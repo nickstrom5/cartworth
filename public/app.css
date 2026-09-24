@@ -198,6 +198,18 @@ a {
 a:hover {
   text-decoration: underline;
 }
+/* A link inside running text must not rely on colour alone (WCAG 1.4.1; axe link-in-text-block in the
+   launch review: the "show" link in the results footer was 1.05:1 against the text around it). */
+p a:not(.btn),
+.small a:not(.btn),
+.muted a:not(.btn),
+.ink2 a:not(.btn),
+li a:not(.btn),
+.notice a:not(.btn),
+.hero-sub a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 button,
 input,
 select,
@@ -808,6 +820,7 @@ label.field .hint {
   padding: 36px 16px;
   color: var(--ink-2);
 }
+.empty h2,
 .empty h3 {
   margin: 8px 0 4px;
   color: var(--ink);
@@ -1303,6 +1316,7 @@ label.field .hint {
   gap: 16px;
   padding: 14px;
 }
+.filters h2,
 .filters h3 {
   font-size: 12px;
   text-transform: uppercase;

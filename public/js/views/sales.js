@@ -160,7 +160,7 @@ export function SalesView() {
     html`<div class="deals-layout">
       <aside class="card filters">
         <div>
-          <h3>Store</h3>
+          <h2>Store</h2>
           <button class="fopt" aria-pressed=${!store ? 'true' : 'false'} onClick=${() => setStore(null)}>All stores <span class="n">${Object.values(model.storeCounts).reduce((a, b) => a + b, 0)}</span></button>
           ${Object.keys(flyersByStore).map(
             (id) => html`<button class="fopt" key=${id} aria-pressed=${store === id ? 'true' : 'false'} onClick=${() => setStore(store === id ? null : id)} title=${flyersByStore[id].map((f) => `${f.name}: ${dateRange(f.validFrom, f.validTo)}`).join('\n')}>
@@ -170,7 +170,7 @@ export function SalesView() {
           ${Object.keys(flyersByStore).length === 0 && html`<div class="muted small">No circulars ${week === 'next' ? 'posted yet for next week' : 'found'} for your stores.</div>`}
         </div>
         <div>
-          <h3>Category</h3>
+          <h2>Category</h2>
           <button class="fopt" aria-pressed=${!cat ? 'true' : 'false'} onClick=${() => setCat(null)}>Everything</button>
           ${CATEGORIES.filter((c) => model.catCounts[c]).map(
             (c) => html`<button class="fopt" key=${c} aria-pressed=${cat === c ? 'true' : 'false'} onClick=${() => setCat(cat === c ? null : c)}>${c}<span class="n">${model.catCounts[c]}</span></button>`,
@@ -180,7 +180,7 @@ export function SalesView() {
           </label>
         </div>
         <div>
-          <h3>Deal type</h3>
+          <h2>Deal type</h2>
           ${[
             ['all', 'All deals'],
             ['pct', '30% off or more'],
@@ -192,7 +192,7 @@ export function SalesView() {
         </div>
         ${Object.keys(flyersByStore).length > 0 &&
         html`<div>
-          <h3>Circulars</h3>
+          <h2>Circulars</h2>
           <div class="stack" style=${{ gap: 6 }}>
             ${Object.entries(flyersByStore).flatMap(([id, fl]) =>
               fl.map((f) => html`<div class="small ink2" key=${f.id}><${StoreDot} id=${id} /> <b>${storeInfo(id).short}</b> ${f.name} · ${dateRange(f.validFrom, f.validTo)}</div>`),
@@ -260,7 +260,7 @@ export function DealCard({ d }) {
   const starts = d.week === 'next' && d.validFrom ? `Starts ${shortDate(d.validFrom)}` : null;
   const priceMain = d.price != null ? d.priceText : d.priceText || d.story || '';
   return html`<article class="deal">
-    <div class="deal-img" role="button" tabindex="0" onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)} style=${{ cursor: 'pointer' }}>
+    <div class="deal-img" role="button" tabindex="0" aria-label=${`Details: ${d.name}`} onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)} style=${{ cursor: 'pointer' }}>
       <${DealImage} src=${d.image} fallback=${html`<${Icon} name="tag" size=${28} />`} />
       ${offerBadge(d.deal) ? html`<span class="badge badge-sale deal-pct">${offerBadge(d.deal)}</span>` : d.pctOff ? html`<span class="badge badge-sale deal-pct">${d.pctOff}% off</span>` : null}
     </div>

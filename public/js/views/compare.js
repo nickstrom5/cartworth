@@ -24,6 +24,7 @@ export function CompareView() {
   useTick(30000);
 
   return html`<div>
+    <h1 class="sr-only">${search?.q ? `Prices for ${search.q}` : 'Compare grocery prices'}</h1>
     <${SearchBar} initial=${search?.q || ''} recent=${recent} />
     ${!search &&
     html`<div class="quick">
