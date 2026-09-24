@@ -117,7 +117,7 @@ function parseStores(v) {
   if (ids.length > LIMITS.stores.max) throw bad(`Too many stores (max ${LIMITS.stores.max})`);
   const out = [];
   for (const id of ids) {
-    if (!STORE_BY_ID[id]) throw bad(`Unknown store “${String(id).slice(0, 40)}”`);
+    if (!Object.hasOwn(STORE_BY_ID, id)) throw bad(`Unknown store “${String(id).slice(0, 40)}”`);
     if (!out.includes(id)) out.push(id);
   }
   return out;
@@ -133,7 +133,7 @@ function parseOverrides(v) {
   if (v === undefined || v === null || v === '') return {};
   const out = {};
   const add = (id, zip) => {
-    if (!STORE_BY_ID[id]) throw bad(`Unknown store “${String(id).slice(0, 40)}” in overrides`);
+    if (!Object.hasOwn(STORE_BY_ID, id)) throw bad(`Unknown store “${String(id).slice(0, 40)}” in overrides`);
     const z = parseZip(zip, `ZIP code for ${STORE_BY_ID[id].name}`);
     if (z) out[id] = { zip: z };
   };

@@ -287,9 +287,15 @@ enum Units {
         return false
     }
 
+    /// Bound what the size regexes see: long digit runs backtrack badly (mirrors boundSizeText in
+    /// shared/units.js).
+    static func boundSizeText(_ v: String) -> String {
+        Rx("\\d{10,}").replace(String(v.prefix(200)), with: "999999999")
+    }
+
     static func parseSize(_ input: String?) -> ParsedSize? {
         guard let input else { return nil }
-        var s = input.replacingOccurrences(of: "\u{00AE}", with: " ")
+        var s = boundSizeText(input).replacingOccurrences(of: "\u{00AE}", with: " ")
             .replacingOccurrences(of: "\u{2122}", with: " ")
             .replacingOccurrences(of: "\u{00A0}", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -389,7 +395,7 @@ enum Units {
     static func sizeFromName(_ rawName: String) -> ParsedSize? {
         guard !rawName.isEmpty else { return nil }
         // Nutrition claims ("12g Whole Grains") and capacities ("Holds Up to 24 Pounds") are not sizes.
-        let name = capacityRx.replace(nutritionClaimRx.replace(rawName, with: " "), with: " ")
+        let name = capacityRx.replace(nutritionClaimRx.replace(boundSizeText(rawName), with: " "), with: " ")
         // JS splits on /,\s*/: the comma and the whitespace AFTER it go, whitespace before it stays.
         let parts: [String] = name.components(separatedBy: ",").enumerated().map { i, raw in
             i == 0 ? raw : String(raw.drop(while: { $0.isWhitespace }))

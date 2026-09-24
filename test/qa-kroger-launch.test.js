@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sourceFor, searchStore } from '../src/search.js';
-import { ttlFromCacheControl, _setBudgetForTests } from '../src/adapters/kroger.js';
+import { ttlFromCacheControl, _setBudgetForTests, ensureValidated } from '../src/adapters/kroger.js';
 import { contextFrom } from '../src/context.js';
 
 const ctx = (zip, headers = {}) => contextFrom(new URL(`http://x/api/search?zip=${zip}`), null, headers);
@@ -60,6 +60,7 @@ test('DEFECT: a Kroger answer marked no-store is not kept, so the next search as
   globalThis.fetch = stubKroger({ cacheControl: 'no-store', onProducts: () => (calls += 1) });
   try {
     const c = ctx('60601', { 'x-kroger-client-id': 'nostore-id', 'x-kroger-client-secret': 's' });
+    await ensureValidated(c);
     const r1 = await searchStore('marianos', 'milk nostore', c);
     assert.equal(r1.status, 'ok', r1.error);
     await searchStore('marianos', 'milk nostore', c);
@@ -75,6 +76,7 @@ test('control: a Kroger answer with a max-age is kept and reused', async () => {
   globalThis.fetch = stubKroger({ cacheControl: 'max-age=120', onProducts: () => (calls += 1) });
   try {
     const c = ctx('60602', { 'x-kroger-client-id': 'maxage-id', 'x-kroger-client-secret': 's' });
+    await ensureValidated(c);
     await searchStore('marianos', 'milk maxage', c);
     const r2 = await searchStore('marianos', 'milk maxage', c);
     assert.equal(calls, 1);
@@ -94,9 +96,31 @@ test('DEFECT: once the server keys’ daily budget is spent, Mariano’s falls b
     for (let i = 0; i < 3; i++) assert.equal((await searchStore('marianos', `budget ${i}`, c)).status, 'ok');
     assert.equal(sourceFor('marianos', ctx('60603')).type, 'instacart', 'over budget, the store is priced from Instacart');
     // A visitor's own keys carry their own limits and are not affected.
-    assert.equal(sourceFor('marianos', ctx('60603', { 'x-kroger-client-id': 'v', 'x-kroger-client-secret': 'w' })).type, 'kroger');
+    const own = ctx('60603', { 'x-kroger-client-id': 'v', 'x-kroger-client-secret': 'w' });
+    await ensureValidated(own);
+    assert.equal(sourceFor('marianos', own).type, 'kroger');
   } finally {
     globalThis.fetch = real;
     _setBudgetForTests({ products: 9000, locations: 1400 });
   }
 }));
+
+// The security review: a made-up key pair switched the source to Kroger and was served Kroger
+// results another visitor's keys had paid for.
+test('DEFECT: a visitor’s keys are used only after Kroger accepts them', async () => {
+  const real = globalThis.fetch;
+  const json = (b, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json' } });
+  try {
+    globalThis.fetch = async () => json({ error: 'invalid_client' }, 401);
+    const bad = ctx('60604', { 'x-kroger-client-id': 'made-up', 'x-kroger-client-secret': 'nope' });
+    assert.equal(sourceFor('marianos', bad).type, 'instacart', 'untested keys are not used');
+    await ensureValidated(bad);
+    assert.equal(sourceFor('marianos', bad).type, 'instacart', 'rejected keys are not used');
+    globalThis.fetch = async () => json({ access_token: 't', expires_in: 1800 });
+    const good = ctx('60604', { 'x-kroger-client-id': 'real-id', 'x-kroger-client-secret': 'real' });
+    await ensureValidated(good);
+    assert.equal(sourceFor('marianos', good).type, 'kroger');
+  } finally {
+    globalThis.fetch = real;
+  }
+});

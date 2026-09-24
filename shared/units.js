@@ -198,9 +198,18 @@ function lookupUnit(raw) {
  *   base: size in base units (oz / floz / ct)
  *   perWeight: true when the item is sold by weight ("per lb") and has no fixed size
  */
+/**
+ * Bound what the size regexes see. Several backtrack on long runs of digits: 400 digits took about
+ * 1.5 s and 2,000 about 30 s (the security review), and product names come from retailers with no
+ * length limit. No real size needs more than a couple of hundred characters or a 9-digit number.
+ */
+function boundSizeText(v) {
+  return String(v).slice(0, 200).replace(/\d{10,}/g, (d) => d.slice(0, 9));
+}
+
 export function parseSize(input) {
   if (input == null) return null;
-  let s = String(input).replace(/[\u00ae\u2122]/g, ' ').replace(/\u00a0/g, ' ').trim();
+  let s = boundSizeText(input).replace(/[\u00ae\u2122]/g, ' ').replace(/\u00a0/g, ' ').trim();
   if (!s) return null;
   const lower = s.toLowerCase();
 
@@ -300,7 +309,7 @@ export function sizeFromName(name) {
   if (!name) return null;
   // Nutrition claims ("12g Whole Grains", "10g Protein") are not sizes; see NUTRIENT_AFTER_RE.
   // Nor is what a product HOLDS: see CAPACITY_RE.
-  name = String(name).replace(NUTRITION_CLAIM_RE, ' ').replace(CAPACITY_RE, ' ');
+  name = boundSizeText(name).replace(NUTRITION_CLAIM_RE, ' ').replace(CAPACITY_RE, ' ');
   const parts = String(name).split(/,\s*/);
   // Try progressively longer tails before single segments: a pack size is often split across two
   // of them ("Coca-Cola, 12 fl oz, 12 Pack Cans"), and parsing only the last segment would keep

@@ -1,7 +1,7 @@
 // Official Kroger Public API (https://developer.kroger.com) for Mariano's exact store prices.
 // Requires a free client id/secret (Settings). Uses the client_credentials grant, product.compact scope.
 import { createHash } from 'node:crypto';
-import { request } from '../http.js';
+import { request, requestScope } from '../http.js';
 
 // Every host this adapter reads gets the owner's rule from src/http.js (DEFAULT_HOST_POLICY: one
 // request in flight, 700 ms apart, stop on 429). The looser per-host limits that used to be set
@@ -52,16 +52,56 @@ function today() {
 }
 function spend(settings, path) {
   if (!settings?.kroger?.server) return;
+  visitorOk(true);
   const u = today();
   if (path.startsWith('/locations')) u.locations += 1;
   else if (path.startsWith('/products')) u.products += 1;
 }
-/** Keys present and, for the server's own keys, budget left today. */
+// Each visitor's share of the server's keys per hour, so one visitor walking ZIPs cannot spend the
+// day's location budget in minutes and switch Kroger prices off for everyone (the security review).
+const PER_VISITOR_HOURLY = +process.env.KROGER_PER_VISITOR_HOURLY || 150;
+const visitorUse = new Map(); // visitor -> { hour, n }
+function visitorOk(spendOne = false) {
+  const v = requestScope.getStore()?.visitor;
+  if (!v) return true;
+  const hour = Math.floor(Date.now() / 3_600_000);
+  let e = visitorUse.get(v);
+  if (!e || e.hour !== hour) {
+    if (visitorUse.size > 5000) visitorUse.clear();
+    e = { hour, n: 0 };
+    visitorUse.set(v, e);
+  }
+  if (spendOne) e.n += 1;
+  return e.n < PER_VISITOR_HOURLY;
+}
+
+// A visitor's own keys are used only once Kroger has accepted them: a made-up id/secret pair
+// otherwise switched the source to Kroger and was served Kroger results cached from someone else's
+// search, and sent Kroger a failed token request on every cache miss. Known answers are kept per
+// credential hash (a rejection for 10 minutes).
+const validated = new Map(); // credential hash -> { ok, at }
+function validity(ctx) {
+  const v = validated.get(credentialKey(ctx.kroger.clientId, ctx.kroger.clientSecret));
+  if (!v) return undefined;
+  if (!v.ok && Date.now() - v.at > 10 * 60_000) return undefined;
+  return v.ok;
+}
+/** Make sure a visitor's keys have been tried once (a token request), before a search uses them. */
+export async function ensureValidated(ctx) {
+  if (!hasKeys(ctx) || ctx.kroger.server || validity(ctx) !== undefined) return;
+  try {
+    await getToken(ctx);
+  } catch {
+    // recorded by getToken
+  }
+}
+
+/** Keys present and usable: a visitor's accepted by Kroger; the server's within today's budget and this visitor's share. */
 export function available(ctx) {
   if (!hasKeys(ctx)) return false;
-  if (!ctx.kroger.server) return true;
+  if (!ctx.kroger.server) return validity(ctx) === true;
   const u = today();
-  return u.products < BUDGET.products && u.locations < BUDGET.locations;
+  return u.products < BUDGET.products && u.locations < BUDGET.locations && visitorOk();
 }
 export function krogerUsage() {
   return { ...today(), budget: { ...BUDGET } };
@@ -70,6 +110,7 @@ export function krogerUsage() {
 export function _setBudgetForTests(b) {
   Object.assign(BUDGET, b);
   Object.assign(usage, { day: '', products: 0, locations: 0 });
+  visitorUse.clear();
 }
 
 /**
@@ -106,10 +147,14 @@ async function getToken(settings, { force = false } = {}) {
     timeout: 15000,
   });
   // A wrong key is the visitor's problem, not a server fault: tag it 400 so it is answered, not logged.
-  if (r.status === 400 || r.status === 401) throw Object.assign(new Error('Kroger API rejected the client ID/secret — check them in Settings'), { status: 400 });
+  if (r.status === 400 || r.status === 401) {
+    validated.set(secretHash, { ok: false, at: Date.now() });
+    throw Object.assign(new Error('Kroger API rejected the client ID/secret — check them in Settings'), { status: 400 });
+  }
   if (!r.ok) throw Object.assign(new Error(`Kroger token error (HTTP ${r.status})`), { status: 502 });
   const d = r.json();
   rememberToken(secretHash, d.access_token, (d.expires_in || 1800) * 1000);
+  validated.set(secretHash, { ok: true, at: Date.now() });
   return d.access_token;
 }
 

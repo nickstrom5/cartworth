@@ -58,12 +58,25 @@ export function sourceFor(storeId, settings) {
   return store.price || null;
 }
 
-export function cacheKey(storeId, src, zip, query) {
-  return `search:v${CACHE_VERSION}:${storeId}:${src.type}:${zip}:${normalize(query)}`;
+/**
+ * How many results a store is asked for, snapped UP to a few rungs. The answer depends on it, so it
+ * is part of the cache key: without it one visitor's resultsPerStore=8&fresh=1 cut the cached answer
+ * to 8 items for everybody for 20 minutes (the security review). Rungs, not every value from 8 to 60,
+ * so it cannot multiply the lookups one query costs by more than four.
+ */
+const RESULT_RUNGS = [12, 24, 36, 60];
+export function resultLimit(settings) {
+  const n = Number(settings?.resultsPerStore) || 36;
+  return RESULT_RUNGS.find((r) => r >= n) ?? RESULT_RUNGS[RESULT_RUNGS.length - 1];
+}
+
+export function cacheKey(storeId, src, zip, query, limit = 36) {
+  // The default keeps its old key, so the cache survives this change.
+  return `search:v${CACHE_VERSION}:${storeId}:${src.type}:${zip}:${normalize(query)}${limit === 36 ? '' : `:n${limit}`}`;
 }
 
 async function runAdapter(storeId, src, query, zip, settings) {
-  const limit = settings.resultsPerStore || 36;
+  const limit = resultLimit(settings);
   switch (src.type) {
     case 'instacart':
       return instacart.search({ ...src, storeId }, query, zip, { limit });
@@ -85,7 +98,7 @@ export async function searchStore(storeId, query, settings, { fresh = false } = 
   if (!src) return { storeId, status: 'unsupported', items: [], message: STORE_BY_ID[storeId]?.note || 'No price source' };
   const zip = storeZip(settings, storeId);
   if (!zip) return { storeId, status: 'error', items: [], error: 'Set your ZIP code first' };
-  const key = cacheKey(storeId, src, zip, query);
+  const key = cacheKey(storeId, src, zip, query, resultLimit(settings));
   const wasCached = !fresh && peek(key) !== undefined;
   const t0 = Date.now();
   let staleErr = null;
@@ -137,6 +150,8 @@ export async function searchStore(storeId, query, settings, { fresh = false } = 
     // 'blocked': the store refuses automated lookups (see traderjoes.js); not an error to retry.
     return { ...base, status: r.blocked ? 'blocked' : r.items.length ? 'ok' : 'empty', items: r.items, location, message: r.message || null };
   } catch (err) {
+    // Refused before it left (http.js requestScope): the store is fine, Cartworth is busy.
+    if (err.busy) return { storeId, status: 'busy', items: [], source: src.type, message: `Cartworth is busy, so ${STORE_BY_ID[storeId].name} was not asked just now. Try again in a minute.` };
     health[storeId] = { ok: false, at: Date.now(), ms: Date.now() - t0, error: publicError(err.message), source: src.type };
     return { storeId, status: 'error', items: [], error: friendlyError(err), ms: Date.now() - t0, source: src.type };
   }

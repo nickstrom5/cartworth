@@ -23,7 +23,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const { contextFrom, requireZip, storeZip, queryFrom, DEFAULTS, LIMITS, RADIUS_MILES, snapRadius } = await import('./src/context.js');
-const { takeRequest, allowFresh, admitCold, guardStats } = await import('./src/guard.js');
+const { takeRequest, allowFresh, admitCold, canAdmit, clientKey, guardStats } = await import('./src/guard.js');
 const search = await import('./src/search.js');
 const deals = await import('./src/deals.js');
 const flipp = await import('./src/adapters/flipp.js');
@@ -36,12 +36,13 @@ const wholefoods = await import('./src/adapters/wholefoods.js');
 const traderjoes = await import('./src/adapters/traderjoes.js');
 const { STORES, STORE_BY_ID, CORE_STORE_IDS, slotFor } = await import('./shared/stores.js');
 const { directory, defaultStoreIds } = await import('./src/directory.js');
-const { stats: httpStats, hostBacklog } = await import('./src/http.js');
+const { stats: httpStats, hostBacklog, requestScope } = await import('./src/http.js');
 const { cachePurge, db, DB_PATH, dbStatus, legacyReport, maintain, purgeLegacy, softWriteFailures } = await import('./src/db.js');
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = +process.env.PORT || 4747;
 const HOST = process.env.HOST || '127.0.0.1';
+const LOOPBACK_ONLY = ['127.0.0.1', 'localhost', '::1'].includes(HOST);
 const STARTED_AT = Date.now();
 const STATIC = { '/': path.join(ROOT, 'public'), '/shared/': path.join(ROOT, 'shared') };
 const MIME = {
@@ -57,6 +58,14 @@ const MIME = {
 export { RADIUS_MILES, snapRadius };
 
 // ---------------- helpers ----------------
+// Sent with every static file. The CSP matches what the app actually loads: its own scripts and
+// styles (public/ and /shared/), its own API, retailer product images over https, and nothing else.
+const SECURITY_HEADERS = {
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'x-frame-options': 'DENY',
+  'content-security-policy': "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
+};
 function send(res, status, body, headers = {}) {
   const data = typeof body === 'string' ? body : JSON.stringify(body);
   res.writeHead(status, { 'content-type': typeof body === 'string' ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers });
@@ -85,15 +94,25 @@ function serveStatic(req, res, pathname) {
     rel = pathname.slice('/shared'.length);
   }
   if (rel === '/' || rel === '') rel = '/index.html';
-  const file = path.normalize(path.join(base, decodeURIComponent(rel)));
-  if (!file.startsWith(base)) return send(res, 403, 'Forbidden');
+  // A malformed escape ("/%") threw out of the request handler and took the whole server down; a
+  // NUL byte made fs.stat throw synchronously. Both are the visitor's mistake: 400.
+  let decoded;
+  try {
+    decoded = decodeURIComponent(rel);
+  } catch {
+    return send(res, 400, 'Bad request');
+  }
+  if (decoded.includes('\0')) return send(res, 400, 'Bad request');
+  const file = path.normalize(path.join(base, decoded));
+  // With the separator: "public-old/" also starts with "public".
+  if (file !== base && !file.startsWith(base.endsWith(path.sep) ? base : base + path.sep)) return send(res, 403, 'Forbidden');
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) {
       // SPA fallback for hash-less deep links
       if (!path.extname(rel)) return serveStatic(req, res, '/');
       return send(res, 404, 'Not found');
     }
-    res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-cache', 'content-length': st.size });
+    res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-cache', 'content-length': st.size, ...SECURITY_HEADERS });
     fs.createReadStream(file).pipe(res);
   });
 }
@@ -104,7 +123,8 @@ function ctxFor(req, url, body = null) {
   if (ctx.fresh && !allowFresh(req)) ctx.fresh = false; // over budget: serve the cache, spare the retailer
   // Asked by searchStore before any lookup that would reach a retailer (see src/guard.js admitCold).
   // Not enumerable, so it never lands in a cache key or a response.
-  Object.defineProperty(ctx, 'admitCold', { value: (hosts) => admitCold(req, hosts, Date.now(), hostBacklog), enumerable: false });
+  // A check, not a charge: http.js charges each request that actually leaves (requestScope below).
+  Object.defineProperty(ctx, 'admitCold', { value: (hosts) => canAdmit(req, hosts, Date.now(), hostBacklog), enumerable: false });
   return ctx;
 }
 
@@ -183,7 +203,20 @@ route('GET', '/api/state', async () => ({
 // should not 500 because the history write lost a race), so a disk filling up is otherwise
 // completely silent: every search still succeeds and nothing is recorded. The counter self-clears
 // after a quiet minute, so a non-zero value means failures are happening NOW.
-route('GET', '/api/health', async () => ({
+/**
+ * The operator's view: database path and last write error, per-host traffic, guard and Kroger
+ * usage. Only for a request from this machine or one carrying BASKET_HEALTH_TOKEN; everyone else
+ * gets up/down (the security review: the database path and error text were public).
+ */
+function operator(req) {
+  const token = process.env.BASKET_HEALTH_TOKEN;
+  if (token && req.headers['x-health-token'] === token) return true;
+  const a = String(req.socket?.remoteAddress || '');
+  const local = a === '127.0.0.1' || a === '::1' || a === '::ffff:127.0.0.1';
+  return local && !req.headers['x-forwarded-for'] && !req.headers['cf-connecting-ip'];
+}
+
+route('GET', '/api/health', async (req) => (!operator(req) ? { ok: !dbStatus.degraded && softWriteFailures.count === 0 } : {
   ok: !dbStatus.degraded && softWriteFailures.count === 0,
   uptimeMs: Date.now() - STARTED_AT,
   db: { degraded: dbStatus.degraded, reason: dbStatus.reason, path: dbStatus.path },
@@ -206,12 +239,14 @@ route('GET', '/api/directory', async (req, url) => {
 route('GET', '/api/locations', async (req, url) => {
   const ctx = ctxFor(req, url);
   requireZip(ctx);
+  await kroger.ensureValidated(ctx);
   const out = {};
   await Promise.all(ctx.stores.map(async (id) => {
     try {
       out[id] = await resolveLocation(id, ctx, ctx.fresh);
     } catch (err) {
-      out[id] = { error: err.message };
+      // Generic: the underlying message can carry a retailer's reply or a network address.
+      out[id] = { error: err.busy ? 'Cartworth is busy; try again in a minute.' : 'Could not look up this store right now.' };
     }
   }));
   return out;
@@ -221,6 +256,7 @@ route('GET', '/api/search', async (req, url, res) => {
   const ctx = ctxFor(req, url);
   const q = queryFrom(url);
   requireZip(ctx);
+  await kroger.ensureValidated(ctx);
   const ids = ctx.stores.filter((id) => STORE_BY_ID[id]);
 
   res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store', connection: 'keep-alive', 'x-accel-buffering': 'no' });
@@ -292,6 +328,7 @@ route('POST', '/api/watch/check', async (req, url) => {
   const body = await readBody(req);
   const ctx = ctxFor(req, url, body);
   requireZip(ctx);
+  await kroger.ensureValidated(ctx);
   return watch.checkWatch(body, ctx, { fresh: ctx.fresh });
 });
 
@@ -300,6 +337,7 @@ route('POST', '/api/list/optimize', async (req, url) => {
   const body = await readBody(req);
   const ctx = ctxFor(req, url, body);
   requireZip(ctx);
+  await kroger.ensureValidated(ctx);
   return list.optimize(body.items, ctx, { fresh: ctx.fresh });
 });
 
@@ -308,7 +346,9 @@ route('POST', '/api/kroger/test', async (req, url) => {
   const body = await readBody(req);
   const ctx = ctxFor(req, url, body);
   const zip = requireZip(ctx);
-  if (!kroger.hasKeys(ctx)) throw Object.assign(new Error('Send both the client ID and secret'), { status: 400 });
+  // Tests a visitor's OWN keys. Without this check a bare request tested the server's keys, minting
+  // a fresh token on the owner's credentials every time (the security review).
+  if (!kroger.hasKeys(ctx) || ctx.kroger.server) throw Object.assign(new Error('Send both the client ID and secret'), { status: 400 });
   return kroger.testKeys(ctx, zip);
 });
 
@@ -332,13 +372,30 @@ function originAllowed(req) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  try {
+    await handle(req, res);
+  } catch (err) {
+    // Last line of defence: nothing a visitor sends may end the process for everybody.
+    console.error(`[${req.method} ${String(req.url).slice(0, 200)}]`, err);
+    if (!res.headersSent) send(res, 400, { error: 'Bad request' });
+    else res.end();
+  }
+});
+
+async function handle(req, res) {
+  // A fixed base: a Host header of "a b" made new URL() throw and crashed the server.
+  const url = new URL(req.url, 'http://localhost');
   const pathname = url.pathname;
   if (!pathname.startsWith('/api/')) {
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed');
     return serveStatic(req, res, pathname);
   }
   if (!originAllowed(req)) return send(res, 403, { error: 'Cross-origin requests are not allowed' });
+  // DNS rebinding: a page on evil.example whose name re-resolves to 127.0.0.1 is "same origin" by
+  // the Host header it sends. A server listening only on this machine answers only local names.
+  if (LOOPBACK_ONLY && !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(String(req.headers.host || ''))) {
+    return send(res, 403, { error: 'Unknown host' });
+  }
   const budget = takeRequest(req);
   if (!budget.ok) return send(res, 429, { error: 'Too many requests — give it a moment.' }, { 'retry-after': String(budget.retryAfter) });
 
@@ -348,7 +405,9 @@ const server = http.createServer(async (req, res) => {
     if (!m) continue;
     const params = Object.fromEntries(r.keys.map((k, i) => [k, m[i + 1]]));
     try {
-      const out = await r.handler(req, url, res, params);
+      // Every retailer request this route causes is counted against this visitor (src/http.js).
+      const scope = { visitor: clientKey(req), admit: (host) => admitCold(req, [host], Date.now(), hostBacklog) };
+      const out = await requestScope.run(scope, () => r.handler(req, url, res, params));
       if (out !== undefined && !res.headersSent) send(res, 200, out);
     } catch (err) {
       const status = err.status || 500;
@@ -361,7 +420,9 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   send(res, 404, { error: 'No such endpoint' });
-});
+}
+
+process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {

@@ -1,6 +1,20 @@
 // Small HTTP layer: timeouts, retries, a cookie jar, manual redirects (so cookies set on
 // redirect hops are kept), and polite per-host concurrency limits.
 
+import { AsyncLocalStorage } from 'node:async_hooks';
+
+/**
+ * The visitor an outbound request is being made for. server.js runs every API request inside a
+ * scope carrying `admit(host)` (src/guard.js admitCold): each request that actually leaves for a
+ * retailer — whichever route caused it: search, directory, locations, weekly ads, deal details —
+ * is counted against that visitor and refused when the host's queue is already long. Cache hits
+ * never get here, so they cost nothing. Shared background work runs outside any scope (see
+ * `unscoped`).
+ */
+export const requestScope = new AsyncLocalStorage();
+/** Run `fn` as shared background work, not on behalf of the visitor whose request started it. */
+export const unscoped = (fn) => requestScope.exit(fn);
+
 export class HttpError extends Error {
   constructor(message, { status, url, body } = {}) {
     super(message);
@@ -243,10 +257,30 @@ export async function request(url, opts = {}) {
   throw lastErr;
 }
 
+/** localhost, .local/.internal names, and literal loopback, private, link-local and CGNAT addresses. */
+export function isPrivateHost(hostname) {
+  const h = String(hostname).toLowerCase().replace(/^\[|\]$/g, '');
+  if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal')) return true;
+  const v4 = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(h);
+  if (v4) {
+    const [a, b] = [+v4[1], +v4[2]];
+    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127);
+  }
+  return h === '::1' || h === '::' || /^f[cd]/.test(h) || /^fe[89ab]/.test(h) || h.startsWith('::ffff:');
+}
+
 async function once(url, { method, headers, body, jar, timeout, followRedirects, maxRedirects }) {
+  const scope = requestScope.getStore();
+  if (scope?.admit && !scope.admit(new URL(url).host)) {
+    stats.refused += 1;
+    throw Object.assign(new HttpError(`${new URL(url).host} is busy`, { status: 503, url }), { busy: true });
+  }
   let current = url;
   let m = method;
   let b = body;
+  const origin = new URL(url).origin;
+  let hdrs = headers;
+  let sameOrigin = true;
   for (let hop = 0; hop <= maxRedirects; hop++) {
     const host = new URL(current).host;
     refuseIfCooling(host, current);
@@ -257,8 +291,8 @@ async function once(url, { method, headers, body, jar, timeout, followRedirects,
       // Checked again after the wait: a request that queued behind the one that got the 429 must
       // not go out when its turn comes.
       refuseIfCooling(host, current);
-      const h = { accept: 'application/json, text/plain, */*', ...headers };
-      if (jar && jar.cookies.size) h.cookie = jar.header();
+      const h = { accept: 'application/json, text/plain, */*', ...hdrs };
+      if (jar && sameOrigin && jar.cookies.size) h.cookie = jar.header();
       stats.requests += 1;
       stats.byHost[host] = (stats.byHost[host] || 0) + 1;
       res = await fetch(current, { method: m, headers: h, body: b, redirect: 'manual', signal: AbortSignal.timeout(timeout) });
@@ -282,7 +316,16 @@ async function once(url, { method, headers, body, jar, timeout, followRedirects,
       release(host);
     }
     if (followRedirects && res.status >= 300 && res.status < 400 && res.headers.get('location')) {
-      current = new URL(res.headers.get('location'), current).href;
+      const next = new URL(res.headers.get('location'), current);
+      // A redirect may not take us somewhere a request input never could: plain http, or a local or
+      // private address. And credentials stay with the site they were meant for: a redirect to
+      // another origin drops the Authorization header (Kroger's Basic/Bearer) and the cookie jar.
+      if (next.protocol !== 'https:' || isPrivateHost(next.hostname)) throw new HttpError(`Refused a redirect to ${next.protocol}//${next.hostname}`, { status: 502, url: current });
+      current = next.href;
+      if (next.origin !== origin) {
+        sameOrigin = false;
+        hdrs = Object.fromEntries(Object.entries(hdrs || {}).filter(([k]) => !/^(authorization|cookie|x-kroger-)/i.test(k)));
+      }
       if (res.status === 303 || ((res.status === 301 || res.status === 302) && m === 'POST')) {
         m = 'GET';
         b = undefined;
@@ -299,7 +342,8 @@ async function once(url, { method, headers, body, jar, timeout, followRedirects,
         try {
           return JSON.parse(text);
         } catch {
-          throw new HttpError(`Expected JSON from ${new URL(current).host} but got ${text.slice(0, 80).replace(/\s+/g, ' ')}`, { status: res.status, url: current, body: text.slice(0, 300) });
+          // The retailer's reply stays in .body for our logs; the message may reach a visitor.
+          throw new HttpError(`Expected JSON from ${new URL(current).host}`, { status: res.status, url: current, body: text.slice(0, 300) });
         }
       },
     };

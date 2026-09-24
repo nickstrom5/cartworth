@@ -1,7 +1,7 @@
 // Flipp: weekly circulars (ads) for every merchant near a ZIP, plus item search and item details.
 // Flyer item lists lack the price qualifiers ("2/", "/lb", "BOGO", "for U"), so we fetch each item's
 // details once (they never change for a given flyer item) and keep them in SQLite.
-import { request, mapLimit } from '../http.js';
+import { request, mapLimit, unscoped, hostBacklog } from '../http.js';
 
 // Every host this adapter reads gets the owner's rule from src/http.js (DEFAULT_HOST_POLICY: one
 // request in flight, 700 ms apart, stop on 429). The looser per-host limits that used to be set
@@ -103,10 +103,17 @@ export function enrichFlyer(flyerId, items) {
   const st = enrich.get(flyerId);
   if (st?.running) return st;
   const todo = items.filter((i) => !storedDetail(i.id));
-  const state = { total: items.length, done: items.length - todo.length, running: todo.length > 0, error: null };
+  const state = { total: items.length, done: items.length - todo.length, running: todo.length > 0, error: null, paused: false };
   enrich.set(flyerId, state);
   if (!todo.length) return state;
-  mapLimit(todo, 6, async (i) => {
+  // Shared background work: not charged to the visitor who opened the Sales tab, and it steps aside
+  // when Flipp's queue is long (visitors' searches ask Flipp too). Paused, it picks up where it left
+  // off the next time anyone loads this flyer; details already fetched are stored.
+  unscoped(() => mapLimit(todo, 6, async (i) => {
+    if (state.paused || hostBacklog(new URL(API).host) >= 20) {
+      state.paused = true;
+      return;
+    }
     try {
       await itemDetail(i.id);
     } catch (err) {
@@ -115,7 +122,7 @@ export function enrichFlyer(flyerId, items) {
     state.done += 1;
   }).finally(() => {
     state.running = false;
-  });
+  }));
   return state;
 }
 

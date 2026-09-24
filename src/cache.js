@@ -31,7 +31,9 @@ export async function cached(key, ttlMs, fn, { persist = true, fresh = false, st
     if (persist) {
       const v = cacheGet(key);
       if (v !== undefined) {
-        remember(key, v, ttlMs);
+        // ttlMs may be a function of the value (see below); passing the function itself made the
+        // in-memory expiry NaN, so a disk hit was never reused from memory.
+        remember(key, v, typeof ttlMs === 'function' ? ttlMs(v) : ttlMs);
         return v;
       }
     }
