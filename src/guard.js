@@ -16,6 +16,13 @@ const MAX_PER_WINDOW = +process.env.BASKET_RATE_LIMIT || 90;
 const FRESH_WINDOW_MS = 10 * 60_000;
 const MAX_FRESH_PER_WINDOW = +process.env.BASKET_FRESH_LIMIT || 12;
 const MAX_BUCKETS = 5000;
+// New store lookups (a cache miss asks a retailer's site) per visitor per 10 minutes. A search asks
+// up to ~20 stores; a trip plan of 10 items at 8 stores asks 80. Cached answers cost nothing and are
+// never counted.
+const COLD_WINDOW_MS = 10 * 60_000;
+const MAX_COLD_PER_WINDOW = +process.env.BASKET_COLD_LIMIT || 240;
+// Requests waiting for one retailer host before new lookups are shed (see http.js hostBacklog).
+const MAX_BACKLOG = +process.env.BASKET_MAX_BACKLOG || 40;
 
 const buckets = new Map();
 
@@ -23,7 +30,7 @@ function bucketFor(key, now) {
   let b = buckets.get(key);
   if (!b) {
     if (buckets.size >= MAX_BUCKETS) sweep(now, true);
-    b = { hits: [], fresh: [], seen: now };
+    b = { hits: [], fresh: [], cold: [], seen: now };
     buckets.set(key, b);
   }
   b.seen = now;
@@ -96,6 +103,29 @@ export function allowFresh(req, now = Date.now()) {
   return true;
 }
 
+/**
+ * May this visitor make a NEW lookup (a cache miss) at a store on `hosts`? No when the store's queue
+ * is already long (everyone would wait behind it, and a long queue is how a 429 that stops the store
+ * for every visitor gets provoked), or when this visitor has spent their budget of new lookups. The
+ * caller then serves saved prices, or says the store is busy. It never makes the request anyway.
+ */
+export function admitCold(req, hosts = [], now = Date.now(), backlog = () => 0) {
+  if (hosts.some((h) => backlog(h) >= MAX_BACKLOG)) {
+    shed.busy += 1;
+    return false;
+  }
+  const b = bucketFor(clientKey(req), now);
+  b.cold = b.cold.filter((t) => now - t < COLD_WINDOW_MS);
+  if (b.cold.length >= MAX_COLD_PER_WINDOW) {
+    shed.budget += 1;
+    return false;
+  }
+  b.cold.push(now);
+  return true;
+}
+
+const shed = { busy: 0, budget: 0 };
+
 export function guardStats() {
-  return { buckets: buckets.size, maxPerMinute: MAX_PER_WINDOW, maxFreshPer10Min: MAX_FRESH_PER_WINDOW };
+  return { buckets: buckets.size, maxPerMinute: MAX_PER_WINDOW, maxFreshPer10Min: MAX_FRESH_PER_WINDOW, maxNewLookupsPer10Min: MAX_COLD_PER_WINDOW, maxBacklog: MAX_BACKLOG, shed: { ...shed } };
 }

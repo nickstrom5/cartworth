@@ -5,7 +5,7 @@ import * as wholefoods from './adapters/wholefoods.js';
 import * as traderjoes from './adapters/traderjoes.js';
 import * as kroger from './adapters/kroger.js';
 import * as flipp from './adapters/flipp.js';
-import { cached, peek, MIN } from './cache.js';
+import { cached, peek, peekStale, MIN } from './cache.js';
 import { STORE_BY_ID, storeForMerchant } from '../shared/stores.js';
 import { normalize, relevance } from '../shared/match.js';
 import { storeZip, snapRadius } from './context.js';
@@ -57,7 +57,7 @@ export function sourceFor(storeId, settings) {
   return store.price || null;
 }
 
-function cacheKey(storeId, src, zip, query) {
+export function cacheKey(storeId, src, zip, query) {
   return `search:v${CACHE_VERSION}:${storeId}:${src.type}:${zip}:${normalize(query)}`;
 }
 
@@ -88,21 +88,34 @@ export async function searchStore(storeId, query, settings, { fresh = false } = 
   const wasCached = !fresh && peek(key) !== undefined;
   const t0 = Date.now();
   let staleErr = null;
+  let shedStale = null;
+  // A lookup that would reach the retailer is asked for first (src/guard.js admitCold): shed when
+  // the store's queue is long or this visitor is out of new lookups. Then the last saved answer is
+  // served, marked stale, or the store says it is busy. No request goes out either way.
+  if (!wasCached && settings.admitCold && !settings.admitCold(sourceHosts(src))) {
+    const saved = peekStale(key, 3 * 24 * 60 * MIN);
+    if (saved === undefined) {
+      return { storeId, status: 'busy', items: [], source: src.type, message: `Cartworth is busy, so ${STORE_BY_ID[storeId].name} was not asked just now. Try again in a minute.` };
+    }
+    shedStale = 'Saved prices: Cartworth is busy, so this store was not asked again just now.';
+  }
   try {
     // STORE_TIMEOUT is how long the store's site may go without answering anything, not how long
     // this search may take: at one request in flight per host, a store near the back of a trip
     // plan's queue waits its turn. See withStallTimeout in src/http.js.
-    const r = await withStallTimeout(
-      cached(key, 20 * MIN, () => runAdapter(storeId, src, query, zip, settings), { fresh, maxStaleMs: 3 * 24 * 60 * MIN, onStale: (e) => (staleErr = e) }),
-      STORE_TIMEOUT,
-      sourceHosts(src),
-      { label: STORE_BY_ID[storeId].name },
-    );
+    const r = shedStale
+      ? peekStale(key, 3 * 24 * 60 * MIN)
+      : await withStallTimeout(
+        cached(key, 20 * MIN, () => runAdapter(storeId, src, query, zip, settings), { fresh, maxStaleMs: 3 * 24 * 60 * MIN, onStale: (e) => (staleErr = e) }),
+        STORE_TIMEOUT,
+        sourceHosts(src),
+        { label: STORE_BY_ID[storeId].name },
+      );
     const ms = Date.now() - t0;
     health[storeId] = staleErr
       ? { ok: false, at: Date.now(), ms, error: publicError(staleErr.message), source: src.type }
       : { ok: true, at: Date.now(), ms: wasCached ? health[storeId]?.ms ?? ms : ms, error: null, source: src.type };
-    const base = { storeId, ms, cached: wasCached, source: src.type, stale: staleErr ? friendlyError(staleErr) : null };
+    const base = { storeId, ms, cached: wasCached || !!shedStale, source: src.type, stale: shedStale || (staleErr ? friendlyError(staleErr) : null) };
     // Chain-wide prices (priceBasis 'national') come from a storefront somewhere else in the
     // country. They carry no location the shopper could visit, and the radius does not apply to
     // them: the directory decided the chain belongs in this search, and the badge says what the

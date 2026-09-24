@@ -44,6 +44,7 @@ export async function checkWatch(spec, ctx, { fresh = false } = {}) {
   const errors = {};
   for (const r of results) {
     if (r.status === 'error') errors[r.storeId] = r.error;
+    else if (r.status === 'busy') errors[r.storeId] = r.message;
     byStore[r.storeId] = withHistory(r.items || []);
   }
 

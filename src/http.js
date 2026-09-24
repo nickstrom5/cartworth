@@ -99,6 +99,16 @@ export function configureHost(host, { max, gap } = {}) {
   if (max) st.max = max;
   if (gap != null) st.gap = gap;
 }
+/**
+ * How many requests to a host are waiting or in flight. At one request per 700 ms, a backlog of 40
+ * is about half a minute of waiting for whoever is at the back. src/guard.js sheds new lookups
+ * past a limit, so one heavy visitor cannot put every other visitor behind their queue.
+ */
+export function hostBacklog(host) {
+  const st = hosts.get(host);
+  return st ? st.queue.length + st.active : 0;
+}
+
 /** The limits in force for a host, for tests and for the health panel. */
 export function hostPolicy(host) {
   const st = hostState(host);

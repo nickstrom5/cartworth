@@ -561,3 +561,24 @@ test('holiday cards: in December the Christmas card appears, adds its list, and 
     srv = await startAppServer({ api: api() });
   }
 });
+
+test('a store the server did not ask (busy) says so and offers a retry, not "no results"', { skip: SKIP }, async () => {
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/search': (req, url) => {
+    const asked = (url.searchParams.get('stores') || '').split(',').filter(Boolean);
+    const events = [['start', { query: 'milk', stores: asked, zip: fx.zip }]];
+    for (const id of asked) events.push(['store', { storeId: id, status: 'busy', items: [], message: 'Cartworth is busy, so ALDI was not asked just now. Try again in a minute.' }]);
+    events.push(['ads', { deals: [] }], ['done', { ms: 1 }]);
+    return { sse: events };
+  } }) });
+  try {
+    await page.viewport(1280, 900);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare?q=milk' });
+    await page.waitFor(`/busy, try again/.test(document.querySelector('.status-strip')?.innerText || '')`, { what: 'the busy chip' });
+    const strip = await page.eval(`document.querySelector('.status-strip').innerText`);
+    assert.doesNotMatch(strip, /no results/);
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});

@@ -102,6 +102,13 @@ function remember(key, value, ttlMs) {
   memBytes += bytes;
 }
 
+/** The last value for `key` however old (up to maxStaleMs), for a lookup we chose not to make. */
+export function peekStale(key, maxStaleMs) {
+  const hit = mem.get(key);
+  if (hit) return hit.value;
+  return cacheGetStale(key, maxStaleMs);
+}
+
 export function peek(key) {
   const hit = mem.get(key);
   if (hit && hit.expires > Date.now()) return hit.value;

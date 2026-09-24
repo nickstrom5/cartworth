@@ -23,7 +23,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const { contextFrom, requireZip, storeZip, queryFrom, DEFAULTS, LIMITS, RADIUS_MILES, snapRadius } = await import('./src/context.js');
-const { takeRequest, allowFresh, guardStats } = await import('./src/guard.js');
+const { takeRequest, allowFresh, admitCold, guardStats } = await import('./src/guard.js');
 const search = await import('./src/search.js');
 const deals = await import('./src/deals.js');
 const flipp = await import('./src/adapters/flipp.js');
@@ -36,7 +36,7 @@ const wholefoods = await import('./src/adapters/wholefoods.js');
 const traderjoes = await import('./src/adapters/traderjoes.js');
 const { STORES, STORE_BY_ID, CORE_STORE_IDS, slotFor } = await import('./shared/stores.js');
 const { directory, defaultStoreIds } = await import('./src/directory.js');
-const { stats: httpStats } = await import('./src/http.js');
+const { stats: httpStats, hostBacklog } = await import('./src/http.js');
 const { cachePurge, db, DB_PATH, dbStatus, legacyReport, maintain, purgeLegacy, softWriteFailures } = await import('./src/db.js');
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -102,6 +102,9 @@ function serveStatic(req, res, pathname) {
 function ctxFor(req, url, body = null) {
   const ctx = contextFrom(url, body, req.headers);
   if (ctx.fresh && !allowFresh(req)) ctx.fresh = false; // over budget: serve the cache, spare the retailer
+  // Asked by searchStore before any lookup that would reach a retailer (see src/guard.js admitCold).
+  // Not enumerable, so it never lands in a cache key or a response.
+  Object.defineProperty(ctx, 'admitCold', { value: (hosts) => admitCold(req, hosts, Date.now(), hostBacklog), enumerable: false });
   return ctx;
 }
 
