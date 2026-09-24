@@ -10,6 +10,14 @@ import { CATEGORIES, offerBadge } from '/shared/deals.js';
 import { OccasionCards } from './occasions.js';
 import { normalize, tokens } from '/shared/match.js';
 
+// A weekly-ad picture that fails to load (a CDN refusing, a network hiccup) shows the deal's icon,
+// not the browser's broken-image glyph: the launch review's live journey saw ad images fail.
+function DealImage({ src, style, fallback }) {
+  const [broken, setBroken] = useState(false);
+  if (!src || broken) return fallback;
+  return html`<img src=${src} alt="" style=${style} loading="lazy" decoding="async" referrerpolicy="no-referrer" onError=${() => setBroken(true)} />`;
+}
+
 const FOOD = new Set(['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Bakery & Bread', 'Deli & Prepared', 'Frozen', 'Pantry', 'Snacks & Candy', 'Beverages']);
 
 export function dealScore(d) {
@@ -253,7 +261,7 @@ export function DealCard({ d }) {
   const priceMain = d.price != null ? d.priceText : d.priceText || d.story || '';
   return html`<article class="deal">
     <div class="deal-img" role="button" tabindex="0" onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)} style=${{ cursor: 'pointer' }}>
-      ${d.image ? html`<img src=${d.image} alt="" loading="lazy" referrerpolicy="no-referrer" />` : html`<${Icon} name="tag" size=${28} />`}
+      <${DealImage} src=${d.image} fallback=${html`<${Icon} name="tag" size=${28} />`} />
       ${offerBadge(d.deal) ? html`<span class="badge badge-sale deal-pct">${offerBadge(d.deal)}</span>` : d.pctOff ? html`<span class="badge badge-sale deal-pct">${d.pctOff}% off</span>` : null}
     </div>
     <div class="deal-body">
@@ -281,7 +289,7 @@ export function DealCard({ d }) {
 export function DealCardMini({ deal: d }) {
   const ends = endsLabel(d.validTo);
   return html`<div class="ad-card" role="button" tabindex="0" style=${{ cursor: 'pointer' }} onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)}>
-    ${d.image ? html`<img src=${d.image} alt="" loading="lazy" referrerpolicy="no-referrer" />` : html`<div class="pimg ph" style=${{ width: 56, height: 56 }}><${Icon} name="tag" size=${18} /></div>`}
+    <${DealImage} src=${d.image} fallback=${html`<div class="pimg ph" style=${{ width: 56, height: 56 }}><${Icon} name="tag" size=${18} /></div>`} />
     <div style=${{ minWidth: 0, display: 'grid', gap: 2 }}>
       <div class="ad-price">${d.priceText || d.story || 'See ad'}${termsPending(d) ? html` <span class="muted small" title=${PENDING_TITLE}>· terms loading</span>` : ''}</div>
       <div class="small" style=${{ fontWeight: 600, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>${d.name}</div>
@@ -319,7 +327,7 @@ function DealDetail({ d }) {
   const disclaimer = detail?.disclaimer || d.disclaimer;
   return html`<${Modal} title=${d.name} sub=${`${storeInfo(d.storeId).name} · ${dateRange(d.validFrom, d.validTo)}`}>
     <div class="row" style=${{ gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-      ${d.image && html`<img src=${d.image} alt="" style=${{ width: 180, maxHeight: 180, objectFit: 'contain', background: '#fff', borderRadius: 12, border: '1px solid var(--border)' }} referrerpolicy="no-referrer" />`}
+      <${DealImage} src=${d.image} style=${{ width: 180, maxHeight: 180, objectFit: 'contain', background: '#fff', borderRadius: 12, border: '1px solid var(--border)' }} fallback=${null} />
       <div class="grow stack" style=${{ gap: 6, minWidth: 220 }}>
         <div style=${{ fontSize: 26, fontWeight: 750 }}>${d.priceText || d.story || 'See ad'}</div>
         ${termsPending(d) && html`<div class="ink2" title=${PENDING_TITLE}>${terms ? `Ad terms: ${terms}` : 'Checking the ad’s terms…'}</div>`}

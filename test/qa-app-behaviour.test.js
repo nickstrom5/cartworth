@@ -729,3 +729,20 @@ test('DEFECT (launch): while stores are still answering, the headline says "so f
     srv = await startAppServer({ api: api() });
   }
 });
+
+// DEFECT (launch review, live journey): weekly-ad pictures were bare <img> tags, so an image a CDN
+// refused showed the browser's broken-image glyph on the Sales tab. They fall back to the deal icon.
+test('DEFECT (launch): a weekly-ad picture that fails to load shows the deal icon, not a broken image', { skip: SKIP }, async () => {
+  const deals = [{ id: 'd-x', source: 'flipp', flippId: 11, storeId: 'meijer', name: 'Dark Roast Coffee', price: 6.99, priceText: '$6.99', enriched: true, category: 'Beverages', week: 'current', image: `${srv.origin}/no-such-image.png` }];
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/deals': { week: 'current', deals: deals.map((d) => ({ ...d, image: d.image.replace(/^http:\/\/[^/]+/, '') })), flyers: [], errors: [] } }) });
+  try {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/sales' });
+    await page.waitFor(`/Dark Roast Coffee/.test(document.body.innerText)`, { what: 'the deal' });
+    await page.waitFor(`![...document.querySelectorAll('.deal img')].some((i) => i.getAttribute('src'))`, { what: 'the failed picture replaced' });
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});

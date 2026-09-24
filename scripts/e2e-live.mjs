@@ -60,7 +60,12 @@ async function journey(label, viewport, { isMobile = false } = {}) {
   const context = await browser.newContext({ viewport, isMobile, hasTouch: isMobile, deviceScaleFactor: isMobile ? 3 : 1, ignoreHTTPSErrors: argv.includes('--insecure') });
   const page = await context.newPage();
   const problems = [];
-  page.on('console', (m) => { if (m.type() === 'error') problems.push(`console: ${m.text()}`); });
+  const thirdParty = new Set();
+  // "Failed to load resource" is the browser's echo of a failed request; those are judged below by
+  // whose they are. Our own server's failures fail the run; a retailer image host's are reported.
+  page.on('console', (m) => { if (m.type() === 'error' && !/^Failed to load resource/.test(m.text())) problems.push(`console: ${m.text()}`); });
+  page.on('response', (r) => { if (!r.url().startsWith(base) && r.status() >= 400) thirdParty.add(`${r.status()} ${new URL(r.url()).host}`); });
+  page.on('requestfailed', (r) => { if (!r.url().startsWith(base)) thirdParty.add(`${r.failure()?.errorText} ${new URL(r.url()).host}`); });
   page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
   page.on('response', (r) => { if (r.url().startsWith(base) && r.status() >= 400) problems.push(`${r.status()} ${r.url().replace(base, '')}`); });
   page.on('requestfailed', (r) => { if (r.url().startsWith(base) && !/aborted|ERR_ABORTED/i.test(r.failure()?.errorText || '')) problems.push(`failed ${r.url().replace(base, '')}: ${r.failure()?.errorText}`); });
@@ -148,6 +153,7 @@ async function journey(label, viewport, { isMobile = false } = {}) {
     await shot('error').catch(() => {});
   }
   ok(problems.length === 0, 'no console errors, page errors or failed requests', problems.slice(0, 6).join(' | '));
+  if (thirdParty.size) console.log(`  info  third-party loads that failed (retailer images; the app shows a placeholder): ${[...thirdParty].slice(0, 6).join(', ')}`);
   await context.close();
 }
 
