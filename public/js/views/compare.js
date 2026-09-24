@@ -167,6 +167,7 @@ function StatusStrip({ search }) {
         </button>`;
       if (r.status === 'unsupported') return html`<span class="sstat off" key=${id} title=${r.message}>${s.short} · ads only</span>`;
       if (r.status === 'tooFar') return html`<span class="sstat off" key=${id} title=${r.message}>${s.short} · outside radius</span>`;
+      if (r.status === 'blocked') return html`<span class="sstat off" key=${id} title=${r.message}>${s.short} · prices in the iPhone app</span>`;
       return html`<span class="sstat" key=${id} title=${title + (r.stale ? ` · ⚠ ${r.stale}` : '')}>
         <${StoreDot} id=${id} /><b>${s.short}</b> ${r.items?.length ? r.items.length : 'no results'}
         ${r.stale && html`<span class="badge badge-warn" title=${r.stale}>stale</span>`}

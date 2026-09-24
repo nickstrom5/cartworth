@@ -112,7 +112,8 @@ export async function searchStore(storeId, query, settings, { fresh = false } = 
     if (!national && outsideRadius(location?.distance, radius)) {
       return { ...base, status: 'tooFar', items: [], location, message: `The nearest ${STORE_BY_ID[storeId].name} is ${location.distance} mi away, outside your ${radius}-mile radius` };
     }
-    return { ...base, status: r.items.length ? 'ok' : 'empty', items: r.items, location, message: r.message || null };
+    // 'blocked': the store refuses automated lookups (see traderjoes.js); not an error to retry.
+    return { ...base, status: r.blocked ? 'blocked' : r.items.length ? 'ok' : 'empty', items: r.items, location, message: r.message || null };
   } catch (err) {
     health[storeId] = { ok: false, at: Date.now(), ms: Date.now() - t0, error: publicError(err.message), source: src.type };
     return { storeId, status: 'error', items: [], error: friendlyError(err), ms: Date.now() - t0, source: src.type };
