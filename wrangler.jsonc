@@ -9,7 +9,7 @@
     // /privacy serves privacy.html and /privacy.html redirects to /privacy: the iOS app links to
     // the extensionless /privacy, /terms and /support.
     "html_handling": "auto-trailing-slash",
-    // A missing page is a real 404, not the landing page with a 200.
-    "not_found_handling": "none"
+    // A missing page is a real 404 status, with site/404.html as its body.
+    "not_found_handling": "404-page"
   }
 }

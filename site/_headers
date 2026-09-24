@@ -11,11 +11,15 @@
   # mandatory and there is no http:// fallback to worry about.
   Strict-Transport-Security: max-age=31536000; includeSubDomains
 
+# Every page links styles.css, img/* and fonts/* with ?v=<content hash> (tools/version-assets.py),
+# so a changed file has a new URL; the long cache only ever serves the right version.
 /styles.css
   Cache-Control: public, max-age=604800
 
 /img/*
   Cache-Control: public, max-age=604800
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
 
 # Never cache the legal pages hard: the iOS app links to them and they must be correctable fast.
 /privacy
