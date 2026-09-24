@@ -24,11 +24,12 @@ GREY = HexColor('#555c63')
 RULE = HexColor('#d9dde1')
 
 INTRO = (
-    '<b>Where things stand.</b> The iPhone app, the website and the marketing site are built and heavily tested '
-    '(449 web tests passing, including 13 browser tests; the iOS suite needs a re-run on your Mac). The pricing fixes '
-    'from the last round are in. The prices are <b>not ship-ready yet</b>: what is left is a hand-check of every '
-    '"best price" result across Chicago, Lombard, Milwaukee and Kenosha, on the web and on the iPhone. Nothing goes to '
-    'the App Store until that check passes. Everything not on this list, Claude is handling.'
+    '<b>Where things stand.</b> <b>cartworth.app is live</b> (the marketing site, with support@ and hello@ forwarding '
+    'to your Gmail, and the sitemap in Google and Bing). The price check across Chicago, Lombard, Milwaukee and Kenosha '
+    'found three wrong "best price" headlines, all fixed and re-checked: 0 wrong in 56. 456 web tests pass, including 13 '
+    'browser tests. The prices are <b>not ship-ready yet</b> for two reasons that need your Mac: the iPhone half of every '
+    'fix has not been compiled or tested, and the check could not cover every store from the cloud (Instacart '
+    'rate-limited it, and Trader Joe\'s blocks cloud machines). Everything not on this list, Claude is handling.'
 )
 
 # (heading, subtitle, [(title, detail, cost/time)])
@@ -37,7 +38,9 @@ CONTENT = [
         ('Decide on the price-data question, ideally with a lawyer',
          "Cartworth reads prices from Instacart, Flipp, Whole Foods, Trader Joe's and ALDI without an agreement. For a paid "
          "app, Apple guideline 5.2.2 requires permission to use a third-party service's content, and it is your biggest "
-         'legal exposure. Read their terms of use, then get advice before charging money.',
+         'legal exposure. It is also a capacity question now: Instacart rate-limited the price check after about 2,500 '
+         'requests in 90 minutes from one machine, even at one request every 0.7 s, so a public web app that sends every '
+         'visitor through one server would hit that quickly. Read their terms of use, then get advice before charging money.',
          'Biggest risk to launch'),
         ('Enroll in the Apple Developer Program as an individual',
          'developer.apple.com/programs/enroll. Your name (Nicholas Soderstrom) shows as the seller. Showing "Cartworth" '
@@ -53,31 +56,29 @@ CONTENT = [
          'cheap insurance.',
          '1 hour<br/>or ~$500 with a lawyer'),
     ]),
-    ('2. This week: quick ones', None, [
+    ('2. This week: on your Mac', 'These need the Mac: the cloud has no iOS Simulator, and store sites treat it differently.', [
+        ('Run the iOS tests',
+         'Open ios/Cartworth.xcodeproj in Xcode and press Cmd+U (or have Claude run it on the Mac). Every pricing fix of '
+         'this round was ported to Swift but has never been compiled: the store catalog, request pacing, matching, the '
+         '"8oz, 9ct" rule and the per-pound check.',
+         '15 minutes'),
+        ('Run the price check from home, one ZIP at a time',
+         'node scripts/price-audit.js --zips 60148 (then 53211, then 53142), with a break between. It covers the stores '
+         "the cloud run lost to Instacart's rate limit, and shows whether Trader Joe's answers a home connection: it "
+         'refused every search from the cloud (HTTP 403).',
+         '~15 min per ZIP'),
+        ('Review and merge the fix-round-3 branch',
+         "On GitHub, open a pull request from fix-round-3 into main (or ask Claude to), look it over and merge. The live "
+         'site already has its part; the app fixes are only on the branch.',
+         '10 minutes'),
         ('Get free Kroger developer keys',
          "developer.kroger.com: create an account, register an application, and copy its client ID and secret into "
          "Cartworth's Settings. This gives real shelf and card prices for Mariano's and Pick 'n Save instead of their "
          'Instacart listings, which run above the shelf. Read the API terms while you are there.',
          'Free<br/>20 minutes'),
-        ('Let the cloud sessions reach the store sites, or run the price check on your Mac',
-         "The final price check reads live prices, and the cloud environment's network settings block Instacart, Whole "
-         "Foods, Trader Joe's and Flipp. Either add those sites to the environment's allowed domains, or have Claude run "
-         'the check (and the iOS tests) on your Mac.',
-         '5 minutes'),
-        ('Set up support@cartworth.app',
-         'Cloudflare dashboard, cartworth.app, Email, Email Routing, forward to your Gmail. Then send it a test email. It '
-         'is printed on six pages and App Review checks that it works.',
-         'Free<br/>10 minutes'),
-        ('Pick a host for the free web app and create the account',
-         'Fly.io, Render, Railway or a small VPS. It needs Node 24 and a persistent disk. Tell Claude which one; Claude '
-         'writes the configuration. The marketing site goes on Cloudflare Pages, where your domain already is.',
-         '~$5 to $10 a month'),
-        ('Give the go-ahead to publish the website',
-         'Claude prepares both deploys. Publishing is your call because it makes the site public.',
-         'A "yes"'),
-        ('Verify the site with Google Search Console and Bing Webmaster Tools',
-         'After the site is live. Each gives you a verification record or link to approve; Claude submits the sitemap.',
-         '15 minutes'),
+        ('Send a test email to support@cartworth.app',
+         'Routing is set up; confirm it lands in your Gmail. App Review writes to it.',
+         '2 minutes'),
     ]),
     ('3. Social media', 'A full plan with verified draft posts is being written now. Your part:', [
         ('Claim the handles',
@@ -89,6 +90,11 @@ CONTENT = [
          'A decision'),
     ]),
     ('4. App Store submission', 'After Apple enrollment (section 1) and after the price check passes.', [
+        ('Re-shoot the price screenshots on the fixed build',
+         'The captured search, deal and trip screens predate this round and show errors since fixed (a $29.84/gal milk, '
+         'peanut butter as butter). Claude can drive the simulator on the Mac; the script that frames them for the site is '
+         'site/tools/make-device-shots.py.',
+         '1 hour'),
         ('Sign in to Xcode with your Apple ID',
          'Xcode, Settings, Accounts. This lets builds be signed and uploaded to TestFlight.',
          '5 minutes'),
@@ -108,9 +114,17 @@ CONTENT = [
          'A "yes"'),
     ]),
     ('5. Decisions only you can make', "Claude's recommendation is in brackets.", [
-        ('Where the free web app lives',
-         '[app.cartworth.app. It cannot sit under cartworth.app/app/ without rework, because the app loads its code from '
-         'root paths.]',
+        ('The "Open the free web app" buttons',
+         'The live site has several, and they lead to a "not open yet" page. [Relabel them "Web app coming soon" until '
+         'it opens.]',
+         'A decision'),
+        ('When and where the free web app opens',
+         'After the price-data question. It needs a host with Node 24 and a disk (Fly.io, Render, Railway or a small VPS, '
+         '~$5-10 a month). [app.cartworth.app: it cannot sit under cartworth.app/app/ without rework.]',
+         ''),
+        ('The iPhone search radius',
+         'The phone keeps stores out to 1.6x the radius you pick (18 mi on a 10-mile setting); the website is strict. '
+         '[Make the phone match the website.]',
          ''),
         ('Pages for search traffic',
          'The site is four pages, too thin to rank for anything but the name. City and store pages ("cheapest groceries '
@@ -120,7 +134,8 @@ CONTENT = [
          'The real number is 94 chains with prices out of 119 in the catalog. Understating is the safe side. [Say 90+.]',
          ''),
         ('A weekly automatic wrong-price sweep',
-         'Retailers change their data without warning. [Yes, as a scheduled task across your four ZIPs.]',
+         'Retailers change their data without warning; this round found three new kinds of wrong price. [Yes, as a '
+         'scheduled task, one ZIP per day so Instacart is never pressed.]',
          ''),
         ('The daily price tracker',
          'Built and not switched on. It runs 2 to 2.8 hours a day on your Mac, at the same one-request-at-a-time pace as '
