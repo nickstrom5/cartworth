@@ -250,3 +250,29 @@ test('control: asking for the form or the squash finds it; zucchini squash is zu
   assert.ok(relevance('zucchini', { name: 'Zucchini Squash' }) >= RELEVANT);
   assert.ok(relevance('tomatoes', { name: 'Roma Tomatoes' }) >= RELEVANT);
 });
+
+// DEFECT (state x holiday audit, Phoenix): Smart & Final's "Table Carrots", stated 25 lb at $2.19,
+// slug ".../bulk-carrots-per-lb": the price buys one pound, and dividing it over the case made
+// Phoenix's best carrots $0.09/lb. A stated size is trusted down to 1/30 of the median, so the
+// plausibility guard could not catch it.
+test('DEFECT (Phoenix): a per-lb slug over a stated 25 lb case is a size conflict', () => {
+  const p = makeProduct({ storeId: 'smartfinal', id: 'x', name: 'Table Carrots', sizeText: '25 lb', price: 2.19, url: 'https://www.instacart.com/products/26519058-bulk-carrots-per-lb?retailerSlug=smart-final' });
+  assert.ok(p.sizeConflict);
+  assert.equal(p.unit.weight, undefined);
+});
+
+test('control: a per-lb slug over a stated 1 lb, and a bag with no per-lb slug, keep their unit price', () => {
+  const loose = makeProduct({ storeId: 'elsuper', id: 'y', name: 'Carrots (Loose)', sizeText: '1 lb', price: 0.69, url: 'https://www.instacart.com/products/19653636-carrots-loose-per-lb?retailerSlug=el-super' });
+  assert.equal(loose.sizeConflict, null);
+  const bag = makeProduct({ storeId: 'frys', id: 'z', name: 'Carrot Bag', sizeText: '5 lb', price: 4.99, url: 'https://www.instacart.com/products/487835-carrot-bag-5-lbs?retailerSlug=frys' });
+  assert.equal(bag.sizeConflict, null);
+  assert.ok(bag.unit.weight);
+});
+
+// DEFECT (state x holiday audit, Phoenix, St. Patrick's Day): ALDI's "Brookdale Corned Beef", 12 oz,
+// is canned; its name does not say so, its aisle does.
+test('DEFECT (Phoenix): corned beef filed under Canned Meat is not the corned beef brisket', () => {
+  assert.ok(relevance('corned beef', { name: 'Brookdale Corned Beef', category: 'Canned Meat' }) < RELEVANT);
+  assert.ok(relevance('corned beef', { name: 'Corned Beef Brisket Point Cut', category: 'Beef' }) >= RELEVANT);
+  assert.ok(relevance('green beans', { name: 'Del Monte Cut Green Beans', category: 'Canned Vegetables' }) >= RELEVANT, 'canned green beans stay (Thanksgiving)');
+});

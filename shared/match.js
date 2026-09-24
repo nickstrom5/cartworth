@@ -462,6 +462,9 @@ export function relevance(query, product, opts = {}) {
   if (FRESH_VEG_MEAT_RE.test(head || '')) {
     const m = SHELF_FORM_RE.exec(nameNorm);
     if (m && !normalize(query).includes(m[0])) mult *= 0.3;
+    // The aisle says it when the name does not: ALDI's "Brookdale Corned Beef", 12 oz, is canned
+    // corned beef, and it was Phoenix's best "corned beef" for St. Patrick's Day.
+    else if (!m && catTok.has('canned') && !qset.has('canned')) mult *= 0.3;
   }
   if (/\bjuice\b/.test(normalize(query)) && JUICE_IMPOSTOR_RE.test(nameNorm) && !WANTS_JUICE_DRINK_RE.test(normalize(query))) mult *= 0.3;
   if (BABY_PRODUCT_RE.test(nameNorm) && !WANTS_BABY_RE.test(normalize(query))) mult *= 0.2;

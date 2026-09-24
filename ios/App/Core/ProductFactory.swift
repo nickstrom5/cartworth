@@ -161,6 +161,13 @@ enum ProductFactory {
         "l": "l|liters?|litres?", "ml": "ml",
     ]
 
+    private static let slugPerLbRx = Rx("-per-(?:lb|lbs|pound)(?=$|[-/?#])")
+    static func slugPerLbConflict(_ size: ParsedSize?, url: URL?, soldByLb: Bool) -> SizeConflict? {
+        guard !soldByLb, let size, size.dim == .weight, !size.perWeight, let b = size.base, b > 0 else { return nil }
+        guard slugPerLbRx.test(slugOf(url)), abs(b - 16) > 0.32 else { return nil }
+        return SizeConflict(text: Units.format(size), name: "priced per lb")
+    }
+
     /// True when the retailer's URL slug spells out this size (".../18848374-sweet-potatoes-10-lbs-10-lb"
     /// states 10 lb and never 5 lb). Port of `slugStates` in src/normalize.js.
     static func slugStates(_ url: URL?, _ size: ParsedSize?, beforeEnd: Bool = false) -> Bool {
@@ -357,6 +364,9 @@ enum ProductFactory {
             if let c = listed?.conflict { sizeConflict = c }
             else if size?.packFromListing != true { sizeConflict = unitLineConflict(size, price: f.price, listed: f.listedUnit) ?? countOnlyConflict(size, chosen: chosen, textSize: textSize, nameSize: nameSize) }
         }
+        // The URL says "per-lb" but the stated size is a fixed weight: Smart & Final's "Table Carrots",
+        // stated 25 lb at $2.19, slug "...-bulk-carrots-per-lb", was $0.09/lb. Port of slugPerLbConflict.
+        if let c = slugPerLbConflict(size, url: f.url, soldByLb: soldByLb) { sizeConflict = c }
         // Where the size behind the unit price came from; see `Product.sizeSource`.
         let sizeSource: String? = {
             if soldByLb { return "perLb" }

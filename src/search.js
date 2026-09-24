@@ -43,7 +43,9 @@ const STORE_TIMEOUT = 35000;
 // compound look-alikes (baking soda, cooking wine, creme eggs, celery salt), canned vegetables/meats.
 // v18: a named cut is not answered by another (drumsticks for wings); "X for strawberries" is an
 // accessory; cottage cheese and Salisbury steak are look-alikes; champagne is sparkling wine.
-const CACHE_VERSION = 18;
+// v19: a per-lb slug over a stated fixed weight is a size conflict ($0.09/lb carrots); a canned aisle
+// is not the fresh vegetable or cut.
+const CACHE_VERSION = 19;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

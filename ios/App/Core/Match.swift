@@ -403,7 +403,11 @@ enum Match {
         // "Glaze for Strawberries" is to use WITH strawberries. Port of the "for" rule in shared/match.js.
         if !qset.contains("for"), Rx("\\bfor (?:[a-z]+ ){0,2}\(NSRegularExpression.escapedPattern(for: head))").test(words.joined(separator: " ")) { mult *= 0.2 }
         if champagneGrapesRx.test(nameNorm) && !grapeRx.test(qNormForImitation) { mult *= 0.2 }
-        if freshVegMeatRx.test(head), let m = shelfFormRx.match(nameNorm)?.first ?? nil, !qNormForImitation.contains(m) { mult *= 0.3 }
+        if freshVegMeatRx.test(head) {
+            if let m = shelfFormRx.match(nameNorm)?.first ?? nil {
+                if !qNormForImitation.contains(m) { mult *= 0.3 }
+            } else if catTok.contains("canned") && !qset.contains("canned") { mult *= 0.3 } // "Brookdale Corned Beef" in Canned Meat
+        }
         if juiceWordRx.test(qNormForImitation) && juiceImpostorRx.test(nameNorm) && !wantsJuiceDrinkRx.test(qNormForImitation) { mult *= 0.3 }
         if babyProductRx.test(nameNorm) && !wantsBabyRx.test(qNormForImitation) { mult *= 0.2 }
         // Books, cookware and apparel that happen to name a food. Applied to the whole name because

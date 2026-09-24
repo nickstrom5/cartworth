@@ -1755,6 +1755,28 @@ final class NationwideAuditTests: XCTestCase {
         XCTAssertEqual(RetailerCatalog.chain(forStoreName: "H Mart")?.id, "hmart")
     }
 
+    /// Phoenix: the slug says per lb, the stated size is a 25 lb case; no unit price from that.
+    func testDefectPerLbSlugOverAFixedWeightIsAConflict() {
+        let carrots = ProductFactory.make(ProductInput(
+            storeId: "smartfinal", id: "x", name: "Table Carrots", sizeText: "25 lb", price: 2.19, soldBy: .each,
+            url: URL(string: "https://www.instacart.com/products/26519058-bulk-carrots-per-lb?retailerSlug=smart-final"), category: nil, priceBasis: .online
+        ))!
+        XCTAssertNotNil(carrots.sizeConflict)
+        XCTAssertNil(carrots.unitPrice(.weight))
+        let loose = ProductFactory.make(ProductInput(
+            storeId: "elsuper", id: "y", name: "Carrots (Loose)", sizeText: "1 lb", price: 0.69, soldBy: .each,
+            url: URL(string: "https://www.instacart.com/products/19653636-carrots-loose-per-lb?retailerSlug=el-super"), category: nil, priceBasis: .shelf
+        ))!
+        XCTAssertNil(loose.sizeConflict)
+    }
+
+    /// Phoenix: corned beef filed under Canned Meat is not the brisket; canned green beans stay.
+    func testDefectCannedAisleIsNotTheFreshCut() {
+        XCTAssertLessThan(Match.relevance(query: "corned beef", name: "Brookdale Corned Beef", category: "Canned Meat"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "corned beef", name: "Corned Beef Brisket Point Cut", category: "Beef"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "green beans", name: "Del Monte Cut Green Beans", category: "Canned Vegetables"), Match.relevant)
+    }
+
     /// Charlotte: a lookup that failed is recorded as unresolved, not "no store". A directory cached
     /// before that field existed must still decode, or every phone would lose its store list.
     func testDirectoryCachedBeforeUnresolvedStillDecodes() throws {

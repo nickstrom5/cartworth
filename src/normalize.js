@@ -163,6 +163,24 @@ export function slugStates(url, size, { beforeEnd = false } = {}) {
 export const slugConfirms = (url, size) => slugStates(url, size, { beforeEnd: true });
 
 /**
+ * The retailer's own URL says the price is per pound, but the stated size is a fixed weight.
+ *
+ * Smart & Final's "Table Carrots": stated "25 lb" at $2.19, slug ".../26519058-bulk-carrots-per-lb".
+ * The $2.19 buys a pound; divided over the 25 lb case it made Phoenix's best carrots $0.09/lb (the
+ * state x holiday audit), and a stated size is trusted down to 1/30 of the median, so the
+ * plausibility guard let it through. The listing contradicts itself, so it keeps its price and
+ * loses its unit price, like every size contradiction.
+ */
+const SLUG_PER_LB_RE = /-per-(?:lb|lbs|pound)(?=$|[-/?#])/i;
+export function slugPerLbConflict(size, f, soldByLb) {
+  if (soldByLb || !size || size.dim !== 'weight' || size.perWeight || !(size.base > 0)) return null;
+  const slug = String(f.url || '').replace(/^[^?#]*\/products?\//, '/').replace(/[?#].*$/, '');
+  if (!SLUG_PER_LB_RE.test(slug)) return null;
+  if (Math.abs(size.base - 16) <= 0.32) return null; // stated 1 lb: the same thing said twice
+  return { text: formatSize(size), name: 'priced per lb' };
+}
+
+/**
  * Pack count stated only in the retailer's URL slug.
  *
  * Sam's Club lists "Kerrygold Salted Irish Butter Sticks" with a sizeText of "4 oz" — the size of
@@ -394,7 +412,7 @@ export function makeProduct(f) {
   // "24-count", or "64 fl oz" against "Half Gallon, 3-count" — it has already resolved the
   // reading, and that is a decision, not a contradiction.
   const soldByLb = f.soldBy === 'lb' || size?.perWeight;
-  const sizeConflict =
+  const sizeConflict = slugPerLbConflict(size, f, soldByLb) || (
     // A range in the name ("4-10 Pounds HoKa Turkey Breast") describes a variable-weight item,
     // not a second statement of this package, so it contradicts nothing.
     // And when the retailer's own URL slug names the stated size and not the name's, the name's
@@ -410,7 +428,7 @@ export function makeProduct(f) {
       : soldByLb ? null
       : listed?.conflict ? listed.conflict
       : size?.packFromListing ? null
-      : unitLineConflict(size, f) || countOnlyConflict(size, chosen, textSize, nameSize);
+      : unitLineConflict(size, f) || countOnlyConflict(size, chosen, textSize, nameSize));
   // Where the size we priced from came from, so the plausibility guard can tell a number the
   // retailer stated from one we inferred (see flagImplausible in shared/compare.js):
   //   perLb    the retailer's own price per pound; no size is involved at all
