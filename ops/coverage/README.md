@@ -58,3 +58,16 @@ and Walmart); 7 of 51 towns and 11 of 51 rural ZIPs have none but Costco/Walmart
 - Whole Foods answers "no store near this ZIP" with a 404, which was read as a failed lookup: every rural
   ZIP was left "unresolved" (counts may be low) and rebuilt every few minutes.
 - Onboarding counted a chain-wide listing as a store "within 25 miles".
+
+## City staples audits (24 Sept, later)
+
+Denver 80218 (9 priced stores), Atlanta 30307 (13), Phoenix 85016 (17), Cambridge MA 02139 (14);
+milk, eggs, butter, chicken breast, bananas, bread, ground beef. Every ZIP resolved every chain.
+
+- Fixed: King Soopers' "2% Reduced Fat Milk Half Gallon", stated "2 gal", was Denver's best milk at
+  $1.50/gal. A size only at the end of an Instacart slug is the stated size, not confirmation.
+- Fixed: a ZIP geocoded by the Nominatim fallback carried the state's name and lost every regional
+  chain for a year.
+- Suspect, not changed: Walmart's chain-wide "Crescent Foods Halal Lean Ground Beef 85/15", 1 lb at
+  $2.50, is the best ground beef in all four cities. It is labelled chain-wide and online; nothing
+  in the row contradicts itself, so no rule can safely reject it.
