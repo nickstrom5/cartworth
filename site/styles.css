@@ -1158,7 +1158,10 @@ table.compare caption {
 /* ---------- document pages ---------- */
 
 .doc-header {
-  padding: clamp(36px, 5vw, 60px) 0 8px;
+  /* Top and bottom only: a shorthand here zeroed .wrap's side gutter, so the privacy, terms and
+     support headings sat flush against the screen edge on a phone. */
+  padding-top: clamp(36px, 5vw, 60px);
+  padding-bottom: 8px;
 }
 .doc-header .h-section {
   font-size: clamp(28px, 4.2vw, 40px);

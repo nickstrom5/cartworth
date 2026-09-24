@@ -1,0 +1,7 @@
+# Not published by `wrangler deploy` (see /wrangler.jsonc). Maintenance notes, image build
+# scripts and other hosts' config files are not content.
+README.md
+img/README.md
+tools
+netlify.toml
+vercel.json

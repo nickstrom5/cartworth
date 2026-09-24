@@ -135,6 +135,13 @@ are already committed here.** Pages serves `privacy.html` at `/privacy` on its o
 not also rewrite `/privacy` to `/privacy.html`, which loops (see the note in that file). Check with
 `npx wrangler pages dev site` before changing it.
 
+### Cloudflare Workers (how cartworth.app is deployed)
+
+The `cartworth` Worker in the Cloudflare account builds from `main` with `npx wrangler deploy`.
+`/wrangler.jsonc` at the repo root publishes this folder, and only this folder, as static assets;
+`site/.assetsignore` keeps this README, `img/README.md`, `tools/` and the other hosts' configs out.
+Check locally with `npx wrangler dev` from the repo root before changing either file.
+
 ### Cloudflare Pages, start to finish
 
 1. Cloudflare dashboard, **Compute (Workers & Pages)** then **Create** then **Pages**. Connect the
