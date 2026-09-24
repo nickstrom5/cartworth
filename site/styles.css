@@ -1,55 +1,63 @@
-/* Cartworth marketing site.
-   Green and white: the brand green carries the page rather than sitting on a neutral grey, and the
-   surfaces are a warm tinted white so it reads friendly instead of clinical. Softer radii and
-   green-tinted shadows do the rest of that work.
+/* Cartworth marketing site, in Sprout (design/sprout/: tokens.css, CONTRAST.md).
+   A pure white page; structure from hairlines and a few soft tinted blocks (mint, peach, sky) rather
+   than grey panels or heavy colour. One green accent, #1C7C4B, for the primary action and the best
+   price and nothing else. DM Sans for text, Baloo 2 for headings, self-hosted in /fonts (the CSP is
+   default-src 'self'). The owner chose Sprout for the website; it replaced a greener, heavier look.
 
-   Every ink/background pair below was measured, not eyeballed (scripts/check-palette.js has the
-   maths). The accent is #15803D rather than the app's slightly brighter #168F4A because 5.02:1 on
-   white clears AA for body text and for white-on-green buttons, where #168F4A only reaches 4.15:1.
-   Light and dark are both designed rather than auto-inverted. Nothing here needs a build step. */
+   The variable names below are the site's own; every value is the Sprout token named beside it, so
+   the contrast measured in design/sprout/CONTRAST.md holds here. scripts/check-palette.js re-measures
+   the site's pairs. Dark is Sprout's designed dark palette, not an inversion. No build step. */
+
+@font-face { font-family: 'Baloo 2'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/baloo-2-600.woff2') format('woff2'); }
+@font-face { font-family: 'Baloo 2'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/baloo-2-700.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/dm-sans-400.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/dm-sans-500.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/dm-sans-600.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/dm-sans-700.woff2') format('woff2'); }
 
 :root {
   color-scheme: light;
-  --page: #f4faf6;
-  --surface: #ffffff;
-  --surface-2: #eef7f0;
-  --surface-3: #ddeee3;
-  --ink: #102a1b;
-  --ink-2: #3d5247;
-  --muted: #55665c;
-  --line: #d9e9de;
-  --line-strong: #5f8a72;
-  --border: rgba(16, 42, 27, 0.12);
-  --accent: #15803d;
-  --accent-strong: #0f7a3d;
-  --accent-soft: #eef9f1;
-  --accent-ink: #ffffff;
-  --focus: #15803d;
-  --link: #0f7a3d;
-  --good-ink: #006300;
-  --good-bg: #e6f4e4;
-  --warn-ink: #7a5100;
-  --warn-bg: #fff3d3;
+  --page: #ffffff;          /* --sp-bg */
+  --surface: #ffffff;       /* --sp-surface */
+  --surface-2: #f3f6f4;     /* --sp-surface-soft */
+  --surface-3: #f0f3f1;     /* --sp-surface-tag */
+  --ink: #1e2a24;           /* --sp-ink, 14.87:1 */
+  --ink-2: #55635c;         /* --sp-ink-2, 6.31:1 */
+  --muted: #5f6c66;         /* --sp-ink-3, 5.49:1 */
+  --line: #e6eae8;          /* --sp-hairline */
+  --line-strong: #7a8981;   /* --sp-control-edge, 3.67:1 */
+  --border: #e6eae8;        /* --sp-hairline */
+  --accent: #1c7c4b;        /* --sp-accent, 5.21:1 */
+  --accent-strong: #176a40; /* --sp-accent-hover */
+  --accent-soft: #e6f4ea;   /* --sp-mint */
+  --accent-ink: #ffffff;    /* --sp-accent-ink */
+  --focus: #1c7c4b;
+  --link: #1c7c4b;
+  --good-ink: #185c3a;      /* --sp-mint-ink */
+  --good-bg: #e6f4ea;       /* --sp-mint */
+  --warn-ink: #6b4a00;      /* --sp-warn-ink */
+  --warn-bg: #fff3d1;       /* --sp-warn */
   --bad-ink: #a51f1f;
   --bad-bg: #fce9e8;
-  --deal-ink: #b23a0c;
-  --deal-bg: #ffeee3;
-  --info-bg: #eaf2fc;
-  --info-ink: #1c5cab;
+  --deal-ink: #8b3a0f;      /* --sp-peach-ink */
+  --deal-bg: #ffe9dd;       /* --sp-peach */
+  --info-bg: #e8f1fb;       /* --sp-sky */
+  --info-ink: #1d4e7e;      /* --sp-sky-ink */
   --dot-ring: rgb(0 0 0 / 0.28);
   --store-1: #e69f00;
   --store-2: #0072b2;
   --store-3: #009e73;
   --store-5: #d55e00;
   --bar: #86b6ef;
-  --bar-best: #1c5cab;
-  /* Green-tinted rather than neutral grey, so shadows read as part of the palette. */
-  --shadow: 0 1px 2px rgba(16, 42, 27, 0.05), 0 8px 24px rgba(16, 42, 27, 0.07);
-  --shadow-pop: 0 12px 44px rgba(16, 42, 27, 0.14);
+  --bar-best: #1c7c4b;
+  /* Sprout is flat: a hairline, not a shadow, separates things. Only what floats keeps one. */
+  --shadow: 0 0 0 1px #e6eae8;
+  --shadow-pop: 0 1px 2px rgb(30 42 36 / 0.06), 0 8px 24px rgb(30 42 36 / 0.08); /* --sp-shadow-float */
   --radius: 18px;
   --radius-sm: 12px;
-  --radius-lg: 26px;
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius-lg: 24px;
+  --font: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Baloo 2', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, monospace;
   --gutter: 16px;
   --measure: 1120px;
@@ -58,39 +66,39 @@
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme='light'])) {
     color-scheme: dark;
-    --page: #0c1410;
-    --surface: #141e18;
-    --surface-2: #1b2821;
-    --surface-3: #24342b;
-    --ink: #eaf3ed;
-    --ink-2: #b4c6bb;
-    --muted: #93a79a;
-    --line: #24342b;
-    --line-strong: #688f77;
-    --border: rgba(234, 243, 237, 0.12);
-    --accent: #4ade80;
-    --accent-strong: #5ee894;
-    --accent-soft: #16301f;
-    --accent-ink: #06120b;
-    --focus: #4ade80;
-    --link: #5ee894;
-    --good-ink: #3dc43d;
-    --good-bg: #14301a;
-    --warn-ink: #fab219;
-    --warn-bg: #33280c;
+    --page: #111814;
+    --surface: #111814;
+    --surface-2: #1a2320;
+    --surface-3: #1f2924;
+    --ink: #e6efea;
+    --ink-2: #9eada5;
+    --muted: #8e9d95;
+    --line: #2a3530;
+    --line-strong: #6f8078;
+    --border: #2a3530;
+    --accent: #5cc592;
+    --accent-strong: #7ad4a7;
+    --accent-soft: #183124;
+    --accent-ink: #07170f;
+    --focus: #5cc592;
+    --link: #5cc592;
+    --good-ink: #8fddb4;
+    --good-bg: #183124;
+    --warn-ink: #f4cb63;
+    --warn-bg: #352a0e;
     --bad-ink: #ff8a8a;
     --bad-bg: #3a1716;
-    --deal-ink: #ff9a6b;
-    --deal-bg: #3a1f10;
-    --info-bg: #13263d;
-    --info-ink: #86b6ef;
+    --deal-ink: #ffbc98;
+    --deal-bg: #3a2519;
+    --info-bg: #172a3f;
+    --info-ink: #a9cdf5;
     --dot-ring: rgb(255 255 255 / 0.35);
     --store-2: #4a9fdc;
     --store-5: #e2711d;
     --bar: #256abf;
-    --bar-best: #86b6ef;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.35);
-    --shadow-pop: 0 10px 40px rgba(0, 0, 0, 0.6);
+    --bar-best: #5cc592;
+    --shadow: 0 0 0 1px #2a3530;
+    --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px rgb(0 0 0 / 0.4);
   }
 }
 
@@ -121,13 +129,6 @@ html {
 body {
   margin: 0;
   background: var(--page);
-  /* A wash of the brand green behind the top of the page. The offsets MUST be absolute and the
-     size explicit: a percentage offset resolves against the body box, and on a 15,000px-tall
-     document "-10%" put the gradient a mile above the viewport, so it never rendered at all. */
-  background-image: radial-gradient(1200px 520px at 220px -60px, var(--accent-soft) 0%, transparent 70%);
-  background-repeat: no-repeat;
-  background-size: 100% 900px;
-  background-position: left top;
   color: var(--ink);
   font: 16px/1.55 var(--font);
   -webkit-font-smoothing: antialiased;
@@ -158,7 +159,9 @@ h2,
 h3,
 h4 {
   margin: 0;
-  letter-spacing: -0.022em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1.15;
   text-wrap: balance;
 }
@@ -421,13 +424,13 @@ section {
   background: var(--accent);
   color: var(--accent-ink);
   border-color: transparent;
-  box-shadow: 0 2px 10px rgba(21, 128, 61, 0.26);
+  box-shadow: none; /* Sprout is flat */
 }
 .btn-primary:hover {
   background: var(--accent-strong);
   color: var(--accent-ink);
   border-color: transparent;
-  box-shadow: 0 4px 16px rgba(21, 128, 61, 0.32);
+  box-shadow: none;
   transform: translateY(-1px);
 }
 .btn-primary:active {
