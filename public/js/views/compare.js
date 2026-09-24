@@ -467,7 +467,11 @@ export function effPrice(p, prefs) {
 // figure only between two prices of the same basis, words across bases, nothing against a flagged
 // price. This only fills in the display unit and the store's name.
 export function savingsLine(a, b, displayUnit) {
-  const c = savingsClaim(a, b);
+  // Pass the unambiguous { product, perBase, est } shape: a Compare row also carries the product's
+  // own `unit` map ({ volume: { perBase } }), which savingsClaim would otherwise read as a
+  // bestPerStore entry's single unit and find no price in, so the line silently never showed.
+  const side = (r) => ({ product: r, perBase: r.cmp, est: !!r.cmpEst });
+  const c = savingsClaim(side(a), side(b));
   if (!c) return null;
   return c.text
     .replace('{amount}', c.diffPerBase != null ? unitPrice(c.diffPerBase, displayUnit).text : '')

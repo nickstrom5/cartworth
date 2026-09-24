@@ -329,8 +329,12 @@ function claimSide(x) {
   // Accepts a bestPerStore entry ({ item, unit }), a Compare-view row (product fields + cmp), or
   // a plain { product, perBase, est } — the three shapes the callers hold.
   const p = x.item || x.product || x;
-  const perBase = x.unit ? x.unit.perBase : x.cmp != null ? x.cmp : x.perBase;
-  const est = !!(x.unit ? x.unit.est : x.cmp != null ? x.cmpEst : x.est);
+  // Only a bestPerStore entry ({ item, unit }) has a single `unit`; a product or a Compare row carries
+  // a `unit` MAP keyed by dimension, and reading that as one price found none (the web headline's
+  // savings line never showed).
+  const entry = !!(x.item && x.unit);
+  const perBase = entry ? x.unit.perBase : x.cmp != null ? x.cmp : x.perBase;
+  const est = !!(entry ? x.unit.est : x.cmp != null ? x.cmpEst : x.est);
   const basis = BASIS_SPREAD[p.priceBasis] ? p.priceBasis : 'shelf';
   return { storeId: p.storeId, perBase, est, basis, flagged: !!(p.implausible || p.sizeConflict) };
 }

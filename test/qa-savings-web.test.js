@@ -17,7 +17,10 @@ const { savingsLine } = await importPublic('js/views/compare.js');
 const { planVsSingle } = await importPublic('js/views/list.js');
 
 // A Compare-view row: product fields plus cmp (price per base unit) and cmpEst.
-const row = (storeId, cmp, extra = {}) => ({ storeId, cmp, cmpEst: false, priceBasis: 'shelf', name: 'Butter', ...extra });
+// As the Compare view builds them: the product (with its own `unit` map, keyed by dimension) plus
+// cmp/cmpEst for the chosen dimension. The `unit` map is what hid the savings line in production:
+// the first version of these tests left it out and passed while the live page showed nothing.
+const row = (storeId, cmp, extra = {}) => ({ storeId, cmp, cmpEst: false, priceBasis: 'shelf', name: 'Butter', unit: { weight: { perBase: cmp, est: false } }, ...extra });
 // Rendered html`` → its text, whatever shape htm produced.
 const text = (v) => (v == null || v === false ? '' : typeof v === 'string' ? v : Array.isArray(v) ? v.map(text).join('') : text(v.props?.children));
 
