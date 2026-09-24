@@ -1726,6 +1726,14 @@ final class NationwideAuditTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "boneless skinless chicken breast", name: "Tyson Boneless Skinless Chicken Breasts, 4 lb. (Frozen)", category: "Frozen Chicken Breasts"), Match.relevant)
     }
 
+    /// Dallas: an apple pectin supplement is not apples, and a tablet is not an apple.
+    func testDefectSupplementIsNotTheFood() {
+        XCTAssertLessThan(Match.relevance(query: "apples", name: "NaturesPlus Apple Pectin 500 mg Tablets"), Match.relevant)
+        XCTAssertNil(Units.produceWeightLb("NaturesPlus Apple Pectin 500 mg Tablets"))
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "apples", name: "Gala Apples"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "apple pectin", name: "NaturesPlus Apple Pectin 500 mg Tablets"), Match.relevant)
+    }
+
     /// Charlotte: a lookup that failed is recorded as unresolved, not "no store". A directory cached
     /// before that field existed must still decode, or every phone would lose its store list.
     func testDirectoryCachedBeforeUnresolvedStillDecodes() throws {

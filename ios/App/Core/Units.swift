@@ -543,7 +543,7 @@ enum Units {
     /// Ube Purple Yam" — 7.5 oz of ice cream in total — quoted at $1.66/lb when the honest figure
     /// is $12.78/lb. A container word is just as disqualifying: a "Yellow Onion Bag" is not one
     /// 0.5 lb onion, and pricing it as one published $25.98/lb against a real median of $1.75.
-    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling)\\b")
+    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg)\\b")
 
     static func produceWeightLb(_ name: String) -> Double? {
         let n = name.lowercased()

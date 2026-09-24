@@ -12,7 +12,8 @@ enum PriceSearch {
     // 7: juice-flavoured drinks are not juice; "from concentrate" juice is (Match.juiceImpostorRx).
     // 8: "<thing> a la <style>" is a prepared dish (Chicken a la King is not chicken).
     // 9: a processed-form category (Dried/Frozen Bananas) does not cover the plain query; -ade is not juice.
-    static let cacheVersion = 9
+    // 10: supplements named after a food (apple pectin tablets) are not the food.
+    static let cacheVersion = 10
 
     struct Payload: Codable {
         var items: [Product]

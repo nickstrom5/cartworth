@@ -234,6 +234,10 @@ const WANTS_BABY_RE = /\bbaby (?:food|formula|cereal|wipes?)\b|\bformula\b|\bger
 // Fresh fruit bought loose, for the processed-category rule in relevance(). Not vegetables: frozen
 // green beans are a fair answer to "green beans" (the Thanksgiving run), frozen banana slices are not.
 const FRESH_FRUIT_RE = /\b(?:bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberries|blueberries|raspberries|blackberries|cherries|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\b/;
+// Supplements named after a food: Natural Grocers' "NaturesPlus Apple Pectin 500 mg Tablets",
+// 180 count, was Dallas's best "apples" at an estimated $0.30/lb (the nationwide audit).
+const SUPPLEMENT_RE = /\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewable)\b|\b\d+(?:\.\d+)?\s?(?:mg|mcg|iu)\b/i;
+const WANTS_SUPPLEMENT_RE = /\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\b/i;
 const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
 const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
 
@@ -374,6 +378,7 @@ export function relevance(query, product, opts = {}) {
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the
   // position rules deliberately look past "in"/"with" phrases, which is where the giveaway sits.
   if (NON_GROCERY_RE.test(nameNorm)) mult *= 0.15;
+  if (SUPPLEMENT_RE.test(nameNorm) && !WANTS_SUPPLEMENT_RE.test(normalize(query))) mult *= 0.15;
 
   score *= mult;
 

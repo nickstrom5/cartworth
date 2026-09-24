@@ -91,6 +91,10 @@ enum Match {
     /// The position-aware trap loop cannot see these: it skips any word sitting behind an "in" or
     /// "with" phrase (so "tuna in oil" is not penalised), and that is exactly where the giveaway
     /// lands in "Turkey in Disguise (Hardcover)". Mirrors shared/match.js.
+    /// Supplements named after a food ("NaturesPlus Apple Pectin 500 mg Tablets" was Dallas's best
+    /// "apples"). Port of SUPPLEMENT_RE in shared/match.js.
+    private static let supplementRx = Rx("\\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewable)\\b|\\b\\d+(?:\\.\\d+)?\\s?(?:mg|mcg|iu)\\b")
+    private static let wantsSupplementRx = Rx("\\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\\b")
     private static let nonGroceryRx = Rx("\\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\\b")
 
     /// Imitation markers: a product that says it merely tastes like the thing is not the thing.
@@ -340,6 +344,7 @@ enum Match {
         // the position rules deliberately look past "in"/"with" phrases, which is where the
         // giveaway sits.
         if nonGroceryRx.test(nameNorm) { mult *= 0.15 }
+        if supplementRx.test(nameNorm) && !wantsSupplementRx.test(normalize(query)) { mult *= 0.15 }
 
         score *= mult
         if let rank, let total, total > 1 { score *= 1 - 0.15 * (Double(rank) / Double(total)) }

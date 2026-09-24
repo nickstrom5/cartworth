@@ -36,7 +36,8 @@ const STORE_TIMEOUT = 35000;
 // v12: "<thing> a la <style>" is a prepared dish (Chicken a la King is not chicken).
 // v13: a "Dried/Frozen Bananas" category no longer makes a snack the shopper's bananas; -ade drinks
 // are not juice.
-const CACHE_VERSION = 13;
+// v14: supplements named after a food (apple pectin tablets) are not the food.
+const CACHE_VERSION = 14;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

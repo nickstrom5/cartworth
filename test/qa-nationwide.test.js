@@ -205,3 +205,18 @@ test('control: fresh bananas, asking for the form, and frozen raw chicken are un
   assert.ok(relevance('dried bananas', { name: 'Simply Dried Banana', category: 'Dried Bananas' }) >= RELEVANT);
   assert.ok(relevance('boneless skinless chicken breast', { name: 'Tyson Boneless Skinless Chicken Breasts, 4 lb. (Frozen)', category: 'Frozen Chicken Breasts' }) >= RELEVANT);
 });
+
+// DEFECT (Dallas re-run): Natural Grocers' "NaturesPlus Apple Pectin 500 mg Tablets", 180 count, was
+// Dallas's best "apples" at $0.30/lb: the matcher took it for apples and the produce estimate took
+// each tablet for a 0.4 lb apple.
+import { produceWeightLb } from '../shared/units.js';
+test('DEFECT (Dallas): an apple pectin supplement is not apples, and a tablet is not an apple', () => {
+  assert.ok(relevance('apples', { name: 'NaturesPlus Apple Pectin 500 mg Tablets' }) < RELEVANT);
+  assert.equal(produceWeightLb('NaturesPlus Apple Pectin 500 mg Tablets'), null);
+});
+
+test('control: apples, and a shopper who asks for the supplement, are unchanged', () => {
+  assert.ok(relevance('apples', { name: 'Gala Apples' }) >= RELEVANT);
+  assert.equal(produceWeightLb('Gala Apple'), 0.4);
+  assert.ok(relevance('apple pectin', { name: 'NaturesPlus Apple Pectin 500 mg Tablets' }) >= RELEVANT);
+});
