@@ -52,3 +52,17 @@ test('BASKET_OFFLINE=1 refuses outbound requests without sending them', async ()
     globalThis.fetch = realFetch;
   }
 });
+
+// The privacy policy: request counts per IP "are dropped after about ten minutes without a request".
+// The memory-bounding sweep stopped once the table was half empty, so on a quiet server an idle
+// visitor's address stayed indefinitely.
+test('an idle visitor\'s address is dropped from the rate limiter after ten minutes', async () => {
+  const { takeRequest, expireIdle, trackedVisitors } = await import('../src/guard.js');
+  const req = (ip) => ({ headers: {}, socket: { remoteAddress: ip } });
+  const t0 = Date.now();
+  takeRequest(req('192.0.2.10'), t0);
+  takeRequest(req('192.0.2.11'), t0 + 9 * 60_000);
+  const before = trackedVisitors();
+  expireIdle(t0 + 11 * 60_000);
+  assert.equal(trackedVisitors(), before - 1, 'the visitor idle for 11 minutes is gone, the one idle for 2 is kept');
+});

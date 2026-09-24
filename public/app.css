@@ -369,6 +369,16 @@ main {
   color: var(--ink-2);
   font-size: 14px;
 }
+.app-footer {
+  max-width: 1240px;
+  margin: -56px auto 0;
+  padding: 0 16px 28px;
+  line-height: 1.5;
+}
+.app-footer nav a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .footer-note {
   margin-top: 28px;
   color: var(--muted);
@@ -377,6 +387,13 @@ main {
 }
 
 @media (max-width: 640px) {
+  /* Clear the fixed bottom tab bar, which otherwise covered the footer's links. */
+  .app-footer {
+    margin-top: -40px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
   .hide-sm {
     display: none;
   }

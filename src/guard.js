@@ -46,6 +46,22 @@ function bucketFor(key, now) {
   return b;
 }
 
+/**
+ * Drop every visitor idle for longer than the longest window. The privacy policy says these counts
+ * are dropped after about ten minutes without a request; sweep() below stops as soon as the table
+ * is half empty (it exists to bound memory), so on a quiet server an idle visitor's address stayed
+ * in memory indefinitely (launch review). Runs every minute.
+ */
+export function expireIdle(now = Date.now()) {
+  let n = 0;
+  for (const [k, b] of buckets) if (now - b.seen > FRESH_WINDOW_MS) { buckets.delete(k); n += 1; }
+  return n;
+}
+setInterval(() => expireIdle(), 60_000).unref();
+
+/** How many visitors are being counted (for tests and /api/health). */
+export const trackedVisitors = () => buckets.size;
+
 function sweep(now, force = false) {
   for (const [k, b] of buckets) {
     if (force || now - b.seen > FRESH_WINDOW_MS) buckets.delete(k);

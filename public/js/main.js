@@ -66,6 +66,20 @@ function Header({ route }) {
   </header>`;
 }
 
+// On every screen of a public site: who we are not, and the policies. The web app had no link to
+// the privacy policy, terms or support at all (launch review).
+function AppFooter() {
+  return html`<footer class="app-footer small muted">
+    Cartworth is independent and not affiliated with any retailer. Prices come from each store’s own listings and can change; check before you buy.
+    <nav aria-label="About Cartworth" class="row wrap" style=${{ gap: 14, marginTop: 6 }}>
+      <a href="https://cartworth.app/privacy">Privacy</a>
+      <a href="https://cartworth.app/terms">Terms</a>
+      <a href="https://cartworth.app/support">Support</a>
+      <a href="https://cartworth.app/">About Cartworth</a>
+    </nav>
+  </footer>`;
+}
+
 function App() {
   const ready = useStore((s) => s.ready);
   const settings = useStore((s) => s.settings);
@@ -107,11 +121,12 @@ function App() {
     return html`<main><div class="onboard card"><${Notice} kind="bad" icon="alert">${bootError}</${Notice}><button class="btn" onClick=${() => location.reload()}>Reload</button></div></main>`;
   if (!ready) return html`<div class="boot"><${Spinner} /> Loading Cartworth…</div>`;
   if (!settings?.zip || onboarding) {
-    return html`<main><${StorageBanner} /><${OnboardingGate} /></main><${Toasts} />`;
+    return html`<main><${StorageBanner} /><${OnboardingGate} /></main><${AppFooter} /><${Toasts} />`;
   }
   const View = { compare: CompareView, sales: SalesView, watch: WatchView, list: ListView, settings: SettingsView }[route.name] || CompareView;
   return html`<${Header} route=${route} />
     <main><${StorageBanner} /><${View} /></main>
+    <${AppFooter} />
     <${Toasts} />
     <${ModalHost} />`;
 }

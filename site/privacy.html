@@ -54,7 +54,7 @@
   <div class="wrap wrap-narrow doc-header">
     <p class="eyebrow">Legal</p>
     <h1 class="h-section">Privacy policy</h1>
-    <p class="doc-meta">Last updated September 22, 2026. Applies to the Cartworth iPhone app, the free web version of Cartworth, and this website.</p>
+    <p class="doc-meta">Last updated September 24, 2026. Applies to the Cartworth iPhone app, the free web version of Cartworth, and this website.</p>
   </div>
 
   <div class="wrap wrap-narrow doc-body prose">
@@ -157,6 +157,9 @@
       <li><strong>Where price requests come from.</strong> Your ZIP and search term reach the retailers' websites from the server, not from your browser, so the retailer sees the server's request rather than your browser's.</li>
       <li><strong>No analytics, no advertising, no third-party scripts.</strong> The web version loads no analytics, no advertising and no third-party tracking code, and sets no advertising or tracking cookies.</li>
       <li><strong>Server logs.</strong> Ordinary web server and hosting logs may record request information such as IP address, timestamp and the page requested, as they do for any website. These are operational records used to keep the service running and are not used to build a profile of you or shared for advertising.</li>
+      <li><strong>Request limits.</strong> So that no one can use the service to flood a retailer's website, the server counts requests per IP address (per network block for IPv6). Those counts are held in memory only, never written to disk, and are dropped after about ten minutes without a request.</li>
+      <li><strong>Pictures.</strong> Product photos and weekly-ad pictures are loaded by your browser directly from the retailers' and the circular service's image servers, so those servers see an ordinary image request from your browser. The request carries no referrer and nothing about what you searched beyond the picture itself.</li>
+      <li><strong>Your own Kroger keys (optional).</strong> If you add Kroger developer keys in Settings, they are stored in this browser and sent to the server only with requests that need them, to be passed to Kroger. The server keeps only a one-way fingerprint of them, to remember whether they work, and Kroger's short-lived access token, both in memory; the keys themselves are never written to disk or logged.</li>
     </ul>
     <p>If you would rather nothing at all sat on a server, use the iPhone app, which has no server of ours in the path.</p>
 
@@ -226,7 +229,7 @@
       "name": "Privacy policy | Cartworth",
       "description": "Cartworth has no accounts, no analytics SDK and no tracking, and sells nothing. This policy explains exactly what stays on your device and what is sent to retailer websites to look up a price.",
       "inLanguage": "en-US",
-      "dateModified": "2026-09-22",
+      "dateModified": "2026-09-24",
       "isPartOf": { "@id": "https://cartworth.app/#website" },
       "publisher": { "@id": "https://cartworth.app/#organization" },
       "about": { "@id": "https://cartworth.app/#ios-app" },

@@ -444,7 +444,7 @@ function DataCard({ server, recentCount }) {
     <h2 style=${{ fontSize: 15 }}>Server</h2>
     <div class="ink2 small" style=${{ marginBottom: 8 }}>
       The Cartworth server only fetches prices and keeps a shared, anonymous record of what products have cost.
-      ${server?.counts && html` It is tracking ${plural(server.counts.products, 'product')} with ${plural(server.counts.observations, 'price observation')} — by product, not by person.`}
+      ${Number.isFinite(server?.counts?.products) && Number.isFinite(server?.counts?.observations) && html` It is tracking ${plural(server.counts.products, 'product')} with ${plural(server.counts.observations, 'price observation')} — by product, not by person.`}
     </div>
     ${server?.health &&
     html`<table class="wtable">

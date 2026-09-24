@@ -746,3 +746,36 @@ test('DEFECT (launch): a weekly-ad picture that fails to load shows the deal ico
     srv = await startAppServer({ api: api() });
   }
 });
+
+// DEFECT (launch review): the public web app linked to no privacy policy, terms or support page.
+test('DEFECT (launch): every screen links to the privacy policy, terms and support', { skip: SKIP }, async () => {
+  for (const [hash, storage] of [['#/', {}], ['#/compare', STORAGE()], ['#/settings', STORAGE()]]) {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage, hash });
+    await page.waitFor(`!!document.querySelector('.app-footer')`, { what: `the footer on ${hash}` });
+    const links = await page.eval(`[...document.querySelectorAll('.app-footer a')].map((a) => a.getAttribute('href'))`);
+    for (const want of ['/privacy', '/terms', '/support']) assert.ok(links.some((h) => h.endsWith(want)), `${hash}: no ${want} link`);
+  }
+  // And no screen prints a missing value: Settings read "tracking undefined products" when the
+  // server's counts were absent.
+  for (const hash of ['#/compare', '#/sales', '#/watch', '#/list', '#/settings']) {
+    await openApp(page, srv.origin, { storage: STORAGE(), hash });
+    await page.waitFor(`!!document.querySelector('.app-footer')`, { what: `the page ${hash}` });
+    await new Promise((r) => setTimeout(r, 300));
+    assert.doesNotMatch(await page.eval(`document.body.innerText`), /\bundefined\b|\bNaN\b/, hash);
+  }
+});
+
+test('DEFECT (launch): Settings does not print "undefined" when the server sends no counts', { skip: SKIP }, async () => {
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/state': { version: 2, app: 'cartworth', stateless: true, catalog: { storeCount: 119, coreStoreIds: [], stores: [] }, defaults: {}, limits: {}, counts: {}, health: {} } }) });
+  try {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/settings' });
+    await page.waitFor(`/anonymous record/.test(document.body.innerText)`, { what: 'the Server section' });
+    assert.doesNotMatch(await page.eval(`document.body.innerText`), /\bundefined\b|\bNaN\b/);
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
