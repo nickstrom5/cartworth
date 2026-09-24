@@ -9,6 +9,7 @@ import { basisInfo, isPriceable } from '../format.js';
 
 export function Onboarding() {
   const [widening, setWidening] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
   const stores = useStore((s) => s.stores);
   const settings = useStore((s) => s.settings);
   const directory = useStore((s) => s.directory);
@@ -83,6 +84,22 @@ export function Onboarding() {
     }
   };
   const enabled = (stores || []).filter((s) => s.enabled);
+  // Chains whose lookup failed (a timeout, a busy site). Not "no store here": the list may be short,
+  // and the server keeps such a build only ten minutes (src/directory.js UNRESOLVED_RETRY_MS). The
+  // four-city audit on 24 Sep saw 14 of 17 chains time out in Charlotte; rebuilt, it found 13 stores.
+  const pending = directory?.unresolved || [];
+  const recheck = async () => {
+    setRechecking(true);
+    try {
+      const before = new Set(getState().settings?.stores || []);
+      const dir = await loadDirectory(true);
+      // Switching on what was found is what onboarding does anyway; keep every store already on.
+      const add = (dir?.suggested || []).filter((id) => !before.has(id));
+      if (add.length) await saveSettings({ stores: [...before, ...add] }, { quiet: true });
+    } finally {
+      setRechecking(false);
+    }
+  };
 
   return html`<div class="card onboard">
     <h1>Stores near ${place?.city || `ZIP ${settings?.zip}`}</h1>
@@ -95,6 +112,14 @@ export function Onboarding() {
             : ''}.
           The ${enabled.length} below are switched on — change them any time in Settings.
         </div>`}
+
+    ${!loading && pending.length > 0 &&
+      html`<${Notice} kind="warn" icon="alert">
+        ${pending.length} more ${pending.length === 1 ? 'store' : 'stores'} didn’t answer in time, so this list may be short.
+        <div style=${{ marginTop: 8 }}>
+          <button class="btn btn-sm" onClick=${recheck} disabled=${rechecking}>${rechecking ? 'Checking…' : 'Check again'}</button>
+        </div>
+      </${Notice}>`}
 
     ${!loading && !priced.length && !canWiden &&
       html`<${Notice} kind="warn" icon="alert">

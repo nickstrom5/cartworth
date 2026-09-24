@@ -608,3 +608,30 @@ test('DEFECT (nationwide sweep): a rural ZIP with nothing in 25 miles is offered
     srv = await startAppServer({ api: api() });
   }
 });
+
+// DEFECT (four-city audit): in Charlotte 14 of 17 chains timed out while the directory was built.
+// Onboarding said "found 3 stores", switched on those 3, and never mentioned the rest; rebuilt a
+// minute later the same ZIP had 13. The page now says the list may be short and can check again.
+test('DEFECT (nationwide audit): lookups that timed out are named, and "Check again" adds what they find', { skip: SKIP }, async () => {
+  let calls = 0;
+  const base = { ...fx.directory, zip: '28205', city: 'Charlotte', state: 'NC', otherMerchants: [], maxMiles: 25 };
+  const partial = { ...base, chains: [{ id: 'aldi', name: 'ALDI', short: 'ALDI', status: 'shelf', hasAds: true, distance: 2.1, address: '1 A St' }], suggested: ['aldi'], unresolved: ['foodlion', 'harristeeter'] };
+  const full = { ...base, chains: [...partial.chains, { id: 'foodlion', name: 'Food Lion', short: 'Food Lion', status: 'shelf', hasAds: true, distance: 1.2, address: '2 B St' }], suggested: ['foodlion', 'aldi'], unresolved: [] };
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/directory': () => (++calls === 1 ? partial : full) }) });
+  try {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: {}, hash: '#/' });
+    await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'the ZIP step' });
+    await page.eval(`(() => { const i = document.querySelector('input[aria-label="Your ZIP code"]'); i.value = '28205'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+    await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
+    await page.waitFor(`/2 more stores didn’t answer in time/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the short-list notice' });
+    await page.eval(`[...document.querySelectorAll('button')].find((b) => /Check again/.test(b.textContent)).click()`);
+    await page.waitFor(`!/didn’t answer in time/.test(document.querySelector('.onboard').innerText) && /found 2 stores/.test(document.querySelector('.onboard').innerText)`, { what: 'the complete result' });
+    const stores = await page.eval(`JSON.parse(localStorage.getItem('cartworth:v1:settings')).stores`);
+    assert.ok(stores.includes('foodlion') && stores.includes('aldi'), `the late store is switched on and ALDI kept: ${stores}`);
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});

@@ -1707,4 +1707,19 @@ final class NationwideAuditTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "cranberry juice", name: "Ocean Spray Cranberry Juice Cocktail"), Match.relevant)
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "fruit punch", name: "Hawaiian Punch Fruit Juicy Red"), Match.relevant)
     }
+
+    /// Charlotte: a lookup that failed is recorded as unresolved, not "no store". A directory cached
+    /// before that field existed must still decode, or every phone would lose its store list.
+    func testDirectoryCachedBeforeUnresolvedStillDecodes() throws {
+        let place = UserPlace(zip: "28205", latitude: 35.22, longitude: -80.79, city: "Charlotte", state: "NC")
+        let chain = NearbyChain(id: "aldi", name: "ALDI", short: "ALDI", distance: 2.1, address: nil, latitude: nil, longitude: nil,
+                                status: .shelf, hasAds: true, onMap: true, mapCount: 1, note: nil)
+        let dir = Directory(place: place, radius: 25, chains: [chain], others: [], adMerchants: [], builtAt: Date(), unresolved: ["foodlion"])
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(dir)) as! [String: Any]
+        XCTAssertEqual(json["unresolved"] as? [String], ["foodlion"])
+        json["unresolved"] = nil
+        let old = try JSONDecoder().decode(Directory.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertNil(old.unresolved)
+        XCTAssertEqual(old.chains.map(\.id), ["aldi"])
+    }
 }

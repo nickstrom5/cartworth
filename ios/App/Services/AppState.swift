@@ -82,8 +82,9 @@ final class AppState {
                 let ads = dir.chains.filter { $0.status == .adsOnly }.prefix(3).map(\.id)
                 selectedChainIds = Array(priced.prefix(10)) + ads
             } else {
-                // Keep choices that still exist here
-                let valid = Set(dir.chains.map(\.id))
+                // Keep choices that still exist here. A chain whose lookup failed this time
+                // (dir.unresolved) was not found absent, so the shopper's choice stays.
+                let valid = Set(dir.chains.map(\.id)).union(dir.unresolved ?? [])
                 let kept = selectedChainIds.filter { valid.contains($0) }
                 if !kept.isEmpty { selectedChainIds = kept }
             }
