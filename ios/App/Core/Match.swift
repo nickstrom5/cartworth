@@ -102,6 +102,11 @@ enum Match {
     private static let wantsBabyRx = Rx("\\bbaby (?:food|formula|cereal|wipes?)\\b|\\bformula\\b|\\bgerber\\b|\\bbeech-?nut\\b|\\binfant\\b|\\btoddler\\b")
     private static let waterDrinkRx = Rx("\\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\\b|\\bseltzer\\b|\\bla croix\\b")
     private static let wantsWaterRx = Rx("\\bwater\\b|\\bseltzer\\b|\\bla croix\\b")
+    /// Juice-flavoured drinks: Costco's "Sunny D Citrus Punch", filed under Orange Juice, was
+    /// Minneapolis's best orange juice. Port of JUICE_IMPOSTOR_RE in shared/match.js.
+    private static let juiceImpostorRx = Rx("\\bpunch\\b|\\bjuice (?:drink|beverage|cocktail blend)s?\\b|\\bsunny ?d\\b|\\bhi[- ]?c\\b|\\bkool[- ]?aid\\b|\\bcapri ?sun\\b|\\btampico\\b|\\bdrink mix\\b")
+    private static let wantsJuiceDrinkRx = Rx("\\bpunch\\b|\\bdrinks?\\b|\\bbeverage\\b|\\bsunny ?d\\b|\\bhi[- ]?c\\b|\\bkool[- ]?aid\\b|\\bcapri ?sun\\b|\\btampico\\b")
+    private static let juiceWordRx = Rx("\\bjuice\\b")
     private static let imitationRx = Rx("\\btastes?\\s+like\\b|\\bimitation\\b|\\b(?:butter|cheese|milk|meat|crab)[- ]style\\b|\\balternative to\\b|\\bsubstitute\\b")
     /// ...unless the shopper is looking for the imitation category itself, in which case a name
     /// like "Tastes Like Butter Margarine" is exactly what they asked for.
@@ -113,7 +118,7 @@ enum Match {
     /// every ALDI store brand use it — but 'cream' is a trap so that "cream cheese" does not score
     /// as cheese. Plain butter scored 0.40 and lost to spreadable blends at 0.97.
     /// From the Christmas run: "Sprinkles Mix" is sprinkles, "Ocean Spray" is a brand, a "Juice Cocktail" is juice.
-    private static let benignAfter: [String: Set<String>] = ["cream": ["sweet", "whipping"], "mix": ["sprinkle"], "spray": ["ocean"], "cocktail": ["juice"]]
+    private static let benignAfter: [String: Set<String>] = ["cream": ["sweet", "whipping"], "mix": ["sprinkle"], "spray": ["ocean"], "cocktail": ["juice"], "concentrate": ["from"]]
     /// A trap noun forgiven when the next word names what it is: "King Oyster Mushrooms" are
     /// mushrooms. Mirrors BENIGN_BEFORE in shared/match.js.
     private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"]]
@@ -318,6 +323,7 @@ enum Match {
         let wantsImitation = imitationRx.test(qNormForImitation) || imitationCategoryRx.test(qNormForImitation)
         if imitationRx.test(nameNorm) && !wantsImitation { mult *= 0.3 }
         if waterDrinkRx.test(nameNorm) && !wantsWaterRx.test(qNormForImitation) { mult *= 0.3 }
+        if juiceWordRx.test(qNormForImitation) && juiceImpostorRx.test(nameNorm) && !wantsJuiceDrinkRx.test(qNormForImitation) { mult *= 0.3 }
         if babyProductRx.test(nameNorm) && !wantsBabyRx.test(qNormForImitation) { mult *= 0.2 }
         // Books, cookware and apparel that happen to name a food. Applied to the whole name because
         // the position rules deliberately look past "in"/"with" phrases, which is where the

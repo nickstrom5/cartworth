@@ -1697,4 +1697,14 @@ final class NationwideAuditTests: XCTestCase {
         ))!
         XCTAssertNil(potatoes.sizeConflict)
     }
+
+    /// Minneapolis/Dallas: juice-flavoured drinks are not juice; "from concentrate" juice is.
+    func testDefectCitrusPunchIsNotOrangeJuice() {
+        XCTAssertLessThan(Match.relevance(query: "orange juice", name: "Sunny D Citrus Punch, Tangy Original, 11.3 fl oz, 30-Count", category: "Orange Juice"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "orange juice", name: "Sunnyd Tangy Original Orange Juice"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "orange juice", name: "Minute Maid Orange Juice From Concentrate"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "orange juice", name: "Minute Maid Frozen Orange Juice Concentrate"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "cranberry juice", name: "Ocean Spray Cranberry Juice Cocktail"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "fruit punch", name: "Hawaiian Punch Fruit Juicy Red"), Match.relevant)
+    }
 }

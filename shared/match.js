@@ -125,7 +125,7 @@ const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?r
 // From the Christmas run: "Sprinkles Mix" is sprinkles; "Ocean Spray" is a brand, not a household
 // spray (its Jellied Cranberry Sauce scored 0.37 and was refused in every cranberry search); and a
 // "Juice Cocktail" is juice, not alcohol.
-const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['sprinkle']), spray: new Set(['ocean']), cocktail: new Set(['juice']) };
+const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['sprinkle']), spray: new Set(['ocean']), cocktail: new Set(['juice']), concentrate: new Set(['from']) };
 /** The mirror image: a trap noun forgiven when the word right AFTER it names what it is. "King
  * Oyster Mushrooms" are mushrooms, so 'oyster' must not bury them in a mushroom search. */
 const BENIGN_BEFORE = { oyster: new Set(['mushroom']) };
@@ -233,6 +233,13 @@ const WANTS_BABY_RE = /\bbaby (?:food|formula|cereal|wipes?)\b|\bformula\b|\bger
 
 const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
 const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
+
+// Juice-flavoured drinks. Costco's "Sunny D Citrus Punch" is filed under Orange Juice, and that
+// category alone scored it 0.87: it was Minneapolis's best orange juice (the nationwide audit), and
+// ALDI names the same bottle "Sunnyd Tangy Original Orange Juice". A punch or a "juice drink" is
+// not juice. "From concentrate" IS juice (BENIGN_AFTER); a can of frozen concentrate is not.
+const JUICE_IMPOSTOR_RE = /\bpunch\b|\bjuice (?:drink|beverage|cocktail blend)s?\b|\bsunny ?d\b|\bhi[- ]?c\b|\bkool[- ]?aid\b|\bcapri ?sun\b|\btampico\b|\bdrink mix\b/i;
+const WANTS_JUICE_DRINK_RE = /\bpunch\b|\bdrinks?\b|\bbeverage\b|\bsunny ?d\b|\bhi[- ]?c\b|\bkool[- ]?aid\b|\bcapri ?sun\b|\btampico\b/i;
 
 const IMITATION_RE = /\btastes?\s+like\b|\bimitation\b|\b(?:butter|cheese|milk|meat|crab)[- ]style\b|\balternative to\b|\bsubstitute\b/i;
 // ...unless the shopper is looking for the imitation category itself, in which case a name like
@@ -351,6 +358,7 @@ export function relevance(query, product, opts = {}) {
   const wantsImitation = IMITATION_RE.test(normalize(query)) || IMITATION_CATEGORY_RE.test(normalize(query));
   if (IMITATION_RE.test(nameNorm) && !wantsImitation) mult *= 0.3;
   if (WATER_DRINK_RE.test(nameNorm) && !WANTS_WATER_RE.test(normalize(query))) mult *= 0.3;
+  if (/\bjuice\b/.test(normalize(query)) && JUICE_IMPOSTOR_RE.test(nameNorm) && !WANTS_JUICE_DRINK_RE.test(normalize(query))) mult *= 0.3;
   if (BABY_PRODUCT_RE.test(nameNorm) && !WANTS_BABY_RE.test(normalize(query))) mult *= 0.2;
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the
   // position rules deliberately look past "in"/"with" phrases, which is where the giveaway sits.

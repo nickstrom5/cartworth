@@ -144,3 +144,24 @@ test('control: a slug that states the size inside the name part still settles it
   const p = makeProduct({ storeId: 'costco', id: 'c-1', name: 'Sweet Potatoes, 5 lbs', sizeText: '10 lb', price: 8.07, url: 'https://www.instacart.com/products/18848374-sweet-potatoes-10-lbs-10-lb?retailerSlug=costco' });
   assert.equal(p.sizeConflict, null);
 });
+
+// DEFECT (Minneapolis/Dallas audit): Costco's "Sunny D Citrus Punch", filed under Orange Juice, was
+// Minneapolis's best orange juice at $7.04/gal; ALDI's same bottle, named "Sunnyd Tangy Original
+// Orange Juice", was Dallas's. Juice-flavoured drinks are not juice.
+test('DEFECT (Minneapolis): a citrus punch filed under Orange Juice is not orange juice', () => {
+  assert.ok(relevance('orange juice', { name: 'Sunny D Citrus Punch, Tangy Original, 11.3 fl oz, 30-Count', category: 'Orange Juice' }) < RELEVANT);
+  assert.ok(relevance('orange juice', { name: 'Sunnyd Tangy Original Orange Juice' }) < RELEVANT);
+  assert.ok(relevance('orange juice', { name: 'Hi-C Orange Lavaburst Juice Drink', category: 'Orange Juice' }) < RELEVANT);
+});
+
+test('DEFECT (Minneapolis): orange juice "from concentrate" is orange juice; frozen concentrate is not', () => {
+  assert.ok(relevance('orange juice', { name: 'Minute Maid Orange Juice From Concentrate' }) >= RELEVANT);
+  assert.ok(relevance('orange juice', { name: 'Minute Maid Frozen Orange Juice Concentrate' }) < RELEVANT);
+});
+
+test('control: real juice, juice cocktail and a shopper who asks for punch are unchanged', () => {
+  assert.ok(relevance('orange juice', { name: 'Tropicana Pure Premium Orange Juice' }) >= RELEVANT);
+  assert.ok(relevance('cranberry juice', { name: 'Ocean Spray Cranberry Juice Cocktail' }) >= RELEVANT);
+  assert.ok(relevance('fruit punch', { name: 'Hawaiian Punch Fruit Juicy Red' }) >= RELEVANT);
+  assert.ok(relevance('sunny d', { name: 'Sunny D Tangy Original' }) >= RELEVANT);
+});

@@ -9,7 +9,8 @@ enum PriceSearch {
     // and the Christmas-run matcher fixes change which listing wins.
     // 6: a size only at the END of an Instacart slug no longer settles a name that says otherwise
     // (ProductFactory.slugConfirms); a half gallon stated "2 gal" was $1.50 a gallon.
-    static let cacheVersion = 6
+    // 7: juice-flavoured drinks are not juice; "from concentrate" juice is (Match.juiceImpostorRx).
+    static let cacheVersion = 7
 
     struct Payload: Codable {
         var items: [Product]
