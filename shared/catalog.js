@@ -121,7 +121,7 @@ export const CHAINS = [
   { id: 'heb', name: 'H-E-B', short: 'H-E-B', aliases: ['h-e-b', 'h e b'], price: null, ads: ['H-E-B', 'HEB'], states: ['TX'], note: 'Weekly ad only — H-E-B blocks automated price lookups.' },
   { id: 'meijer', name: 'Meijer', short: 'Meijer', aliases: ['meijer'], price: ic('meijer'), ads: ['Meijer'], states: ['MI', 'OH', 'IN', 'IL', 'KY', 'WI'] },
   { id: 'hyvee', name: 'Hy-Vee', short: 'Hy-Vee', aliases: ['hy-vee', 'hyvee'], price: ic('hy-vee'), ads: ['Hy-Vee'], states: ['IA', 'IL', 'KS', 'MN', 'MO', 'NE', 'SD', 'WI', 'IN'] },
-  { id: 'wegmans', name: 'Wegmans', short: 'Wegmans', aliases: ['wegmans'], price: ic('wegmans'), ads: ['Wegmans'], states: ['NY', 'PA', 'NJ', 'MD', 'VA', 'MA', 'NC', 'DE', 'DC'] },
+  { id: 'wegmans', name: 'Wegmans', short: 'Wegmans', aliases: ['wegmans'], price: ic('wegmans'), ads: ['Wegmans', "Wegman's"], states: ['NY', 'PA', 'NJ', 'MD', 'VA', 'MA', 'NC', 'DE', 'DC'] },
   { id: 'foodlion', name: 'Food Lion', short: 'Food Lion', aliases: ['food lion'], price: ic('food-lion'), ads: ['Food Lion'], states: ['DE', 'GA', 'KY', 'MD', 'NC', 'PA', 'SC', 'TN', 'VA', 'WV'] },
   { id: 'giant', name: 'Giant Food', short: 'Giant', aliases: ['giant food'], price: ic('giant'), ads: ['Giant', 'Giant Food'], states: ['MD', 'VA', 'DC', 'DE'] },
   { id: 'martins', name: 'Martin’s', short: 'Martin’s', aliases: ["martin's food", 'martins food'], price: ic('martins'), ads: ["Martin's"], states: ['PA', 'MD', 'VA', 'WV'] },
@@ -168,7 +168,7 @@ export const CHAINS = [
   { id: 'savemart', name: 'Save Mart', short: 'Save Mart', aliases: ['save mart'], price: ic('savemart'), ads: ['Save Mart'], states: ['CA', 'NV'] },
   { id: 'foodmaxx', name: 'FoodMaxx', short: 'FoodMaxx', aliases: ['foodmaxx', 'food maxx'], price: ic('foodmaxx'), ads: ['FoodMaxx'], states: ['CA', 'NV'] },
   { id: 'luckysupermarkets', name: 'Lucky Supermarkets', short: 'Lucky', aliases: ['lucky supermarket'], price: ic('lucky-supermarkets'), ads: ['Lucky Supermarkets'], states: ['CA'] },
-  { id: 'foodcity', name: 'Food City', short: 'Food City', aliases: ['food city'], price: ic('food-city'), ads: ['Food City'], states: ['TN', 'VA', 'GA', 'KY', 'AL'] },
+  { id: 'foodcity', name: 'Food City', short: 'Food City', aliases: ['food city'], price: ic('food-city'), ads: ['Food City', 'FoodCity'], states: ['TN', 'VA', 'GA', 'KY', 'AL'] },
   { id: 'lowesfoods', name: 'Lowes Foods', short: 'Lowes Foods', aliases: ['lowes foods'], price: null, ads: ['Lowes Foods'], states: ['NC', 'SC', 'VA'], note: 'Weekly ad only.' },
   { id: 'brookshires', name: 'Brookshire’s', short: 'Brookshire’s', aliases: ["brookshire's", 'brookshires'], price: ic('brookshires'), ads: ["Brookshire's"], states: ['TX', 'LA', 'AR'] },
   // Priced since 23 Sep 2026 from Piggly Wiggly MIDWEST's own store site. The marketplace's

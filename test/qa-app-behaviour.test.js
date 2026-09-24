@@ -481,3 +481,28 @@ test('DEFECT (Christmas run): a listing whose size and name disagree says so on 
   await srv.close();
   srv = await startAppServer({ api: api() });
 });
+
+test('DEFECT (nationwide sweep): a chain-wide price is not counted as a store found within the radius', { skip: SKIP }, async () => {
+  // Vredenburgh AL (36481), live: no store located within 25 miles, Walmart's chain-wide listing, and
+  // four weekly ads. Onboarding said "found 1 store it can price ... within 25 miles".
+  const rural = {
+    ...fx.directory, zip: '36481', city: 'Vredenburgh', state: 'AL', otherMerchants: [],
+    chains: [
+      { id: 'walmart', name: 'Walmart', short: 'Walmart', status: 'national', hasAds: true, distance: null, address: null },
+      { id: 'dollargeneral', name: 'Dollar General', short: 'Dollar General', status: 'adsOnly', hasAds: true, distance: 9.8, address: null },
+    ],
+  };
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/directory': rural }) });
+  await page.viewport(390, 844);
+  await openApp(page, srv.origin, { storage: {}, hash: '#/' });
+  await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'the ZIP step' });
+  await page.eval(`(() => { const i = document.querySelector('input[aria-label="Your ZIP code"]'); i.value = '36481'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
+  await page.waitFor(`/Cartworth found/.test(document.body.innerText)`, { what: 'the store summary' });
+  const t = await page.eval(`document.querySelector('.onboard').innerText.replace(/\\s+/g, ' ')`);
+  assert.match(t, /found 0 stores it can price/, t);
+  assert.match(t, /plus chain-wide prices from Walmart/, t);
+  await srv.close();
+  srv = await startAppServer({ api: api() });
+});

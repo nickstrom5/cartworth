@@ -61,6 +61,11 @@ export function Onboarding() {
   // claim it found nothing when it found four.
   const priced = (stores || []).filter((s) => isPriceable(s.basis));
   const adsOnly = (stores || []).filter((s) => s.basis === 'adsOnly');
+  // A chain-wide listing has no store and no distance, so it is not one of the stores "within N
+  // miles" (the rule directory.js countsFor states). In rural ZIPs of the nationwide sweep it was
+  // often the only price source, and the sentence counted Walmart as a store found within 25 miles.
+  const national = priced.filter((s) => s.basis === 'national');
+  const local = priced.filter((s) => s.basis !== 'national');
   const enabled = (stores || []).filter((s) => s.enabled);
 
   return html`<div class="card onboard">
@@ -68,8 +73,10 @@ export function Onboarding() {
     ${loading
       ? html`<div class="row muted"><${Spinner} /> Checking which chains serve your ZIP…</div>`
       : html`<div class="ink2">
-          Cartworth found <b>${priced.length}</b> ${priced.length === 1 ? 'store' : 'stores'} it can price
-          ${adsOnly.length ? html` and <b>${adsOnly.length}</b> more with a weekly ad` : ''} within ${directory.maxMiles} miles.
+          Cartworth found <b>${local.length}</b> ${local.length === 1 ? 'store' : 'stores'} it can price
+          ${adsOnly.length ? html` and <b>${adsOnly.length}</b> more with a weekly ad` : ''} within ${directory.maxMiles} miles${national.length
+            ? html`, plus chain-wide prices from ${national.map((s) => s.short || s.name).join(', ')}`
+            : ''}.
           The ${enabled.length} below are switched on — change them any time in Settings.
         </div>`}
 
