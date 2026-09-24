@@ -1587,3 +1587,39 @@ extension ChristmasPricingTests {
         XCTAssertGreaterThanOrEqual(score("gelatin", "Knox Unflavored Gelatin"), Match.relevant)
     }
 }
+
+/// The St. Patrick's run (mirrors test/qa-stpatricks.test.js) and the holiday cards.
+final class StPatricksTests: XCTestCase {
+    private func score(_ q: String, _ name: String) -> Double { Match.relevance(query: q, name: name) }
+
+    func testDefectCornedBeefHashIsNotCornedBeef() {
+        XCTAssertLessThan(score("corned beef", "Food Club Corned Beef Hash"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("corned beef", "Mosey's Corned Beef Brisket Point Cut with Spice Packet"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("corned beef hash", "Hormel Corned Beef Hash, 15 oz"), Match.relevant)
+    }
+
+    func testDefectBabyVegetablesAreVegetables() {
+        XCTAssertGreaterThanOrEqual(score("carrots", "Baby Carrots 1 lb"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("spinach", "Baby Spinach 5 oz"), Match.relevant)
+        XCTAssertLessThan(score("carrots", "Gerber Baby Food Carrots Puree"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("formula", "Similac Baby Formula"), Match.relevant)
+    }
+
+    func testDefectDollAndFries() {
+        XCTAssertLessThan(score("cabbage", "Cabbage Patch Kids Doll"), Match.relevant)
+        XCTAssertLessThan(score("russet potatoes", "Ore-Ida Russet Potato Fries"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("french fries", "Ore-Ida Golden Crinkles French Fries"), Match.relevant)
+    }
+
+    private func day(_ y: Int, _ m: Int, _ d: Int) -> Date { Calendar.current.date(from: DateComponents(year: y, month: m, day: d, hour: 9))! }
+
+    func testDefectBothHolidaysAreFeatured() {
+        // Hanukkah 2027 begins Dec 24: the one-card version showed it instead of Christmas all December.
+        let dec = Seasonal.featured(from: day(2027, 12, 10)).map(\.name)
+        XCTAssertTrue(dec.contains("Christmas"), "\(dec)")
+        XCTAssertTrue(dec.contains("Hanukkah"), "\(dec)")
+        let mar = Seasonal.featured(from: day(2027, 3, 1)).map(\.name)
+        XCTAssertTrue(mar.contains("St. Patrick’s Day"), "\(mar)")
+        XCTAssertLessThanOrEqual(mar.count, 2)
+    }
+}

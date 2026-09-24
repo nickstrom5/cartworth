@@ -21,8 +21,8 @@ enum Match {
         "sauce", "dressing", "soup", "broth", "stock", "bouillon", "seasoning", "marinade", "rub", "gravy", "mix", "powder",
         "drink", "juice", "smoothie", "shake", "yogurt", "creamer", "cheese", "noodle", "pasta", "ramen", "ricotta",
         "soap", "shampoo", "conditioner", "lotion", "candle", "freshener", "spray", "wipe", "detergent", "cleaner", "filter", "mug",
-        "treat", "dog", "cat", "pet", "kibble", "bone", "baby", "infant", "toddler", "gummy", "gummies", "vitamin", "supplement",
-        "extract", "syrup", "spread", "dip", "jam", "jelly", "preserve", "pudding", "gelatin", "popsicle", "bar", "bite", "chip", "crisp",
+        "treat", "dog", "cat", "pet", "kibble", "bone", "infant", "toddler", "gummy", "gummies", "vitamin", "supplement",
+        "extract", "syrup", "spread", "dip", "jam", "jelly", "preserve", "pudding", "gelatin", "hash", "fry", "popsicle", "bar", "bite", "chip", "crisp",
         "nugget", "tender", "patty", "burger", "sausage", "jerky", "salad", "sandwich", "wrap", "pizza", "meal", "entree", "kit",
         // Compound-modifier nouns: "peanut butter", "cream cheese", "macaroni and cheese",
         // "beef base", "butter lettuce". Without these the head noun matched and the product
@@ -91,11 +91,15 @@ enum Match {
     /// The position-aware trap loop cannot see these: it skips any word sitting behind an "in" or
     /// "with" phrase (so "tuna in oil" is not penalised), and that is exactly where the giveaway
     /// lands in "Turkey in Disguise (Hardcover)". Mirrors shared/match.js.
-    private static let nonGroceryRx = Rx("\\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub)\\b")
+    private static let nonGroceryRx = Rx("\\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\\b")
 
     /// Imitation markers: a product that says it merely tastes like the thing is not the thing.
     /// Flavoured waters named after the drink they taste of ("Spiced Cider Sparkling Water" is not
     /// sparkling cider). Mirrors WATER_DRINK_RE / WANTS_WATER_RE in shared/match.js.
+    /// Baby FOOD by what it is, not the word 'baby' (Baby Spinach and Baby Carrots are vegetables).
+    /// Mirrors BABY_PRODUCT_RE / WANTS_BABY_RE in shared/match.js.
+    private static let babyProductRx = Rx("\\bbaby (?:foods?|formula|wipes?|puree|cereal|shampoo|lotion|wash|oil|powder|snacks?|puffs|teethers?|yogurt melts)\\b|\\bgerber\\b|\\bbeech-?nut\\b|\\bstage [1-4]\\b|\\bfor babies\\b")
+    private static let wantsBabyRx = Rx("\\bbaby (?:food|formula|cereal|wipes?)\\b|\\bformula\\b|\\bgerber\\b|\\bbeech-?nut\\b|\\binfant\\b|\\btoddler\\b")
     private static let waterDrinkRx = Rx("\\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\\b|\\bseltzer\\b|\\bla croix\\b")
     private static let wantsWaterRx = Rx("\\bwater\\b|\\bseltzer\\b|\\bla croix\\b")
     private static let imitationRx = Rx("\\btastes?\\s+like\\b|\\bimitation\\b|\\b(?:butter|cheese|milk|meat|crab)[- ]style\\b|\\balternative to\\b|\\bsubstitute\\b")
@@ -314,6 +318,7 @@ enum Match {
         let wantsImitation = imitationRx.test(qNormForImitation) || imitationCategoryRx.test(qNormForImitation)
         if imitationRx.test(nameNorm) && !wantsImitation { mult *= 0.3 }
         if waterDrinkRx.test(nameNorm) && !wantsWaterRx.test(qNormForImitation) { mult *= 0.3 }
+        if babyProductRx.test(nameNorm) && !wantsBabyRx.test(qNormForImitation) { mult *= 0.2 }
         // Books, cookware and apparel that happen to name a food. Applied to the whole name because
         // the position rules deliberately look past "in"/"with" phrases, which is where the
         // giveaway sits.

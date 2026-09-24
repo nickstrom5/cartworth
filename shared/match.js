@@ -25,8 +25,8 @@ const TRAPS = new Set([
   'sauce', 'dressing', 'soup', 'broth', 'stock', 'bouillon', 'seasoning', 'marinade', 'rub', 'gravy', 'mix', 'powder',
   'drink', 'juice', 'smoothie', 'shake', 'yogurt', 'creamer', 'cheese', 'noodle', 'pasta', 'ramen', 'ricotta',
   'soap', 'shampoo', 'conditioner', 'lotion', 'candle', 'freshener', 'spray', 'wipe', 'detergent', 'cleaner', 'filter', 'mug',
-  'treat', 'dog', 'cat', 'pet', 'kibble', 'bone', 'baby', 'infant', 'toddler', 'gummy', 'gummies', 'vitamin', 'supplement',
-  'extract', 'syrup', 'spread', 'dip', 'jam', 'jelly', 'preserve', 'pudding', 'gelatin', 'popsicle', 'bar', 'bite', 'chip', 'crisp',
+  'treat', 'dog', 'cat', 'pet', 'kibble', 'bone', 'infant', 'toddler', 'gummy', 'gummies', 'vitamin', 'supplement',
+  'extract', 'syrup', 'spread', 'dip', 'jam', 'jelly', 'preserve', 'pudding', 'gelatin', 'hash', 'fry', 'popsicle', 'bar', 'bite', 'chip', 'crisp',
   'nugget', 'tender', 'patty', 'burger', 'sausage', 'jerky', 'salad', 'sandwich', 'wrap', 'pizza', 'meal', 'entree', 'kit',
   // Compound-modifier nouns: "peanut butter", "cream cheese", "macaroni and cheese", "beef base",
   // "butter lettuce". Without these the head noun matched and the product scored as a real hit.
@@ -110,7 +110,7 @@ const TRAPS = new Set([
  * Debbie's Christmas Tree Cakes are food), 'decorations' (cake decorations are baking aisle) or
  * 'stocking' (a candy-filled stocking is candy).
  */
-const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub)\b/i;
+const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\b/i;
 
 /**
  * Qualifiers that turn a trap noun back into an ordinary description of the searched product.
@@ -225,6 +225,12 @@ export function queryTokens(q) {
 // Flavoured waters named after the drink they taste of. Whole Foods' "Spiced Cider Sparkling Water"
 // was Chicago's best price for sparkling cider in the Christmas run, "63% less" than real cider.
 // Whole-name, because 'water' alone is not a trap: Carr's Table Water Crackers are crackers.
+// Baby FOOD, found by what it is rather than by the word 'baby'. 'baby' was a trap, so Baby Spinach,
+// Baby Carrots, Baby Gold Potatoes and Baby Swiss all scored 0.37 against their own names and were
+// hidden (the St. Patrick's run: a bag of baby carrots never answered "carrots").
+const BABY_PRODUCT_RE = /\bbaby (?:foods?|formula|wipes?|puree|cereal|shampoo|lotion|wash|oil|powder|snacks?|puffs|teethers?|yogurt melts)\b|\bgerber\b|\bbeech-?nut\b|\bstage [1-4]\b|\bfor babies\b/i;
+const WANTS_BABY_RE = /\bbaby (?:food|formula|cereal|wipes?)\b|\bformula\b|\bgerber\b|\bbeech-?nut\b|\binfant\b|\btoddler\b/i;
+
 const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
 const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
 
@@ -345,6 +351,7 @@ export function relevance(query, product, opts = {}) {
   const wantsImitation = IMITATION_RE.test(normalize(query)) || IMITATION_CATEGORY_RE.test(normalize(query));
   if (IMITATION_RE.test(nameNorm) && !wantsImitation) mult *= 0.3;
   if (WATER_DRINK_RE.test(nameNorm) && !WANTS_WATER_RE.test(normalize(query))) mult *= 0.3;
+  if (BABY_PRODUCT_RE.test(nameNorm) && !WANTS_BABY_RE.test(normalize(query))) mult *= 0.2;
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the
   // position rules deliberately look past "in"/"with" phrases, which is where the giveaway sits.
   if (NON_GROCERY_RE.test(nameNorm)) mult *= 0.15;

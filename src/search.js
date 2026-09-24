@@ -28,8 +28,8 @@ const STORE_TIMEOUT = 35000;
 // v9: Whole Foods sale dates are calendar days (shared/deals.js wallClock); a v8 entry dropped a
 // sale price at 7 pm Central on the sale's last day and showed the regular price instead; and
 // eggnog and buttermilk are liquids (shared/units.js), compared per gallon, not per pound; and the
-// Christmas-run matcher fixes (Ocean Spray, candy canes, holiday decor, flavoured waters) change which
-// listing wins.
+// Christmas- and St. Patrick's-run matcher fixes (Ocean Spray, candy canes, holiday decor, flavoured
+// waters, corned beef hash, baby vegetables) change which listing wins.
 const CACHE_VERSION = 9;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
