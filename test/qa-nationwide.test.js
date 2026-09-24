@@ -165,3 +165,13 @@ test('control: real juice, juice cocktail and a shopper who asks for punch are u
   assert.ok(relevance('fruit punch', { name: 'Hawaiian Punch Fruit Juicy Red' }) >= RELEVANT);
   assert.ok(relevance('sunny d', { name: 'Sunny D Tangy Original' }) >= RELEVANT);
 });
+
+// DEFECT (Charlotte/Dallas/St. Louis audit): every Instacart chain came back unresolved at once. The
+// directory fails every lookup queued on a retailer that has answered nothing for PROBE_TIMEOUT
+// (15 s), but one Instacart storefront request is allowed 20 s: a slow-but-permitted first load
+// failed all 14-20 chains behind it, and onboarding showed 3 stores instead of 13.
+import { PROBE_TIMEOUT } from '../src/directory.js';
+import { STOREFRONT_TIMEOUT } from '../src/adapters/instacart.js';
+test('DEFECT (Charlotte): the directory waits longer than one permitted Instacart request', () => {
+  assert.ok(PROBE_TIMEOUT > STOREFRONT_TIMEOUT, `${PROBE_TIMEOUT} ms must outlast a ${STOREFRONT_TIMEOUT} ms request`);
+});

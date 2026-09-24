@@ -33,7 +33,12 @@ import { geocodeZip, stateCode } from './geo.js';
 const OWN_SALES_FEED = new Set(['wholefoods']);
 
 const PROBE_CONCURRENCY = 4;
-const PROBE_TIMEOUT = 15000;
+// How long a retailer may go without answering ANYTHING before every lookup queued on it fails
+// (http.js withStallTimeout). It must outlast the slowest single request the adapters allow, or one
+// slow-but-permitted Instacart storefront load (up to 20 s) could fail every chain queued behind
+// it. (In the Charlotte, Dallas and St. Louis audits all Instacart chains went unresolved at once;
+// a re-run showed Instacart rate-limiting too, so this was at most part of it.)
+export const PROBE_TIMEOUT = 25000;
 
 // How long a build with an unanswered probe is trusted before it is rebuilt. See directory().
 export const UNRESOLVED_RETRY_MS = 10 * MIN;

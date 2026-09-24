@@ -17,6 +17,10 @@ import { getKV, setKV, delKV } from '../db.js';
 import { makeProduct, money, settleByStatedCount, slugStates, slugConfirms } from '../normalize.js';
 import { parseSize, sizeFromName } from '../../shared/units.js';
 
+// The longest one request to Instacart may take (a storefront page or a session bootstrap). A
+// caller's stall limit on the whole host must be longer than this: src/directory.js PROBE_TIMEOUT.
+export const STOREFRONT_TIMEOUT = 20000;
+
 const FALLBACK_HASHES = {
   SearchResultsPlacements: 'c127efb3fa85276388954593f2c1a27eb0775dd7b0964e39c949e7fd89c7ef19',
   Items: '396b053077ec2644bac71a1876c3bbdc86d72833f1dbb3f4da56c9a280864372',
@@ -75,7 +79,7 @@ async function createSession(cfg, zip, { reset }) {
   const reuse = saved && Date.now() - saved.created < SESSION_MAX_AGE;
   const jar = reuse ? CookieJar.from(saved.cookies) : new CookieJar();
   const storefront = `${cfg.base}/store/${cfg.slug}/storefront`;
-  let res = await request(storefront, { jar, timeout: 20000, headers: { accept: 'text/html' } });
+  let res = await request(storefront, { jar, timeout: STOREFRONT_TIMEOUT, headers: { accept: 'text/html' } });
   let html = res.text;
 
   if (!jar.has('__Host-instacart_sid')) {
@@ -89,12 +93,12 @@ async function createSession(cfg, zip, { reset }) {
       jar,
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ operationName: op, variables: { postalCode: zip }, extensions: { persistedQuery: { version: 1, sha256Hash: hash } } }),
-      timeout: 20000,
+      timeout: STOREFRONT_TIMEOUT,
     });
     if (!jar.has('__Host-instacart_sid')) {
       throw new Error(`Could not start a guest session (HTTP ${r.status})`);
     }
-    res = await request(storefront, { jar, timeout: 20000, headers: { accept: 'text/html' } });
+    res = await request(storefront, { jar, timeout: STOREFRONT_TIMEOUT, headers: { accept: 'text/html' } });
     html = res.text;
   }
 
@@ -123,7 +127,7 @@ async function gqlRaw(cfg, session, op, variables) {
   const hash = session.hashes[op];
   if (!hash) throw new Error(`No hash known for ${op}`);
   const url = `${cfg.base}/graphql?operationName=${op}&variables=${encodeURIComponent(JSON.stringify(variables))}&extensions=${encodeURIComponent(JSON.stringify({ persistedQuery: { version: 1, sha256Hash: hash } }))}`;
-  const res = await request(url, { jar: session.jar, timeout: 20000, headers: { accept: 'application/json' } });
+  const res = await request(url, { jar: session.jar, timeout: STOREFRONT_TIMEOUT, headers: { accept: 'application/json' } });
   if (res.status === 401 || res.status === 403) {
     const e = new HttpError(`Session rejected (HTTP ${res.status})`, { status: res.status });
     e.code = 'AUTH';
