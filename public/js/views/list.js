@@ -181,7 +181,7 @@ function PlanView({ plan, onRefresh, planning }) {
                   <${ProductImage} src=${c.product.image} size=${34} />
                   <div class="grow">
                     <div style=${{ fontWeight: 600 }}>${i.qty > 1 ? `${i.qty} × ` : ''}${i.text}</div>
-                    <div class="muted small">${c.product.url ? html`<a href=${c.product.url} target="_blank" rel="noopener noreferrer" title=${linkDestination(c.product.url, storeInfo(storeId))?.text}>${c.product.name}</a>` : c.product.name}${c.product.size ? ` · ${c.product.size}` : ''} · ${money2(c.product.price)}${c.product.soldBy === 'lb' ? '/lb' : ''}${c.product.onSale ? ' · on sale' : ''}${c.product.priceBasis && c.product.priceBasis !== 'shelf' ? html` · <span title=${BASIS_TITLE[c.product.priceBasis]}>${BASIS_LABEL[c.product.priceBasis]}</span>` : ''}</div>
+                    <div class="muted small">${c.product.url ? html`<a href=${c.product.url} target="_blank" rel="noopener noreferrer" title=${linkDestination(c.product.url, storeInfo(storeId))?.text}>${c.product.name}</a>` : c.product.name}${c.product.size ? ` · ${c.product.size}` : ''} · ${money2(c.product.price)}${c.product.soldBy === 'lb' ? '/lb' : ''}${c.product.onSale ? ' · on sale' : ''}${c.product.priceBasis ? html` · <span title=${BASIS_TITLE[c.product.priceBasis]}>${BASIS_LABEL[c.product.priceBasis] || BASIS_LABEL.online}</span>` : ''}</div>
                   </div>
                   <div class="num" style=${{ fontWeight: 650, textAlign: 'right' }}>
                     ${money2(c.cost)}${c.est ? html`<span class="muted small"> est.</span>` : ''}

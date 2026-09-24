@@ -79,7 +79,14 @@ export async function startAppServer({ api = {}, headers = {} } = {}) {
       if (h && h.sse) {
         res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store' });
         for (const [event, data] of h.sse) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+        // { sse, hold }: keep the stream open until `hold` settles (stores still answering).
+        if (h.hold) await h.hold;
         return res.end();
+      }
+      // { status, body }: an error answer (the stub server's only way to say "this failed").
+      if (h && typeof h.status === 'number' && 'body' in h) {
+        res.writeHead(h.status, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify(h.body));
       }
       res.writeHead(200, { 'content-type': 'application/json' });
       return res.end(JSON.stringify(h));

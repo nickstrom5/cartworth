@@ -29,7 +29,8 @@ export async function geocodeZip(zip) {
           break;
         }
       }
-      if (!p) throw new Error(`ZIP ${zip} was not found`);
+      // The visitor's mistake, not a server fault: a 404, and not logged as a crash (launch review).
+      if (!p) throw Object.assign(new Error(`ZIP ${zip} was not found`), { status: 404 });
       // Territories come back with a FIPS number rather than a postal abbreviation.
       const abbr = String(p['state abbreviation'] || '').trim();
       const state = /^[A-Z]{2}$/.test(abbr) ? abbr : country.toUpperCase();

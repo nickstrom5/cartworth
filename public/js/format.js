@@ -128,6 +128,7 @@ export function capitalize(s) {
 // trust a number is owed the name of the place it came from.
 export const BASIS_LABEL = { shelf: 'shelf price', online: 'online (Instacart) price', national: 'national price' };
 export const BASIS_TITLE = {
+  shelf: 'The store\u2019s own in-store (shelf) price for its location nearest you.',
   online: 'From the store\u2019s Instacart listing for its location nearest you. Instacart prices can run higher than the shelf price in the store.',
   national: 'From Instacart\u2019s chain-wide listing, not a store near you. The shelf price at your local store may differ.',
 };
@@ -136,7 +137,9 @@ export const BASIS_TITLE = {
 // row itself has to carry the provenance: a shopper who sees Jewel-Osco's butter at $7.99 here and
 // cheaper in Jewel's own app should be able to tell, from the row alone, that $7.99 is Jewel's
 // price on Instacart.
-export const BASIS_BADGE = { online: 'Instacart', national: 'national' };
+// Every price says where it came from, the shelf included (the owner's rule; the launch review found
+// shelf prices were the one kind left unlabelled, on the headline too).
+export const BASIS_BADGE = { shelf: 'shelf', online: 'Instacart', national: 'national' };
 
 /**
  * The same provenance as a visible sentence, for the product sheet — the one place with room to

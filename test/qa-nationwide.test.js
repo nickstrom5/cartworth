@@ -276,3 +276,12 @@ test('DEFECT (Phoenix): corned beef filed under Canned Meat is not the corned be
   assert.ok(relevance('corned beef', { name: 'Corned Beef Brisket Point Cut', category: 'Beef' }) >= RELEVANT);
   assert.ok(relevance('green beans', { name: 'Del Monte Cut Green Beans', category: 'Canned Vegetables' }) >= RELEVANT, 'canned green beans stay (Thanksgiving)');
 });
+
+// DEFECT (launch review): an unknown ZIP was a 500 and logged as a server fault. It is a 404.
+test('DEFECT (launch): an unknown ZIP is a 404, not a server error', async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => (String(url).includes('zippopotam.us') ? new Response('{}', { status: 404 }) : realFetch(url));
+  try {
+    await assert.rejects(geocodeZip('00001'), (e) => e.status === 404 && /not found/.test(e.message));
+  } finally { globalThis.fetch = realFetch; }
+});

@@ -13,6 +13,8 @@ export function Onboarding() {
   const stores = useStore((s) => s.stores);
   const settings = useStore((s) => s.settings);
   const directory = useStore((s) => s.directory);
+  const directoryError = useStore((s) => s.directoryError);
+  const directoryLoading = useStore((s) => s.directoryLoading);
   const place = useStore((s) => s.place);
   const [zip, setZip] = useState('');
   const [busy, setBusy] = useState(false);
@@ -20,21 +22,23 @@ export function Onboarding() {
   const [step, setStep] = useState(settings?.zip ? 2 : 1);
 
   useEffect(() => {
-    if (step === 2 && !directory) loadDirectory();
-  }, [step, directory]);
+    if (step === 2 && !directory && !directoryLoading && !directoryError) loadDirectory();
+  }, [step, directory, directoryLoading, directoryError]);
 
-  const submit = async (e) => {
+  // Straight to the store step. The first look at a new ZIP asks each chain one at a time and takes
+  // up to a minute; waiting for it here left a first-time visitor on a silent spinner on the ZIP
+  // form for all of it (the launch review's live journey).
+  const submit = (e) => {
     e.preventDefault();
     setBusy(true);
     setErr(null);
-    try {
-      await saveSettings({ zip }, { quiet: true });
-      setStep(2);
-    } catch (e2) {
-      setErr(e2.message);
-    } finally {
-      setBusy(false);
-    }
+    setStep(2);
+    saveSettings({ zip }, { quiet: true })
+      .catch((e2) => {
+        setErr(e2.message);
+        setStep(1);
+      })
+      .finally(() => setBusy(false));
   };
 
   if (step === 1)
@@ -57,7 +61,7 @@ export function Onboarding() {
       <div class="muted small">Works anywhere in the US. Your ZIP is only used to find the nearest store of each chain, and it is saved in this browser — not on the server.</div>
     </div>`;
 
-  const loading = !directory;
+  const loading = !directory && !directoryError;
   // 'national' counts: the price is real, it just belongs to the chain rather than to a store near
   // you. In rural ZIPs it is often the only source there is, so dropping it would make Cartworth
   // claim it found nothing when it found four.
@@ -105,8 +109,21 @@ export function Onboarding() {
 
   return html`<div class="card onboard">
     <h1>Stores near ${place?.city || `ZIP ${settings?.zip}`}</h1>
-    ${loading
-      ? html`<div class="row muted"><${Spinner} /> Checking which chains serve your ZIP…</div>`
+    ${!directory && directoryError
+      ? html`<${Notice} kind="bad" icon="alert">
+          ${/not found/i.test(directoryError)
+            ? `There’s no US ZIP code ${settings?.zip || ''}. Check the number and try again.`
+            : `Cartworth couldn’t look up the stores near ${settings?.zip || 'this ZIP'} just now. Try again in a moment.`}
+          <div class="row" style=${{ gap: 8, marginTop: 8 }}>
+            ${!/not found/i.test(directoryError) && html`<button class="btn btn-sm" onClick=${() => loadDirectory(true)} disabled=${directoryLoading}>${directoryLoading ? 'Trying…' : 'Try again'}</button>`}
+            <button class="btn btn-sm" onClick=${() => { setStep(1); setZip(settings?.zip || ''); }}>Change ZIP</button>
+          </div>
+        </${Notice}>`
+      : loading
+      ? html`<div role="status">
+          <div class="row muted"><${Spinner} /> Checking which chains serve your ZIP…</div>
+          <div class="muted small" style=${{ marginTop: 6 }}>The first look at a ZIP takes up to a minute: Cartworth asks each store near you, one at a time, so no store is flooded. After that it’s instant.</div>
+        </div>`
       : html`<div class="ink2">
           Cartworth found <b>${local.length}</b> ${local.length === 1 ? 'store' : 'stores'} it can price
           ${adsOnly.length ? html` and <b>${adsOnly.length}</b> more with a weekly ad` : ''} within ${directory.maxMiles} miles${national.length

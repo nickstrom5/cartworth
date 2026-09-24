@@ -207,7 +207,8 @@ function Results({ search, settings }) {
 
   const prefs = { prime: settings?.prime, cardPrices: settings?.cardPrices };
   const results = search.results;
-  const loading = Object.values(results).some((r) => r.status === 'loading');
+  const pendingStores = Object.values(results).filter((r) => r.status === 'loading').length;
+  const loading = pendingStores > 0;
 
   const model = useMemo(() => {
     const all = [];
@@ -425,15 +426,16 @@ function Results({ search, settings }) {
       <div class="side-sticky">
         ${winner
           ? html`<div class="card hero-best">
-              <div class="hero-label">Best price${include.length ? ` · ${include.join(', ')}` : ''}</div>
+              <div class="hero-label">${loading ? 'Best price so far' : 'Best price'}${include.length ? ` · ${include.join(', ')}` : ''}</div>
               <div class="hero-value">${unitPrice(winner.cmp, displayUnit).text}<span class="per">/${unitLabel(displayUnit)}</span></div>
               <div class="row wrap" style=${{ gap: 6 }}>
                 <${StoreTag} id=${winner.storeId} short=${false} />
                 ${winner.cmpEst && html`<span class="badge" title="Estimated from a typical piece weight">est.</span>`}
-                ${winner.priceBasis !== 'shelf' && html`<span class="badge badge-outline" title=${BASIS_TITLE[winner.priceBasis]}>${BASIS_LABEL[winner.priceBasis]}</span>`}
+                ${winner.priceBasis && html`<span class="badge badge-outline" title=${BASIS_TITLE[winner.priceBasis]}>${BASIS_LABEL[winner.priceBasis] || BASIS_LABEL.online}</span>`}
               </div>
               <div class="hero-sub"><a href="#" onClick=${(e) => { e.preventDefault(); openProduct(winner, displayUnit); }}>${winner.name}</a>${winner.size ? ` · ${winner.size}` : ''} · ${money2(effPrice(winner, prefs))}${winner.soldBy === 'lb' ? '/lb' : ''}</div>
               ${bestRows[1] && savingsLine(winner, bestRows[1], displayUnit) && html`<div class="muted small">${savingsLine(winner, bestRows[1], displayUnit)}</div>`}
+              ${loading && html`<div class="muted small">${pendingStores} more ${pendingStores === 1 ? 'store is' : 'stores are'} still answering; this can change.</div>`}
             </div>`
           : loading
             ? html`<div class="card hero-best"><div class="hero-label">Best price</div><div class="skeleton" style=${{ height: 40, width: '70%' }}></div><div class="skeleton" style=${{ height: 14, width: '90%' }}></div></div>`
@@ -442,7 +444,7 @@ function Results({ search, settings }) {
         html`<div class="card card-pad">
           <h2>Cheapest match at each store <span class="muted small" style=${{ fontWeight: 400 }}>per ${unitLabel(displayUnit)}</span></h2>
           <${BestBars}
-            rows=${bestRows.map((p, i) => ({ id: p.storeId, storeId: p.storeId, label: storeInfo(p.storeId).short, value: p.shown, text: unitPrice(p.cmp, displayUnit).text, sub: `${p.name}${p.size ? ` · ${p.size}` : ''} — ${money2(effPrice(p, prefs))}${p.soldBy === 'lb' ? '/lb' : ''}`, best: i === 0, close: verdicts[p.storeId] === 'close', basis: p.priceBasis !== 'shelf' ? BASIS_BADGE[p.priceBasis] || BASIS_BADGE.online : null }))}
+            rows=${bestRows.map((p, i) => ({ id: p.storeId, storeId: p.storeId, label: storeInfo(p.storeId).short, value: p.shown, text: unitPrice(p.cmp, displayUnit).text, sub: `${p.name}${p.size ? ` · ${p.size}` : ''} — ${money2(effPrice(p, prefs))}${p.soldBy === 'lb' ? '/lb' : ''}`, best: i === 0, close: verdicts[p.storeId] === 'close', basis: p.priceBasis ? BASIS_BADGE[p.priceBasis] || BASIS_BADGE.online : null }))}
             onPick=${(r) => openProduct(bestRows.find((p) => p.storeId === r.storeId), displayUnit)}
             note=${bestRows.some((p) => p.priceBasis === 'national')
               ? 'Some stores show online (Instacart) prices, which can run higher than the shelf. \u201CNational\u201D means Instacart\u2019s chain-wide listing rather than a store near you.'
@@ -540,7 +542,7 @@ export function ProductRow({ p, displayUnit, best, prefs, q, compact }) {
         ${rose && html`<span class="badge badge-warn" title="Since your last check"><${Icon} name="arrowUp" size=${11} stroke=${3} /> from ${money2(h.prev)}</span>`}
         ${oos && html`<span class="badge badge-bad">Out of stock</span>`}
         ${/low/i.test(p.stock || '') && html`<span class="badge badge-warn">Low stock</span>`}
-        ${p.priceBasis !== 'shelf' && html`<span class="badge badge-outline" title=${BASIS_TITLE[p.priceBasis]}>${BASIS_BADGE[p.priceBasis] || BASIS_BADGE.online}</span>`}
+        ${p.priceBasis && html`<span class="badge badge-outline" title=${BASIS_TITLE[p.priceBasis]}>${BASIS_BADGE[p.priceBasis] || BASIS_BADGE.online}</span>`}
         ${p.implausible &&
         html`<span
           class="badge warn"

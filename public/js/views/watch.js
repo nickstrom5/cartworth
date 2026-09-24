@@ -155,7 +155,7 @@ function WatchCard({ w }) {
         <div style=${{ fontSize: 30, fontWeight: 750, letterSpacing: '-0.02em', lineHeight: 1.1 }}>${bestShown.text}<span class="muted" style=${{ fontSize: 15, fontWeight: 600 }}>/${bestShown.unit}</span></div>
         <div class="row wrap small" style=${{ gap: 6, marginTop: 3 }}>
           <${StoreTag} id=${best[0]} />
-          ${best[1]?.priceBasis && best[1].priceBasis !== 'shelf' && html`<span class="badge badge-outline" title=${BASIS_TITLE[best[1].priceBasis]}>${BASIS_BADGE[best[1].priceBasis] || BASIS_BADGE.online}</span>`}
+          ${best[1]?.priceBasis && html`<span class="badge badge-outline" title=${BASIS_TITLE[best[1].priceBasis]}>${BASIS_BADGE[best[1].priceBasis] || BASIS_BADGE.online}</span>`}
           ${w.target != null &&
           (vsTarget <= 1e-9
             ? html`<span class="badge badge-good"><${Icon} name="check" size=${11} stroke=${3} /> at/below target ${money2(w.target)}</span>`
@@ -178,7 +178,7 @@ function WatchCard({ w }) {
                 ${[s.size, s.soldBy === 'lb' ? `${money2(s.price)}/lb` : money2(s.price)].filter(Boolean).join(' · ')}
                 ${s.onSale && html` · <span style=${{ color: 'var(--deal-ink)', fontWeight: 600 }}>sale${s.regularPrice ? ` (reg ${money2(s.regularPrice)})` : ''}</span>`}
                 ${s.promo && html` · <span style=${{ color: 'var(--deal-ink)' }}>${s.promo}</span>`}
-                ${s.priceBasis !== 'shelf' && ` \u00b7 ${BASIS_LABEL[s.priceBasis] || 'online price'}`}
+                ${s.priceBasis && ` \u00b7 ${BASIS_LABEL[s.priceBasis] || 'online price'}`}
               </div>
             </td>
             <td class="r"><b>${du ? unitPrice(s.unitPerBase, du).text : ''}</b>${s.est ? html`<span class="muted"> est.</span>` : ''}</td>

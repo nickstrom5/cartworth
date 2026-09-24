@@ -639,3 +639,93 @@ test('DEFECT (nationwide audit): lookups that timed out are named, and "Check ag
     srv = await startAppServer({ api: api() });
   }
 });
+
+
+// DEFECT (launch review, live journey): the first look at a new ZIP takes up to a minute, and the
+// ZIP form waited for all of it on a silent spinner. A failed lookup then left the store step on
+// "Checking…" for ever, and an unknown ZIP was a 500. The store step now appears at once and says
+// why it is slow, a failure offers Try again and Change ZIP, and an unknown ZIP says so.
+async function onboardWith(directoryHandler, zip) {
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/directory': directoryHandler }) });
+  await page.viewport(390, 844);
+  await openApp(page, srv.origin, { storage: {}, hash: '#/' });
+  await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'the ZIP step' });
+  await page.eval(`(() => { const i = document.querySelector('input[aria-label="Your ZIP code"]'); i.value = '${zip}'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
+}
+
+test('DEFECT (launch): a slow first store lookup shows the store step at once, and says why', { skip: SKIP }, async () => {
+  let release;
+  const slow = new Promise((r) => (release = r));
+  try {
+    await onboardWith(async () => { await slow; return { ...fx.directory }; }, '60618');
+    await page.waitFor(`/up to a minute/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the store step, explaining the wait' });
+    release();
+    await page.waitFor(`/found \\d+ stores?/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the stores, once found' });
+  } finally {
+    release();
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+test('DEFECT (launch): a failed store lookup offers Try again instead of spinning for ever', { skip: SKIP }, async () => {
+  let calls = 0;
+  try {
+    await onboardWith(() => { calls += 1; if (calls === 1) return { status: 503, body: { error: 'Could not reach the store site (network)' } }; return { ...fx.directory }; }, '60618');
+    await page.waitFor(`/couldn’t look up the stores/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the failure notice' });
+    await page.eval(`[...document.querySelectorAll('button')].find((b) => /Try again/.test(b.textContent)).click()`);
+    await page.waitFor(`/found \\d+ stores?/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the stores after retrying' });
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+test('DEFECT (launch): an unknown ZIP says so and offers Change ZIP', { skip: SKIP }, async () => {
+  try {
+    await onboardWith(() => ({ status: 404, body: { error: 'ZIP 00000 was not found' } }), '00000');
+    await page.waitFor(`/no US ZIP code 00000/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the not-found notice' });
+    await page.eval(`[...document.querySelectorAll('.onboard button')].find((b) => /Change ZIP/.test(b.textContent)).click()`);
+    await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'back on the ZIP step' });
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+
+// DEFECT (launch review, live journey): the owner's rule is that every price says where it came
+// from, but shelf prices were the one kind with no label: on the result rows, on the per-store bars,
+// and on the headline "Best price" itself. And the headline read "Best price" while seven of eight
+// stores were still answering.
+test('DEFECT (launch): every result row and the headline say where the price came from, shelf included', { skip: SKIP }, async () => {
+  await page.viewport(1280, 900);
+  await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare?q=brown%20sugar' });
+  await page.waitFor(`document.querySelectorAll('[aria-label="Add to list"]').length > 5 && !!document.querySelector('.hero-best .hero-value')`, { what: 'results and a best price' });
+  const unlabelled = await page.eval(`[...document.querySelectorAll('.plist > *')].filter((row) => row.querySelector('[aria-label="Add to list"]') && !/\\b(shelf|instacart|national)\\b/i.test(row.innerText)).length`);
+  assert.equal(unlabelled, 0, 'rows with no source label');
+  assert.match(await page.eval(`document.querySelector('.hero-best').innerText`), /shelf price|online \\(instacart\\) price|national price/i);
+});
+
+test('DEFECT (launch): while stores are still answering, the headline says "so far"', { skip: SKIP }, async () => {
+  let release;
+  const hold = new Promise((r) => (release = r));
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/search': (req, url) => {
+    const asked = (url.searchParams.get('stores') || '').split(',').filter(Boolean);
+    const aldi = fx.search['brown sugar'].find((r) => r.storeId === 'aldi');
+    return { sse: [['start', { query: 'brown sugar', stores: asked, zip: fx.zip }], ['store', aldi]], hold };
+  } }) });
+  try {
+    await page.viewport(1280, 900);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare?q=brown%20sugar' });
+    await page.waitFor(`/Best price so far/i.test(document.querySelector('.hero-best')?.innerText || '')`, { what: 'the provisional headline' });
+    assert.match(await page.eval(`document.querySelector('.hero-best').innerText`), /still answering/);
+  } finally {
+    release();
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
