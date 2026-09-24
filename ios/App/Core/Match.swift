@@ -100,11 +100,13 @@ enum Match {
     /// Mirrors BABY_PRODUCT_RE / WANTS_BABY_RE in shared/match.js.
     private static let babyProductRx = Rx("\\bbaby (?:foods?|formula|wipes?|puree|cereal|shampoo|lotion|wash|oil|powder|snacks?|puffs|teethers?|yogurt melts)\\b|\\bgerber\\b|\\bbeech-?nut\\b|\\bstage [1-4]\\b|\\bfor babies\\b")
     private static let wantsBabyRx = Rx("\\bbaby (?:food|formula|cereal|wipes?)\\b|\\bformula\\b|\\bgerber\\b|\\bbeech-?nut\\b|\\binfant\\b|\\btoddler\\b")
+    /// Fresh fruit bought loose (not vegetables: frozen green beans answer "green beans"). Port of FRESH_FRUIT_RE.
+    private static let freshFruitRx = Rx("\\b(?:bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberries|blueberries|raspberries|blackberries|cherries|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\\b")
     private static let waterDrinkRx = Rx("\\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\\b|\\bseltzer\\b|\\bla croix\\b")
     private static let wantsWaterRx = Rx("\\bwater\\b|\\bseltzer\\b|\\bla croix\\b")
     /// Juice-flavoured drinks: Costco's "Sunny D Citrus Punch", filed under Orange Juice, was
     /// Minneapolis's best orange juice. Port of JUICE_IMPOSTOR_RE in shared/match.js.
-    private static let juiceImpostorRx = Rx("\\bpunch\\b|\\bjuice (?:drink|beverage|cocktail blend)s?\\b|\\bsunny ?d\\b|\\bhi[- ]?c\\b|\\bkool[- ]?aid\\b|\\bcapri ?sun\\b|\\btampico\\b|\\bdrink mix\\b")
+    private static let juiceImpostorRx = Rx("\\bpunch\\b|\\b(?:orange|lemon|lime|cherry|grape|power|gator)ade\\b|\\bjuice (?:drink|beverage|cocktail blend)s?\\b|\\bsunny ?d\\b|\\bhi[- ]?c\\b|\\bkool[- ]?aid\\b|\\bcapri ?sun\\b|\\btampico\\b|\\bdrink mix\\b")
     private static let wantsJuiceDrinkRx = Rx("\\bpunch\\b|\\bdrinks?\\b|\\bbeverage\\b|\\bsunny ?d\\b|\\bhi[- ]?c\\b|\\bkool[- ]?aid\\b|\\bcapri ?sun\\b|\\btampico\\b")
     private static let juiceWordRx = Rx("\\bjuice\\b")
     private static let imitationRx = Rx("\\btastes?\\s+like\\b|\\bimitation\\b|\\b(?:butter|cheese|milk|meat|crab)[- ]style\\b|\\balternative to\\b|\\bsubstitute\\b")
@@ -253,7 +255,13 @@ enum Match {
         // matching instead of the product: Trader Joe's files apricot preserves under "Nut Butters
         // & Fruit Spreads", which contains "butter", and chicken thighs under "Chicken & Turkey".
         let qsetAll = Set(qt)
-        let catCoversQuery = !catTok.isEmpty && qt.allSatisfy { catTok.contains($0) }
+        // A category that names a processed FORM covers only a shopper who asked for that form
+        // ("Dried Bananas", "Frozen Bananas" were each store's "bananas"). Only for fresh fruit. Port of `processedCat` in shared/match.js.
+        let freshFruit = freshFruitRx.test(normalize(query))
+        let processedCat = freshFruit && catTok.contains(where: { w in
+            ["dried", "dehydrated", "freeze", "canned", "frozen"].contains(w) && !qt.contains(w)
+        })
+        let catCoversQuery = !catTok.isEmpty && qt.allSatisfy { catTok.contains($0) } && !processedCat
             && !catTok.contains(where: { traps.contains($0) && !qsetAll.contains($0) })
 
         // The same words are invisible to the prefix fallback below, or "Whole Foods Market" would
@@ -271,7 +279,7 @@ enum Match {
         let qNorm = normalize(query)
         if !qNorm.isEmpty && nameNorm.contains(qNorm) { score += 0.12 }
         let head = qt[qt.count - 1]
-        if !catTok.isEmpty && catTok.contains(head) { score += 0.08 }
+        if !catTok.isEmpty && catTok.contains(head) && !processedCat { score += 0.08 }
 
         let words = tokens(name)
         let qset = Set(qt)

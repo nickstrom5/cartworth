@@ -231,6 +231,9 @@ export function queryTokens(q) {
 const BABY_PRODUCT_RE = /\bbaby (?:foods?|formula|wipes?|puree|cereal|shampoo|lotion|wash|oil|powder|snacks?|puffs|teethers?|yogurt melts)\b|\bgerber\b|\bbeech-?nut\b|\bstage [1-4]\b|\bfor babies\b/i;
 const WANTS_BABY_RE = /\bbaby (?:food|formula|cereal|wipes?)\b|\bformula\b|\bgerber\b|\bbeech-?nut\b|\binfant\b|\btoddler\b/i;
 
+// Fresh fruit bought loose, for the processed-category rule in relevance(). Not vegetables: frozen
+// green beans are a fair answer to "green beans" (the Thanksgiving run), frozen banana slices are not.
+const FRESH_FRUIT_RE = /\b(?:bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberries|blueberries|raspberries|blackberries|cherries|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\b/;
 const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
 const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
 
@@ -238,7 +241,7 @@ const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
 // category alone scored it 0.87: it was Minneapolis's best orange juice (the nationwide audit), and
 // ALDI names the same bottle "Sunnyd Tangy Original Orange Juice". A punch or a "juice drink" is
 // not juice. "From concentrate" IS juice (BENIGN_AFTER); a can of frozen concentrate is not.
-const JUICE_IMPOSTOR_RE = /\bpunch\b|\bjuice (?:drink|beverage|cocktail blend)s?\b|\bsunny ?d\b|\bhi[- ]?c\b|\bkool[- ]?aid\b|\bcapri ?sun\b|\btampico\b|\bdrink mix\b/i;
+const JUICE_IMPOSTOR_RE = /\bpunch\b|\b(?:orange|lemon|lime|cherry|grape|power|gator)ade\b|\bjuice (?:drink|beverage|cocktail blend)s?\b|\bsunny ?d\b|\bhi[- ]?c\b|\bkool[- ]?aid\b|\bcapri ?sun\b|\btampico\b|\bdrink mix\b/i;
 const WANTS_JUICE_DRINK_RE = /\bpunch\b|\bdrinks?\b|\bbeverage\b|\bsunny ?d\b|\bhi[- ]?c\b|\bkool[- ]?aid\b|\bcapri ?sun\b|\btampico\b/i;
 
 const IMITATION_RE = /\btastes?\s+like\b|\bimitation\b|\b(?:butter|cheese|milk|meat|crab)[- ]style\b|\balternative to\b|\bsubstitute\b/i;
@@ -284,8 +287,13 @@ export function relevance(query, product, opts = {}) {
   // A category that ALSO names a different food does not count, or the aisle sign starts matching
   // instead of the product: Trader Joe's files apricot preserves under "Nut Butters & Fruit
   // Spreads", which contains "butter", and chicken thighs under "Chicken & Turkey".
+  // A category that names a processed FORM covers only a shopper who asked for that form: "Dried
+  // Bananas" filed Key Food's freeze-dried banana snack, and "Frozen Bananas" Kroger's frozen
+  // slices, as each store's price for "bananas" (the capture sweep). Only for fresh fruit:
+  // frozen raw chicken breasts are chicken breasts, frozen green beans are green beans.
+  const processedCat = FRESH_FRUIT_RE.test(normalize(query)) && [...catTok].some((w) => ['dried', 'dehydrated', 'freeze', 'canned', 'frozen'].includes(w) && !qt.includes(w));
   const catCoversQuery =
-    catTok.size > 0 && qt.every((t) => catTok.has(t)) && ![...catTok].some((w) => TRAPS.has(w) && !new Set(qt).has(w));
+    catTok.size > 0 && qt.every((t) => catTok.has(t)) && !processedCat && ![...catTok].some((w) => TRAPS.has(w) && !new Set(qt).has(w));
 
   // The same words are invisible to the prefix fallback below, or "Whole Foods Market" would hand
   // the query word back through `n.startsWith(t)` at 0.7 instead of 1.
@@ -303,7 +311,7 @@ export function relevance(query, product, opts = {}) {
   const qNorm = normalize(query);
   if (qNorm && nameNorm.includes(qNorm)) score += 0.12;
 
-  if (catTok.size && catTok.has(qt[qt.length - 1])) score += 0.08;
+  if (catTok.size && catTok.has(qt[qt.length - 1]) && !processedCat) score += 0.08;
 
   // Position-aware penalties around the head noun (the last query word).
   const head = qt[qt.length - 1];

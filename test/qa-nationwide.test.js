@@ -187,3 +187,21 @@ test('control: asking for the dish finds it, and "La" in a brand is not a dish',
   assert.ok(relevance('chicken a la king', { name: 'Stouffers Chicken a la King' }) >= RELEVANT);
   assert.ok(relevance('coffee', { name: 'La Colombe Coffee' }) >= RELEVANT);
 });
+
+// DEFECT (capture sweep, 616 searches in 7 states): a category naming a processed FORM was read as
+// covering the plain query. Kroger's "bananas" was Frozen Sliced Bananas and Key Food's a
+// freeze-dried banana snack, each filed under "Frozen/Dried Bananas"; Snapple Orangeade was filed
+// under Orange Juice.
+test('DEFECT (capture sweep): a "Dried/Frozen Bananas" category does not make a snack the bananas', () => {
+  assert.ok(relevance('bananas', { name: 'Crispy Green Crispy Fruit All Banana', category: 'Dried Bananas' }) < RELEVANT);
+  assert.ok(relevance('bananas', { name: 'Kroger® Frozen Sliced Bananas', category: 'Frozen Bananas' }) < RELEVANT);
+  assert.ok(relevance('bananas', { name: 'Kroger® Mercado Plantain Strips', category: 'Dried Bananas' }) < RELEVANT);
+  assert.ok(relevance('orange juice', { name: 'Snapple Orangeade', category: 'Orange Juice' }) < RELEVANT);
+});
+
+test('control: fresh bananas, asking for the form, and frozen raw chicken are unchanged', () => {
+  assert.ok(relevance('bananas', { name: 'Banana', category: 'Yellow Bananas' }) >= RELEVANT);
+  assert.ok(relevance('frozen bananas', { name: 'Kroger Frozen Sliced Bananas', category: 'Frozen Bananas' }) >= RELEVANT);
+  assert.ok(relevance('dried bananas', { name: 'Simply Dried Banana', category: 'Dried Bananas' }) >= RELEVANT);
+  assert.ok(relevance('boneless skinless chicken breast', { name: 'Tyson Boneless Skinless Chicken Breasts, 4 lb. (Frozen)', category: 'Frozen Chicken Breasts' }) >= RELEVANT);
+});

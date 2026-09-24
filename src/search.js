@@ -34,7 +34,9 @@ const STORE_TIMEOUT = 35000;
 // confirmation (normalize.js slugConfirms); a v9 entry priced a half gallon as 2 gal, $1.50/gal.
 // v11: juice-flavoured drinks (SunnyD citrus punch) are not juice, and "from concentrate" juice is.
 // v12: "<thing> a la <style>" is a prepared dish (Chicken a la King is not chicken).
-const CACHE_VERSION = 12;
+// v13: a "Dried/Frozen Bananas" category no longer makes a snack the shopper's bananas; -ade drinks
+// are not juice.
+const CACHE_VERSION = 13;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

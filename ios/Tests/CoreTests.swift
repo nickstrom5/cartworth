@@ -1716,6 +1716,16 @@ final class NationwideAuditTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "coffee", name: "La Colombe Coffee"), Match.relevant)
     }
 
+    /// Capture sweep: a category naming a processed form does not cover the plain query.
+    func testDefectProcessedCategoryIsNotThePlainThing() {
+        XCTAssertLessThan(Match.relevance(query: "bananas", name: "Crispy Green Crispy Fruit All Banana", category: "Dried Bananas"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "bananas", name: "Kroger® Frozen Sliced Bananas", category: "Frozen Bananas"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "orange juice", name: "Snapple Orangeade", category: "Orange Juice"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "bananas", name: "Banana", category: "Yellow Bananas"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "frozen bananas", name: "Kroger Frozen Sliced Bananas", category: "Frozen Bananas"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "boneless skinless chicken breast", name: "Tyson Boneless Skinless Chicken Breasts, 4 lb. (Frozen)", category: "Frozen Chicken Breasts"), Match.relevant)
+    }
+
     /// Charlotte: a lookup that failed is recorded as unresolved, not "no store". A directory cached
     /// before that field existed must still decode, or every phone would lose its store list.
     func testDirectoryCachedBeforeUnresolvedStillDecodes() throws {
