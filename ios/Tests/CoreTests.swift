@@ -1512,6 +1512,8 @@ final class ChristmasDatesTests: XCTestCase {
     private var chicago: Calendar = {
         var c = Calendar(identifier: .gregorian)
         c.timeZone = TimeZone(identifier: "America/Chicago")!
+        // "Thru Jan 5" is US order; pinned so the test passes on a Mac set to any region.
+        c.locale = Locale(identifier: "en_US")
         return c
     }()
     private func at(_ y: Int, _ mo: Int, _ d: Int, _ h: Int, _ mi: Int = 0) -> Date {

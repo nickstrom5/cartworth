@@ -276,6 +276,8 @@ enum SaleDates {
         let days = calendarDaysUntil(to, now: now, calendar: calendar)
         var style = Date.FormatStyle.dateTime
         style.timeZone = calendar.timeZone
+        // The calendar's locale (the device's, for Calendar.current), so a caller that pins one gets it.
+        style.locale = calendar.locale ?? .current
         if days == 0 { return "Ends today" }
         if days == 1 { return "Ends tomorrow" }
         if days < 7 { return "Ends \(to.formatted(style.weekday(.abbreviated)))" }
