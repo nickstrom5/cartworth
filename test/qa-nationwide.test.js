@@ -175,3 +175,15 @@ import { STOREFRONT_TIMEOUT } from '../src/adapters/instacart.js';
 test('DEFECT (Charlotte): the directory waits longer than one permitted Instacart request', () => {
   assert.ok(PROBE_TIMEOUT > STOREFRONT_TIMEOUT, `${PROBE_TIMEOUT} ms must outlast a ${STOREFRONT_TIMEOUT} ms request`);
 });
+
+// DEFECT (Dallas audit): Kimbala "Coffee a la Jaggery", 10.2 oz, was Dallas's best coffee, and
+// "Chicken a la King" (a frozen dinner) scored 0.92 for "chicken". "<thing> a la <style>" is a dish.
+test('DEFECT (Dallas): "<the thing> a la <style>" is a prepared dish, not the thing', () => {
+  assert.ok(relevance('coffee', { name: 'Coffee a la Jaggery', brand: 'Kimbala' }) < RELEVANT);
+  assert.ok(relevance('chicken', { name: 'Stouffers Chicken a la King' }) < RELEVANT);
+});
+
+test('control: asking for the dish finds it, and "La" in a brand is not a dish', () => {
+  assert.ok(relevance('chicken a la king', { name: 'Stouffers Chicken a la King' }) >= RELEVANT);
+  assert.ok(relevance('coffee', { name: 'La Colombe Coffee' }) >= RELEVANT);
+});

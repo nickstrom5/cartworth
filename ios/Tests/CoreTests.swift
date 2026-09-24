@@ -1708,6 +1708,14 @@ final class NationwideAuditTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "fruit punch", name: "Hawaiian Punch Fruit Juicy Red"), Match.relevant)
     }
 
+    /// Dallas: "<the thing> a la <style>" is a prepared dish, not the thing.
+    func testDefectALaIsADish() {
+        XCTAssertLessThan(Match.relevance(query: "coffee", name: "Coffee a la Jaggery", brand: "Kimbala"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "chicken", name: "Stouffers Chicken a la King"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "chicken a la king", name: "Stouffers Chicken a la King"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "coffee", name: "La Colombe Coffee"), Match.relevant)
+    }
+
     /// Charlotte: a lookup that failed is recorded as unresolved, not "no store". A directory cached
     /// before that field existed must still decode, or every phone would lose its store list.
     func testDirectoryCachedBeforeUnresolvedStillDecodes() throws {

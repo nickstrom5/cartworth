@@ -323,6 +323,9 @@ enum Match {
         let wantsImitation = imitationRx.test(qNormForImitation) || imitationCategoryRx.test(qNormForImitation)
         if imitationRx.test(nameNorm) && !wantsImitation { mult *= 0.3 }
         if waterDrinkRx.test(nameNorm) && !wantsWaterRx.test(qNormForImitation) { mult *= 0.3 }
+        // "Chicken a la King" is a frozen dinner, "Coffee a la Jaggery" a sweetened mix: "<the thing>
+        // a la <style>" names a prepared dish. Port of the same rule in shared/match.js.
+        if !qNormForImitation.contains(" a la ") && !qNormForImitation.hasPrefix("a la ") && nameNorm.contains("\(qNormForImitation) a la ") { mult *= 0.3 }
         if juiceWordRx.test(qNormForImitation) && juiceImpostorRx.test(nameNorm) && !wantsJuiceDrinkRx.test(qNormForImitation) { mult *= 0.3 }
         if babyProductRx.test(nameNorm) && !wantsBabyRx.test(qNormForImitation) { mult *= 0.2 }
         // Books, cookware and apparel that happen to name a food. Applied to the whole name because

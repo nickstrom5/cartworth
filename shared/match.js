@@ -358,6 +358,9 @@ export function relevance(query, product, opts = {}) {
   const wantsImitation = IMITATION_RE.test(normalize(query)) || IMITATION_CATEGORY_RE.test(normalize(query));
   if (IMITATION_RE.test(nameNorm) && !wantsImitation) mult *= 0.3;
   if (WATER_DRINK_RE.test(nameNorm) && !WANTS_WATER_RE.test(normalize(query))) mult *= 0.3;
+  // "Chicken a la King" is a frozen dinner and "Coffee a la Jaggery" (Kimbala, 10.2 oz, Dallas's
+  // best coffee in the audit) a sweetened mix: "<the thing> a la <style>" names a prepared dish.
+  { const q = normalize(query); if (!/\ba la\b/.test(q) && nameNorm.includes(`${q} a la `)) mult *= 0.3; }
   if (/\bjuice\b/.test(normalize(query)) && JUICE_IMPOSTOR_RE.test(nameNorm) && !WANTS_JUICE_DRINK_RE.test(normalize(query))) mult *= 0.3;
   if (BABY_PRODUCT_RE.test(nameNorm) && !WANTS_BABY_RE.test(normalize(query))) mult *= 0.2;
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the

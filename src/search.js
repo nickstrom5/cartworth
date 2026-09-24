@@ -33,7 +33,8 @@ const STORE_TIMEOUT = 35000;
 // v10: a size found only at the END of an Instacart slug is the stated size repeating itself, not
 // confirmation (normalize.js slugConfirms); a v9 entry priced a half gallon as 2 gal, $1.50/gal.
 // v11: juice-flavoured drinks (SunnyD citrus punch) are not juice, and "from concentrate" juice is.
-const CACHE_VERSION = 11;
+// v12: "<thing> a la <style>" is a prepared dish (Chicken a la King is not chicken).
+const CACHE_VERSION = 12;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**
