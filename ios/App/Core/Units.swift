@@ -29,6 +29,8 @@ struct ParsedSize: Codable, Hashable {
     /// "N ct, M oz": the name stated a count before the size, and whether M is each unit or all of
     /// them is not decidable from the words alone. See `Units.countWordFirstRx`.
     var countFirst: CountFirst? = nil
+    /// "M oz, N ct": a piece count after a weight. See `Units.containerInNameRx`.
+    var countAfter: CountFirst? = nil
     /// Set when the weight was recovered from a butter stick count (see
     /// `ProductFactory.butterSticks`): the number of quarter-pound sticks the retailer stated.
     var sticks: Int? = nil
@@ -220,7 +222,11 @@ enum Units {
     /// The hyphen in "12-pack" is not optional in the wild: Costco lists nearly every case that way
     /// ("16.9 fl oz, 12-pack"). Without it the size resolved to a bare count of 12 and the volume was
     /// thrown away, which prices a case of shakes per bottle.
-    private static let multiRxTrailing = Rx("\(num)\\s*(\(unitPattern))\\b[\\s,.]*-?[\\s,.]*(?<![\\d.])(\\d+)\\s*-?\\s*(?:pk\\.?|pack|ct\\.?|count)\\b")
+    private static let multiRxTrailing = Rx("\(num)\\s*(\(unitPattern))\\b[\\s,.]*-?[\\s,.]*(?<![\\d.])(\\d+)(\\s*-?\\s*)(pk\\.?|pack|ct\\.?|count)\\b")
+    /// "Yogurt Cups, 5.3 oz, 12 Count": a plural container word means the count after a weight is
+    /// N containers of M. Without one ("Cheese Slices, 8oz, 9ct") the weight is the package. Port of
+    /// CONTAINER_IN_NAME_RE in shared/units.js, which records the measurement behind it.
+    private static let containerInNameRx = Rx("\\b(?:cups|pouches|portions|packets|cans|bottles|jars|tubs|cartons|containers|boxes|bars|pods|sticks|packs|bags|cartridges|k-cups)\\b", caseInsensitive: true)
     private static let nameSizeRx = Rx("(\\d+\\s*(?:x|pk|pack|ct)?\\s*(?:/|x|-)?\\s*)?\(num)\\s*(\(unitPattern))\\b")
     private static let adjectiveRx = Rx("(\\d)\\s+(?:double|triple|mega|huge|giant|super|jumbo|family(?:\\s+size)?|big|regular|large|xl)\\s+(?=[a-z])")
     private static let perWeightRx = Rx("^(?:priced\\s+)?per\\s+(lb|pound|kg)\\b")
@@ -331,6 +337,14 @@ enum Units {
             u = lookup(t[2])
             n = Int(t[3] ?? "")
             m = t
+            // "8oz, 9ct": a weight followed by an unhyphenated piece count is the package; the count
+            // is kept for sizeFromName (see containerInNameRx).
+            let word = (t[5] ?? "").lowercased()
+            let pieceWord = (word.hasPrefix("ct") || word.hasPrefix("count")) && !(t[4] ?? "").contains("-")
+            if pieceWord, let uu = u, uu.dim == .weight, let nn = n, nn > 1, nn <= 200, let ee = each, ee > 0, !isDoseNotPackage(uu, ee) {
+                let one = round4(ee * uu.factor)
+                return ParsedSize(dim: uu.dim, base: one, amount: ee, unit: uu.key, count: 1, perWeight: false, range: false, text: s, countAfter: CountFirst(n: nn, unitBase: one))
+            }
         }
         if let m, let u {
             // "10-15 oz" is a range, not ten 15-oz packs. Any dash-joined pair of plain numbers
@@ -361,6 +375,16 @@ enum Units {
         return nil
     }
 
+    /// "Yogurt Cups, 5.3 oz, 12 Count": the name counts containers, so the count-after reading is N of M.
+    private static func packIfContainers(_ p: ParsedSize, _ name: String) -> ParsedSize {
+        guard let ca = p.countAfter, containerInNameRx.test(name) else { return p }
+        var pack = p
+        pack.base = round4(Double(ca.n) * ca.unitBase)
+        pack.count = ca.n
+        pack.countAfter = nil
+        return pack
+    }
+
     /// Size embedded in a name: "Organic Whole Milk, 64 FZ", "Eggs Large 12ct".
     static func sizeFromName(_ rawName: String) -> ParsedSize? {
         guard !rawName.isEmpty else { return nil }
@@ -379,11 +403,11 @@ enum Units {
                 // A count-first weight ("12 ct, 15 oz") parses with count 1 but must still be
                 // returned from here WITH its stated count, so pickSize can recognise Costco's two
                 // 20 oz loaves.
-                if let p = parseSize(tail), !p.perWeight, p.count > 1 || p.countFirst != nil, p.dim != .count { return p }
+                if let p = parseSize(tail), !p.perWeight, p.count > 1 || p.countFirst != nil || p.countAfter != nil, p.dim != .count { return packIfContainers(p, name) }
             }
         }
         for p in parts.reversed() {
-            if let s = parseSize(p), !s.perWeight { return s }
+            if let s = parseSize(p), !s.perWeight { return packIfContainers(s, name) }
         }
         if let m = nameSizeRx.match(name), let whole = m[0] { return parseSize(whole) }
         return nil

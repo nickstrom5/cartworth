@@ -676,6 +676,15 @@ final class PortedUnitsTests: XCTestCase {
         XCTAssertEqual(s?.base, 63.6)
     }
 
+    /// Round-3 price check: nine Tillamook slices in an 8 oz pack took Chicago's cheddar headline
+    /// read as nine packs. Mirrors DEFECT P21 in test/qa-pricing-round2.test.js.
+    func testPieceCountAfterAWeightIsThePackage() {
+        XCTAssertEqual(Units.sizeFromName("Tillamook Farmstyle Medium Cheddar Cheese Slices, 8oz, 9ct")?.base, 8)
+        XCTAssertEqual(Units.sizeFromName("Ferrero Rocher, Milk Chocolate Hazelnut Candy, 21.2 oz, 48 Count")?.base, 21.2)
+        XCTAssertEqual(Units.sizeFromName("Tillamook Medium Cheddar Cheese Snack Portions, 0.75oz, 10ct")?.base, 7.5)
+        XCTAssertEqual(Units.sizeFromName("Kerrygold Pure Irish Butter, Salted, 8 oz, 4-count")?.base, 32)
+    }
+
     /// The hyphenated leading form: "12-count 5.3 oz cups".
     func testHyphenatedLeadingCount() {
         let s = Units.parseSize("12-count 5.3 oz cups")

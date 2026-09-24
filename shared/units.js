@@ -143,6 +143,27 @@ const MULTI_RE_2 = new RegExp(`(?<![\\d.])(\\d+)\\s*(?:pk\\.?|pack|ct\\.?|count)
  * spelled-out "N Pack"/"N Count" titles state the whole box (see splitNameSize in
  * src/adapters/wholefoods.js).
  */
+/**
+ * A COUNT AFTER a weight, written "9ct" or "48 Count" with no hyphen, is as ambiguous as a count
+ * before it. Measured over every captured name of the form "M oz, N count" (153, round 3):
+ *   - "N-count" / "N-pack" with a hyphen is Costco's and Sam's multipack spelling, and every one is
+ *     N units of M ("Kerrygold Pure Irish Butter, Salted, 8 oz, 4-count").
+ *   - "N pack" / "N pk" count packages, as COUNT_WORD_FIRST_RE's note found.
+ *   - "N ct" / "N count" on a WEIGHT splits: "Tillamook Farmstyle Medium Cheddar Cheese Slices,
+ *     8oz, 9ct" is nine slices in an 8 oz pack (stated 8 oz, $5.49) and "Ferrero Rocher ..., 21.2 oz,
+ *     48 Count" is 48 chocolates in 21.2 oz; read as packs they were 9x and 48x too cheap, and the
+ *     Tillamook slices took Chicago's cheddar headline at $1.22/lb in the round-3 price check.
+ *     "Tillamook ... Snack Portions, 0.75oz, 10ct", "Chobani Greek Yogurt Cups, 5.3 oz, 12 Count" and
+ *     "Stonyfield ... Yogurt Pouches, 3.5 oz., 4 Ct" really are N of M, and each says so with a plural
+ *     container word in the name (CONTAINER_IN_NAME_RE, applied by sizeFromName).
+ * So such a weight is read as the package, the reading that cannot be too cheap, and carries
+ * `countAfter` so that a container word in the name can turn it back into the pack. A retailer that
+ * states the pack's total ("12.5 oz, 4 count" stated 50 oz) is priced from that already: pickSize
+ * prefers a measured stated size to the name's. Volumes keep the pack reading: drinks are labelled
+ * per container.
+ */
+const CONTAINER_IN_NAME_RE = /\b(?:cups|pouches|portions|packets|cans|bottles|jars|tubs|cartons|containers|boxes|bars|pods|sticks|packs|bags|cartridges|k-cups)\b/i;
+
 const COUNT_WORD_FIRST_RE = /^\s*\d+\s*-?\s*(?:pack|packs|ct\.?|count|cnt)\b/i;
 const CONTAINERS_AFTER_RE = /^\s*\.?\s*(?:[a-z]+\s+)?(?:cups|cans|bottles|pouches|packets|jars|tubs|cartons|containers|boxes)\b/i;
 // The count can also come AFTER the size: "12 fl oz, 12 Pack Cans", "5.3 oz, 12 Count".
@@ -150,7 +171,7 @@ const MULTI_RE_TRAILING = new RegExp(
   // The hyphen in "12-pack" is not optional in the wild: Costco lists nearly every case that way
   // ("16.9 fl oz, 12-pack"). Without it the size resolved to a bare count of 12 and the volume was
   // thrown away, which prices a case of shakes per bottle.
-  `${NUM}\\s*(${UNIT_PATTERN})\\b[\\s,.]*-?[\\s,.]*(?<![\\d.])(\\d+)\\s*-?\\s*(?:pk\\.?|pack|ct\\.?|count)\\b`,
+  `${NUM}\\s*(${UNIT_PATTERN})\\b[\\s,.]*-?[\\s,.]*(?<![\\d.])(\\d+)(\\s*-?\\s*)(pk\\.?|pack|ct\\.?|count)\\b`,
   'i'
 );
 
@@ -227,6 +248,12 @@ export function parseSize(input) {
       u = lookupUnit(t[2]);
       n = parseInt(t[3], 10);
       m = t;
+      // "8oz, 9ct": see CONTAINER_IN_NAME_RE. A weight followed by an unhyphenated piece count is
+      // the package, with the count kept for sizeFromName and pickSize to settle.
+      const pieceWord = /^(?:ct|count)/i.test(t[5]) && !t[4].includes('-');
+      if (pieceWord && u && u.dim === 'weight' && n > 1 && n <= 200 && each > 0 && !isDoseNotPackage(u, each)) {
+        return { dim: u.dim, base: round(each * u.factor), amount: each, unit: u.key, count: 1, perWeight: false, range: false, text: s, countAfter: { n, unitBase: round(each * u.factor) } };
+      }
     }
   }
   if (m && u) {
@@ -284,14 +311,21 @@ export function sizeFromName(name) {
     // A count-first weight ("12 ct, 15 oz") parses with count 1 but must still be returned from
     // here WITH its stated count: dropping to the last segment alone would lose the "2-count" that
     // pickSize needs to recognise Costco's two 20 oz loaves.
-    if (p && !p.perWeight && (p.count > 1 || p.countFirst) && p.dim !== 'count') return p;
+    if (p && !p.perWeight && (p.count > 1 || p.countFirst || p.countAfter) && p.dim !== 'count') return p.countAfter ? packIfContainers(p, name) : p;
   }
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parseSize(parts[i]);
-    if (p && !p.perWeight) return p;
+    if (p && !p.perWeight) return p.countAfter ? packIfContainers(p, name) : p;
   }
   const m = String(name).match(new RegExp(`(\\d+\\s*(?:x|pk|pack|ct)?\\s*(?:\\/|x|-)?\\s*)?${NUM}\\s*(${UNIT_PATTERN})\\b`, 'i'));
   return m ? parseSize(m[0]) : null;
+}
+
+/** "Yogurt Cups, 5.3 oz, 12 Count": the name counts containers, so the count-after reading is N of M. */
+function packIfContainers(p, name) {
+  if (!CONTAINER_IN_NAME_RE.test(String(name))) return p;
+  const { n, unitBase } = p.countAfter;
+  return { ...p, base: round(n * unitBase), count: n, countAfter: undefined };
 }
 
 /** True when a parsed weight is a dosage rather than the size of the package. */
