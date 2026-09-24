@@ -71,3 +71,16 @@ milk, eggs, butter, chicken breast, bananas, bread, ground beef. Every ZIP resol
 - Suspect, not changed: Walmart's chain-wide "Crescent Foods Halal Lean Ground Beef 85/15", 1 lb at
   $2.50, is the best ground beef in all four cities. It is labelled chain-wide and online; nothing
   in the row contradicts itself, so no rule can safely reject it.
+
+Second round: Minneapolis 55408 (11 priced stores), Charlotte 28205, Dallas 75206, St. Louis 63110;
+milk, eggs, orange juice, cheddar, rice, apples, coffee, chicken thighs.
+
+- Fixed: SunnyD "Citrus Punch", filed under Orange Juice, was the best orange juice in Minneapolis
+  and (named "...Orange Juice" by ALDI) in Dallas. Juice drinks are not juice; "from concentrate" is.
+- Fixed: "Coffee a la Jaggery" won Dallas coffee, and "Chicken a la King" scored as chicken.
+- Charlotte, Dallas and St. Louis came back with every Instacart chain unresolved. Rebuilt alone,
+  Charlotte found 13 priced stores; Dallas and St. Louis then hit Instacart 429s and the run stopped.
+  Onboarding (web and iOS) now says the list may be short and offers "Check again"; iOS no longer
+  caches a failed lookup as "no store" for three days; the directory's stall limit now outlasts
+  the slowest permitted Instacart request.
+- Still to do: re-run Dallas and St. Louis once Instacart has cooled down.
