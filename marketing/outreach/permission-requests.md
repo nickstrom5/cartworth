@@ -1,6 +1,6 @@
 # Price-data permission requests (drafts, not sent)
 
-Drafted Sept 24, 2026 for Nicholas Soderstrom to review and send from his own address. Nothing here has
+Drafted Sept 24, 2026 for Nicholas Soderstrom to review and send from their own address. Nothing here has
 been sent. Each draft is short on purpose: a first contact asks one clear question.
 
 ## Where each source stands (research, Sept 2026)
