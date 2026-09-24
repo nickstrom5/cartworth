@@ -21,6 +21,7 @@ import * as traderjoes from './adapters/traderjoes.js';
 import * as flipp from './adapters/flipp.js';
 import { cached, peek, DAY, MIN } from './cache.js';
 import { cacheGetStale } from './db.js';
+import { withStallTimeout } from './http.js';
 import { geocodeZip } from './geo.js';
 
 // Chains whose weekly ad we read from their OWN site rather than from Flipp's flyer list.
@@ -67,15 +68,22 @@ export function outsideRadius(distance, maxMiles) {
   return distance != null && Number.isFinite(Number(distance)) && Number.isFinite(Number(maxMiles)) && Number(distance) > Number(maxMiles);
 }
 
-function withTimeout(p, ms) {
-  let t;
-  return Promise.race([
-    Promise.resolve(p).finally(() => clearTimeout(t)),
-    new Promise((_, rej) => {
-      t = setTimeout(() => rej(new Error('timeout')), ms);
-    }),
-  ]);
+/**
+ * The hosts a price source talks to, for withStallTimeout. A probe or a search is only "timed out"
+ * when these stop answering; waiting in their queue is not the retailer being slow.
+ */
+export function sourceHosts(src) {
+  if (!src) return [];
+  switch (src.type) {
+    case 'instacart': return [new URL(src.base).host];
+    case 'wholefoods': return ['www.wholefoodsmarket.com'];
+    case 'traderjoes': return ['www.traderjoes.com', 'alphaapi.brandify.com'];
+    case 'kroger': return ['api.kroger.com'];
+    default: return [];
+  }
 }
+
+const withTimeout = (p, ms, src) => withStallTimeout(p, ms, sourceHosts(src), { label: 'The store locator' });
 
 /** Ask one chain's own price source whether it serves this ZIP. */
 async function probe(chain, zip, geo, maxMiles) {
@@ -92,7 +100,7 @@ async function probe(chain, zip, geo, maxMiles) {
   if (!chain.price) return out;
   try {
     if (chain.price.type === 'instacart') {
-      const shop = await withTimeout(instacart.resolveShop(chain.price, zip), PROBE_TIMEOUT);
+      const shop = await withTimeout(instacart.resolveShop(chain.price, zip), PROBE_TIMEOUT, chain.price);
       if (!shop || shop.none) return out;
       if (shop.canonical) {
         // Instacart's canonical storefront: no store of this chain serves this ZIP, so Instacart
@@ -122,13 +130,13 @@ async function probe(chain, zip, geo, maxMiles) {
       out.serviceType = shop.serviceType;
       out.canonical = false;
     } else if (chain.price.type === 'wholefoods') {
-      const s = await withTimeout(wholefoods.resolveStore(zip), PROBE_TIMEOUT);
+      const s = await withTimeout(wholefoods.resolveStore(zip), PROBE_TIMEOUT, chain.price);
       if (!s || s.none) return out;
       out.status = STATUS.shelf;
       out.distance = s.distance ?? null;
       out.address = s.address ?? null;
     } else if (chain.price.type === 'traderjoes') {
-      const s = await withTimeout(traderjoes.resolveStore(zip), PROBE_TIMEOUT);
+      const s = await withTimeout(traderjoes.resolveStore(zip), PROBE_TIMEOUT, chain.price);
       if (!s || s.none) return out;
       out.status = STATUS.shelf;
       out.distance = s.distance ?? null;

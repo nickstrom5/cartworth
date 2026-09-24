@@ -37,6 +37,10 @@ const TRAPS = new Set([
   // absurd per-pound price that then set the scale of the per-store chart.
   'popcorn', 'pretzel', 'granola', 'danish', 'twist', 'pastry', 'scone', 'croissant', 'roll',
   'shrimp', 'salmon', 'tuna', 'crab', 'lobster', 'scallop', 'fish', 'chicken', 'beef', 'pork',
+  // The rest of the shellfish, for the same reason: "Garlic Butter Mussels", "Clams in Butter
+  // Sauce" and "Butter Garlic Squid" are seafood, not butter. Handoff from the round-2 directory
+  // fixer. "Oyster mushrooms" are mushrooms: see BENIGN_BEFORE.
+  'clam', 'mussel', 'oyster', 'squid', 'octopus',
   'turkey', 'ham', 'bacon', 'steak', 'ravioli', 'lasagna', 'pierogi', 'dumpling', 'taco', 'burrito',
   'cupcake', 'brownie', 'toffee', 'fudge', 'caramel', 'praline', 'nut', 'almond', 'cashew', 'pecan',
   // Single-serve and concentrated forms that cannot be compared on unit price with the thing
@@ -76,6 +80,12 @@ const TRAPS = new Set([
   // searching for wine or seltzer still finds it.
   'hard', 'alcoholic', 'beer', 'ale', 'lager', 'ipa', 'wine', 'vodka', 'whiskey', 'whisky', 'rum',
   'tequila', 'bourbon', 'liqueur', 'brandy', 'cocktail', 'hopped', 'cerveza', 'seltzer',
+  // 'wine' alone missed the wine itself: flyers print the grape, not the word. JaM Cellars'
+  // "Butter" Chardonnay ($16.99) scored 0.92 against butter in the weekly-ad search, the same as a
+  // pound of Land O Lakes (handoff from the round-2 directory fixer). Grapes and producer words
+  // only; not 'champagne' or 'rose', which also name grapes, vinegars and rose water.
+  'chardonnay', 'merlot', 'cabernet', 'pinot', 'sauvignon', 'riesling', 'moscato', 'zinfandel', 'malbec',
+  'prosecco', 'stout', 'cellars', 'winery', 'vineyard', 'brewery', 'brewing',
   // Health and beauty that borrows a food word. "Redken All Soft Heavy Cream Treatment" at
   // $632/gal was a relevant match for "heavy cream", and a "Rosemary Apple Cider Scalp Detox
   // Tonic" for apple cider.
@@ -108,6 +118,9 @@ const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?r
  * still trapped on its second 'cream'.
  */
 const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']) };
+/** The mirror image: a trap noun forgiven when the word right AFTER it names what it is. "King
+ * Oyster Mushrooms" are mushrooms, so 'oyster' must not bury them in a mushroom search. */
+const BENIGN_BEFORE = { oyster: new Set(['mushroom']) };
 
 // Plant bases in front of the noun make a different product: "almond milk", "coconut milk", "oat creamer".
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
@@ -282,6 +295,7 @@ export function relevance(query, product, opts = {}) {
       if (qset.has(w) || SOFT.has(w)) continue;
       if (words[i - 1] === 'in' || words[i - 1] === 'with' || words[i - 2] === 'in') continue; // "tuna in oil", "with sauce"
       if (BENIGN_AFTER[w]?.has(words[i - 1])) continue; // "sweet cream butter" is plain butter
+      if (BENIGN_BEFORE[w]?.has(words[i + 1])) continue; // "oyster mushrooms" are mushrooms
       if (TRAPS.has(w)) strong += 1;
     }
     let alt = 0;

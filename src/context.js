@@ -32,6 +32,42 @@ export const LIMITS = {
   krogerKey: { max: 256 },
 };
 
+/**
+ * The search radii Cartworth offers, in miles. Same ladder as the iPhone picker
+ * (ios/App/UI/Settings/SettingsView.swift) and the web control (public/js/store.js RADIUS_MILES);
+ * test/qa-search-radius.test.js pins all three together.
+ */
+export const RADIUS_MILES = [5, 10, 15, 25, 40];
+
+/**
+ * Second sanitisation pass on a visitor's radius, on top of the clamp every other input already
+ * gets in src/context.js (LIMITS.maxMiles, which rejects a non-number as a 400 and bounds the rest
+ * to 3–50). This narrows that to the five radii the products actually offer, and it is about
+ * politeness to the retailers as much as about correctness:
+ *
+ *   src/directory.js caches a build under `dir:v1:<zip>:<maxMiles>`, and the radius only filters
+ *   the RESULT — the same candidate chains are probed whatever it is. So a caller walking
+ *   miles=3,4,5…50 does not get a wider search fifty times, it gets fifty full re-probes of the
+ *   same chains for one ZIP, comfortably inside the 90-requests-per-minute budget in src/guard.js.
+ *   Pinning the radius to five rungs caps that at five builds per ZIP: it is the difference between
+ *   one visitor being able to multiply our outbound traffic ~50x and ~5x.
+ *
+ * Nothing is rejected with an error — an odd number is not malformed, just not one of ours — and a
+ * value between two rungs snaps DOWN, so we never return a store further away than was asked for.
+ * /api/directory echoes the radius it actually used, so the client always shows the real one.
+ */
+export function snapRadius(v) {
+  const n = Number(v);
+  const min = RADIUS_MILES[0];
+  const max = RADIUS_MILES[RADIUS_MILES.length - 1];
+  if (!Number.isFinite(n)) return DEFAULTS.maxMiles;
+  if (n <= min) return min;
+  if (n >= max) return max;
+  let out = min;
+  for (const m of RADIUS_MILES) if (m <= n) out = m;
+  return out;
+}
+
 function bad(message) {
   return Object.assign(new Error(message), { status: 400 });
 }

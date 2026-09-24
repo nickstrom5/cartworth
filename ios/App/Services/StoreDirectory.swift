@@ -114,10 +114,12 @@ actor StoreDirectory {
         let limit = max(radius * 1.6, radius + 8)
         switch c.source {
         case .instacart(let base, let slug, let guest):
-            if let shop = try? await InstacartSource.shared.resolveShop(.init(base: base, slug: slug, guest: guest), place: place), !shop.none {
+            if let shop = try? await InstacartSource.shared.resolveShop(.init(base: base, slug: slug, guest: guest, chainWide: c.chainWide), place: place), !shop.none {
                 if shop.canonical {
-                    // Instacart's national storefront: real prices, but not this shopper's store.
-                    out.status = .national
+                    // Instacart's national storefront: real prices for a chain-wide chain (Walmart),
+                    // but no store of any other chain near this shopper — Hy-Vee's answer for
+                    // Milwaukee was its Lincoln, NE store. Same rule as src/directory.js probe().
+                    if c.chainWide { out.status = .national }
                     break
                 }
                 if let d = shop.distance, d > limit { break }

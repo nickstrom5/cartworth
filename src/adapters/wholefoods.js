@@ -1,7 +1,10 @@
 // Whole Foods Market: nearest store by ZIP, store-level product search, weekly sales flyer.
-import { request, CookieJar, configureHost } from '../http.js';
+import { request, CookieJar } from '../http.js';
 
-configureHost('www.wholefoodsmarket.com', { max: 2, gap: 200 });
+// Every host this adapter reads gets the owner's rule from src/http.js (DEFAULT_HOST_POLICY: one
+// request in flight, 700 ms apart, stop on 429). The looser per-host limits that used to be set
+// here were removed at the owner's decision (Sept 2026); long queues are handled by
+// withStallTimeout, not by asking faster.
 import { cached, HOUR, DAY } from '../cache.js';
 import { geocodeZip, miles } from '../geo.js';
 import { makeProduct, titleCase } from '../normalize.js';

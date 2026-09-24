@@ -34,7 +34,7 @@ async function loadBrowserStore() {
   const src = fs.readFileSync(path.join(ROOT, 'public/js/store.js'), 'utf8');
   const hooks = 'data:text/javascript,' + encodeURIComponent('export const useEffect=()=>{};export const useReducer=()=>[0,()=>{}];');
   const units = pathToFileURL(path.join(ROOT, 'shared/units.js')).href;
-  const patched = src.replace("from 'preact/hooks'", `from '${hooks}'`).replace("from '/shared/units.js'", `from '${units}'`);
+  const patched = src.replace("from '/vendor/preact-hooks.mjs'", `from '${hooks}'`).replace("from '/shared/units.js'", `from '${units}'`);
   assert.ok(patched.includes(hooks) && patched.includes(units), 'store.js imports changed — update this harness');
   const file = path.join(SCRATCH, `store.radius.${process.pid}.${harnessSeq++}.mjs`);
   fs.writeFileSync(file, patched);

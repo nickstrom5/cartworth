@@ -113,6 +113,8 @@ export async function launchBrowser() {
     [
       '--headless=new',
       '--remote-debugging-port=0',
+      // Chrome refuses to start as root with its sandbox on (containers, CI). Only then.
+      ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
       `--user-data-dir=${profile}`,
       '--no-first-run',
       '--no-default-browser-check',

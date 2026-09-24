@@ -19,7 +19,9 @@ enum PriceSearch {
         }
         let wasFresh = await Cache.shared.isFresh(key)
         do {
-            let r = try await withTimeout(seconds: 35) {
+            // 35 s without an answer from the store's site, not 35 s in all: at one request per
+            // host, a store at the back of a trip plan's queue waits its turn. See withStallTimeout.
+            let r = try await withStallTimeout(seconds: 35, hosts: hosts(chain.source)) {
                 try await Cache.shared.value(key, ttl: 20 * TTL.minute, fresh: fresh, maxStale: 3 * TTL.day) {
                     try await run(chain: chain, query: q, place: place, limit: limit)
                 }
@@ -40,7 +42,7 @@ enum PriceSearch {
     private static func run(chain: Chain, query: String, place: UserPlace, limit: Int) async throws -> Payload {
         switch chain.source {
         case .instacart(let base, let slug, let guest):
-            let r = try await InstacartSource.shared.search(.init(base: base, slug: slug, guest: guest), retailerId: chain.id, query: query, place: place, limit: limit)
+            let r = try await InstacartSource.shared.search(.init(base: base, slug: slug, guest: guest, chainWide: chain.chainWide), retailerId: chain.id, query: query, place: place, limit: limit)
             return Payload(items: r.items, location: r.location, message: r.message)
         case .wholeFoods:
             let r = try await WholeFoodsSource.shared.search(query: query, retailerId: chain.id, place: place, limit: limit)
@@ -50,6 +52,16 @@ enum PriceSearch {
             return Payload(items: r.items, location: r.location, message: r.message)
         case .adsOnly:
             return Payload(items: [], location: nil, message: "Weekly ad only")
+        }
+    }
+
+    /// The hosts a price source talks to. Mirrors `sourceHosts` in src/directory.js.
+    static func hosts(_ source: SourceKind) -> [String] {
+        switch source {
+        case .instacart(let base, _, _): return [URL(string: base)?.host].compactMap { $0 }
+        case .wholeFoods: return ["www.wholefoodsmarket.com"]
+        case .traderJoes: return ["www.traderjoes.com", "alphaapi.brandify.com"]
+        case .adsOnly: return []
         }
     }
 
@@ -83,6 +95,29 @@ func withTimeout<T>(seconds: Double, _ op: @escaping @Sendable () async throws -
         group.addTask {
             try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             throw TimeoutError()
+        }
+        let r = try await group.next()!
+        group.cancelAll()
+        return r
+    }
+}
+
+/// A timeout that fires when `hosts` stop answering, not when the work has taken a while. Port of
+/// `withStallTimeout` in src/http.js: at one request in flight per host, 700 ms apart, a caller can
+/// wait a long time for its turn, and that wait is not the store being slow. The clock restarts
+/// whenever any of `hosts` answers; `maxSeconds` is a hard ceiling for the whole call.
+func withStallTimeout<T>(seconds: Double, hosts: [String], maxSeconds: Double = 300, _ op: @escaping @Sendable () async throws -> T) async throws -> T {
+    let start = Date()
+    return try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask { try await op() }
+        group.addTask {
+            while true {
+                try await Task.sleep(nanoseconds: 500_000_000)
+                let now = Date()
+                if now.timeIntervalSince(start) > maxSeconds { throw TimeoutError() }
+                let last = max(start, await HTTP.shared.lastAnswer(hosts) ?? start)
+                if now.timeIntervalSince(last) > seconds { throw TimeoutError() }
+            }
         }
         let r = try await group.next()!
         group.cancelAll()

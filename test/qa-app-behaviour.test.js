@@ -307,6 +307,11 @@ const REFLOW_CHECK = `(() => {
     if (!el.getBoundingClientRect().width || inScroller(el)) continue;
     if (el.scrollWidth > el.clientWidth + 1) bad.push((el.className || el.tagName) + ' "' + el.textContent.trim().slice(0, 40) + '" is wider than its box (' + el.scrollWidth + ' > ' + el.clientWidth + ')');
   }
+  // A control label cut to "Close mat…" is the ellipsis safety net in app.css firing: the control
+  // no longer fits its row and needs a real fix, not a shorter label nobody chose.
+  for (const el of document.querySelectorAll('.seg button')) {
+    if (el.getBoundingClientRect().width && el.scrollWidth > el.clientWidth + 0.5) bad.push('control label "' + el.textContent.trim() + '" is cut off');
+  }
   for (const el of document.querySelectorAll('.unit-big, .pkg, .pkg .nw, .pkg .was, .hero-value, .bar-val, .plan-total, .tabs .tab')) {
     const r = el.getBoundingClientRect();
     if (!r.width || inScroller(el)) continue;

@@ -25,18 +25,19 @@ struct HTTPResponse {
     }
 }
 
-/// Limits concurrent requests per host so we stay polite to store sites.
+/// The owner's rule for every store site, same as the server's src/http.js DEFAULT_HOST_POLICY:
+/// one request in flight per host, at least 700 ms between requests, and stop on HTTP 429.
 actor HostGate {
     private var active: [String: Int] = [:]
     private var waiters: [String: [CheckedContinuation<Void, Never>]] = [:]
     private var lastStart: [String: Date] = [:]
     private var blocked: Set<String> = []
+    private var answered: [String: Date] = [:]
     private let maxPerHost: Int
-    /// Minimum gap between two requests to the same host. Zero in the shipping app, which relies
-    /// on `maxPerHost` alone; set for a screenshot capture run by `-qaPolite`.
+    /// Minimum gap between two requests to the same host.
     private let minGap: TimeInterval
 
-    init(maxPerHost: Int = 4, minGap: TimeInterval = 0) {
+    init(maxPerHost: Int = 1, minGap: TimeInterval = 0.7) {
         self.maxPerHost = maxPerHost
         self.minGap = minGap
     }
@@ -45,6 +46,12 @@ actor HostGate {
     func isBlocked(_ host: String) -> Bool { blocked.contains(host) }
 
     func block(_ host: String) { blocked.insert(host) }
+
+    /// The host gave a real answer (not a 5xx or a 429). `withStallTimeout` reads this.
+    func noteAnswer(_ host: String) { answered[host] = Date() }
+
+    /// When any of `hosts` last answered, or nil if none has.
+    func lastAnswer(_ hosts: [String]) -> Date? { hosts.compactMap { answered[$0] }.max() }
 
     func acquire(_ host: String) async {
         if active[host, default: 0] < maxPerHost {
@@ -76,10 +83,14 @@ final class HTTP {
     static let shared = HTTP()
 
     let session: URLSession
-    // `-qaPolite` (debug builds only, and only when the argument is passed) drops a capture run
-    // to one request at a time per host with a 700 ms gap, and stops talking to a host that
-    // answers 429. The shipping app keeps the four-at-once behaviour it has always had.
-    private let gate = QAShot.politeNetworking ? HostGate(maxPerHost: 1, minGap: 0.7) : HostGate(maxPerHost: 4)
+    // One request at a time per host, 700 ms apart, and a host that answers 429 is not asked
+    // again. This used to be `-qaPolite` only, with four at once and no gap in the shipping app;
+    // the owner made the rule apply everywhere (Sept 2026). Long queues are handled by
+    // `withStallTimeout`, not by asking faster.
+    private let gate = HostGate()
+
+    /// When any of `hosts` last gave a real answer. See `withStallTimeout`.
+    func lastAnswer(_ hosts: [String]) async -> Date? { await gate.lastAnswer(hosts) }
 
     init() {
         let c = URLSessionConfiguration.default
@@ -124,11 +135,16 @@ final class HTTP {
         for (k, v) in headers { req.setValue(v, forHTTPHeaderField: k) }
         req.httpBody = body
         let host = url.host ?? ""
+        if await gate.isBlocked(host) { throw HTTPError(status: 429, message: "\(host) asked us to slow down — not asking again") }
         await gate.acquire(host)
         defer { Task { await gate.release(host) } }
+        // Checked again after the wait: a request queued behind the one that got the 429 must not go out.
+        if await gate.isBlocked(host) { throw HTTPError(status: 429, message: "\(host) asked us to slow down — not asking again") }
         let (data, resp) = try await session.data(for: req)
         let http = resp as? HTTPURLResponse
-        return HTTPResponse(status: http?.statusCode ?? 0, data: data, url: http?.url ?? url, headers: http?.allHeaderFields ?? [:])
+        let status = http?.statusCode ?? 0
+        if status == 429 { await gate.block(host) } else if status > 0 && status < 500 { await gate.noteAnswer(host) }
+        return HTTPResponse(status: status, data: data, url: http?.url ?? url, headers: http?.allHeaderFields ?? [:])
     }
 
     func getJSON(_ url: URL, headers: [String: String] = [:], timeout: TimeInterval = 20) async throws -> J {

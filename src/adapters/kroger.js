@@ -1,10 +1,12 @@
 // Official Kroger Public API (https://developer.kroger.com) for Mariano's exact store prices.
 // Requires a free client id/secret (Settings). Uses the client_credentials grant, product.compact scope.
 import { createHash } from 'node:crypto';
-import { request, configureHost } from '../http.js';
+import { request } from '../http.js';
 
-// A licensed API with a published daily quota, so keep well clear of it.
-configureHost('api.kroger.com', { max: 2, gap: 200 });
+// Every host this adapter reads gets the owner's rule from src/http.js (DEFAULT_HOST_POLICY: one
+// request in flight, 700 ms apart, stop on 429). The looser per-host limits that used to be set
+// here were removed at the owner's decision (Sept 2026); long queues are handled by
+// withStallTimeout, not by asking faster.
 import { cached, DAY } from '../cache.js';
 import { geocodeZip, miles } from '../geo.js';
 import { makeProduct } from '../normalize.js';

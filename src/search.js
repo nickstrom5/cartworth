@@ -8,7 +8,9 @@ import * as flipp from './adapters/flipp.js';
 import { cached, peek, MIN } from './cache.js';
 import { STORE_BY_ID, storeForMerchant } from '../shared/stores.js';
 import { normalize, relevance } from '../shared/match.js';
-import { storeZip } from './context.js';
+import { storeZip, snapRadius } from './context.js';
+import { outsideRadius, sourceHosts } from './directory.js';
+import { withStallTimeout } from './http.js';
 import { recordProducts, historyStats } from './history.js';
 
 const STORE_TIMEOUT = 35000;
@@ -17,7 +19,10 @@ const STORE_TIMEOUT = 35000;
 // count; Instacart drops a product-name size clause that contradicts the stated size; a price of
 // 0 is dropped everywhere. Every one of those changes a PRICE, so serving a v5 entry would show
 // the old wrong number for up to three days.
-const CACHE_VERSION = 6;
+// v7: a canonical (chain-wide) storefront's location is withheld (instacart.js publicLocation), so
+// a v6 entry still carries Walmart's Antioch, CA address and its 1,801-mile distance — which the
+// radius check below would then read as "too far" and throw Walmart's real chain-wide prices away.
+const CACHE_VERSION = 7;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**
@@ -64,15 +69,6 @@ async function runAdapter(storeId, src, query, zip, settings) {
   }
 }
 
-function withTimeout(p, ms, label) {
-  let t;
-  return Promise.race([
-    p.finally(() => clearTimeout(t)),
-    new Promise((_, rej) => {
-      t = setTimeout(() => rej(Object.assign(new Error(`${label} took longer than ${ms / 1000}s`), { code: 'TIMEOUT' })), ms);
-    }),
-  ]);
-}
 
 /** Search one store. Returns { storeId, status, items, location, ms, cached, error }. */
 export async function searchStore(storeId, query, settings, { fresh = false } = {}) {
@@ -85,19 +81,35 @@ export async function searchStore(storeId, query, settings, { fresh = false } = 
   const t0 = Date.now();
   let staleErr = null;
   try {
-    const r = await withTimeout(
+    // STORE_TIMEOUT is how long the store's site may go without answering anything, not how long
+    // this search may take: at one request in flight per host, a store near the back of a trip
+    // plan's queue waits its turn. See withStallTimeout in src/http.js.
+    const r = await withStallTimeout(
       cached(key, 20 * MIN, () => runAdapter(storeId, src, query, zip, settings), { fresh, maxStaleMs: 3 * 24 * 60 * MIN, onStale: (e) => (staleErr = e) }),
       STORE_TIMEOUT,
-      STORE_BY_ID[storeId].name,
+      sourceHosts(src),
+      { label: STORE_BY_ID[storeId].name },
     );
     const ms = Date.now() - t0;
     health[storeId] = staleErr
       ? { ok: false, at: Date.now(), ms, error: publicError(staleErr.message), source: src.type }
       : { ok: true, at: Date.now(), ms: wasCached ? health[storeId]?.ms ?? ms : ms, error: null, source: src.type };
-    return {
-      storeId, status: r.items.length ? 'ok' : 'empty', items: r.items, location: r.location, message: r.message || null, ms,
-      cached: wasCached, source: src.type, stale: staleErr ? friendlyError(staleErr) : null,
-    };
+    const base = { storeId, ms, cached: wasCached, source: src.type, stale: staleErr ? friendlyError(staleErr) : null };
+    // Chain-wide prices (priceBasis 'national') come from a storefront somewhere else in the
+    // country. They carry no location the shopper could visit, and the radius does not apply to
+    // them: the directory decided the chain belongs in this search, and the badge says what the
+    // price is. Belt and braces for any adapter or cache entry that still carries one.
+    const national = !!r.location?.canonical || (r.items.length > 0 && r.items.every((p) => p.priceBasis === 'national'));
+    const location = national && r.location ? { ...r.location, name: null, address: null, distance: null, id: null, canonical: true } : r.location;
+    // Handoff H1: the radius the shopper chose is the radius prices come from. The directory
+    // applies it when it lists stores, but a search re-resolves each store on its own, so
+    // /api/search?zip=53211&miles=10 priced Costco's Menomonee Falls warehouse 13.2 mi away. Same
+    // definition as discovery (directory.js outsideRadius), on the same snapped radius.
+    const radius = snapRadius(settings.maxMiles);
+    if (!national && outsideRadius(location?.distance, radius)) {
+      return { ...base, status: 'tooFar', items: [], location, message: `The nearest ${STORE_BY_ID[storeId].name} is ${location.distance} mi away, outside your ${radius}-mile radius` };
+    }
+    return { ...base, status: r.items.length ? 'ok' : 'empty', items: r.items, location, message: r.message || null };
   } catch (err) {
     health[storeId] = { ok: false, at: Date.now(), ms: Date.now() - t0, error: publicError(err.message), source: src.type };
     return { storeId, status: 'error', items: [], error: friendlyError(err), ms: Date.now() - t0, source: src.type };

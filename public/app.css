@@ -384,7 +384,10 @@ main {
     overflow: visible;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 1fr;
+    /* minmax(0, 1fr), not 1fr: a 1fr track never shrinks below its label, so one wide label in a
+       wider font (Android's Roboto, Linux's DejaVu) pushed the Settings tab 9px off a 320px screen
+       and made the whole page scroll sideways. */
+    grid-auto-columns: minmax(0, 1fr);
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--page) 92%, transparent);
     backdrop-filter: saturate(160%) blur(12px);
@@ -400,6 +403,9 @@ main {
     border-radius: 10px;
     justify-content: center;
     min-height: 46px;
+    min-width: 0;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
   }
   /* Keep the selected tab readable without the full-bleed pill swallowing the row. */
   .tabs .tab[aria-current='page'] {
@@ -987,6 +993,10 @@ label.field .hint {
 }
 .seg {
   display: inline-flex;
+  /* Never wider than its row: in a wider font than the Mac's (Android's Roboto, Linux's DejaVu)
+     "Show [Close matches | Matches | Everything]" came to 329px on a 320px phone, and the phone
+     widened the whole page to fit it — tab bar and all. */
+  max-width: 100%;
   padding: 2px;
   border-radius: 9px;
   background: var(--surface-2);
@@ -994,6 +1004,9 @@ label.field .hint {
 }
 .seg button {
   min-height: 26px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 3px 10px;
   border: 0;
   border-radius: 7px;
@@ -1366,6 +1379,11 @@ label.field .hint {
   gap: 14px;
 }
 @media (max-width: 420px) {
+  /* The row is ~270px wide on a 320px phone; the three strictness labels must fit it whole. */
+  .seg button {
+    padding: 3px 6px;
+    font-size: 12px;
+  }
   .watch-grid {
     grid-template-columns: minmax(0, 1fr);
   }

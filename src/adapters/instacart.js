@@ -5,12 +5,12 @@
 // The site uses persisted GraphQL queries identified by sha256 hashes. We read the current
 // hashes from the site's own "operation-hashes" manifest so we keep working after deploys,
 // and fall back to known hashes if discovery fails.
-import { request, CookieJar, HttpError, configureHost } from '../http.js';
+import { request, CookieJar, HttpError } from '../http.js';
 
-// Interactive searches, so a little more headroom than Flipp, still well under the default.
-configureHost('www.instacart.com', { max: 3, gap: 150 });
-configureHost('www.aldi.us', { max: 2, gap: 200 });
-configureHost('shopwoodmans.com', { max: 2, gap: 200 });
+// Every host this adapter reads gets the owner's rule from src/http.js (DEFAULT_HOST_POLICY: one
+// request in flight, 700 ms apart, stop on 429). The looser per-host limits that used to be set
+// here were removed at the owner's decision (Sept 2026); long queues are handled by
+// withStallTimeout, not by asking faster.
 import { cached, invalidate, HOUR, DAY } from '../cache.js';
 import { geocodeZip, miles } from '../geo.js';
 import { getKV, setKV, delKV } from '../db.js';

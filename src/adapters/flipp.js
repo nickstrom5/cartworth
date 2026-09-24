@@ -1,11 +1,12 @@
 // Flipp: weekly circulars (ads) for every merchant near a ZIP, plus item search and item details.
 // Flyer item lists lack the price qualifiers ("2/", "/lb", "BOGO", "for U"), so we fetch each item's
 // details once (they never change for a given flyer item) and keep them in SQLite.
-import { request, mapLimit, configureHost } from '../http.js';
+import { request, mapLimit } from '../http.js';
 
-// Ad enrichment fetches one item at a time in the background and is never user-blocking, so this
-// is the gentlest setting in the app.
-configureHost('backflipp.wishabi.com', { max: 2, gap: 250 });
+// Every host this adapter reads gets the owner's rule from src/http.js (DEFAULT_HOST_POLICY: one
+// request in flight, 700 ms apart, stop on 429). The looser per-host limits that used to be set
+// here were removed at the owner's decision (Sept 2026); long queues are handled by
+// withStallTimeout, not by asking faster.
 import { cached, HOUR } from '../cache.js';
 import { db } from '../db.js';
 import { storeForMerchant } from '../../shared/stores.js';

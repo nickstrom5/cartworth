@@ -1003,6 +1003,33 @@ final class PortedMatchTests: XCTestCase {
         matches("toilet paper", "Charmin Ultra Soft Toilet Paper", "Charmin")
         matches("paper towels", "Bounty Select-A-Size Paper Towels", "Bounty")
     }
+
+    // Shellfish traps, mirroring test/qa-match-relevance.test.js.
+    func testShellfishDishesDoNotAnswerTheirSauce() {
+        rejects("butter", "Garlic Butter Mussels", "Kirkland Signature")
+        rejects("butter", "Butter Garlic Clams", "Trader Joe\u{2019}s")
+        rejects("butter", "Lemon Butter Squid Rings")
+        rejects("garlic", "Garlic Octopus Salad")
+        rejects("crackers", "Oyster Crackers", "Nabisco")
+    }
+
+    func testOysterMushroomsAndShellfishStillMatchThemselves() {
+        matches("mushrooms", "King Oyster Mushrooms")
+        matches("mushrooms", "Organic Oyster Mushrooms", "Wegmans")
+        matches("clams", "Chopped Clams", "Bumble Bee")
+        matches("oysters", "Fancy Whole Oysters", "Crown Prince")
+        matches("mussels", "Fresh Mussels")
+    }
+
+    // Wine named after a food, mirroring test/qa-match-relevance.test.js. PriceSearch.ads keeps a
+    // flyer item at relevance >= 0.4, so the wine must fall under that.
+    func testWineNamedAfterAFoodIsNotAnAdMatch() {
+        XCTAssertLessThan(score("butter", "Butter Chardonnay", ""), 0.4)
+        XCTAssertLessThan(score("noir", "Meiomi Pinot Noir", ""), 0.4)
+        matches("chardonnay", "Kendall-Jackson Vintner\u{2019}s Reserve Chardonnay")
+        matches("pinot noir", "Meiomi Pinot Noir")
+        matches("butter", "Truly Grass Fed Butter")
+    }
 }
 
 final class PortedDealsTests: XCTestCase {

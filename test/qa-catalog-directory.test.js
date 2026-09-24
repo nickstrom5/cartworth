@@ -468,7 +468,7 @@ async function search(storeId, qs, { fresh = true } = {}) {
   }
 }
 
-test('DEFECT C1: /api/search at a 10-mile radius does not price Costco’s warehouse 13.2 miles away', { todo: 'handoff H1 (v2) — src/search.js must apply outsideRadius; remove this todo when it lands' }, async () => {
+test('DEFECT C1: /api/search at a 10-mile radius does not price Costco’s warehouse 13.2 miles away', async () => {
   seedZip('53211');
   const r = await search('costco', 'zip=53211&miles=10');
   assert.equal(r.items.length, 0, `${r.items.length} Costco prices at 13.2 mi for a 10-mile radius`);
@@ -483,7 +483,7 @@ test('control: the same search at 25 miles prices Costco', async () => {
   assert.equal(r.location.distance, 13.2);
 });
 
-test('DEFECT C2c: a Walmart search result carries no Antioch CA address and no 1,801-mile distance', { todo: 'handoff H2 (v2) — src/adapters/instacart.js publicLocation must drop the canonical storefront; remove this todo when it lands' }, async () => {
+test('DEFECT C2c: a Walmart search result carries no Antioch CA address and no 1,801-mile distance', async () => {
   seedZip('53211');
   const r = await search('walmart', 'zip=53211&miles=25');
   assert.equal(r.status, 'ok', r.error || r.message);
@@ -494,7 +494,7 @@ test('DEFECT C2c: a Walmart search result carries no Antioch CA address and no 1
   assert.ok(!/Antioch|2697/.test(JSON.stringify(r.location)), JSON.stringify(r.location));
 });
 
-test('DEFECT C2d: a chain that is not chain-wide is never priced from its canonical storefront (Hy-Vee, Lincoln NE, for Milwaukee)', { todo: 'handoff H2 (v2) — src/adapters/instacart.js search() must refuse a canonical shop unless cfg.chainWide; remove this todo when it lands' }, async () => {
+test('DEFECT C2d: a chain that is not chain-wide is never priced from its canonical storefront (Hy-Vee, Lincoln NE, for Milwaukee)', async () => {
   seedZip('53211');
   const r = await search('hyvee', 'zip=53211&miles=25');
   assert.equal(r.items.length, 0, `${r.items.length} Hy-Vee prices from a store 478.8 mi away, labelled "national"`);
@@ -520,7 +520,7 @@ const WALMART_CACHED_V6 = {
   location: { name: 'Walmart - 2697', address: '4893 Lone Tree Way, Antioch, CA 94531', distance: 1801.1, serviceType: 'delivery', priceNote: 'No markups', id: '90203' },
 };
 
-test('DEFECT C2e: a Walmart answer cached before the fix is neither served with Antioch attached nor dropped as "1801.1 mi away"', { todo: 'handoffs H1 (v2) + H2 (v2) — needs the src/search.js CACHE_VERSION bump that ships with H2; remove this todo when they land' }, async () => {
+test('DEFECT C2e: a Walmart answer cached before the fix is neither served with Antioch attached nor dropped as "1801.1 mi away"', async () => {
   seedZip('53211');
   const key = 'search:v6:walmart:instacart:53211:butter';
   invalidate(key);

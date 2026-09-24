@@ -36,6 +36,9 @@ enum Match {
         // addition in shared/match.js; the two must not diverge.
         "popcorn", "pretzel", "granola", "danish", "twist", "pastry", "scone", "croissant", "roll",
         "shrimp", "salmon", "tuna", "crab", "lobster", "scallop", "fish", "chicken", "beef", "pork",
+        // The rest of the shellfish: "Garlic Butter Mussels" is seafood, not butter. "Oyster
+        // mushrooms" are mushrooms: see benignBefore. Mirrors shared/match.js.
+        "clam", "mussel", "oyster", "squid", "octopus",
         "turkey", "ham", "bacon", "steak", "ravioli", "lasagna", "pierogi", "dumpling", "taco", "burrito",
         "cupcake", "brownie", "toffee", "fudge", "caramel", "praline", "nut", "almond", "cashew", "pecan",
         // Single-serve and concentrated forms that cannot be compared on unit price with the thing
@@ -71,6 +74,10 @@ enum Match {
         // someone searching for wine or seltzer still finds it.
         "hard", "alcoholic", "beer", "ale", "lager", "ipa", "wine", "vodka", "whiskey", "whisky", "rum",
         "tequila", "bourbon", "liqueur", "brandy", "cocktail", "hopped", "cerveza", "seltzer",
+        // Flyers print the grape, not the word "wine": JaM Cellars' "Butter" Chardonnay scored as
+        // butter in the weekly-ad search. Mirrors shared/match.js.
+        "chardonnay", "merlot", "cabernet", "pinot", "sauvignon", "riesling", "moscato", "zinfandel", "malbec",
+        "prosecco", "stout", "cellars", "winery", "vineyard", "brewery", "brewing",
         // Health and beauty that borrows a food word: "Redken All Soft Heavy Cream Treatment" at
         // $632/gal was a relevant match for "heavy cream".
         "treatment", "tonic", "detox", "scalp", "hair", "cosmetic", "makeup", "deodorant",
@@ -98,6 +105,9 @@ enum Match {
     /// every ALDI store brand use it — but 'cream' is a trap so that "cream cheese" does not score
     /// as cheese. Plain butter scored 0.40 and lost to spreadable blends at 0.97.
     private static let benignAfter: [String: Set<String>] = ["cream": ["sweet", "whipping"]]
+    /// A trap noun forgiven when the next word names what it is: "King Oyster Mushrooms" are
+    /// mushrooms. Mirrors BENIGN_BEFORE in shared/match.js.
+    private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"]]
 
     /// How the food is kept, not what it is. Only these are forgiven when the retailer's own
     /// category is exactly what was searched. 'dried' is deliberately absent: dried cranberries are
@@ -269,6 +279,7 @@ enum Match {
                 let prev2 = i >= 2 ? words[i - 2] : nil
                 if prev == "in" || prev == "with" || prev2 == "in" { continue } // "tuna in oil", "with sauce"
                 if let ok = benignAfter[w], let p = prev, ok.contains(p) { continue } // "sweet cream butter"
+                if let ok = benignBefore[w], i + 1 < words.count, ok.contains(words[i + 1]) { continue } // "oyster mushrooms"
                 if traps.contains(w) { strong += 1 }
             }
             var alt = 0, mildN = 0, flavorN = 0

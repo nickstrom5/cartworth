@@ -6,7 +6,7 @@ import { BestBars } from '../charts.js';
 import { useStore, pref, setPref, openModal, getState } from '../store.js';
 import { runSearch, addWatch, addToList, go } from '../actions.js';
 import { money, money2, unitPrice, unitLabel, ago, shortDate, endsLabel, plural, BASIS_LABEL, BASIS_TITLE, BASIS_BADGE, linkDestination } from '../format.js';
-import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible } from '/shared/compare.js';
+import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim } from '/shared/compare.js';
 import { refineChips, RELEVANT } from '/shared/match.js';
 import { displayUnitsFor, DISPLAY_UNITS } from '/shared/units.js';
 import { ProductDetail } from './product.js';
@@ -166,6 +166,7 @@ function StatusStrip({ search }) {
           <${Icon} name="alert" size=${13} /><b>${s.short}</b> failed · retry
         </button>`;
       if (r.status === 'unsupported') return html`<span class="sstat off" key=${id} title=${r.message}>${s.short} · ads only</span>`;
+      if (r.status === 'tooFar') return html`<span class="sstat off" key=${id} title=${r.message}>${s.short} · outside radius</span>`;
       return html`<span class="sstat" key=${id} title=${title + (r.stale ? ` · ⚠ ${r.stale}` : '')}>
         <${StoreDot} id=${id} /><b>${s.short}</b> ${r.items?.length ? r.items.length : 'no results'}
         ${r.stale && html`<span class="badge badge-warn" title=${r.stale}>stale</span>`}
@@ -423,7 +424,7 @@ function Results({ search, settings }) {
                 ${winner.priceBasis !== 'shelf' && html`<span class="badge badge-outline" title=${BASIS_TITLE[winner.priceBasis]}>${BASIS_LABEL[winner.priceBasis]}</span>`}
               </div>
               <div class="hero-sub"><a href="#" onClick=${(e) => { e.preventDefault(); openProduct(winner, displayUnit); }}>${winner.name}</a>${winner.size ? ` · ${winner.size}` : ''} · ${money2(effPrice(winner, prefs))}${winner.soldBy === 'lb' ? '/lb' : ''}</div>
-              ${bestRows[1] && html`<div class="muted small">${savingsLine(winner, bestRows[1], displayUnit)}</div>`}
+              ${bestRows[1] && savingsLine(winner, bestRows[1], displayUnit) && html`<div class="muted small">${savingsLine(winner, bestRows[1], displayUnit)}</div>`}
             </div>`
           : loading
             ? html`<div class="card hero-best"><div class="hero-label">Best price</div><div class="skeleton" style=${{ height: 40, width: '70%' }}></div><div class="skeleton" style=${{ height: 14, width: '90%' }}></div></div>`
@@ -462,9 +463,16 @@ export function effPrice(p, prefs) {
   return usesMember(p, prefs) ? p.memberPrice : p.price;
 }
 
-function savingsLine(a, b, displayUnit) {
-  const pctv = Math.round((1 - a.cmp / b.cmp) * 100);
-  return `${unitPrice(b.cmp - a.cmp, displayUnit).text}/${unitLabel(displayUnit)} (${pctv}%) less than the next-best store, ${storeInfo(b.storeId).short}`;
+// The sentence is decided in shared/compare.js savingsClaim, the same one the phone renders: an exact
+// figure only between two prices of the same basis, words across bases, nothing against a flagged
+// price. This only fills in the display unit and the store's name.
+export function savingsLine(a, b, displayUnit) {
+  const c = savingsClaim(a, b);
+  if (!c) return null;
+  return c.text
+    .replace('{amount}', c.diffPerBase != null ? unitPrice(c.diffPerBase, displayUnit).text : '')
+    .replace('{unit}', unitLabel(displayUnit))
+    .replace('{store}', storeInfo(c.storeId).short);
 }
 
 function openProduct(p, displayUnit) {

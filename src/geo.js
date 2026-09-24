@@ -4,7 +4,7 @@ import { cached, DAY } from './cache.js';
 
 // Nominatim's usage policy asks for no more than one request a second, so honour it exactly.
 configureHost('nominatim.openstreetmap.org', { max: 1, gap: 1100 });
-configureHost('api.zippopotam.us', { max: 2, gap: 200 });
+// api.zippopotam.us: the owner's default rule (src/http.js).
 
 export function validZip(zip) {
   return /^\d{5}$/.test(String(zip || '').trim());

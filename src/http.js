@@ -84,7 +84,7 @@ const hosts = new Map();
 function hostState(host) {
   let st = hosts.get(host);
   if (!st) {
-    st = { active: 0, queue: [], last: 0, sent: 0, max: DEFAULT_HOST_POLICY.max, gap: DEFAULT_HOST_POLICY.gap, coolUntil: 0 };
+    st = { active: 0, queue: [], last: 0, sent: 0, answered: 0, max: DEFAULT_HOST_POLICY.max, gap: DEFAULT_HOST_POLICY.gap, coolUntil: 0 };
     hosts.set(host, st);
   }
   return st;
@@ -151,6 +151,40 @@ function release(host) {
 }
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * A timeout for work that waits its turn on a host: it fires when the hosts stop ANSWERING, not
+ * when the work has taken a while.
+ *
+ * At one request in flight per host, 700 ms apart, a directory build or a trip plan queues dozens of
+ * requests on www.instacart.com, and a caller near the back of that queue can wait a minute before
+ * its first request is even sent. A wall-clock timeout (the directory's 15 s per probe, the search's
+ * 35 s per store) counted that wait as the retailer being slow: probes came back "unresolved" and
+ * forced a rebuild, and the stores at the back of a search were reported as failed while the host
+ * was answering every request it got. Here the clock restarts whenever any of `hosts` answers, so
+ * only a host that has genuinely gone quiet for `ms` times the work out. Each request still has its
+ * own fetch timeout (request() above), and `maxMs` is a hard ceiling for the whole call.
+ */
+export function withStallTimeout(promise, ms, hosts = [], { maxMs = 5 * 60_000, label = 'The store site' } = {}) {
+  const start = Date.now();
+  let timer;
+  return Promise.race([
+    Promise.resolve(promise).finally(() => clearInterval(timer)),
+    new Promise((_, reject) => {
+      const fail = (msg) => {
+        clearInterval(timer);
+        reject(Object.assign(new Error(msg), { code: 'TIMEOUT' }));
+      };
+      timer = setInterval(() => {
+        const now = Date.now();
+        if (now - start > maxMs) return fail(`${label} took longer than ${Math.round(maxMs / 1000)}s`);
+        const last = Math.max(start, ...hosts.map((h) => hostState(h).answered));
+        if (now - last > ms) fail(`${label} stopped answering for ${Math.round(ms / 1000)}s`);
+      }, Math.max(20, Math.min(1000, Math.floor(ms / 4))));
+      timer.unref?.();
+    }),
+  ]);
+}
 
 // Stats for the health panel. `limited` records every host that has answered 429 (when, and until
 // when we are staying away); `refused` counts the requests we did not send because of it.
@@ -227,6 +261,8 @@ async function once(url, { method, headers, body, jar, timeout, followRedirects,
       }
       if (jar) jar.absorb(res);
       text = await res.text();
+      // The host is alive and answering; see withStallTimeout. A 5xx or a 429 is not progress.
+      if (res.status < 500 && res.status !== 429) hostState(host).answered = Date.now();
     } catch (err) {
       if (err instanceof HttpError) throw err;
       const e = new Error(err.name === 'TimeoutError' ? `Timed out after ${timeout / 1000}s (${host})` : `${err.message} (${host})${err.cause ? ': ' + err.cause.message : ''}`);
