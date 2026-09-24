@@ -1,8 +1,8 @@
-# Netlify. The iOS app links to these exact extensionless paths from Settings and the paywall
-# (see ios/App/UI/Settings/SettingsView.swift and PaywallView.swift), so they must resolve.
-/privacy   /privacy.html   200
-/terms     /terms.html     200
-/support   /support.html   200
+# The iOS app links to the extensionless /privacy, /terms and /support from Settings and the
+# paywall (ios/App/UI/Settings/SettingsView.swift, PaywallView.swift). Cloudflare Pages serves
+# privacy.html at /privacy by itself and redirects /privacy.html to /privacy, so a rewrite of
+# /privacy to /privacy.html here loops forever (308 to itself, measured with `wrangler pages dev`).
+# Netlify gets its rewrites from netlify.toml instead. Do not add them back here.
 
 # The free web app is served by server.js. Point /app/* at wherever it is deployed and
 # uncomment. Until then /app/ returns the landing page rather than a 404.

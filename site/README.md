@@ -131,14 +131,17 @@ action and the footer of each page.
 
 **The domain is registered on Cloudflare (cartworth.app), so Cloudflare Pages is the path of least
 resistance: same account, DNS already there, and it reads the `_redirects` and `_headers` files that
-are already committed here. Nothing in this folder needs to change.**
+are already committed here.** Pages serves `privacy.html` at `/privacy` on its own; `_redirects` must
+not also rewrite `/privacy` to `/privacy.html`, which loops (see the note in that file). Check with
+`npx wrangler pages dev site` before changing it.
 
 ### Cloudflare Pages, start to finish
 
 1. Cloudflare dashboard, **Compute (Workers & Pages)** then **Create** then **Pages**. Connect the
    git repo, or use **Direct Upload** and drag this `site/` folder in if the repo is not on GitHub.
-2. Build settings: **no build command**, and the output directory is this folder (`site` if you
-   connected the whole repo, `/` if you uploaded just this folder). There is no build step by design.
+2. Build settings: framework preset **None**, **no build command**, and the output directory is
+   this folder (`site` if you connected the whole repo, `/` if you uploaded just this folder). There
+   is no build step by design. Production branch: `main`.
 3. **Custom domains** then add `cartworth.app` and `www.cartworth.app`. Because the domain is already
    in this Cloudflare account, the DNS records are created for you.
 4. Confirm after it is live:
