@@ -41,7 +41,9 @@ const STORE_TIMEOUT = 35000;
 // v16: ketchup, paste and canned tomatoes are not "tomatoes"; spaghetti squash is not "spaghetti".
 // v17: the holiday matrix: query-specific descriptors (Beef Ribeye Steak, Red Wine, Hot Dog Buns),
 // compound look-alikes (baking soda, cooking wine, creme eggs, celery salt), canned vegetables/meats.
-const CACHE_VERSION = 17;
+// v18: a named cut is not answered by another (drumsticks for wings); "X for strawberries" is an
+// accessory; cottage cheese and Salisbury steak are look-alikes; champagne is sparkling wine.
+const CACHE_VERSION = 18;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

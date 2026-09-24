@@ -3,11 +3,13 @@
   "query": "sparkling wine",
   "match": [
    "La Marca Prosecco Sparkling Wine 750 ml",
-   "Cook's California Champagne Brut Sparkling Wine"
+   "Cook's California Champagne Brut Sparkling Wine",
+   "Cook's California Champagne Brut"
   ],
   "reject": [
    "Martinelli's Sparkling Cider",
-   "Sparkling Wine Glass Set"
+   "Sparkling Wine Glass Set",
+   "Champagne Grapes"
   ]
  },
  {
@@ -29,7 +31,8 @@
   "reject": [
    "Cheez-It Original Crackers",
    "Kraft Macaroni & Cheese Dinner",
-   "Philadelphia Cream Cheese"
+   "Philadelphia Cream Cheese",
+   "Darigold Cottage Cheese 2% Low Fat, 3 lbs"
   ]
  },
  {
@@ -64,11 +67,13 @@
   "query": "chicken wings",
   "match": [
    "Tyson Chicken Wings Frozen 2.5 lb",
-   "Fresh Chicken Party Wings"
+   "Fresh Chicken Party Wings",
+   "Chicken Wing Drumettes and Flats"
   ],
   "reject": [
    "Buffalo Wild Wings Sauce",
-   "Tyson Any'tizers Boneless Chicken Wyngz"
+   "Tyson Any'tizers Boneless Chicken Wyngz",
+   "Great Value Chicken Drumsticks, Natural"
   ]
  },
  {
@@ -143,7 +148,8 @@
   "reject": [
    "Strawberry Yogurt",
    "Frozen Sliced Strawberries in Syrup",
-   "Smucker's Strawberry Jam"
+   "Smucker's Strawberry Jam",
+   "Marzetti Glaze for Strawberries"
   ]
  },
  {
@@ -165,7 +171,8 @@
   ],
   "reject": [
    "A.1. Original Steak Sauce",
-   "McCormick Montreal Steak Seasoning"
+   "McCormick Montreal Steak Seasoning",
+   "Stouffer's Family Size Salisbury Steak"
   ]
  },
  {

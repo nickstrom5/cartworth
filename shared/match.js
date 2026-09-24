@@ -186,7 +186,7 @@ const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn to
   'onion salt', 'garlic salt', 'yogurt raisin', 'yogurt covered', 'yogurt pretzel', 'wine glass', 'glass set', 'champagne flute',
   'sugar free', 'charcoal toothpaste', 'chocolate milk'];
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
-  'candy corn', 'corned beef brisket'];
+  'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak'];
 // Tokenised with the matcher's own tokens() ("tortillas" stays "tortillas"), on first use: tokens()
 // depends on constants declared further down this file.
 let compounds = null;
@@ -201,6 +201,10 @@ function hasPhrase(words, phrase) {
 // Canned and dried forms of vegetables and meats are different products from the fresh ones:
 // "Del Monte Asparagus Spears Canned", "Libby's Corned Beef Canned". Frozen is not in this list:
 // frozen green beans answer "green beans" (the Thanksgiving run), frozen wings answer "wings".
+// Cuts of a bird or animal. A search naming one cut is not answered by another, whatever the aisle:
+// Walmart files "Great Value Chicken Drumsticks" under Chicken Wings, and that category made it
+// Birmingham's best chicken wings (the state x holiday audit).
+const CUTS = new Set(['wing', 'drumstick', 'thigh', 'breast', 'leg', 'tenderloin', 'tender', 'gizzard', 'liver', 'neck', 'quarter', 'drumette']);
 const FRESH_VEG_MEAT_RE = /^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$/;
 const SHELF_FORM_RE = /\b(?:canned|dehydrated|freeze[- ]?dried)\b/;
 
@@ -257,11 +261,11 @@ export function tokens(s) {
 }
 
 // Product words that imply another word ("ground chuck" is ground beef).
-const IMPLIES = { frank: 'dog', chuck: 'beef', sirloin: 'beef', brisket: 'beef', ribeye: 'beef', kcup: 'coffee', 'k-cup': 'coffee', espresso: 'coffee', cage: 'egg', clementine: 'mandarin', cutie: 'mandarin', tp: 'toilet' };
+const IMPLIES = { champagne: ['sparkling', 'wine'], prosecco: ['sparkling', 'wine'], cava: ['sparkling', 'wine'], frank: 'dog', chuck: 'beef', sirloin: 'beef', brisket: 'beef', ribeye: 'beef', kcup: 'coffee', 'k-cup': 'coffee', espresso: 'coffee', cage: 'egg', clementine: 'mandarin', cutie: 'mandarin', tp: 'toilet' };
 
 function productTokens(s) {
   const t = tokens(s);
-  for (const w of [...t]) if (IMPLIES[w]) t.push(IMPLIES[w]);
+  for (const w of [...t]) if (IMPLIES[w]) t.push(...[].concat(IMPLIES[w]));
   return t;
 }
 
@@ -446,6 +450,15 @@ export function relevance(query, product, opts = {}) {
     for (const p of compoundTokens().head) if (hasPhrase(words, p) && p.slice(0, -1).some(inQ) && !inQ(p[p.length - 1])) { mult *= 0.2; break; }
     for (const p of compoundTokens().modifier) if (hasPhrase(words, p) && inQ(p[p.length - 1]) && !inQ(p[0])) { mult *= 0.2; break; }
   }
+  {
+    const qCut = qt.find((w) => CUTS.has(w));
+    if (qCut && words.some((w) => CUTS.has(w) && w !== qCut && !qset.has(w)) && !words.includes(qCut)) mult *= 0.2;
+  }
+  // "Marzetti Glaze for Strawberries" is something to use WITH strawberries; it was Little Rock's best
+  // "strawberries" (the state x holiday audit). Same for a dip for apples, a rub for ribs.
+  if (head && !qset.has('for') && new RegExp(`\\bfor (?:[a-z]+ ){0,2}${head.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(words.join(' '))) mult *= 0.2;
+  // Champagne grapes are grapes, not the champagne IMPLIES reads into the name.
+  if (/\bchampagne grapes?\b/.test(nameNorm) && !/\bgrape/.test(normalize(query))) mult *= 0.2;
   if (FRESH_VEG_MEAT_RE.test(head || '')) {
     const m = SHELF_FORM_RE.exec(nameNorm);
     if (m && !normalize(query).includes(m[0])) mult *= 0.3;

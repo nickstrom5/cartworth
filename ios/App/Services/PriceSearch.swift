@@ -16,7 +16,8 @@ enum PriceSearch {
     // 11: a dose on a grocery (Vitamin D 400 IU) is not a supplement; "a la carte" is not a dish.
     // 12: ketchup and canned tomatoes are not "tomatoes"; spaghetti squash is not "spaghetti".
     // 13: the holiday matrix (Match.queryAllows, compounds, canned vegetables and meats).
-    static let cacheVersion = 13
+    // 14: cuts, "for <food>" accessories, cottage cheese / Salisbury steak, champagne = sparkling wine.
+    static let cacheVersion = 14
 
     struct Payload: Codable {
         var items: [Product]

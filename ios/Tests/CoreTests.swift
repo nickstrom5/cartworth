@@ -1777,8 +1777,10 @@ final class HolidayMatrixTests: XCTestCase {
     func testSparklingWine() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "sparkling wine", name: "La Marca Prosecco Sparkling Wine 750 ml"), Match.relevant, "La Marca Prosecco Sparkling Wine 750 ml")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "sparkling wine", name: "Cook's California Champagne Brut Sparkling Wine"), Match.relevant, "Cook's California Champagne Brut Sparkling Wine")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "sparkling wine", name: "Cook's California Champagne Brut"), Match.relevant, "Cook's California Champagne Brut")
         XCTAssertLessThan(Match.relevance(query: "sparkling wine", name: "Martinelli's Sparkling Cider"), Match.relevant, "Martinelli's Sparkling Cider")
         XCTAssertLessThan(Match.relevance(query: "sparkling wine", name: "Sparkling Wine Glass Set"), Match.relevant, "Sparkling Wine Glass Set")
+        XCTAssertLessThan(Match.relevance(query: "sparkling wine", name: "Champagne Grapes"), Match.relevant, "Champagne Grapes")
     }
     func testShrimpCocktail() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "shrimp cocktail", name: "Censea Shrimp Cocktail with Sauce 16 oz"), Match.relevant, "Censea Shrimp Cocktail with Sauce 16 oz")
@@ -1791,6 +1793,7 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertLessThan(Match.relevance(query: "cheese", name: "Cheez-It Original Crackers"), Match.relevant, "Cheez-It Original Crackers")
         XCTAssertLessThan(Match.relevance(query: "cheese", name: "Kraft Macaroni & Cheese Dinner"), Match.relevant, "Kraft Macaroni & Cheese Dinner")
         XCTAssertLessThan(Match.relevance(query: "cheese", name: "Philadelphia Cream Cheese"), Match.relevant, "Philadelphia Cream Cheese")
+        XCTAssertLessThan(Match.relevance(query: "cheese", name: "Darigold Cottage Cheese 2% Low Fat, 3 lbs"), Match.relevant, "Darigold Cottage Cheese 2% Low Fat, 3 lbs")
     }
     func testCrackers() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "crackers", name: "Ritz Original Crackers"), Match.relevant, "Ritz Original Crackers")
@@ -1809,8 +1812,10 @@ final class HolidayMatrixTests: XCTestCase {
     func testChickenWings() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "chicken wings", name: "Tyson Chicken Wings Frozen 2.5 lb"), Match.relevant, "Tyson Chicken Wings Frozen 2.5 lb")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "chicken wings", name: "Fresh Chicken Party Wings"), Match.relevant, "Fresh Chicken Party Wings")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "chicken wings", name: "Chicken Wing Drumettes and Flats"), Match.relevant, "Chicken Wing Drumettes and Flats")
         XCTAssertLessThan(Match.relevance(query: "chicken wings", name: "Buffalo Wild Wings Sauce"), Match.relevant, "Buffalo Wild Wings Sauce")
         XCTAssertLessThan(Match.relevance(query: "chicken wings", name: "Tyson Any'tizers Boneless Chicken Wyngz"), Match.relevant, "Tyson Any'tizers Boneless Chicken Wyngz")
+        XCTAssertLessThan(Match.relevance(query: "chicken wings", name: "Great Value Chicken Drumsticks, Natural"), Match.relevant, "Great Value Chicken Drumsticks, Natural")
     }
     func testTortillaChips() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "tortilla chips", name: "Tostitos Scoops Tortilla Chips"), Match.relevant, "Tostitos Scoops Tortilla Chips")
@@ -1851,6 +1856,7 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertLessThan(Match.relevance(query: "strawberries", name: "Strawberry Yogurt"), Match.relevant, "Strawberry Yogurt")
         XCTAssertLessThan(Match.relevance(query: "strawberries", name: "Frozen Sliced Strawberries in Syrup"), Match.relevant, "Frozen Sliced Strawberries in Syrup")
         XCTAssertLessThan(Match.relevance(query: "strawberries", name: "Smucker's Strawberry Jam"), Match.relevant, "Smucker's Strawberry Jam")
+        XCTAssertLessThan(Match.relevance(query: "strawberries", name: "Marzetti Glaze for Strawberries"), Match.relevant, "Marzetti Glaze for Strawberries")
     }
     func testChocolate() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "chocolate", name: "Hershey's Milk Chocolate Bar"), Match.relevant, "Hershey's Milk Chocolate Bar")
@@ -1863,6 +1869,7 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "steak", name: "New York Strip Steak"), Match.relevant, "New York Strip Steak")
         XCTAssertLessThan(Match.relevance(query: "steak", name: "A.1. Original Steak Sauce"), Match.relevant, "A.1. Original Steak Sauce")
         XCTAssertLessThan(Match.relevance(query: "steak", name: "McCormick Montreal Steak Seasoning"), Match.relevant, "McCormick Montreal Steak Seasoning")
+        XCTAssertLessThan(Match.relevance(query: "steak", name: "Stouffer's Family Size Salisbury Steak"), Match.relevant, "Stouffer's Family Size Salisbury Steak")
     }
     func testAsparagus() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "asparagus", name: "Green Asparagus Bunch"), Match.relevant, "Green Asparagus Bunch")

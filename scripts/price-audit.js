@@ -84,7 +84,7 @@ async function main() {
           return {
             storeId: r.storeId, verdict: r.verdict, basis: r.basis, est: r.est, perBase: r.perBase, shown: perShow(r.perBase, best.dim, q),
             name: b.item.name, size: b.item.size, sizeText: b.item.sizeText, sizeSource: b.item.sizeSource, price: b.item.price,
-            memberPrice: b.item.memberPrice, soldBy: b.item.soldBy, url: b.item.url, score: +b.item.score.toFixed(3),
+            memberPrice: b.item.memberPrice, soldBy: b.item.soldBy, url: b.item.url, category: b.item.category ?? null, score: +b.item.score.toFixed(3),
           };
         }),
         claim: claim?.text || null, flagged, status,

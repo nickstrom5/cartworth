@@ -174,7 +174,7 @@ enum Match {
         "onion salt", "garlic salt", "yogurt raisin", "yogurt covered", "yogurt pretzel", "wine glass", "glass set", "champagne flute",
         "sugar free", "charcoal toothpaste", "chocolate milk"].map { tokens($0) }
     private static let modifierCompounds = ["baking soda", "cooking wine", "creme egg", "cadbury egg", "chocolate egg", "plastic egg", "mini egg",
-        "candy corn", "corned beef brisket"].map { tokens($0) }
+        "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak"].map { tokens($0) }
     private static func stem(_ w: String) -> String { w.hasSuffix("s") ? String(w.dropLast()) : w }
     private static func hasPhrase(_ words: [String], _ phrase: [String]) -> Bool {
         guard !phrase.isEmpty, words.count >= phrase.count else { return false }
@@ -182,12 +182,16 @@ enum Match {
         return false
     }
     /// Canned and dried forms of vegetables and meats. Ports of FRESH_VEG_MEAT_RE / SHELF_FORM_RE.
+    /// Cuts of a bird or animal ("Chicken Drumsticks" filed under Chicken Wings). Port of CUTS.
+    private static let cuts: Set<String> = ["wing", "drumstick", "thigh", "breast", "leg", "tenderloin", "tender", "gizzard", "liver", "neck", "quarter", "drumette"]
+    private static let champagneGrapesRx = Rx("\\bchampagne grapes?\\b")
+    private static let grapeRx = Rx("\\bgrape")
     private static let freshVegMeatRx = Rx("^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$")
     private static let shelfFormRx = Rx("\\b(?:canned|dehydrated|freeze[- ]?dried)\\b")
 
     private static let soft: Set<String> = ["organic", "lactose", "free", "ultra", "filtered", "reduced", "fat", "low", "whole", "skim", "natural", "grass", "fed", "pasture", "raised", "cage", "large", "medium", "small", "extra", "jumbo", "grade", "fresh", "boneless", "skinless", "lean", "ground"]
     /// Product words that imply another ("ground chuck" is ground beef).
-    private static let implies: [String: String] = ["frank": "dog", "chuck": "beef", "sirloin": "beef", "brisket": "beef", "ribeye": "beef", "kcup": "coffee", "k-cup": "coffee", "espresso": "coffee", "cage": "egg", "clementine": "mandarin", "cutie": "mandarin", "tp": "toilet"]
+    private static let implies: [String: [String]] = ["champagne": ["sparkling", "wine"], "prosecco": ["sparkling", "wine"], "cava": ["sparkling", "wine"], "frank": ["dog"], "chuck": ["beef"], "sirloin": ["beef"], "brisket": ["beef"], "ribeye": ["beef"], "kcup": ["coffee"], "k-cup": ["coffee"], "espresso": ["coffee"], "cage": ["egg"], "clementine": ["mandarin"], "cutie": ["mandarin"], "tp": ["toilet"]]
     private static let chipNoise: Set<String> = ["carton", "bottle", "jug", "container", "package", "bag", "box", "can", "jar", "each", "value", "family", "size", "select", "original", "classic", "premium", "organic", "brand", "pack", "count", "ounce", "gallon", "gal", "quart", "half", "pint", "fl", "lb", "lbs", "oz", "ct", "with", "made", "great", "best", "store", "kroger", "signature", "good", "gather", "market", "pantry", "farm", "farms", "simple", "truth", "nature", "kirkland", "365", "everyday", "item", "items"]
 
     private static let percentRx = Rx("(\\d)\\s*%")
@@ -253,7 +257,7 @@ enum Match {
 
     private static func productTokens(_ s: String) -> [String] {
         var t = tokens(s)
-        for w in t { if let imp = implies[w] { t.append(imp) } }
+        for w in t { if let imp = implies[w] { t.append(contentsOf: imp) } }
         return t
     }
 
@@ -395,6 +399,10 @@ enum Match {
             if headCompounds.contains(where: { hasPhrase(words, $0) && $0.dropLast().contains(where: inQ) && !inQ($0.last!) }) { mult *= 0.2 }
             if modifierCompounds.contains(where: { hasPhrase(words, $0) && inQ($0.last!) && !inQ($0.first!) }) { mult *= 0.2 }
         }
+        if let qCut = qt.first(where: { cuts.contains($0) }), words.contains(where: { cuts.contains($0) && $0 != qCut && !qset.contains($0) }), !words.contains(qCut) { mult *= 0.2 }
+        // "Glaze for Strawberries" is to use WITH strawberries. Port of the "for" rule in shared/match.js.
+        if !qset.contains("for"), Rx("\\bfor (?:[a-z]+ ){0,2}\(NSRegularExpression.escapedPattern(for: head))").test(words.joined(separator: " ")) { mult *= 0.2 }
+        if champagneGrapesRx.test(nameNorm) && !grapeRx.test(qNormForImitation) { mult *= 0.2 }
         if freshVegMeatRx.test(head), let m = shelfFormRx.match(nameNorm)?.first ?? nil, !qNormForImitation.contains(m) { mult *= 0.3 }
         if juiceWordRx.test(qNormForImitation) && juiceImpostorRx.test(nameNorm) && !wantsJuiceDrinkRx.test(qNormForImitation) { mult *= 0.3 }
         if babyProductRx.test(nameNorm) && !wantsBabyRx.test(qNormForImitation) { mult *= 0.2 }
