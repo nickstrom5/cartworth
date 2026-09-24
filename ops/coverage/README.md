@@ -41,6 +41,10 @@ and Walmart); 7 of 51 towns and 11 of 51 rural ZIPs have none but Costco/Walmart
 
 ## Fixed from this sweep
 
+- Nine of those grocers are on Instacart and are now priced, each slug verified against a local
+  store by `scripts/find-slugs.js`: Ruler Foods, Family Fare, Marc's, Strack & Van Til, C-Town, Food
+  Bazaar (shelf prices), Kings, Bravo and DeCicco & Sons. Shoppers, Shop 'n Save, Morton Williams and
+  Times Supermarket are not on Instacart and stay weekly-ad only.
 - Flipp spells two priced chains "Wegman's" and "FoodCity"; their weekly ads never reached the Sales tab.
 - Whole Foods answers "no store near this ZIP" with a 404, which was read as a failed lookup: every rural
   ZIP was left "unresolved" (counts may be low) and rebuilt every few minutes.

@@ -171,6 +171,19 @@ export const CHAINS = [
   { id: 'foodcity', name: 'Food City', short: 'Food City', aliases: ['food city'], price: ic('food-city'), ads: ['Food City', 'FoodCity'], states: ['TN', 'VA', 'GA', 'KY', 'AL'] },
   { id: 'lowesfoods', name: 'Lowes Foods', short: 'Lowes Foods', aliases: ['lowes foods'], price: null, ads: ['Lowes Foods'], states: ['NC', 'SC', 'VA'], note: 'Weekly ad only.' },
   { id: 'brookshires', name: 'Brookshire’s', short: 'Brookshire’s', aliases: ["brookshire's", 'brookshires'], price: ic('brookshires'), ads: ["Brookshire's"], states: ['TX', 'LA', 'AR'] },
+  // Added from the nationwide sweep (24 Sep 2026): grocers advertising into sampled ZIPs with no
+  // price source. Each slug verified by scripts/find-slugs.js against a LOCAL store (not a canonical
+  // storefront elsewhere). Not on Instacart, so still weekly-ad only: Shoppers, Shop 'n Save,
+  // Morton Williams, Times Supermarket.
+  { id: 'rulerfoods', name: 'Ruler Foods', short: 'Ruler', aliases: ['ruler foods'], price: ic('ruler-foods'), ads: ['Ruler Foods'], states: ['IL', 'IN', 'KY', 'MO', 'TN', 'OH'] },
+  { id: 'familyfare', name: 'Family Fare', short: 'Family Fare', aliases: ['family fare'], price: ic('family-fare-supermarkets'), ads: ['Family Fare'], states: ['MI', 'MN', 'ND', 'NE', 'SD', 'IA', 'WI'] },
+  { id: 'marcs', name: 'Marc’s', short: 'Marc’s', aliases: ["marc's", 'marcs'], price: ic('marcs'), ads: ["Marc's"], states: ['OH'] },
+  { id: 'strackvantil', name: 'Strack & Van Til', short: 'Strack & Van Til', aliases: ['strack & van til', 'strack and van til'], price: ic('strack-van-til'), ads: ['Strack and Van Til', 'Strack & Van Til'], states: ['IN', 'IL'] },
+  { id: 'ctown', name: 'C-Town', short: 'C-Town', aliases: ['c town', 'c-town', 'ctown'], price: ic('ctown-supermarkets'), ads: ['C Town', 'C-Town'], states: ['NY', 'NJ', 'CT', 'MA', 'PA'] },
+  { id: 'foodbazaar', name: 'Food Bazaar', short: 'Food Bazaar', aliases: ['food bazaar'], price: ic('food-bazaar'), ads: ['Food Bazaar Supermarket', 'Food Bazaar'], states: ['NY', 'NJ', 'CT'] },
+  { id: 'kings', name: 'Kings Food Markets', short: 'Kings', aliases: ['kings food markets', 'kings food market'], price: ic('kings-food-markets'), ads: ['Kings Food Markets'], states: ['NJ', 'NY', 'CT'] },
+  { id: 'bravo', name: 'Bravo Supermarkets', short: 'Bravo', aliases: ['bravo supermarket', 'bravo supermarkets'], price: ic('bravo-supermarkets'), ads: ['Bravo Supermarket', 'Bravo Supermarkets'], states: ['NY', 'NJ', 'CT', 'PA', 'MA', 'RI', 'FL'] },
+  { id: 'decicco', name: 'DeCicco & Sons', short: 'DeCicco’s', aliases: ['decicco & sons', "decicco's", 'deciccos', 'decicco and sons'], price: ic('deciccos'), ads: ['DeCicco & Sons'], states: ['NY', 'CT'] },
   // Priced since 23 Sep 2026 from Piggly Wiggly MIDWEST's own store site. The marketplace's
   // 'piggly-wiggly' storefront is the Southern chain: it answers Milwaukee and Kenosha only with its
   // canonical store 844-878 mi away, which must never be read as a local price (see chainWide above),
