@@ -323,30 +323,35 @@ export function listingPack(size, packText, { name = '', url = '' } = {}) {
 }
 
 /**
- * The retailer's own unit price, when it disagrees with the package size, is a third witness that
- * the listing contradicts itself.
+ * A package price that is really a price PER POUND, caught by the retailer's own unit line.
  *
  * Round-3 price check, Piggly Wiggly (order.shopthepig.com) at 53142: "Certified Angus Beef 80%
- * Ground Chuck Beef", size "10 lb", $7.99 — Instacart's own line under it reads "$0.50/oz", which is
- * $7.99 for ONE pound. Divided by the stated 10 lb it was 80c/lb and took Kenosha's and Milwaukee's
- * ground-beef headline "81% less than the next-best store". "Cady Creek Farms Sharp Cheddar Cheese",
- * "5 lb", $8.99, "$0.56/oz": the same shape, $1.80/lb against a listing that says $8.99/lb. Which
- * number is stale cannot be known from outside, so like every other size contradiction the row keeps
- * its package price and loses its unit price (sizeConflict). A factor of 1.5 or more, as for the
- * name-versus-size conflict above: the listed line is rounded to the cent, which on a cheap item
- * ("$0.03/oz") is itself worth up to 17%.
+ * Ground Chuck Beef", size "10 lb", $7.99, and Instacart's own line under it "$0.50/oz" — $7.99 buys
+ * ONE pound. Divided by the stated 10 lb it was 80c/lb and took Kenosha's and Milwaukee's ground-beef
+ * headline "81% less than the next-best store". Cady Creek cheddar "5 lb" at $8.99, "$0.56/oz": the
+ * same. It is how a store that prices meat and cheese by the pound reads when the feed says "each".
  *
- * `f.listedUnit` is { price, unit } from the adapter (the line as printed: "$0.50/oz", "$3.49/gal").
+ * Measured twice over fresh listings at 53142 (16 stores, 14 staples; 5,834 then 3,782 rows). The
+ * line is NOT a reliable size on its own: on a sale it is often the regular price over the size, with
+ * no regular price sent (Mariano's Land O Lakes, 1 lb at $3.99 with "$0.50/oz"; Butternut bread 20 oz
+ * at $2.99 with "$0.25/oz"); on a warehouse pack it is one unit (Costco "Uncle Matt's ..., 52 oz,
+ * 2-count"); on counts it is arbitrary; and some lines are wrong the other way (Sargento 7.5 oz at
+ * $4.49, "$0.07/oz"). Every row that implied a smaller package for any of those reasons implied some
+ * other amount; every Piggly Wiggly row, and only those, implied exactly one pound (15.98 to 16.19 oz)
+ * against a stated 3, 5 or 10 lb. So the rule is that shape and no wider: a weight of 1.5 lb or more
+ * whose own line says the price buys one pound, +/-3% for rounding the line to the cent. The row then
+ * keeps its package price and loses its unit price (sizeConflict), like every size contradiction.
+ *
+ * `f.listedUnit` is { price, unit } from the adapter (the line as printed: "$0.50/oz", "$7.99/lb").
  */
-const LISTED_UNITS = { oz: ['weight', 1], lb: ['weight', 16], lbs: ['weight', 16], 'fl oz': ['volume', 1], floz: ['volume', 1], gal: ['volume', 128], qt: ['volume', 32], l: ['volume', 33.8140227], ct: ['count', 1], each: ['count', 1], ea: ['count', 1] };
+const LISTED_WEIGHT = { oz: 1, lb: 16, lbs: 16 };
 export function unitLineConflict(size, f) {
   const lu = f.listedUnit;
-  const u = lu && LISTED_UNITS[String(lu.unit || '').toLowerCase().replace(/\.$/, '').trim()];
-  if (!u || !(lu.price > 0) || !(f.price > 0) || !size || size.perWeight || !(size.base > 0) || u[0] !== size.dim) return null;
-  const impliedBase = (f.price / lu.price) * u[1];
-  const ratio = Math.max(impliedBase, size.base) / Math.min(impliedBase, size.base);
-  if (ratio < 1.5) return null;
-  return { text: formatSize(size), name: `${Math.round(impliedBase * 100) / 100} ${u[0] === 'weight' ? 'oz' : u[0] === 'volume' ? 'fl oz' : 'ct'} (the listing's own ${'$'}${lu.price}/${lu.unit})` };
+  const per = lu && LISTED_WEIGHT[String(lu.unit || '').toLowerCase().replace(/\.$/, '').trim()];
+  if (!per || !(lu.price > 0) || !(f.price > 0) || !size || size.perWeight || size.dim !== 'weight' || !(size.base >= 24)) return null;
+  const implied = (f.price / lu.price) * per;
+  if (Math.abs(implied - 16) > 16 * 0.03) return null;
+  return { text: formatSize(size), name: `1 lb (the listing's own ${'$'}${lu.price}/${lu.unit})` };
 }
 
 const ROLL_GOODS_RE = /\b(?:alumin(?:i)?um foil|foil|plastic wrap|cling wrap|wax(?:ed)? paper|parchment(?: paper)?|freezer paper|butcher paper)\b/i;

@@ -753,3 +753,22 @@ test('control: a unit line that agrees (to the cent), or is per each on a volume
   const oj = pig({ id: 3, name: 'Don Simon Orange Juice, 33.81 fl oz, 4-count', size: '33.81 fl oz', price: 3.69, perUnit: '$0.92 each', slug: 'z' });
   assert.equal(oj.sizeConflict, null);
 });
+
+// The measurement behind the narrowed rule (5,834 fresh listings at 53142): the unit line is often
+// the REGULAR price, one unit of a warehouse pack, or just wrong the other way. None may withhold a
+// price. See unitLineConflict.
+test('control: a sale with no regular price, a line that errs the dear way, and a Costco per-unit line are not conflicts', () => {
+  const m = (name, sizeText, price, listedUnit, regularPrice = null) => makeProduct({ storeId: 's', id: name, name, sizeText, price, regularPrice, listedUnit });
+  // As Mariano's sent it: no regular price, and a line that is the $7.99 regular price over 16 oz.
+  const lol = m('Land O Lakes Butter, Salted', '1 lb', 3.99, { price: 0.5, unit: 'oz' });
+  assert.equal(lol.sizeConflict, null, "Mariano's $3.99 pound of butter, whose line is the $7.99 regular price");
+  assert.equal(m('Butternut Large White Bread', '20 oz', 2.99, { price: 0.25, unit: 'oz' }).sizeConflict, null);
+  assert.ok(close(perLb(lol), 3.99));
+  assert.equal(m('Sargento Natural 4 State Cheddar Shredded Cheese, Traditional Cut', '7.5 oz', 4.49, { price: 0.07, unit: 'oz' }).sizeConflict, null);
+  assert.equal(m("Uncle Matt's Organic Orange Juice, 52 oz, 2-count", '52 fl oz', 15.91, { price: 0.31, unit: 'fl oz' }).sizeConflict, null);
+});
+
+test("DEFECT P22: Piggly Wiggly's 3 lb meats priced over one pound are conflicts too", () => {
+  const beef = pig({ id: 4, name: '80% Ground Beef', size: '3 lb', price: 4.99, perUnit: '$0.31/oz', slug: '80-ground-beef' });
+  assert.ok(beef.sizeConflict);
+});

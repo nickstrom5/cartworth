@@ -422,5 +422,11 @@ final class PricingRound2Tests: XCTestCase {
         XCTAssertNil(listed("Certified Angus Beef 80% Lean Ground Beef Chuck", "3 lb", 5.99, "$0.12/oz").sizeConflict)
         XCTAssertNil(listed("Store Brand Salt", "26 oz", 0.89, "$0.03/oz").sizeConflict)
         XCTAssertNil(listed("Don Simon Orange Juice, 33.81 fl oz, 4-count", "33.81 fl oz", 3.69, "$0.92 each").sizeConflict)
+        XCTAssertNil(listed("Sargento Natural 4 State Cheddar Shredded Cheese", "7.5 oz", 4.49, "$0.07/oz").sizeConflict)
+        XCTAssertNil(listed("Uncle Matt's Organic Orange Juice, 52 oz, 2-count", "52 fl oz", 15.91, "$0.31/fl oz").sizeConflict)
+        // As Mariano's sent them: sale prices, no regular price, lines computed from the regular price.
+        XCTAssertNil(listed("Land O Lakes Butter, Salted", "1 lb", 3.99, "$0.50/oz").sizeConflict)
+        XCTAssertNil(listed("Butternut Large White Bread", "20 oz", 2.99, "$0.25/oz").sizeConflict)
+        XCTAssertNotNil(listed("80% Ground Beef", "3 lb", 4.99, "$0.31/oz").sizeConflict, "Piggly Wiggly's per-pound meat")
     }
 }

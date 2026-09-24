@@ -212,10 +212,12 @@ enum ProductFactory {
     /// cases and a whole-package size in none — but we still do not multiply, because a wrong
     /// multiplication is a price too cheap, and it wins. The disagreement is recorded, which
     /// withholds the unit price. Port of `countOnlyConflict` in src/normalize.js.
-    /// The retailer's own unit price disagreeing with the package size by 1.5x or more: Piggly
-    /// Wiggly's "10 lb" of ground chuck at $7.99 whose own line reads "$0.50/oz" (one pound).
-    /// Port of `unitLineConflict` in src/normalize.js, which records the measurement.
-    private static let listedUnits: [String: (Dim, Double)] = ["oz": (.weight, 1), "lb": (.weight, 16), "lbs": (.weight, 16), "fl oz": (.volume, 1), "floz": (.volume, 1), "gal": (.volume, 128), "qt": (.volume, 32), "l": (.volume, 33.8140227), "ct": (.count, 1), "each": (.count, 1), "ea": (.count, 1)]
+    /// A package price that is really a price PER POUND: a weight of 1.5 lb or more whose own
+    /// Instacart line says the price buys one pound (+/-3%). Piggly Wiggly's "10 lb" of ground chuck at
+    /// $7.99, line "$0.50/oz". Nothing wider: the line is often the regular price on a sale, one unit
+    /// of a warehouse pack, or wrong the other way. Port of `unitLineConflict` in src/normalize.js,
+    /// which records the two fresh measurements (5,834 and 3,782 listings) behind the shape.
+    private static let listedWeight: [String: Double] = ["oz": 1, "lb": 16, "lbs": 16]
     private static let listedUnitRx = Rx("^\\s*\\$\\s*(\\d+(?:\\.\\d+)?)\\s*(?:/\\s*|\\s+)(fl\\.?\\s*oz|oz|lbs?|gal|qt|l|ct|each|ea)\\.?\\s*$")
 
     static func listedUnit(_ s: String?) -> ListedUnit? {
@@ -225,12 +227,11 @@ enum ProductFactory {
     }
 
     static func unitLineConflict(_ size: ParsedSize?, price: Double?, listed: ListedUnit?) -> SizeConflict? {
-        guard let listed, let u = listedUnits[listed.unit], listed.price > 0, let price, price > 0,
-              let size, !size.perWeight, let b = size.base, b > 0, u.0 == size.dim else { return nil }
-        let implied = (price / listed.price) * u.1
-        guard max(implied, b) / min(implied, b) >= 1.5 else { return nil }
-        let label = u.0 == .weight ? "oz" : u.0 == .volume ? "fl oz" : "ct"
-        return SizeConflict(text: Units.format(size), name: "\((implied * 100).rounded() / 100) \(label) (the listing's own $\(listed.price)/\(listed.unit))")
+        guard let listed, let per = listedWeight[listed.unit], listed.price > 0, let price, price > 0,
+              let size, !size.perWeight, size.dim == .weight, let b = size.base, b >= 24 else { return nil }
+        let implied = (price / listed.price) * per
+        guard abs(implied - 16) <= 16 * 0.03 else { return nil }
+        return SizeConflict(text: Units.format(size), name: "1 lb (the listing's own $\(listed.price)/\(listed.unit))")
     }
 
     static func countOnlyConflict(_ size: ParsedSize?, chosen: ParsedSize?, textSize: ParsedSize?, nameSize: ParsedSize?) -> SizeConflict? {
