@@ -280,6 +280,11 @@ struct WatchEditSheet: View {
     @State private var include = ""
     @State private var exclude = ""
 
+    private var unitChoices: [DisplayUnit] {
+        guard let d = watch.dim.flatMap(Dim.init(rawValue:)) else { return DisplayUnit.allCases }
+        return DisplayUnit.units(for: d)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -288,7 +293,9 @@ struct WatchEditSheet: View {
                     HStack {
                         TextField("e.g. 2.50", text: $target).keyboardType(.decimalPad)
                         Picker("per", selection: $unit) {
-                            ForEach(DisplayUnit.allCases) { u in Text("per \(u.label)").tag(u) }
+                            // Only units of what the watch measures: butter "per gal" multiplied a per-ounce
+                            // price by 128 into the card, the chart and the target alert.
+                            ForEach(unitChoices) { u in Text("per \(u.label)").tag(u) }
                         }
                         .labelsHidden()
                     }
@@ -309,7 +316,8 @@ struct WatchEditSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         watch.label = label.isEmpty ? watch.query : label
-                        watch.target = Double(target)
+                        // A decimal-comma region types "2,50"; Double("2,50") is nil and silently cleared the target.
+                        watch.target = Double(target.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: "."))
                         watch.displayUnit = unit.rawValue
                         let newInclude = include.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
                         let newExclude = exclude.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
@@ -325,7 +333,8 @@ struct WatchEditSheet: View {
             .onAppear {
                 label = watch.label
                 target = watch.target.map { String($0) } ?? ""
-                unit = watch.displayUnit.flatMap(DisplayUnit.init(rawValue:)) ?? .lb
+                let saved = watch.displayUnit.flatMap(DisplayUnit.init(rawValue:))
+                unit = saved.flatMap { unitChoices.contains($0) ? $0 : nil } ?? [DisplayUnit.lb, .gal, .ct].first(where: unitChoices.contains) ?? .lb
                 include = watch.include.joined(separator: ", ")
                 exclude = watch.exclude.joined(separator: ", ")
             }

@@ -208,6 +208,11 @@ struct Deal: Identifiable, Codable, Hashable {
         if price == nil && story == nil && priceText.isEmpty { s -= 30 }
         return s
     }
+
+    /// A weekly-ad price whose terms Flipp has not sent yet: the flyer list gives "2/$7" as $7.00
+    /// and "$3.99/lb" as $3.99. Labelled, sorted last and never notified until enriched. Mirrors
+    /// termsPending in public/js/views/sales.js.
+    var termsPending: Bool { source == "flipp" && !enriched && price != nil }
 }
 
 struct Flyer: Identifiable, Codable, Hashable {

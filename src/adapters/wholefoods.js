@@ -109,7 +109,7 @@ export function toProduct(r, { storeId = null, rank = 0, total = 1, now = Date.n
   // Eve, not 5:59 pm Central): read them as wall-clock times, as the weekly ads are.
   const saleStart = wallClock(r.saleStartDate);
   const saleEnd = wallClock(r.saleEndDate);
-  const saleActive = r.salePrice != null && (!saleEnd || Date.parse(saleEnd) >= now) && (!saleStart || Date.parse(saleStart) <= now + 12 * HOUR);
+  const saleActive = r.salePrice != null && (!saleEnd || Date.parse(saleEnd) >= now) && (!saleStart || Date.parse(saleStart) <= now);
   const regular = r.regularPrice ?? null;
 
   // A multi-buy arrives as the TOTAL, not the each price: "2 for $7.78" is salePrice 7.78 with

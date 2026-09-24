@@ -68,8 +68,12 @@ struct RecipeImportView: View {
                 }
                 if let error { InfoBanner(kind: .bad, symbol: "exclamationmark.triangle", text: error) }
 
-                Button { showScanner = true } label: {
-                    optionLabel("Scan a recipe", "Point your camera at a cookbook page or card", "doc.viewfinder")
+                // Not offered where there is no document camera (an iPad app on a Mac, the
+                // Simulator): the full-screen cover had nothing to show and no way to close it.
+                if VNDocumentCameraViewController.isSupported {
+                    Button { showScanner = true } label: {
+                        optionLabel("Scan a recipe", "Point your camera at a cookbook page or card", "doc.viewfinder")
+                    }
                 }
                 PhotosPicker(selection: $photoItem, matching: .images) {
                     optionLabel("Choose a photo", "Use a screenshot or saved photo", "photo.on.rectangle")

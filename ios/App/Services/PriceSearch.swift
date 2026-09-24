@@ -85,6 +85,8 @@ enum PriceSearch {
             guard let chain = RetailerCatalog.chain(forMerchant: h.merchant), chainIds.contains(chain.id) else { continue }
             let d = FlippSource.deal(item: h.item, detail: h.detail, retailerId: chain.id, merchant: h.merchant, now: now)
             if let to = d.validTo, to < now { continue }
+            // Next week's circular is not "in this week's ads" (and is a Pro feature on its own tab).
+            if let from = d.validFrom, from > now { continue }
             let score = Match.relevance(query: query, name: "\(d.name) \(d.description ?? "")")
             if score >= 0.4 { out.append((d, score)) }
         }

@@ -87,7 +87,7 @@ actor WholeFoodsSource {
             // Calendar days written as UTC: "2026-12-24T23:59:59Z" is all of Christmas Eve (SaleDates.wallClock).
             let saleStart = SaleDates.wallClock(r["saleStartDate"].string)
             let saleEnd = SaleDates.wallClock(r["saleEndDate"].string)
-            let saleActive = r["salePrice"].double != nil && (saleEnd == nil || saleEnd! >= now) && (saleStart == nil || saleStart! <= now.addingTimeInterval(12 * 3600))
+            let saleActive = r["salePrice"].double != nil && (saleEnd == nil || saleEnd! >= now) && (saleStart == nil || saleStart! <= now)
             let regular = r["regularPrice"].double
             let sale = saleActive ? r["salePrice"].double : nil
             let prime = saleActive ? r["incrementalSalePrice"].double : nil

@@ -55,7 +55,8 @@ enum BackgroundRefresh {
         await DealsModel.shared.load(.current)
         let matches = DealsModel.shared.matches(terms: favorites.map(\.term))
         for f in favorites {
-            let fresh = (matches[f.term] ?? []).filter { !f.seenDealIds.contains($0.id) }
+            // Not before the terms are known: "$7.00" in a notification may be the price of two.
+            let fresh = (matches[f.term] ?? []).filter { !f.seenDealIds.contains($0.id) && !$0.termsPending }
             guard let top = fresh.first else { continue }
             let store = RetailerCatalog.byId[top.retailerId]?.short ?? top.merchant
             let more = fresh.count > 1 ? " +\(fresh.count - 1) more" : ""

@@ -6,7 +6,7 @@ import { api } from '../api.js';
 import { useStore, setState, getState, pref, setPref, openModal, closeModal } from '../store.js';
 import { runSearch, addToList, contextParams } from '../actions.js';
 import { money2, endsLabel, dateRange, plural, shortDate } from '../format.js';
-import { CATEGORIES } from '/shared/deals.js';
+import { CATEGORIES, offerBadge } from '/shared/deals.js';
 import { normalize, tokens } from '/shared/match.js';
 
 const FOOD = new Set(['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Bakery & Bread', 'Deli & Prepared', 'Frozen', 'Pantry', 'Snacks & Candy', 'Beverages']);
@@ -109,7 +109,7 @@ export function SalesView() {
     const by = {
       best: (a, b) => dealScore(b) - dealScore(a),
       pct: (a, b) => (b.pctOff ?? -1) - (a.pctOff ?? -1),
-      price: (a, b) => (a.each ?? a.price ?? Infinity) - (b.each ?? b.price ?? Infinity),
+      price: (a, b) => termsPending(a) - termsPending(b) || (a.each ?? a.price ?? Infinity) - (b.each ?? b.price ?? Infinity),
       ending: (a, b) => (Date.parse(a.validTo || '2100-01-01') - Date.parse(b.validTo || '2100-01-01')),
       store: (a, b) => a.storeId.localeCompare(b.storeId) || dealScore(b) - dealScore(a),
       az: (a, b) => a.name.localeCompare(b.name),
@@ -232,6 +232,15 @@ function badges(d) {
   return b;
 }
 
+/**
+ * A weekly-ad price whose terms Flipp has not sent yet. The flyer list carries the number without
+ * its qualifier: a "2/$7" deal arrives as $7.00 and "$3.99/lb" as $3.99. 14% of the Chicago deals
+ * enriched in the Christmas run were multi-buys, so until the terms arrive the number is labelled,
+ * sorted after the rest, and never read as one item's price.
+ */
+export const termsPending = (d) => d.source === 'flipp' && !d.enriched && d.price != null;
+const PENDING_TITLE = "Flipp hasn't sent this deal's full terms yet. The price may be for more than one (\"2 for\") or per pound. Open the deal to check.";
+
 export function DealCard({ d }) {
   const ends = endsLabel(d.validTo);
   const starts = d.week === 'next' && d.validFrom ? `Starts ${shortDate(d.validFrom)}` : null;
@@ -239,10 +248,11 @@ export function DealCard({ d }) {
   return html`<article class="deal">
     <div class="deal-img" role="button" tabindex="0" onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)} style=${{ cursor: 'pointer' }}>
       ${d.image ? html`<img src=${d.image} alt="" loading="lazy" referrerpolicy="no-referrer" />` : html`<${Icon} name="tag" size=${28} />`}
-      ${d.pctOff ? html`<span class="badge badge-sale deal-pct">${d.pctOff}% off</span>` : d.deal?.kind === 'bogo' ? html`<span class="badge badge-sale deal-pct">BOGO</span>` : null}
+      ${offerBadge(d.deal) ? html`<span class="badge badge-sale deal-pct">${offerBadge(d.deal)}</span>` : d.pctOff ? html`<span class="badge badge-sale deal-pct">${d.pctOff}% off</span>` : null}
     </div>
     <div class="deal-body">
       <div class="deal-price">${priceMain || html`<span class="muted small">See ad</span>`}</div>
+      ${termsPending(d) && html`<div class="small muted" title=${PENDING_TITLE}>checking ad terms…</div>`}
       ${d.qty > 1 && d.each != null && html`<div class="small ink2">${money2(d.each)} each</div>`}
       ${(d.regular || d.regularText) && html`<div class="small muted">${d.regular ? `Reg. ${money2(d.regular)}` : regularLine(d.regularText)}</div>`}
       ${d.memberText && html`<div class="small" style=${{ color: 'var(--info-ink)', fontWeight: 600 }}>${d.memberText}</div>`}
@@ -267,7 +277,7 @@ export function DealCardMini({ deal: d }) {
   return html`<div class="ad-card" role="button" tabindex="0" style=${{ cursor: 'pointer' }} onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)}>
     ${d.image ? html`<img src=${d.image} alt="" loading="lazy" referrerpolicy="no-referrer" />` : html`<div class="pimg ph" style=${{ width: 56, height: 56 }}><${Icon} name="tag" size=${18} /></div>`}
     <div style=${{ minWidth: 0, display: 'grid', gap: 2 }}>
-      <div class="ad-price">${d.priceText || d.story || 'See ad'}</div>
+      <div class="ad-price">${d.priceText || d.story || 'See ad'}${termsPending(d) ? html` <span class="muted small" title=${PENDING_TITLE}>· terms loading</span>` : ''}</div>
       <div class="small" style=${{ fontWeight: 600, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>${d.name}</div>
       <div class="row wrap" style=${{ gap: 5 }}>
         <${StoreTag} id=${d.storeId} />
@@ -298,12 +308,15 @@ function DealDetail({ d }) {
     }
   }, [d.id]);
   const desc = detail?.description || d.description;
+  // The terms, once they arrive, exactly as the ad prints them ("2/" "$7.00" "").
+  const terms = termsPending(d) && detail && `${detail.pre || ''} $${Number(detail.current ?? d.price).toFixed(2)} ${detail.post || ''}`.replace(/\s+/g, ' ').trim();
   const disclaimer = detail?.disclaimer || d.disclaimer;
   return html`<${Modal} title=${d.name} sub=${`${storeInfo(d.storeId).name} · ${dateRange(d.validFrom, d.validTo)}`}>
     <div class="row" style=${{ gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
       ${d.image && html`<img src=${d.image} alt="" style=${{ width: 180, maxHeight: 180, objectFit: 'contain', background: '#fff', borderRadius: 12, border: '1px solid var(--border)' }} referrerpolicy="no-referrer" />`}
       <div class="grow stack" style=${{ gap: 6, minWidth: 220 }}>
         <div style=${{ fontSize: 26, fontWeight: 750 }}>${d.priceText || d.story || 'See ad'}</div>
+        ${termsPending(d) && html`<div class="ink2" title=${PENDING_TITLE}>${terms ? `Ad terms: ${terms}` : 'Checking the ad’s terms…'}</div>`}
         ${d.qty > 1 && d.each != null && html`<div class="ink2">${money2(d.each)} each</div>`}
         ${(d.regular || d.regularText) && html`<div class="ink2">Regular ${d.regular ? money2(d.regular) : d.regularText}${d.pctOff ? ` · save ${d.pctOff}%` : ''}</div>`}
         ${d.memberText && html`<div style=${{ color: 'var(--info-ink)', fontWeight: 600 }}>${d.memberText}</div>`}

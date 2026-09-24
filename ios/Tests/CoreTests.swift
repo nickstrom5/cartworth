@@ -1632,3 +1632,12 @@ extension StPatricksTests {
         XCTAssertNil(Compare.tieBreak(.shelf, false, .shelf, false))
     }
 }
+
+/// Apple-device review (mirrors test/qa-deal-terms.test.js): a buy-some-get-some badge is the offer.
+final class DealBadgeTests: XCTestCase {
+    func testDefectMultiBuyBadgeIsTheOffer() {
+        XCTAssertEqual(DealParser.parse("Buy 1 Get 1 Free")?.offerBadge, "Buy 1 get 1 free")
+        XCTAssertEqual(DealParser.parse("Buy 2, Get 1 Free")?.offerBadge, "Buy 2 get 1 free")
+        XCTAssertNil(DealParser.parse("30% off")?.offerBadge)
+    }
+}

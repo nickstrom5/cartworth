@@ -76,7 +76,7 @@ struct DealsView: View {
         switch sort {
         case .best: list.sort { $0.score > $1.score }
         case .percent: list.sort { ($0.pctOff ?? -1) > ($1.pctOff ?? -1) }
-        case .price: list.sort { ($0.each ?? $0.price ?? .infinity) < ($1.each ?? $1.price ?? .infinity) }
+        case .price: list.sort { ($0.termsPending ? 1 : 0, $0.each ?? $0.price ?? .infinity) < ($1.termsPending ? 1 : 0, $1.each ?? $1.price ?? .infinity) }
         case .ending: list.sort { ($0.validTo ?? .distantFuture) < ($1.validTo ?? .distantFuture) }
         case .store: list.sort { ($0.retailerId, -$0.score) < ($1.retailerId, -$1.score) }
         }
@@ -152,7 +152,9 @@ struct DealsView: View {
                             Label("Your favorites on sale", systemImage: "star.fill").font(.subheadline.weight(.semibold))
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 10) {
-                                    ForEach(favoriteMatches.flatMap(\.value).prefix(12)) { d in
+                                    // Each deal once, in a stable order: a deal matching two favorites was listed
+                                    // twice (duplicate ForEach ids) and the row reshuffled with dictionary order.
+                                    ForEach(model.matchingDeals(terms: favorites.map(\.term), week: week).prefix(12)) { d in
                                         NavigationLink { DealDetailView(deal: d) } label: { DealMiniCard(deal: d) }.buttonStyle(.plain)
                                     }
                                 }
@@ -356,8 +358,8 @@ struct DealCard: View {
                 // the item is half price today — it is not, and the discount only exists if they
                 // buy two. The offer is the honest headline, which is what the deal detail shows
                 // and what the ad itself prints.
-                if deal.terms?.kind == .bogo {
-                    Badge(text: "Buy 1 get 1 free", kind: .sale).padding(6)
+                if let offer = deal.terms?.offerBadge {
+                    Badge(text: offer, kind: .sale).padding(6)
                 } else if let pct = deal.pctOff {
                     Badge(text: "\(pct)% off", kind: .sale).padding(6)
                 }
@@ -372,6 +374,10 @@ struct DealCard: View {
                 // figure directly under a discount badge.
                 if deal.terms?.kind == .bogo, !deal.priceText.isEmpty {
                     Text("single item price").font(.caption2).foregroundStyle(.secondary)
+                }
+                if deal.termsPending {
+                    Text("checking ad terms…").font(.caption2).foregroundStyle(.secondary)
+                        .accessibilityLabel("Ad terms not loaded yet; this price may be for more than one, or per pound")
                 }
                 if deal.qty > 1, let each = deal.each {
                     Text("\(Money.full(each)) each").font(.caption).foregroundStyle(.secondary)

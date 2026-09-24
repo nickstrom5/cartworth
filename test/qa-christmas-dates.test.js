@@ -117,3 +117,13 @@ test('control: a missing or unreadable end date gets no label', () => {
   assert.equal(endsLabel(null), null);
   assert.equal(endsLabel('soon'), null);
 });
+
+// Found by the Apple-device review: with sale days read as wall-clock dates, the old 12-hour head
+// start put TOMORROW's sale price on today's shelf from noon, marked "on sale".
+test('DEFECT: a Whole Foods sale price does not appear before its first day', () => {
+  const r = { ...ham, saleStartDate: '2026-12-18T00:00:00Z', saleEndDate: '2026-12-24T23:59:59Z' };
+  const at17 = at('2026-12-17T18:00:00', () => toProduct(r, { storeId: 'wholefoods', now: Date.now() }));
+  assert.equal(at17.price, 8.99, 'the evening before, the shelf price is the regular price');
+  const at18 = at('2026-12-18T08:00:00', () => toProduct(r, { storeId: 'wholefoods', now: Date.now() }));
+  assert.equal(at18.price, 6.99);
+});

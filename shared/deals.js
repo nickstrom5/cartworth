@@ -278,3 +278,17 @@ export function wallClock(s) {
   const m = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}(?::\d{2})?))?/.exec(String(s));
   return m ? `${m[1]}T${m[2] || '00:00:00'}` : null;
 }
+
+/**
+ * The badge for a buy-some-get-some deal: the offer, never a percentage. Setting pctOff from the
+ * offer printed "50% off" (web) or "33% off" (iPhone, buy 2 get 1) above the untouched single-item
+ * price, telling anyone scanning the grid the item is that much cheaper today; the discount exists
+ * only if they buy the whole set. Null for any other kind of deal.
+ */
+export function offerBadge(deal) {
+  if (deal?.kind === 'bogo') return 'Buy 1 get 1 free';
+  if (deal?.kind !== 'bxgy') return null;
+  const buy = deal.buy ?? (deal.qty ? deal.qty - 1 : null);
+  const get = buy && deal.qty ? deal.qty - buy : null;
+  return buy && get ? `Buy ${buy} get ${get}${deal.freeUnit ? ' free' : ' deal'}` : 'Multi-buy deal';
+}

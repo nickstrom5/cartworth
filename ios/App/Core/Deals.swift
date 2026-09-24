@@ -37,6 +37,24 @@ struct DealTerms: Codable, Hashable {
     }
 }
 
+extension DealTerms {
+    /// The badge for a buy-some-get-some deal: the offer, never a percentage ("33% off" over the
+    /// single-item price of a buy-2-get-1 deal). Nil for other kinds. Mirrors offerBadge in shared/deals.js.
+    var offerBadge: String? {
+        switch kind {
+        case .bogo: return "Buy 1 get 1 free"
+        case .bxgy:
+            guard let q = qty, q > 1 else { return "Multi-buy deal" }
+            // The parser stores buy + get in qty; "buy N" is in the text.
+            if let m = Rx("buy\\s*(\\d+)").match(text.lowercased()), let b = Int(m[1] ?? ""), b < q {
+                return "Buy \(b) get \(q - b)\(text.lowercased().contains("free") ? " free" : " deal")"
+            }
+            return "Multi-buy deal"
+        default: return nil
+        }
+    }
+}
+
 enum DealParser {
     private static let couponRx = Rx("\\bdigital\\b|\\bcoupon\\b|\\bclip\\b|for u\\b|\\bj4u\\b")
     private static let cardRx = Rx("with (?:your )?card|card price|member price|with prime")
