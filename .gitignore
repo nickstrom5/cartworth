@@ -10,3 +10,6 @@ ios/build/
 
 # This Mac's local tooling (launch configs point at session scratch folders)
 .claude/
+
+# Local state from `wrangler dev` / `wrangler deploy --dry-run`
+.wrangler/
