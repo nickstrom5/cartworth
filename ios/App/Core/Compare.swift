@@ -339,13 +339,23 @@ enum Compare {
         var verdict: String
     }
 
+    /// Equal unit prices: shelf before online before chain-wide, exact before estimated. Mirrors
+    /// `tieBreak` in shared/compare.js (Mariano's Instacart carrots were named over the identical
+    /// price on Woodman's shelf because "marianos" < "woodmans").
+    static func basisRank(_ b: PriceBasis) -> Int { b == .shelf ? 0 : b == .online ? 1 : 2 }
+    static func tieBreak(_ a: PriceBasis, _ aEst: Bool, _ b: PriceBasis, _ bEst: Bool) -> Bool? {
+        if basisRank(a) != basisRank(b) { return basisRank(a) < basisRank(b) }
+        if aEst != bEst { return !aEst }
+        return nil
+    }
+
     static func standings(_ stores: [String: Best]) -> [Standing] {
         var rows: [Standing] = stores.compactMap { id, b in
             guard b.perBase > 0 else { return nil }
             let sp = spread(b.product.priceBasis, est: b.est)
             return Standing(storeId: id, perBase: b.perBase, basis: b.product.priceBasis, est: b.est, low: b.perBase * (1 - sp.below), high: b.perBase * (1 + sp.above), verdict: "dearer")
         }
-        rows.sort { $0.perBase != $1.perBase ? $0.perBase < $1.perBase : $0.storeId < $1.storeId }
+        rows.sort { $0.perBase != $1.perBase ? $0.perBase < $1.perBase : tieBreak($0.basis, $0.est, $1.basis, $1.est) ?? ($0.storeId < $1.storeId) }
         guard let w = rows.first else { return rows }
         rows[0].verdict = "best"
         for i in rows.indices.dropFirst() {

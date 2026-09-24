@@ -93,3 +93,23 @@ test('control: an ad across the DST change keeps its printed days and counts day
   at('2027-03-18T00:00:30', () => assert.equal(endsLabel(ad.validTo), 'Ended'));
   assert.equal(wallClock('2027-03-14T02:30:00-05:00'), '2027-03-14T02:30:00');
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 4: equal prices were ordered by store id. Mariano's Instacart listing and Woodman's shelf
+// both sold 5 lb of carrots for $3.99, and "marianos" < "woodmans" made the online price the answer.
+// ---------------------------------------------------------------------------
+import { standings } from '../shared/compare.js';
+const side = (storeId, priceBasis, perBase, est = false) => ({ product: { storeId, priceBasis }, perBase, est });
+
+test('DEFECT 4: on a tie, the shelf price is the best price', () => {
+  const r = standings({ marianos: side('marianos', 'online', 3.99 / 80), woodmans: side('woodmans', 'shelf', 3.99 / 80) });
+  assert.equal(r[0].storeId, 'woodmans');
+  assert.equal(r[0].basis, 'shelf');
+  const r2 = standings({ aldi: side('aldi', 'shelf', 0.05, true), tonys: side('tonys', 'shelf', 0.05) });
+  assert.equal(r2[0].storeId, 'tonys', 'an exact figure before an estimate');
+});
+
+test('control: a cheaper online price still wins, and equal shelf prices still fall to the store id', () => {
+  assert.equal(standings({ marianos: side('marianos', 'online', 0.04), woodmans: side('woodmans', 'shelf', 0.05) })[0].storeId, 'marianos');
+  assert.equal(standings({ tonys: side('tonys', 'shelf', 0.05), aldi: side('aldi', 'shelf', 0.05) })[0].storeId, 'aldi');
+});

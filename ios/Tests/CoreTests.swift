@@ -1623,3 +1623,12 @@ final class StPatricksTests: XCTestCase {
         XCTAssertLessThanOrEqual(mar.count, 2)
     }
 }
+
+extension StPatricksTests {
+    func testDefectTieGoesToTheShelfPrice() {
+        XCTAssertEqual(Compare.tieBreak(.shelf, false, .online, false), true)
+        XCTAssertEqual(Compare.tieBreak(.online, false, .shelf, false), false)
+        XCTAssertEqual(Compare.tieBreak(.shelf, true, .shelf, false), false)
+        XCTAssertNil(Compare.tieBreak(.shelf, false, .shelf, false))
+    }
+}

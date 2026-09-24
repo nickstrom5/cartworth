@@ -6,7 +6,7 @@ import { BestBars } from '../charts.js';
 import { useStore, pref, setPref, openModal, getState } from '../store.js';
 import { runSearch, addWatch, addToList, go } from '../actions.js';
 import { money, money2, unitPrice, unitLabel, ago, shortDate, endsLabel, plural, BASIS_LABEL, BASIS_TITLE, BASIS_BADGE, linkDestination } from '../format.js';
-import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim } from '/shared/compare.js';
+import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim, tieBreak } from '/shared/compare.js';
 import { refineChips, RELEVANT } from '/shared/match.js';
 import { displayUnitsFor, DISPLAY_UNITS } from '/shared/units.js';
 import { ProductDetail } from './product.js';
@@ -246,9 +246,9 @@ function Results({ search, settings }) {
       // A price we cannot believe must never become a store's headline number. It stays in the
       // list below, marked, so nothing is hidden: it just does not get to be the answer.
       if (p.implausible) continue;
-      if (!best[p.storeId] || p.cmp < best[p.storeId].cmp) best[p.storeId] = p;
+      if (!best[p.storeId] || p.cmp < best[p.storeId].cmp || (p.cmp === best[p.storeId].cmp && tieBreak(p, best[p.storeId]) < 0)) best[p.storeId] = p;
     }
-    const bestRows = Object.values(best).sort((a, b) => a.cmp - b.cmp);
+    const bestRows = Object.values(best).sort((a, b) => a.cmp - b.cmp || tieBreak(a, b));
     const cmpSort = {
       unit: (a, b) => (a.cmp ?? Infinity) - (b.cmp ?? Infinity) || b.score - a.score,
       price: (a, b) => (effPrice(a, prefs) ?? Infinity) - (effPrice(b, prefs) ?? Infinity),

@@ -412,6 +412,18 @@ export function savingsClaim(best, runnerUp) {
  * Returns [{ storeId, perBase, basis, est, low, high, verdict }] cheapest listed first; verdict is
  * 'best' (the listed winner), 'close' or 'dearer'.
  */
+const BASIS_RANK = { shelf: 0, online: 1, national: 2 };
+/**
+ * Order two equal unit prices: the store's own shelf price before an online (Instacart) listing,
+ * before a chain-wide one, and an exact figure before an estimate. Equal prices used to fall to the
+ * store id, so in the St. Patrick's run Mariano's Instacart listing ($3.99 for 5 lb of carrots) was
+ * named the best price over the identical $3.99 on Woodman's shelf: "marianos" < "woodmans".
+ */
+export function tieBreak(a, b) {
+  return (BASIS_RANK[a.basis ?? a.priceBasis] ?? 1) - (BASIS_RANK[b.basis ?? b.priceBasis] ?? 1)
+    || (a.est || a.cmpEst ? 1 : 0) - (b.est || b.cmpEst ? 1 : 0);
+}
+
 export function standings(stores) {
   const rows = [];
   for (const [storeId, entry] of Object.entries(stores || {})) {
@@ -420,7 +432,7 @@ export function standings(stores) {
     const sp = spreadOf(s);
     rows.push({ storeId, perBase: s.perBase, basis: s.basis, est: s.est, low: s.perBase * (1 - sp.below), high: s.perBase * (1 + sp.above), verdict: 'dearer' });
   }
-  rows.sort((a, b) => a.perBase - b.perBase || (a.storeId < b.storeId ? -1 : a.storeId > b.storeId ? 1 : 0));
+  rows.sort((a, b) => a.perBase - b.perBase || tieBreak(a, b) || (a.storeId < b.storeId ? -1 : a.storeId > b.storeId ? 1 : 0));
   if (!rows.length) return rows;
   rows[0].verdict = 'best';
   // Exactly the savings line's rule (relation): a store is 'dearer' only when the line under the
