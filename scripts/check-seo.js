@@ -107,6 +107,7 @@ for (const file of pages) {
   // A page robots.txt already keeps out (site/app/, the "not open yet" page) is meant to be noindex.
   const urlPath = '/' + f.replace(/index\.html$/, '').replace(/\.html$/, '');
   const disallowed = ROBOTS_DISALLOW.some((d) => d && !d.includes('*') && urlPath.startsWith(d));
+  if (f === '404.html') continue; // the not-found page: noindex, no canonical and short by design
   if (/noindex/i.test(robotsMeta)) add(disallowed ? 'NOTE' : 'BLOCK', f, disallowed ? 'noindex, and disallowed in robots.txt (intended)' : 'page is marked noindex', robotsMeta);
 
   if (!/^<!doctype html>/i.test(html.trim())) add('BLOCK', f, 'missing <!doctype html>');
@@ -279,7 +280,11 @@ if (has('sitemap.xml')) {
   for (const u of urls) {
     if (!/^https:\/\//i.test(u)) add('BLOCK', 'sitemap.xml', 'sitemap URL is not absolute https', u);
   }
-  const listed = new Set(urls.map((u) => u.replace(/^https?:\/\/[^/]+\//, '').replace(/\/$/, '') || 'index.html'));
+  // "https://cartworth.app/guides/" is guides/index.html; "https://cartworth.app/privacy" is privacy.html.
+  const listed = new Set(urls.map((u) => {
+    const p = u.replace(/^https?:\/\/[^/]+\//, '');
+    return !p ? 'index.html' : p.endsWith('/') ? `${p}index.html` : p.replace(/\/$/, '');
+  }));
   for (const p of pages) {
     const name = rel(p);
     if (!listed.has(name) && !listed.has(name.replace(/\.html$/, ''))) add('NOTE', 'sitemap.xml', `page not in sitemap: ${name}`);
