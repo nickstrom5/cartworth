@@ -7,7 +7,9 @@ enum PriceSearch {
     // 5: Whole Foods sale dates are calendar days (SaleDates.wallClock); a sale was dropped at 7 pm
     // Central on its last day. Eggnog and buttermilk are liquids (Units.liquidRx),
     // and the Christmas-run matcher fixes change which listing wins.
-    static let cacheVersion = 5
+    // 6: a size only at the END of an Instacart slug no longer settles a name that says otherwise
+    // (ProductFactory.slugConfirms); a half gallon stated "2 gal" was $1.50 a gallon.
+    static let cacheVersion = 6
 
     struct Payload: Codable {
         var items: [Product]

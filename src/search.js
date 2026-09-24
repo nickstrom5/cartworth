@@ -30,7 +30,9 @@ const STORE_TIMEOUT = 35000;
 // eggnog and buttermilk are liquids (shared/units.js), compared per gallon, not per pound; and the
 // Christmas- and St. Patrick's-run matcher fixes (Ocean Spray, candy canes, holiday decor, flavoured
 // waters, corned beef hash, baby vegetables) change which listing wins.
-const CACHE_VERSION = 9;
+// v10: a size found only at the END of an Instacart slug is the stated size repeating itself, not
+// confirmation (normalize.js slugConfirms); a v9 entry priced a half gallon as 2 gal, $1.50/gal.
+const CACHE_VERSION = 10;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

@@ -139,16 +139,28 @@ const SLUG_UNITS = {
  * True when a retailer URL slug spells out this size: ".../18848374-sweet-potatoes-10-lbs-10-lb"
  * states 10 lb (and never 5 lb). Slugs write 3.5 lb as "3-5-lb" or, as often, "35-lb".
  */
-export function slugStates(url, size) {
+export function slugStates(url, size, { beforeEnd = false } = {}) {
   const units = SLUG_UNITS[size?.unit];
   if (!url || !units || !(size.amount > 0)) return false;
   // A whole amount may carry a zero decimal: Plugra's slug is "...-extra-creamy-8-0-oz" (8.0 oz),
   // Cool Whip's "...-16-00-oz".
   const whole = Number.isInteger(+size.amount.toFixed(2));
   const amount = String(+size.amount.toFixed(2)).replace('.', '[-.]?') + (whole ? '(?:[-.]0{1,2})?' : '');
-  const slug = String(url).replace(/^[^?#]*\/products?\//, '/').replace(/[?#].*$/, '');
-  return new RegExp(`(?<!\\d)(?<!\\d[-.])${amount}-?(?:${units})(?=$|[-/])`, 'i').test(slug);
+  const slug = String(url).replace(/^[^?#]*\/products?\//, '/').replace(/[?#].*$/, '').replace(/\/+$/, '');
+  const re = new RegExp(`(?<!\\d)(?<!\\d[-.])${amount}-?(?:${units})(?=$|[-/])`, 'gi');
+  for (const m of slug.matchAll(re)) if (!beforeEnd || m.index + m[0].length < slug.length) return true;
+  return false;
 }
+
+/**
+ * Does the slug confirm this size independently of the stated size? Instacart appends the stated
+ * size to every slug, so a size found only at the very END is the stated size repeating itself.
+ * King Soopers' "2% Reduced Fat Milk Half Gallon", stated "2 gal" at $2.99, has the slug
+ * ".../19280305-king-soopers-2-reduced-fat-milk-2-gal": read as confirmation, it made Denver's best
+ * milk $1.50 a gallon (the nationwide audit). Costco's ".../sweet-potatoes-10-lbs-10-lb" still
+ * confirms: the name part of the slug says 10 lbs too.
+ */
+export const slugConfirms = (url, size) => slugStates(url, size, { beforeEnd: true });
 
 /**
  * Pack count stated only in the retailer's URL slug.
@@ -390,7 +402,7 @@ export function makeProduct(f) {
     // "...-10-lbs-10-lb"): that is settled, not a conflict. src/adapters/instacart.js drops such a
     // clause from the displayed name by the same test; deciding it HERE too means a client whose
     // adapter does not (the iOS app) reaches the same price and the same verdict.
-    !(slugStates(f.url, textSize) && !slugStates(f.url, nameSize)) &&
+    !(slugConfirms(f.url, textSize) && !slugStates(f.url, nameSize)) &&
     chosen && chosen === textSize && nameSize && !nameSize.perWeight && !nameSize.range &&
     textSize.dim === nameSize.dim && textSize.base > 0 && nameSize.base > 0 && !size?.packFromUrl &&
     Math.max(textSize.base, nameSize.base) / Math.min(textSize.base, nameSize.base) >= 1.5

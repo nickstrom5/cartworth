@@ -1681,4 +1681,20 @@ final class NationwideAuditTests: XCTestCase {
         XCTAssertNil(Units.sizeFromName("Ziploc Quart Freezer Bags"))
         XCTAssertLessThan(Match.relevance(query: "eggs", name: "Surprise Crystal Egg"), Match.relevant)
     }
+
+    /// Denver: a slug that only ends in the stated size does not settle a name that says otherwise.
+    func testDefectHalfGallonStatedTwoGallonsIsAConflict() {
+        let milk = ProductFactory.make(ProductInput(
+            storeId: "kingsoopers", id: "ks-1", name: "King Soopers® City Market® 2% Reduced Fat Milk Half Gallon", sizeText: "2 gal",
+            price: 2.99, soldBy: .each, url: URL(string: "https://www.instacart.com/products/19280305-king-soopers-2-reduced-fat-milk-2-gal?retailerSlug=king-soopers"), category: nil, priceBasis: .online
+        ))!
+        XCTAssertNotNil(milk.sizeConflict)
+        XCTAssertNil(milk.unitPrice(.volume))
+        // Control: Costco's slug says 10 lbs in the name part too, so that one is settled.
+        let potatoes = ProductFactory.make(ProductInput(
+            storeId: "costco", id: "c-1", name: "Sweet Potatoes, 5 lbs", sizeText: "10 lb",
+            price: 8.07, soldBy: .each, url: URL(string: "https://www.instacart.com/products/18848374-sweet-potatoes-10-lbs-10-lb?retailerSlug=costco"), category: nil, priceBasis: .shelf
+        ))!
+        XCTAssertNil(potatoes.sizeConflict)
+    }
 }

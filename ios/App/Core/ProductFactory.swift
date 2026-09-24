@@ -163,13 +163,24 @@ enum ProductFactory {
 
     /// True when the retailer's URL slug spells out this size (".../18848374-sweet-potatoes-10-lbs-10-lb"
     /// states 10 lb and never 5 lb). Port of `slugStates` in src/normalize.js.
-    static func slugStates(_ url: URL?, _ size: ParsedSize?) -> Bool {
+    static func slugStates(_ url: URL?, _ size: ParsedSize?, beforeEnd: Bool = false) -> Bool {
         guard let size, let units = slugUnits[size.unit], let amount = size.amount, amount > 0, url != nil else { return false }
         // A whole amount may carry a zero decimal: Plugra's slug is "...-extra-creamy-8-0-oz".
         let whole = ((amount * 100).rounded() / 100).truncatingRemainder(dividingBy: 1) == 0
         let a = Units.trimNum(amount).replacingOccurrences(of: ".", with: "[-.]?") + (whole ? "(?:[-.]0{1,2})?" : "")
-        return Rx("(?<!\\d)(?<!\\d[-.])\(a)-?(?:\(units))(?=$|[-/])").test(slugOf(url))
+        var slug = slugOf(url)
+        while slug.hasSuffix("/") { slug.removeLast() }
+        let rx = Rx("(?<!\\d)(?<!\\d[-.])\(a)-?(?:\(units))(?=$|[-/])")
+        if !beforeEnd { return rx.test(slug) }
+        let ns = slug as NSString
+        return rx.re.matches(in: slug, range: NSRange(location: 0, length: ns.length)).contains { $0.range.location + $0.range.length < ns.length }
     }
+
+    /// Does the slug confirm this size independently of the stated size? Instacart appends the stated
+    /// size to every slug, so a size found only at the very END is the stated size repeating itself:
+    /// King Soopers' "2% Reduced Fat Milk Half Gallon", stated "2 gal", slug "...-reduced-fat-milk-2-gal",
+    /// made Denver's best milk $1.50 a gallon. Port of `slugConfirms` in src/normalize.js.
+    static func slugConfirms(_ url: URL?, _ size: ParsedSize?) -> Bool { slugStates(url, size, beforeEnd: true) }
 
     /// Butter sold by the stick, with the stick count as its only stated size. Jewel's cheapest
     /// butter in the owner's own store check, "Lucerne Salted Butter" at $4.99 stated "4 each", had
@@ -338,7 +349,7 @@ enum ProductFactory {
         var sizeConflict: SizeConflict?
         if let t = textSize, let n = nameSize, chosen == t,
            !n.perWeight, !n.range, !t.perWeight, t.dim == n.dim, !packedFromUrl,
-           !(slugStates(f.url, t) && !slugStates(f.url, n)),
+           !(slugConfirms(f.url, t) && !slugStates(f.url, n)),
            let tb = t.base, let nb = n.base, tb > 0, nb > 0,
            max(tb, nb) / min(tb, nb) >= 1.5 {
             sizeConflict = SizeConflict(text: Units.format(t), name: Units.format(n))

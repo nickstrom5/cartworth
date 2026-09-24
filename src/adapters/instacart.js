@@ -14,7 +14,7 @@ import { request, CookieJar, HttpError } from '../http.js';
 import { cached, invalidate, HOUR, DAY } from '../cache.js';
 import { geocodeZip, miles } from '../geo.js';
 import { getKV, setKV, delKV } from '../db.js';
-import { makeProduct, money, settleByStatedCount, slugStates } from '../normalize.js';
+import { makeProduct, money, settleByStatedCount, slugStates, slugConfirms } from '../normalize.js';
 import { parseSize, sizeFromName } from '../../shared/units.js';
 
 const FALLBACK_HASHES = {
@@ -389,7 +389,7 @@ export function dropStaleSizeFromName(name, sizeText, url = null) {
   // One unit and N of them, with N spelled out ("Pulmuone Teriyaki Stir-fry Udon, 30.9 oz", stated
   // 7.72 oz, slug "...-772-oz-4count-..."): not stale, the pack. See settleByStatedCount.
   if (settleByStatedCount(stated, tail, { name, url })) return name;
-  if (!slugStates(url, stated) || slugStates(url, tail)) return name;
+  if (!slugConfirms(url, stated) || slugStates(url, tail)) return name;
   return m[1].trim().replace(/[,\s]+$/, '');
 }
 

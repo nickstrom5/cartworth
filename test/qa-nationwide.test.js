@@ -128,3 +128,19 @@ test('control: an unknown state asks the national chains only, never every chain
   assert.ok(st);
   assert.ok(chainsInState(st).every((c) => c.states === 'US'));
 });
+
+// DEFECT (Denver audit): King Soopers lists "2% Reduced Fat Milk Half Gallon" stated "2 gal" at
+// $2.99. Its slug ends "-2-gal" only because Instacart appends the stated size to every slug, and
+// that was read as the retailer settling the disagreement: Denver's best milk was $1.50 a gallon.
+const KS_MILK = 'https://www.instacart.com/products/19280305-king-soopers-2-reduced-fat-milk-2-gal?retailerSlug=king-soopers';
+
+test('DEFECT (Denver): a half gallon stated "2 gal" is a size conflict and cannot be the best milk', () => {
+  const p = makeProduct({ storeId: 'kingsoopers', id: 'ks-1', name: 'King Soopers® City Market® 2% Reduced Fat Milk Half Gallon', sizeText: '2 gal', price: 2.99, url: KS_MILK, relevance: 1 });
+  assert.ok(p.sizeConflict, 'the name says half a gallon and the size says two');
+  assert.equal(p.unit.volume, undefined, 'no $1.50 a gallon from a size we cannot trust');
+});
+
+test('control: a slug that states the size inside the name part still settles it (Costco)', () => {
+  const p = makeProduct({ storeId: 'costco', id: 'c-1', name: 'Sweet Potatoes, 5 lbs', sizeText: '10 lb', price: 8.07, url: 'https://www.instacart.com/products/18848374-sweet-potatoes-10-lbs-10-lb?retailerSlug=costco' });
+  assert.equal(p.sizeConflict, null);
+});
