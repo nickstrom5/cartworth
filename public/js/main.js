@@ -21,8 +21,9 @@ const TABS = [
 ];
 
 function ThemeToggle() {
-  const [theme, setTheme] = useState(pref('theme', 'auto'));
-  const next = { auto: 'light', light: 'dark', dark: 'auto' }[theme];
+  // Light by default (see theme-boot.js); dark and 'auto' (follow the device) on request.
+  const [theme, setTheme] = useState(pref('theme', 'light'));
+  const next = { light: 'dark', dark: 'auto', auto: 'light' }[theme];
   const apply = (t) => {
     setTheme(t);
     setPref('theme', t);

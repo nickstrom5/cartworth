@@ -444,8 +444,11 @@ test('DEFECT (W6b): the theme a visitor picked is applied again on the next load
   await page.viewport(1280, 900, { dark: false });
   await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare' });
   await page.waitFor(`!!document.querySelector('.top-actions button[aria-label^="Theme"]')`, { what: 'the theme toggle' });
-  // auto -> light -> dark, through the real toggle, which is what writes the preference.
-  for (let i = 0; i < 2; i++) await page.eval(`document.querySelector('.top-actions button[aria-label^="Theme"]').click()`);
+  // Click through the real toggle, which is what writes the preference, until it reaches dark
+  // (light -> dark since the Sprout default became light).
+  for (let i = 0; i < 3 && (await page.eval('document.documentElement.dataset.theme || null')) !== 'dark'; i++) {
+    await page.eval(`document.querySelector('.top-actions button[aria-label^="Theme"]').click()`);
+  }
   assert.equal(await page.eval('document.documentElement.dataset.theme'), 'dark');
   await page.reload();
   await page.waitFor(`!!document.querySelector('.topbar')`, { what: 'reload' });

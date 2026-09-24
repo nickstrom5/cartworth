@@ -1,33 +1,43 @@
+/* Sprout (design/sprout/): white page, hairlines, soft mint/peach/sky blocks, one green accent
+   (#1C7C4B), DM Sans for text and Baloo 2 for display. Values are the Sprout tokens of the same
+   role; design/sprout/CONTRAST.md measures them. Light by default (theme-boot.js); dark is Sprout's
+   designed dark palette, on the visitor's explicit choice or "auto". Fonts are self-hosted. */
+@font-face { font-family: 'Baloo 2'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/baloo-2-700.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/dm-sans-400.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/dm-sans-500.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/dm-sans-600.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/dm-sans-700.woff2') format('woff2'); }
+
 /* Cartworth — design tokens + components. Light and dark are both designed (not an auto-invert). */
 :root {
   color-scheme: light;
-  --page: #f5f4f0;
-  --surface: #fcfcfb;
-  --surface-2: #f1f0ec;
-  --surface-3: #e9e8e2;
-  --ink: #0b0b0b;
-  --ink-2: #52514e;
-  --muted: #6f6d68;
-  --line: #e1e0d9;
-  --line-strong: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.1);
-  --accent: #0b0b0b;
+  --page: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f3f6f4;
+  --surface-3: #f0f3f1;
+  --ink: #1e2a24;
+  --ink-2: #55635c;
+  --muted: #5f6c66;
+  --line: #e6eae8;
+  --line-strong: #d3dcd7;
+  --border: #e6eae8;
+  --accent: #1c7c4b;
   --accent-ink: #ffffff;
-  --focus: #2a78d6;
-  --link: #1c5cab;
+  --focus: #1c7c4b;
+  --link: #1c7c4b;
   --good: #0ca30c;
-  --good-ink: #006300;
-  --good-bg: #e6f4e4;
+  --good-ink: #185c3a;
+  --good-bg: #e6f4ea;
   --warn: #fab219;
-  --warn-ink: #7a5100;
-  --warn-bg: #fff3d3;
+  --warn-ink: #6b4a00;
+  --warn-bg: #fff3d1;
   --bad: #d03b3b;
   --bad-ink: #a51f1f;
   --bad-bg: #fce9e8;
-  --deal-ink: #b23a0c;
-  --deal-bg: #ffeee3;
-  --info-bg: #eaf2fc;
-  --info-ink: #1c5cab;
+  --deal-ink: #8b3a0f;
+  --deal-bg: #ffe9dd;
+  --info-bg: #e8f1fb;
+  --info-ink: #1d4e7e;
   /* Store colours: the Okabe-Ito colour-vision-deficiency-safe categorical palette, unmodified.
 
      Measured on THESE tokens, light on --surface #fcfcfb: minimum separation 10.7 dE, and that
@@ -59,50 +69,51 @@
   /* Bar fills are the graphical object that carries the price comparison, so SC 1.4.11 wants 3:1
      against the card they sit on. #86b6ef was 2.06:1 and #1c5cab only cleared the ordinary bars by
      3.14:1; these clear the card at 3.09:1 and 10.25:1 and each other at 3.31:1. */
-  --bar: #5b93d8;
-  --bar-best: #173f73;
+  --bar: #4a9a70; /* Sprout green: 3.42:1 on the card */
+  --bar-best: #0c3f25; /* 3.51:1 against --bar, 11.98:1 on the card */
   /* A 1px edge that identifies a control against the surface behind it, both themes >= 3:1:
      the selected segment of a segmented control, and the off state of a switch. */
-  --control-edge: #8a8980;
+  --control-edge: #7a8981;
   /* The switch track when off. It has to be dark enough that the WHITE KNOB reads against it
      (3.52:1 here), because knob position — not the green — is the non-colour state cue. At the
      old --line-strong the knob was 1.79:1 against its own track and the whole control was
      1.75:1 against the card: invisible, and indistinguishable from on. */
-  --switch-off: #8a8980;
+  --switch-off: #7a8981;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.05);
   --shadow-pop: 0 10px 40px rgba(0, 0, 0, 0.18);
   --radius: 14px;
   --radius-sm: 9px;
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Baloo 2', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme='light'])) {
     color-scheme: dark;
-    --page: #0d0d0d;
-    --surface: #1a1a19;
-    --surface-2: #222220;
-    --surface-3: #2c2c2a;
-    --ink: #ffffff;
-    --ink-2: #c3c2b7;
-    --muted: #9c9a93;
-    --line: #2c2c2a;
-    --line-strong: #383835;
+    --page: #111814;
+    --surface: #111814;
+    --surface-2: #1a2320;
+    --surface-3: #1f2924;
+    --ink: #e6efea;
+    --ink-2: #9eada5;
+    --muted: #8e9d95;
+    --line: #2a3530;
+    --line-strong: #34403a;
     --border: rgba(255, 255, 255, 0.1);
-    --accent: #ffffff;
-    --accent-ink: #0b0b0b;
-    --focus: #5598e7;
-    --link: #86b6ef;
-    --good-ink: #3dc43d;
-    --good-bg: #14301a;
-    --warn-ink: #fab219;
-    --warn-bg: #33280c;
+    --accent: #5cc592;
+    --accent-ink: #07170f;
+    --focus: #5cc592;
+    --link: #5cc592;
+    --good-ink: #8fddb4;
+    --good-bg: #183124;
+    --warn-ink: #f4cb63;
+    --warn-bg: #352a0e;
     --bad-ink: #ff8a8a;
     --bad-bg: #3a1716;
-    --deal-ink: #ff9a6b;
-    --deal-bg: #3a1f10;
-    --info-bg: #13263d;
-    --info-ink: #86b6ef;
+    --deal-ink: #ffbc98;
+    --deal-bg: #3a2519;
+    --info-bg: #172a3f;
+    --info-ink: #a9cdf5;
     --store-1: #e69f00;
     --store-2: #4a9fdc;
     --store-3: #009e73;
@@ -111,11 +122,11 @@
     --store-6: #56b4e9;
     --store-7: #f0e442;
     --store-8: #dddddd;
-    --bar: #256abf;
+    --bar: #2f7a55;
     /* #86b6ef cleared the ordinary bars by only 2.56:1; this is 3.22:1. */
-    --bar-best: #a9cbf5;
-    --control-edge: #6c6c66;
-    --switch-off: #383835;
+    --bar-best: #a8e6c6;
+    --control-edge: #6f8078;
+    --switch-off: #34403a;
     --dot-ring: rgb(255 255 255 / 0.35);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-pop: 0 10px 40px rgba(0, 0, 0, 0.6);
@@ -123,30 +134,30 @@
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --page: #0d0d0d;
-  --surface: #1a1a19;
-  --surface-2: #222220;
-  --surface-3: #2c2c2a;
-  --ink: #ffffff;
-  --ink-2: #c3c2b7;
-  --muted: #9c9a93;
-  --line: #2c2c2a;
-  --line-strong: #383835;
+  --page: #111814;
+  --surface: #111814;
+  --surface-2: #1a2320;
+  --surface-3: #1f2924;
+  --ink: #e6efea;
+  --ink-2: #9eada5;
+  --muted: #8e9d95;
+  --line: #2a3530;
+  --line-strong: #34403a;
   --border: rgba(255, 255, 255, 0.1);
-  --accent: #ffffff;
-  --accent-ink: #0b0b0b;
-  --focus: #5598e7;
-  --link: #86b6ef;
-  --good-ink: #3dc43d;
-  --good-bg: #14301a;
-  --warn-ink: #fab219;
-  --warn-bg: #33280c;
+  --accent: #5cc592;
+  --accent-ink: #07170f;
+  --focus: #5cc592;
+  --link: #5cc592;
+  --good-ink: #8fddb4;
+  --good-bg: #183124;
+  --warn-ink: #f4cb63;
+  --warn-bg: #352a0e;
   --bad-ink: #ff8a8a;
   --bad-bg: #3a1716;
-  --deal-ink: #ff9a6b;
-  --deal-bg: #3a1f10;
-  --info-bg: #13263d;
-  --info-ink: #86b6ef;
+  --deal-ink: #ffbc98;
+  --deal-bg: #3a2519;
+  --info-bg: #172a3f;
+  --info-ink: #a9cdf5;
   --store-1: #e69f00;
   --store-2: #4a9fdc;
   --store-3: #009e73;
@@ -156,11 +167,11 @@
   --store-7: #f0e442;
   --store-8: #dddddd;
   --dot-ring: rgb(255 255 255 / 0.35);
-  --bar: #256abf;
+  --bar: #2f7a55;
   /* #86b6ef cleared the ordinary bars by only 2.56:1; this is 3.22:1. */
-  --bar-best: #a9cbf5;
-  --control-edge: #6c6c66;
-  --switch-off: #383835;
+  --bar-best: #a8e6c6;
+  --control-edge: #6f8078;
+  --switch-off: #34403a;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-pop: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
@@ -652,8 +663,10 @@ label.field .hint {
   font-size: 11.5px;
   /* 0.7 put this at 3.63:1 in light — the only text-contrast failure in the app's default state,
      and it is the number the user reads to decide whether a filter is worth applying. 0.8 is
-     4.61:1. The base colour alone is 7.73:1, so the opacity was the entire shortfall. */
-  opacity: 0.8;
+     4.61:1. The base colour alone is 7.73:1, so the opacity was the entire shortfall.
+     Sprout's --ink-2 (#55635C, 6.31:1) is already the muted tone, and at 0.8 it measured 3.98:1,
+     so the badge now uses it at full strength. */
+  opacity: 1;
   font-variant-numeric: tabular-nums;
 }
 .chips {
@@ -1903,4 +1916,14 @@ code {
     box-shadow: none;
     border-color: #ccc;
   }
+}
+
+/* Sprout: Baloo 2 is for the wordmark and the prices (design/sprout/components.css .sp-wordmark,
+   .sp-price); everything else is DM Sans. Tabular figures keep price columns aligned. */
+.brand,
+.hero-value,
+.unit-big,
+.plan-total {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
 }

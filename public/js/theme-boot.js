@@ -11,5 +11,8 @@
 // the theme when the toggle is clicked. test/qa-app-behaviour.test.js pins the round trip.
 try {
   const t = JSON.parse(localStorage.getItem('cartworth:v1:pref:theme') || 'null');
-  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  // Light unless the visitor chose otherwise: 'dark', or 'auto' to follow the device (Sprout, Sept
+  // 2026: the owner wants the product light, and dark only on request).
+  if (t === 'dark') document.documentElement.dataset.theme = 'dark';
+  else if (t !== 'auto') document.documentElement.dataset.theme = 'light';
 } catch {}
