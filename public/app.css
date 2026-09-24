@@ -234,6 +234,7 @@ img {
   position: sticky;
   top: 0;
   z-index: 30;
+  background: var(--page);
   background: color-mix(in srgb, var(--page) 86%, transparent);
   backdrop-filter: saturate(160%) blur(12px);
   -webkit-backdrop-filter: saturate(160%) blur(12px);
@@ -400,6 +401,7 @@ main {
        and made the whole page scroll sideways. */
     grid-auto-columns: minmax(0, 1fr);
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: var(--page);
     background: color-mix(in srgb, var(--page) 92%, transparent);
     backdrop-filter: saturate(160%) blur(12px);
     -webkit-backdrop-filter: saturate(160%) blur(12px);
@@ -535,6 +537,7 @@ main {
   border-color: transparent;
 }
 .btn-primary:hover {
+  background: var(--accent);
   background: color-mix(in srgb, var(--accent) 86%, var(--page));
   border-color: transparent;
 }
@@ -866,6 +869,12 @@ label.field .hint {
   outline: none;
   min-width: 0;
 }
+/* The field drops its own outline to sit flush in the bar, so the bar shows focus instead: with
+   nothing in its place a keyboard user could not see that the (autofocused) search had focus. */
+.searchbar:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
 .searchbar .btn-primary {
   height: 44px;
   padding: 0 20px;
@@ -924,6 +933,7 @@ label.field .hint {
   cursor: default;
 }
 .sstat.err {
+  border-color: var(--bad);
   border-color: color-mix(in srgb, var(--bad) 45%, transparent);
   color: var(--bad-ink);
   cursor: pointer;
@@ -1064,13 +1074,16 @@ label.field .hint {
    0.95, which is no signal at all. So the signal moves to something that costs no contrast: a
    tinted row and a left edge, plus the "weak match" badge the row now carries in compare.js. */
 .prow.dim {
+  background: var(--surface-2);
   background: color-mix(in srgb, var(--surface-2) 70%, transparent);
   box-shadow: inset 3px 0 0 var(--line-strong);
 }
 .prow.best {
+  background: var(--good-bg);
   background: color-mix(in srgb, var(--good-bg) 55%, transparent);
 }
 .prow:hover {
+  background: var(--surface-2);
   background: color-mix(in srgb, var(--surface-2) 70%, transparent);
 }
 .pimg {
@@ -1407,6 +1420,7 @@ label.field .hint {
   gap: 10px;
 }
 .wcard.alert {
+  box-shadow: 0 0 0 2px var(--good), var(--shadow);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--good) 60%, transparent), var(--shadow);
 }
 .wtable {
@@ -1425,6 +1439,7 @@ label.field .hint {
   font-variant-numeric: tabular-nums;
 }
 .wtable tr.best td {
+  background: var(--good-bg);
   background: color-mix(in srgb, var(--good-bg) 60%, transparent);
 }
 
@@ -1484,7 +1499,9 @@ label.field .hint {
   background: var(--surface);
 }
 .plan-card.win {
+  border-color: var(--good);
   border-color: color-mix(in srgb, var(--good) 55%, transparent);
+  box-shadow: 0 0 0 1px var(--good);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--good) 40%, transparent);
 }
 .plan-total {
@@ -1926,4 +1943,53 @@ code {
 .plan-total {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
+}
+
+/* Touch screens (iPhone, iPad). Two things Safari on iOS does that a mouse never shows:
+   - Tapping a field whose text is under 16px zooms the whole page in, and it stays zoomed. Every
+     field but the main search box was 13-15px (Apple-device QA, Sept 2026).
+   - Controls sized for a pointer (26px steppers, 28px row icons, 18px checkboxes) are small for a
+     thumb; Apple's minimum is 44pt. Desktop keeps the compact sizes. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    /* !important: compact controls (.select-sm and friends) set 13px with more specific rules. */
+    font-size: 16px !important;
+    min-height: 44px;
+  }
+  .btn,
+  .brand {
+    min-height: 44px;
+  }
+  .brand {
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .qty button {
+    width: 44px;
+    height: 44px;
+  }
+  .pactions {
+    grid-template-columns: repeat(2, 44px);
+  }
+  .pactions .btn {
+    width: 44px;
+    height: 44px;
+  }
+  .btn-icon.btn-sm {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .seg button,
+  .chip,
+  .fopt,
+  .btn-sm {
+    min-height: 44px;
+  }
+  input[type='checkbox'] {
+    min-width: 24px;
+    min-height: 24px;
+  }
 }
