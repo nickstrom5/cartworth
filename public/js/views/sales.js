@@ -7,6 +7,7 @@ import { useStore, setState, getState, pref, setPref, openModal, closeModal } fr
 import { runSearch, addToList, contextParams } from '../actions.js';
 import { money2, endsLabel, dateRange, plural, shortDate } from '../format.js';
 import { CATEGORIES, offerBadge } from '/shared/deals.js';
+import { OccasionCards } from './occasions.js';
 import { normalize, tokens } from '/shared/match.js';
 
 const FOOD = new Set(['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Bakery & Bread', 'Deli & Prepared', 'Frozen', 'Pantry', 'Snacks & Candy', 'Beverages']);
@@ -31,6 +32,7 @@ export function SalesView() {
   const dq = useDebounced(q, 150);
   const [sort, setSort] = useState(pref('dealsSort', 'best'));
   const [type, setType] = useState('all'); // all | bogo | multi | coupon | nocoupon
+  const [occ, setOcc] = useState(null); // { name, ids } when a holiday card's "matching deals" is on
   const [groceryOnly, setGroceryOnly] = useState(pref('groceryOnly', true));
   const [limit, setLimit] = useState(60);
   const [progress, setProgress] = useState(null);
@@ -85,7 +87,8 @@ export function SalesView() {
     };
   }, [data?.generatedAt]);
 
-  useEffect(() => setLimit(60), [store, cat, dq, sort, type, week, groceryOnly]);
+  useEffect(() => setLimit(60), [store, cat, dq, sort, type, week, groceryOnly, occ]);
+  useEffect(() => setOcc(null), [week]);
 
   const model = useMemo(() => {
     if (!data) return null;
@@ -101,7 +104,8 @@ export function SalesView() {
       (type === 'pct' && d.pctOff >= 30);
     const inStore = (d) => !store || d.storeId === store;
     const inCat = (d) => !cat || d.category === cat;
-    const shown = base.filter((d) => matchQ(d) && matchType(d) && inStore(d) && inCat(d));
+    const inOcc = (d) => !occ || occ.ids.has(d.id);
+    const shown = base.filter((d) => matchQ(d) && matchType(d) && inStore(d) && inCat(d) && inOcc(d));
     const storeCounts = {};
     const catCounts = {};
     for (const d of base) if (matchQ(d) && matchType(d) && inCat(d)) storeCounts[d.storeId] = (storeCounts[d.storeId] || 0) + 1;
@@ -116,7 +120,7 @@ export function SalesView() {
     }[sort];
     shown.sort(by);
     return { shown, storeCounts, catCounts, total: base.length };
-  }, [data, dq, type, store, cat, sort, groceryOnly]);
+  }, [data, dq, type, store, cat, sort, groceryOnly, occ]);
 
   const flyersByStore = useMemo(() => {
     const m = {};
@@ -141,6 +145,8 @@ export function SalesView() {
     ${progress?.running && html`<div style=${{ marginBottom: 12 }}><${Notice} icon="sparkle"><span class="row"><${Spinner} size=${12} /> Reading deal details (multi-buy prices, BOGO, digital coupons)… ${progress.done}/${progress.total}</span></${Notice}></div>`}
     ${data?.errors?.length > 0 && html`<div style=${{ marginBottom: 12 }}><${Notice} kind="warn" icon="alert">${data.errors.map((e) => html`<div>${storeInfo(e.storeId).short} — ${e.flyer}: ${e.error}</div>`)}</${Notice}></div>`}
 
+    ${data && html`<${OccasionCards} deals=${data.deals} week=${week} onShowDeals=${(o, matches) => setOcc({ name: o.name, ids: new Set(matches.map((d) => d.id)) })} />`}
+    ${occ && html`<div style=${{ marginBottom: 12 }}><${Notice} icon="tag">Showing ${occ.name} deals. <button class="btn btn-sm" style=${{ marginLeft: 8 }} onClick=${() => setOcc(null)}>Show all deals</button></${Notice}></div>`}
     ${!data && loading && html`<div class="card card-pad row"><${Spinner} /> Loading weekly ads…</div>`}
     ${data &&
     html`<div class="deals-layout">

@@ -11,6 +11,7 @@ import { refineChips, RELEVANT } from '/shared/match.js';
 import { displayUnitsFor, DISPLAY_UNITS } from '/shared/units.js';
 import { ProductDetail } from './product.js';
 import { DealCardMini } from './sales.js';
+import { OccasionCards } from './occasions.js';
 
 const STAPLES = ['milk', 'eggs', 'bananas', 'chicken breast', 'ground beef', 'butter', 'bread', 'coffee', 'avocados', 'strawberries', 'cheddar cheese', 'orange juice', 'bacon', 'greek yogurt', 'paper towels'];
 const STRICT = { strict: 0.75, normal: RELEVANT, all: 0 };
@@ -29,6 +30,7 @@ export function CompareView() {
       ${recent?.length > 0 &&
       html`<div class="section-title" style=${{ marginTop: 18 }}>Recent searches</div>
         <div class="chips">${recent.slice(0, 12).map((r) => html`<${Chip} key=${r.q} onClick=${() => runSearch(r.q)}>${r.q}</${Chip}>`)}</div>`}
+      <${OccasionCards} />
       <div class="section-title" style=${{ marginTop: 18 }}>Staples <span class="sub">tap one to compare every store</span></div>
       <div class="chips">${STAPLES.map((q) => html`<${Chip} key=${q} onClick=${() => runSearch(q)}>${q}</${Chip}>`)}</div>
       <div class="card card-pad" style=${{ marginTop: 22 }}>

@@ -531,3 +531,33 @@ test('DEFECT (Apple-device review): each chart row names a non-shelf price sourc
   for (const r of rows.filter((x) => /≈ same/.test(x.text))) assert.equal(r.best, false, 'the winner is never "≈ same"');
   assert.equal(rows.filter((r) => /Best/.test(r.text)).length, 1);
 });
+
+test('holiday cards: in December the Christmas card appears, adds its list, and finds its deals', { skip: SKIP }, async () => {
+  const clock = await page.initScript(`(() => { const T = new Date(2026, 11, 10, 12).getTime(); const R = Date;
+    class D extends R { constructor(...a) { super(...(a.length ? a : [T])); } static now() { return T; } }
+    globalThis.Date = D; })();`);
+  try {
+    const deals = [
+      { id: 'd-ham', source: 'flipp', flippId: 9, storeId: 'meijer', name: 'Spiral Sliced Half Ham', price: 1.99, perLb: true, priceText: '$1.99/lb', enriched: true, category: 'Meat & Seafood', week: 'current' },
+      { id: 'd-coffee', source: 'flipp', flippId: 10, storeId: 'meijer', name: 'Dark Roast Coffee', price: 6.99, priceText: '$6.99', enriched: true, category: 'Beverages', week: 'current' },
+    ];
+    await srv.close();
+    srv = await startAppServer({ api: api({ 'GET /api/deals': { week: 'current', deals, flyers: [], errors: [] } }) });
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare' });
+    await page.waitFor(`/Christmas in 15 days/.test(document.body.innerText)`, { what: 'the Christmas card' });
+    await clickText('.occasion button', 'Add all to my list');
+    const list = await page.eval(`JSON.parse(localStorage.getItem('cartworth:v1:list') || '[]').map((i) => i.text)`);
+    assert.deepEqual(list, ['spiral ham', 'flour', 'sugar', 'butter', 'chocolate chips', 'eggs', 'eggnog', 'cream cheese']);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/sales' });
+    await page.waitFor(`/1 matching deal in this week/.test(document.body.innerText)`, { what: 'the matching-deals button' });
+    await page.eval(`[...document.querySelectorAll('.occasion button')].find((b) => /matching deal/.test(b.textContent)).click()`);
+    await page.waitFor(`/Showing Christmas deals/.test(document.body.innerText)`, { what: 'the holiday filter' });
+    const names = await page.eval(`[...document.querySelectorAll('.deal .deal-name')].map((e) => e.textContent.trim())`);
+    assert.deepEqual(names, ['Spiral Sliced Half Ham']);
+  } finally {
+    await page.removeInitScript(clock);
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});

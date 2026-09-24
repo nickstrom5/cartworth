@@ -2009,3 +2009,18 @@ code {
     min-height: 24px;
   }
 }
+
+/* Holiday cards (views/occasions.js) */
+.occasions {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 4px;
+}
+@media (min-width: 900px) {
+  .occasions {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+.occasion h2 {
+  font-size: 17px;
+}

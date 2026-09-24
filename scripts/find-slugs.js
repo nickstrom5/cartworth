@@ -72,6 +72,20 @@ const CANDIDATES = {
   sedanos: [['33176'], 'sedanos-supermarkets', 'sedanos', 'sedanos-supermarket'],
   patel: [['60618'], 'patel-brothers', 'patel-bros', 'patelbrothers'],
   seafoodcity: [['90019'], 'seafood-city', 'seafood-city-supermarket', 'seafoodcity'],
+  // Grocers the nationwide sweep (Sept 2026) saw advertising locally with no price source.
+  rulerfoods: [['47714', '46222'], 'ruler-foods', 'ruler'],
+  familyfare: [['49503', '49508'], 'family-fare', 'family-fare-supermarkets'],
+  shoppers: [['20774', '20785'], 'shoppers-food-warehouse', 'shoppers-food', 'shoppers'],
+  marcs: [['44107', '44130'], 'marcs', 'marcs-stores'],
+  shopnsave: [['15212', '15237'], 'shop-n-save', 'shop-n-save-pittsburgh', 'shop-n-save-pa'],
+  ctown: [['10031', '10032'], 'ctown', 'c-town', 'ctown-supermarkets'],
+  foodbazaar: [['11206', '11211'], 'food-bazaar', 'food-bazaar-supermarket'],
+  kings: [['07901', '07081'], 'kings-food-markets', 'kings'],
+  mortonwilliams: [['10024', '10128'], 'morton-williams'],
+  bravo: [['06106', '11226'], 'bravo-supermarkets', 'bravo'],
+  strackvantil: [['46322', '46307'], 'strack-van-til', 'strack-and-van-til'],
+  timessupermarket: [['96817', '96813'], 'times-supermarket', 'times-supermarkets'],
+  decicco: [['10583', '10591'], 'deciccos', 'decicco-and-sons', 'deciccos-market'],
 };
 
 // After the adapter import, which sets its own (faster, concurrent) limits for these hosts.

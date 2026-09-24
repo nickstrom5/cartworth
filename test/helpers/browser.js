@@ -222,6 +222,14 @@ export async function launchBrowser() {
         return false;
       }
     },
+    /** Run `source` in every document before its own scripts (e.g. to set the page's clock). Returns
+     * an id for removeInitScript. */
+    async initScript(source) {
+      return (await cmd('Page.addScriptToEvaluateOnNewDocument', { source })).identifier;
+    },
+    async removeInitScript(identifier) {
+      await cmd('Page.removeScriptToEvaluateOnNewDocument', { identifier });
+    },
     /** Evaluate an expression (or async function body via `(async () => {...})()`) in the page. */
     async eval(expression) {
       const r = await cmd('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });

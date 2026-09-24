@@ -480,6 +480,18 @@ export function addToList(body) {
   return item;
 }
 
+/** Add several items at once (a holiday's starter list), skipping any already on the list. */
+export function addManyToList(texts, { label = 'items' } = {}) {
+  const have = new Set((getState().list || []).map((i) => i.text.trim().toLowerCase()));
+  const fresh = [...new Set(texts.map((t) => String(t || '').trim()).filter(Boolean))].filter((t) => !have.has(t.toLowerCase()));
+  if (fresh.length) {
+    saveList([...(getState().list || []), ...fresh.map((text) => ({ id: newId(), text, qty: 1, pinned: null, done: false, addedAt: Date.now() }))]);
+    setState({ plan: null });
+  }
+  toast(fresh.length ? `Added ${fresh.length} ${label} to your list` : 'Those are already on your list', { action: { label: 'View list', run: () => go('list') } });
+  return fresh.length;
+}
+
 export function updateListItem(id, patch) {
   const next = (getState().list || []).map((i) => (i.id === id ? { ...i, ...patch } : i));
   saveList(next);
