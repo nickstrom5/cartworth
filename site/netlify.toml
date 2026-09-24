@@ -1,0 +1,78 @@
+# Cartworth marketing site. Static, no build step.
+[build]
+  publish = "."
+
+# Extensionless URLs, because the shipping iOS app hardcodes /privacy, /terms and /support.
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 200
+[[redirects]]
+  from = "/terms"
+  to = "/terms.html"
+  status = 200
+[[redirects]]
+  from = "/support"
+  to = "/support.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
+    # The pages are hand-written with no inline event handlers and no third-party scripts.
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# The free web app is served by server.js. Point /app/* at wherever it is deployed. Until then
+# /app/ returns the landing page rather than a 404. Mirrors site/_redirects.
+[[redirects]]
+  from = "/app/*"
+  to = "/index.html"
+  status = 200
+
+# cartworth.app is on the HSTS preload list because .app is a preloaded TLD. Mirrors site/_headers.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# Never cache the legal pages hard: the iOS app links to them and they must be correctable fast.
+[[headers]]
+  for = "/privacy"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+[[headers]]
+  for = "/terms"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+[[headers]]
+  for = "/support"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+# Mirrors site/_headers: robots.txt asks crawlers not to fetch these, and this stops a URL
+# discovered elsewhere from being indexed anyway.
+[[headers]]
+  for = "/README.md"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+[[headers]]
+  for = "/img/README.md"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+[[headers]]
+  for = "/tools/*"
+  [headers.values]
+    X-Robots-Tag = "noindex"

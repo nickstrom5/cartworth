@@ -1,0 +1,369 @@
+{
+  "run": "2026-09-21",
+  "generatedAt": "2026-09-22T18:52:45.293Z",
+  "outliers": [
+    {
+      "item": "chicken",
+      "state": "NY",
+      "city": "New York City",
+      "zip": "11375",
+      "chain": "key-food",
+      "chainName": "Key Food",
+      "parent": "Key Food",
+      "basis": "shelf",
+      "price": 11.99,
+      "packagePrice": 11.99,
+      "product": "D'artagnan D'Artagnan GC Boneless Skinless Chicken Breast",
+      "size": "per lb",
+      "onSale": false,
+      "est": false,
+      "store": "Key Food - 991 Fulton St",
+      "at": "2026-09-22T18:41:25.634Z",
+      "nationalMedian": 2.99,
+      "ratio": 4.01,
+      "reason": "too high"
+    }
+  ],
+  "noMatch": [
+    {
+      "item": "chicken",
+      "state": "CA",
+      "city": "Los Angeles",
+      "chain": "ALDI",
+      "results": 40,
+      "reasons": [
+        "missing:\\bboneless\\b×31",
+        "out-of-stock×2",
+        "category:Chicken Thigh×2",
+        "category:Chicken Leg×2"
+      ]
+    },
+    {
+      "item": "potatoes",
+      "state": "CA",
+      "city": "Los Angeles",
+      "chain": "Vons",
+      "results": 40,
+      "reasons": [
+        "missing:\\brusset|\\bidaho\\b|\\bb×34",
+        "sold-by-weight×1",
+        "size:16×1",
+        "size:160×1"
+      ]
+    },
+    {
+      "item": "potatoes",
+      "state": "CA",
+      "city": "San Francisco",
+      "chain": "Safeway",
+      "results": 40,
+      "reasons": [
+        "missing:\\brusset|\\bidaho\\b|\\bb×35",
+        "sold-by-weight×1",
+        "size:16×1",
+        "reject:\\borganic\\b×1"
+      ]
+    },
+    {
+      "item": "potatoes",
+      "state": "FL",
+      "city": "Miami",
+      "chain": "Publix",
+      "results": 40,
+      "reasons": [
+        "missing:\\brusset|\\bidaho\\b|\\bb×35",
+        "estimated-size×1",
+        "sold-by-weight×1",
+        "reject:\\borganic\\b×1"
+      ]
+    },
+    {
+      "item": "chicken",
+      "state": "FL",
+      "city": "Tampa",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\bboneless\\b×29",
+        "out-of-stock×4",
+        "reject:\\bfrozen\\b×3",
+        "category:Other Prepared Chicken×1"
+      ]
+    },
+    {
+      "item": "beef",
+      "state": "FL",
+      "city": "Tampa",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\b80\\s*%?\\s*(?:lean)?\\×25",
+        "out-of-stock×3"
+      ]
+    },
+    {
+      "item": "chicken",
+      "state": "FL",
+      "city": "Tampa",
+      "chain": "Publix",
+      "results": 0,
+      "reasons": []
+    },
+    {
+      "item": "potatoes",
+      "state": "FL",
+      "city": "Tampa",
+      "chain": "Publix",
+      "results": 40,
+      "reasons": [
+        "missing:\\brusset|\\bidaho\\b|\\bb×34",
+        "estimated-size×3",
+        "sold-by-weight×1",
+        "reject:\\borganic\\b×1"
+      ]
+    },
+    {
+      "item": "orange-juice",
+      "state": "IL",
+      "city": "Chicago",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "size:46×6",
+        "missing:\\borange juice\\b×4",
+        "out-of-stock×3",
+        "size:12×1"
+      ]
+    },
+    {
+      "item": "potatoes",
+      "state": "IL",
+      "city": "Chicago",
+      "chain": "Jewel-Osco",
+      "results": 40,
+      "reasons": [
+        "missing:\\brusset|\\bidaho\\b|\\bb×32",
+        "sold-by-weight×1",
+        "size:16×1",
+        "size:160×1"
+      ]
+    },
+    {
+      "item": "beef",
+      "state": "IL",
+      "city": "Peoria",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\b80\\s*%?\\s*(?:lean)?\\×28",
+        "out-of-stock×2"
+      ]
+    },
+    {
+      "item": "chicken",
+      "state": "MT",
+      "city": "Billings",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\bboneless\\b×29",
+        "out-of-stock×5",
+        "missing:\\bskinless\\b×2",
+        "reject:\\bfrozen\\b×1"
+      ]
+    },
+    {
+      "item": "beef",
+      "state": "MT",
+      "city": "Billings",
+      "chain": "Albertsons",
+      "results": 40,
+      "reasons": [
+        "missing:\\b80\\s*%?\\s*(?:lean)?\\×34",
+        "category:Combination Meat Packs×1",
+        "reject:\\bpatt(y|ies)\\b×1",
+        "low-relevance×1"
+      ]
+    },
+    {
+      "item": "beef",
+      "state": "MT",
+      "city": "Missoula",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\b80\\s*%?\\s*(?:lean)?\\×27",
+        "out-of-stock×2"
+      ]
+    },
+    {
+      "item": "beef",
+      "state": "MT",
+      "city": "Missoula",
+      "chain": "Albertsons",
+      "results": 40,
+      "reasons": [
+        "missing:\\b80\\s*%?\\s*(?:lean)?\\×33",
+        "category:Combination Meat Packs×1",
+        "reject:\\bpatt(y|ies)\\b×1",
+        "low-relevance×1"
+      ]
+    },
+    {
+      "item": "orange-juice",
+      "state": "NY",
+      "city": "New York City",
+      "chain": "Walmart",
+      "results": 40,
+      "reasons": [
+        "missing:\\borange juice\\b×7",
+        "size:89×4",
+        "reject:\\bdrink\\b|\\bpunch\\b|\\b×4",
+        "size:46×3"
+      ]
+    },
+    {
+      "item": "chicken",
+      "state": "NY",
+      "city": "New York City",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\bboneless\\b×25",
+        "out-of-stock×2",
+        "missing:\\bskinless\\b×2",
+        "reject:\\bthin[\\s-]?sliced\\b×1"
+      ]
+    },
+    {
+      "item": "orange-juice",
+      "state": "NY",
+      "city": "New York City",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\borange juice\\b×5",
+        "out-of-stock×3",
+        "size:46×2"
+      ]
+    },
+    {
+      "item": "chicken",
+      "state": "NY",
+      "city": "Buffalo",
+      "chain": "Target",
+      "results": 0,
+      "reasons": []
+    },
+    {
+      "item": "beef",
+      "state": "NY",
+      "city": "Buffalo",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\b80\\s*%?\\s*(?:lean)?\\×25",
+        "out-of-stock×2"
+      ]
+    },
+    {
+      "item": "eggs",
+      "state": "NY",
+      "city": "Buffalo",
+      "chain": "Tops",
+      "results": 0,
+      "reasons": []
+    },
+    {
+      "item": "beef",
+      "state": "TX",
+      "city": "Dallas",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\b80\\s*%?\\s*(?:lean)?\\×26",
+        "out-of-stock×2",
+        "reject:\\bpatt(y|ies)\\b×1"
+      ]
+    },
+    {
+      "item": "rice",
+      "state": "TX",
+      "city": "Dallas",
+      "chain": "Target",
+      "results": 40,
+      "reasons": [
+        "missing:\\bwhite\\b|\\blong grain×27",
+        "out-of-stock×5",
+        "reject:\\binstant\\b|\\bminute\\b×4",
+        "category:Frozen Rice and Grains×1"
+      ]
+    },
+    {
+      "item": "potatoes",
+      "state": "TX",
+      "city": "Dallas",
+      "chain": "Tom Thumb",
+      "results": 40,
+      "reasons": [
+        "missing:\\brusset|\\bidaho\\b|\\bb×34",
+        "sold-by-weight×1",
+        "size:16×1",
+        "size:128×1"
+      ]
+    },
+    {
+      "item": "apples",
+      "state": "TX",
+      "city": "Dallas",
+      "chain": "Tom Thumb",
+      "results": 40,
+      "reasons": [
+        "missing:\\bgala\\b×35",
+        "reject:\\borganic\\b×1",
+        "out-of-stock×1",
+        "low-relevance×1"
+      ]
+    },
+    {
+      "item": "apples",
+      "state": "TX",
+      "city": "Houston",
+      "chain": "ALDI",
+      "results": 40,
+      "reasons": [
+        "missing:\\bgala\\b×18"
+      ]
+    },
+    {
+      "item": "bread",
+      "state": "TX",
+      "city": "Houston",
+      "chain": "Target",
+      "results": 0,
+      "reasons": []
+    },
+    {
+      "item": "potatoes",
+      "state": "TX",
+      "city": "Houston",
+      "chain": "Kroger",
+      "results": 40,
+      "reasons": [
+        "missing:\\brusset|\\bidaho\\b|\\bb×31",
+        "estimated-size×2",
+        "sold-by-weight×1",
+        "size:128×1"
+      ]
+    }
+  ],
+  "warnings": [
+    {
+      "kind": "thin-state",
+      "item": "beef",
+      "state": "MT",
+      "stores": 1,
+      "note": "dropped: fewer than 2 priced stores"
+    }
+  ]
+}

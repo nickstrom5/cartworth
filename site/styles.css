@@ -1,0 +1,1242 @@
+/* Cartworth marketing site.
+   Green and white: the brand green carries the page rather than sitting on a neutral grey, and the
+   surfaces are a warm tinted white so it reads friendly instead of clinical. Softer radii and
+   green-tinted shadows do the rest of that work.
+
+   Every ink/background pair below was measured, not eyeballed (scripts/check-palette.js has the
+   maths). The accent is #15803D rather than the app's slightly brighter #168F4A because 5.02:1 on
+   white clears AA for body text and for white-on-green buttons, where #168F4A only reaches 4.15:1.
+   Light and dark are both designed rather than auto-inverted. Nothing here needs a build step. */
+
+:root {
+  color-scheme: light;
+  --page: #f4faf6;
+  --surface: #ffffff;
+  --surface-2: #eef7f0;
+  --surface-3: #ddeee3;
+  --ink: #102a1b;
+  --ink-2: #3d5247;
+  --muted: #55665c;
+  --line: #d9e9de;
+  --line-strong: #5f8a72;
+  --border: rgba(16, 42, 27, 0.12);
+  --accent: #15803d;
+  --accent-strong: #0f7a3d;
+  --accent-soft: #eef9f1;
+  --accent-ink: #ffffff;
+  --focus: #15803d;
+  --link: #0f7a3d;
+  --good-ink: #006300;
+  --good-bg: #e6f4e4;
+  --warn-ink: #7a5100;
+  --warn-bg: #fff3d3;
+  --bad-ink: #a51f1f;
+  --bad-bg: #fce9e8;
+  --deal-ink: #b23a0c;
+  --deal-bg: #ffeee3;
+  --info-bg: #eaf2fc;
+  --info-ink: #1c5cab;
+  --dot-ring: rgb(0 0 0 / 0.28);
+  --store-1: #e69f00;
+  --store-2: #0072b2;
+  --store-3: #009e73;
+  --store-5: #d55e00;
+  --bar: #86b6ef;
+  --bar-best: #1c5cab;
+  /* Green-tinted rather than neutral grey, so shadows read as part of the palette. */
+  --shadow: 0 1px 2px rgba(16, 42, 27, 0.05), 0 8px 24px rgba(16, 42, 27, 0.07);
+  --shadow-pop: 0 12px 44px rgba(16, 42, 27, 0.14);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --radius-lg: 26px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --gutter: 16px;
+  --measure: 1120px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme='light'])) {
+    color-scheme: dark;
+    --page: #0c1410;
+    --surface: #141e18;
+    --surface-2: #1b2821;
+    --surface-3: #24342b;
+    --ink: #eaf3ed;
+    --ink-2: #b4c6bb;
+    --muted: #93a79a;
+    --line: #24342b;
+    --line-strong: #688f77;
+    --border: rgba(234, 243, 237, 0.12);
+    --accent: #4ade80;
+    --accent-strong: #5ee894;
+    --accent-soft: #16301f;
+    --accent-ink: #06120b;
+    --focus: #4ade80;
+    --link: #5ee894;
+    --good-ink: #3dc43d;
+    --good-bg: #14301a;
+    --warn-ink: #fab219;
+    --warn-bg: #33280c;
+    --bad-ink: #ff8a8a;
+    --bad-bg: #3a1716;
+    --deal-ink: #ff9a6b;
+    --deal-bg: #3a1f10;
+    --info-bg: #13263d;
+    --info-ink: #86b6ef;
+    --dot-ring: rgb(255 255 255 / 0.35);
+    --store-2: #4a9fdc;
+    --store-5: #e2711d;
+    --bar: #256abf;
+    --bar-best: #86b6ef;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-pop: 0 10px 40px rgba(0, 0, 0, 0.6);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 76px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  /* A wash of the brand green behind the top of the page. The offsets MUST be absolute and the
+     size explicit: a percentage offset resolves against the body box, and on a 15,000px-tall
+     document "-10%" put the gradient a mile above the viewport, so it never rendered at all. */
+  background-image: radial-gradient(1200px 520px at 220px -60px, var(--accent-soft) 0%, transparent 70%);
+  background-repeat: no-repeat;
+  background-size: 100% 900px;
+  background-position: left top;
+  color: var(--ink);
+  font: 16px/1.55 var(--font);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  letter-spacing: -0.022em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.skip {
+  position: absolute;
+  left: 8px;
+  top: -60px;
+  z-index: 100;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  transition: top 0.15s;
+}
+.skip:focus {
+  top: 8px;
+}
+
+/* ---------- layout ---------- */
+
+.wrap {
+  width: 100%;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.wrap-narrow {
+  max-width: 760px;
+}
+
+section {
+  padding: clamp(44px, 7vw, 88px) 0;
+}
+
+.band {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+
+.h-display {
+  font-size: clamp(33px, 6.2vw, 58px);
+  letter-spacing: -0.032em;
+  line-height: 1.04;
+}
+
+.h-section {
+  font-size: clamp(25px, 3.6vw, 36px);
+  letter-spacing: -0.028em;
+}
+
+.h-card {
+  font-size: 17px;
+  letter-spacing: -0.012em;
+}
+
+.lede {
+  font-size: clamp(16.5px, 1.6vw, 19px);
+  color: var(--ink-2);
+  line-height: 1.55;
+  max-width: 62ch;
+}
+
+.section-head {
+  max-width: 68ch;
+  margin-bottom: clamp(24px, 4vw, 44px);
+}
+.section-head .lede {
+  margin-top: 12px;
+}
+
+.prose p + p,
+.prose ul + p,
+.prose p + ul {
+  margin-top: 14px;
+}
+.prose ul,
+.prose ol {
+  margin: 14px 0;
+  padding-left: 22px;
+}
+.prose li + li {
+  margin-top: 7px;
+}
+.prose h2 {
+  font-size: clamp(22px, 3vw, 27px);
+  margin: 44px 0 14px;
+}
+.prose h3 {
+  font-size: 17px;
+  margin: 28px 0 8px;
+}
+.prose h2:first-of-type {
+  margin-top: 32px;
+}
+.prose {
+  color: var(--ink-2);
+}
+.prose strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+/* ---------- header ---------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--page) 88%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.brand:hover {
+  text-decoration: none;
+}
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+.site-nav a {
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: var(--ink-2);
+  font-size: 14.5px;
+  font-weight: 550;
+  text-decoration: none;
+}
+.site-nav a:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.header-cta {
+  margin-left: 8px;
+}
+
+@media (max-width: 860px) {
+  .site-nav {
+    display: none;
+  }
+  .header-cta {
+    margin-left: auto;
+  }
+}
+
+/* On a phone the header button was as wide as the logo beside it. Shorten the label and the
+   padding so the brand still leads. */
+@media (max-width: 560px) {
+  .header-cta {
+    height: 38px;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+  .header-cta .cta-long {
+    display: none;
+  }
+}
+@media (min-width: 561px) {
+  .header-cta .cta-short {
+    display: none;
+  }
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 620;
+  font-size: 15px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none !important;
+  transition: background 0.14s, border-color 0.14s, transform 0.08s, box-shadow 0.14s;
+}
+.btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  /* --accent on --accent-soft measures 4.40:1, just under the 4.5 needed for 15px text.
+     --accent-strong measures 4.76:1. Verified with scripts/check-palette.js. */
+  color: var(--accent-strong);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+  box-shadow: 0 2px 10px rgba(21, 128, 61, 0.26);
+}
+.btn-primary:hover {
+  background: var(--accent-strong);
+  color: var(--accent-ink);
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(21, 128, 61, 0.32);
+  transform: translateY(-1px);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+.btn-lg {
+  height: 48px;
+  padding: 0 22px;
+  font-size: 16px;
+  border-radius: 11px;
+}
+.btn-sm {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 14px;
+  border-radius: 8px;
+}
+.btn[aria-disabled='true'] {
+  cursor: default;
+}
+.btn[aria-disabled='true']:active {
+  transform: none;
+}
+
+/* The App Store button before the listing exists: it must read as "not yet", not as a live link. */
+.btn-soon {
+  background: var(--surface-2);
+  color: var(--ink-2);
+  border-style: dashed;
+  border-color: var(--line-strong);
+}
+.btn-soon:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+.btn-soon.is-live {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-style: solid;
+  border-color: transparent;
+}
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.cta-note {
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+/* ---------- cards, badges, notices ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  min-width: 0;
+  transition: border-color 0.16s, box-shadow 0.16s, transform 0.16s;
+}
+/* Only cards that are themselves links lift on hover; a static card that moves is just noise. */
+a.card:hover,
+.card:has(> a:hover) {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-pop);
+  transform: translateY(-2px);
+}
+.band .card {
+  background: var(--page);
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+}
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(270px, 100%), 1fr));
+}
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+}
+
+.card p {
+  color: var(--ink-2);
+  font-size: 15px;
+  margin-top: 8px;
+}
+
+.icon-tile {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--ink);
+  margin-bottom: 14px;
+}
+.band .icon-tile {
+  background: var(--surface-2);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  line-height: 1;
+}
+.badge-good {
+  background: var(--good-bg);
+  color: var(--good-ink);
+}
+.badge-info {
+  background: var(--info-bg);
+  color: var(--info-ink);
+}
+.badge-sale {
+  background: var(--deal-bg);
+  color: var(--deal-ink);
+}
+.badge-warn {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+
+.notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background: var(--info-bg);
+  color: var(--info-ink);
+  line-height: 1.5;
+}
+.notice.warn {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+.notice svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.store-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  display: inline-block;
+  box-shadow: inset 0 0 0 1px var(--dot-ring);
+}
+
+/* ---------- hero ---------- */
+
+.hero {
+  padding-top: clamp(40px, 6vw, 76px);
+  padding-bottom: clamp(36px, 5vw, 64px);
+}
+
+.hero-grid {
+  display: grid;
+  gap: clamp(32px, 5vw, 56px);
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .hero-grid {
+    grid-template-columns: 1.05fr 0.95fr;
+  }
+}
+
+.hero p.lede {
+  margin-top: 18px;
+}
+
+.hero-points {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+.hero-points li {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  color: var(--ink-2);
+  font-size: 15.5px;
+}
+.hero-points svg {
+  flex: none;
+  margin-top: 4px;
+  color: var(--good-ink);
+}
+
+/* ---------- the unit-price illustration ---------- */
+
+.demo {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+  padding: 18px;
+}
+
+.demo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.demo-query {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 650;
+  font-size: 15px;
+}
+.demo-query svg {
+  color: var(--muted);
+}
+
+.row-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: baseline;
+}
+.row-item:last-of-type {
+  border-bottom: 0;
+}
+.row-store {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ink-2);
+  flex-wrap: wrap;
+}
+.row-name {
+  grid-column: 1;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+.row-price {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  text-align: right;
+  align-self: center;
+}
+.row-price .amount {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: block;
+}
+.row-price .unit {
+  font-size: 12.5px;
+  color: var(--muted);
+  display: block;
+  margin-top: 1px;
+}
+.row-item.is-best .row-price .amount {
+  color: var(--good-ink);
+}
+
+.demo-foot {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ---------- numbered steps ---------- */
+
+.steps {
+  counter-reset: step;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.steps > li {
+  counter-increment: step;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+.band .steps > li {
+  background: var(--page);
+}
+.steps > li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.steps h3 {
+  font-size: 17px;
+}
+.steps p {
+  margin-top: 8px;
+  color: var(--ink-2);
+  font-size: 15px;
+}
+
+/* ---------- screenshot slots ---------- */
+
+.shots {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  margin-top: 8px;
+}
+
+.shot {
+  margin: 0;
+  position: relative;
+}
+
+/* The frame is what shows when the PNG is not there yet: a calm panel at the right
+   aspect ratio, never a collapsed box and never a broken-image icon. */
+.shot-frame {
+  position: relative;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-3));
+  border: 1px solid var(--border);
+  overflow: hidden;
+  aspect-ratio: 5 / 9;
+}
+.shot-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: no-repeat center / 44px 44px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239c9a93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18l-1.7 9.4a2 2 0 0 1-2 1.6H7.7a2 2 0 0 1-2-1.6L4 6Z'/%3E%3Cpath d='M8 6 10.5 2M16 6 13.5 2'/%3E%3Ccircle cx='9' cy='21' r='1'/%3E%3Ccircle cx='17' cy='21' r='1'/%3E%3C/svg%3E");
+  opacity: 0.55;
+}
+.shot-frame img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+.shot-frame img.is-missing {
+  opacity: 0;
+}
+.shot figcaption {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.shot figcaption b {
+  color: var(--ink);
+  font-weight: 650;
+  display: block;
+}
+
+.shot-wide .shot-frame {
+  aspect-ratio: 16 / 10;
+}
+
+/* ---------- comparison table ---------- */
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.band .table-scroll {
+  background: var(--page);
+}
+
+table.compare {
+  width: 100%;
+  min-width: min(320px, 100%);
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 14.5px;
+}
+table.compare th,
+table.compare td {
+  text-align: left;
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+table.compare thead th {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line-strong);
+}
+/* A nowrap badge in a fixed-width column is the one thing that can force the table
+   wider than a 375px screen. Let it wrap instead. */
+table.compare thead .badge {
+  /* The plain badge shares a background with the header cell, so give it an edge. */
+  border: 1px solid var(--line-strong);
+  white-space: normal;
+  height: auto;
+  max-width: 100%;
+  padding: 2px 6px;
+  margin-top: 4px;
+  line-height: 1.3;
+}
+table.compare thead .badge-good {
+  border-color: transparent;
+}
+table.compare tbody th {
+  font-weight: 550;
+  color: var(--ink-2);
+}
+table.compare col.c-feature {
+  width: 46%;
+}
+table.compare col.c-plan {
+  width: 27%;
+}
+table.compare td {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 13.5px;
+}
+table.compare tr:last-child th,
+table.compare tr:last-child td {
+  border-bottom: 0;
+}
+table.compare caption {
+  caption-side: bottom;
+  text-align: left;
+  padding: 12px 10px 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.yes {
+  color: var(--good-ink);
+}
+.no {
+  color: var(--muted);
+  font-weight: 550;
+}
+
+@media (max-width: 420px) {
+  table.compare th,
+  table.compare td {
+    padding: 10px 7px;
+    font-size: 12.5px;
+  }
+  table.compare thead th {
+    font-size: 12px;
+  }
+}
+
+/* ---------- pricing ---------- */
+
+.plans {
+  display: grid;
+  gap: 14px;
+  /* 220px keeps all four plan cards on one row down to roughly 920px, so the
+     lifetime card never sits orphaned on a second row on a laptop. */
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  align-items: start;
+}
+
+.plan {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+.band .plan {
+  background: var(--page);
+}
+.plan.is-featured {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-pop);
+}
+.plan-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.plan-price {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.plan-price small {
+  font-size: 15px;
+  font-weight: 550;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+.plan p {
+  color: var(--ink-2);
+  font-size: 14.5px;
+}
+.plan ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+.plan ul li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.plan ul svg {
+  flex: none;
+  margin-top: 4px;
+  color: var(--good-ink);
+}
+
+/* ---------- FAQ ---------- */
+
+.faq {
+  display: grid;
+  gap: 10px;
+  max-width: 820px;
+}
+.faq details {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.band .faq details {
+  background: var(--page);
+}
+.faq summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 18px;
+  font-weight: 650;
+  font-size: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  letter-spacing: -0.012em;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: '';
+  flex: none;
+  width: 11px;
+  height: 11px;
+  margin-top: 6px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.15s;
+}
+.faq details[open] summary::after {
+  transform: rotate(-135deg);
+  margin-top: 9px;
+}
+.faq summary:hover {
+  background: var(--surface-2);
+}
+.faq .answer {
+  padding: 0 18px 18px;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.58;
+}
+.faq .answer p + p {
+  margin-top: 12px;
+}
+
+.nevers {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+.nevers li {
+  position: relative;
+  padding-left: 26px;
+  line-height: 1.45;
+}
+.nevers li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid var(--bad-ink);
+  opacity: 0.85;
+}
+.nevers li::after {
+  content: '';
+  position: absolute;
+  left: 3.5px;
+  top: 11.2px;
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--bad-ink);
+  opacity: 0.85;
+}
+
+/* ---------- honesty callouts ---------- */
+
+.pricelabel {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+.pricelabel div {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14.5px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.pricelabel .badge {
+  margin-top: 2px;
+}
+
+/* ---------- footer ---------- */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: 40px 0 48px;
+  margin-top: 8px;
+}
+.footer-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 40px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 15px;
+}
+.footer-links a {
+  color: var(--ink-2);
+  font-weight: 550;
+}
+.footer-links a:hover {
+  color: var(--ink);
+}
+.footer-fine {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+  max-width: 78ch;
+}
+.footer-fine p + p {
+  margin-top: 8px;
+}
+
+/* ---------- document pages ---------- */
+
+.doc-header {
+  padding: clamp(36px, 5vw, 60px) 0 8px;
+}
+.doc-header .h-section {
+  font-size: clamp(28px, 4.2vw, 40px);
+}
+.doc-meta {
+  margin-top: 12px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.doc-body {
+  padding-top: 8px;
+  padding-bottom: clamp(48px, 7vw, 80px);
+  font-size: 16px;
+}
+.toc {
+  margin: 28px 0 8px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.toc h2 {
+  font-size: 12px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+.toc ol {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.toc li + li {
+  margin-top: 6px;
+}
+
+.fillin {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-weight: 600;
+}
+
+.keyvals {
+  margin: 16px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+.keyvals div {
+  display: grid;
+  grid-template-columns: minmax(120px, 34%) 1fr;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14.5px;
+}
+.keyvals div:last-child {
+  border-bottom: 0;
+}
+.keyvals dt {
+  font-weight: 650;
+  color: var(--ink);
+  margin: 0;
+}
+.keyvals dd {
+  margin: 0;
+  color: var(--ink-2);
+}
+@media (max-width: 460px) {
+  .keyvals div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+}

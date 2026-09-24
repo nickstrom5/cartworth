@@ -1,0 +1,357 @@
+/* Sprout — design tokens.
+ *
+ * Source of truth: the two approved mockups, Sprout-desktop (1280x820) and Sprout-phone (390x844).
+ * Every light-mode colour, size, weight, radius and gap below was read out of those files, except
+ * where a comment says it was changed and why. Dark mode is not in the mockups; it is designed here.
+ *
+ * Load order: fonts.css, tokens.css, components.css. All names are prefixed --sp-.
+ *
+ * Theme switching matches the existing site and app: data-theme="light" | "dark" on <html>, with no
+ * attribute meaning "follow the OS". The dark palette therefore appears twice, once under the
+ * prefers-color-scheme query (guarded so a manual "light" wins) and once under [data-theme="dark"]
+ * (so a manual "dark" wins on a light OS). Keep the two copies identical; the contrast script checks.
+ * [data-theme] also works on any element, which is how preview.html shows both themes side by side.
+ *
+ * Every colour pair the system uses is measured in CONTRAST.md. If you change a colour here, rerun
+ * the contrast script and update that file.
+ */
+
+/* ------------------------------------------------------------------------------------------------
+   1. Colour, light (the default)
+   ------------------------------------------------------------------------------------------------ */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Ground and surfaces. Sprout is a pure white page; structure comes from hairlines and a few
+     soft tinted blocks, not from grey panels or boxes. */
+  --sp-bg: #FFFFFF;
+  --sp-surface: #FFFFFF;          /* cards, tab bar */
+  --sp-surface-soft: #F3F6F4;     /* search field, location pill, hover wash */
+  --sp-surface-tag: #F0F3F1;      /* "Shelf price" tag */
+  --sp-on-tint: #FFFFFF;          /* a pill sitting on a tint block: "Best price" eyebrow, tags in the hero */
+
+  /* Ink */
+  --sp-ink: #1E2A24;              /* 14.87:1 on white */
+  --sp-ink-2: #55635C;            /* secondary: item names, units, inactive nav. 6.31:1 */
+  --sp-ink-3: #5F6C66;            /* tertiary: the capture-date footnote. 5.49:1 */
+
+  /* Lines */
+  --sp-hairline: #E6EAE8;         /* dividers between rows, card outline. Decorative, never a control edge */
+  --sp-hairline-strong: #D3DCD7;  /* the mockup's chip outline. 1.40:1, so kept only for disabled controls */
+  /* CHANGED from the mockup. The mockup outlined chips in #D3DCD7 (1.40:1) and drew the search field
+     as a #F3F6F4 fill with no edge (1.09:1). Both are controls whose boundary identifies them, so
+     WCAG 1.4.11 wants 3:1. This is the lightest ink-family grey that clears 3:1 on white (3.67),
+     on the field fill (3.37) and on mint (3.23). */
+  --sp-control-edge: #7A8981;
+  /* ADDED. A selected chip, the current nav pill and the current tab were mint on white (1.14:1),
+     which is not a state anyone can see. A 1px ring in this green is 3.57:1 on white. */
+  --sp-selected-edge: #49966F;
+
+  /* Accent: the one primary action, and the best-price number. Nothing else. */
+  --sp-accent: #1C7C4B;           /* 5.21:1 on white, 4.58:1 on mint */
+  --sp-accent-hover: #176A40;
+  --sp-accent-ink: #FFFFFF;       /* text on the accent: 5.21:1 */
+
+  /* The three soft blocks */
+  --sp-mint: #E6F4EA;             /* best-price hero, current nav pill */
+  --sp-mint-ink: #185C3A;         /* "Best price" eyebrow, the savings line. 7.03:1 on mint */
+  --sp-peach: #FFE9DD;            /* Sale, Weekly ad */
+  --sp-peach-ink: #8B3A0F;        /* 6.62:1 on peach */
+  --sp-sky: #E8F1FB;              /* Online · Instacart */
+  --sp-sky-ink: #1D4E7E;          /* 7.53:1 on sky */
+  --sp-sky-edge: #6E95BE;         /* ADDED: dashed outline of the National tag */
+
+  /* ADDED. "Price looks wrong". Butter yellow, distinct from the peach Sale tag, and it always
+     carries an outline and a warning icon so it never depends on hue. */
+  --sp-warn: #FFF3D1;
+  --sp-warn-ink: #6B4A00;         /* 7.29:1 on warn */
+  --sp-warn-edge: #9A6B00;
+
+  /* Store colour slots. The ring is the store's Okabe-Ito colour, unchanged, so it matches the
+     slot the app assigns (shared/catalog.js: slots 1-8, 0 = no slot). The tint is that colour mixed
+     about 84% toward white and the ink is a dark shade of it, which is how the mockup built slots
+     1-6 (its inks land between 6.3:1 and 7.6:1). Slots 0, 7 and 8 are not in the mockup and follow
+     the same rule. The letters carry the identity; the ring is decoration and several rings are
+     under 3:1 on white by design (see CONTRAST.md). */
+  --sp-store-0: #898781;  --sp-store-0-tint: #EEEEED;  --sp-store-0-ink: #4A4945;
+  --sp-store-1: #E69F00;  --sp-store-1-tint: #FCF0D6;  --sp-store-1-ink: #714B00;
+  --sp-store-2: #0072B2;  --sp-store-2-tint: #DCEBF6;  --sp-store-2-ink: #004B78;
+  --sp-store-3: #009E73;  --sp-store-3-tint: #DDF2EA;  --sp-store-3-ink: #00573F;
+  --sp-store-4: #CC79A7;  --sp-store-4-tint: #F7E7F0;  --sp-store-4-ink: #7C305B;
+  --sp-store-5: #D55E00;  --sp-store-5-tint: #FBE5D6;  --sp-store-5-ink: #8A3C00;
+  --sp-store-6: #56B4E9;  --sp-store-6-tint: #E0F1FB;  --sp-store-6-ink: #11587F;
+  --sp-store-7: #F0E442;  --sp-store-7-tint: #FBF7D0;  --sp-store-7-ink: #5B5719;
+  --sp-store-8: #3A3A3A;  --sp-store-8-tint: #E5E5E5;  --sp-store-8-ink: #2B2B2B;
+
+  /* Shadows. The mockups use none; the page is flat. This one is only for things that genuinely
+     float over content (a menu, a sheet), tinted with the ink so it reads as part of the palette. */
+  --sp-shadow-float: 0 1px 2px rgb(30 42 36 / 0.06), 0 8px 24px rgb(30 42 36 / 0.08);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   2. Colour, dark (designed; the mockups do not show it)
+
+   Same calm personality: a very dark green-black ground instead of pure black, ink a soft
+   green-tinted white instead of #FFF, and the three soft blocks become dim tints of the same hues
+   (about 1.3:1 against the ground, as the light blocks are about 1.1:1 against white). The accent
+   is lifted to a light jade so the best price and the primary button still lead, and the button
+   label flips to near-black. Store rings use the app's existing dark slot values.
+   ------------------------------------------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --sp-bg: #111814;
+    --sp-surface: #111814;
+    --sp-surface-soft: #1A2320;
+    --sp-surface-tag: #1F2924;
+    --sp-on-tint: #111814;
+    --sp-ink: #E6EFEA;
+    --sp-ink-2: #9EADA5;
+    --sp-ink-3: #8E9D95;
+    --sp-hairline: #2A3530;
+    --sp-hairline-strong: #34403A;
+    --sp-control-edge: #6F8078;
+    --sp-selected-edge: #4DA279;
+    --sp-accent: #5CC592;
+    --sp-accent-hover: #7AD4A7;
+    --sp-accent-ink: #07170F;
+    --sp-mint: #183124;
+    --sp-mint-ink: #8FDDB4;
+    --sp-peach: #3A2519;
+    --sp-peach-ink: #FFBC98;
+    --sp-sky: #172A3F;
+    --sp-sky-ink: #A9CDF5;
+    --sp-sky-edge: #4F7AA6;
+    --sp-warn: #352A0E;
+    --sp-warn-ink: #F4CB63;
+    --sp-warn-edge: #A88230;
+    --sp-store-0: #9C9A93;  --sp-store-0-tint: #2D322D;  --sp-store-0-ink: #C9C7C4;
+    --sp-store-1: #E69F00;  --sp-store-1-tint: #3C3310;  --sp-store-1-ink: #F1CA73;
+    --sp-store-2: #4A9FDC;  --sp-store-2-tint: #1C333C;  --sp-store-2-ink: #9BCAEC;
+    --sp-store-3: #009E73;  --sp-store-3-tint: #0E3327;  --sp-store-3-ink: #73CAB2;
+    --sp-store-4: #CC79A7;  --sp-store-4-tint: #362B31;  --sp-store-4-ink: #E3B5CF;
+    --sp-store-5: #E2711D;  --sp-store-5-tint: #3B2A16;  --sp-store-5-ink: #EFB183;
+    --sp-store-6: #56B4E9;  --sp-store-6-tint: #1F373F;  --sp-store-6-ink: #A2D6F3;
+    --sp-store-7: #F0E442;  --sp-store-7-tint: #3E411D;  --sp-store-7-ink: #F7F097;
+    --sp-store-8: #DDDDDD;  --sp-store-8-tint: #3A3F3C;  --sp-store-8-ink: #ECECEC;
+    --sp-shadow-float: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px rgb(0 0 0 / 0.4);
+  }
+}
+
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  color-scheme: dark;
+  --sp-bg: #111814;
+  --sp-surface: #111814;
+  --sp-surface-soft: #1A2320;
+  --sp-surface-tag: #1F2924;
+  --sp-on-tint: #111814;
+  --sp-ink: #E6EFEA;
+  --sp-ink-2: #9EADA5;
+  --sp-ink-3: #8E9D95;
+  --sp-hairline: #2A3530;
+  --sp-hairline-strong: #34403A;
+  --sp-control-edge: #6F8078;
+  --sp-selected-edge: #4DA279;
+  --sp-accent: #5CC592;
+  --sp-accent-hover: #7AD4A7;
+  --sp-accent-ink: #07170F;
+  --sp-mint: #183124;
+  --sp-mint-ink: #8FDDB4;
+  --sp-peach: #3A2519;
+  --sp-peach-ink: #FFBC98;
+  --sp-sky: #172A3F;
+  --sp-sky-ink: #A9CDF5;
+  --sp-sky-edge: #4F7AA6;
+  --sp-warn: #352A0E;
+  --sp-warn-ink: #F4CB63;
+  --sp-warn-edge: #A88230;
+  --sp-store-0: #9C9A93;  --sp-store-0-tint: #2D322D;  --sp-store-0-ink: #C9C7C4;
+  --sp-store-1: #E69F00;  --sp-store-1-tint: #3C3310;  --sp-store-1-ink: #F1CA73;
+  --sp-store-2: #4A9FDC;  --sp-store-2-tint: #1C333C;  --sp-store-2-ink: #9BCAEC;
+  --sp-store-3: #009E73;  --sp-store-3-tint: #0E3327;  --sp-store-3-ink: #73CAB2;
+  --sp-store-4: #CC79A7;  --sp-store-4-tint: #362B31;  --sp-store-4-ink: #E3B5CF;
+  --sp-store-5: #E2711D;  --sp-store-5-tint: #3B2A16;  --sp-store-5-ink: #EFB183;
+  --sp-store-6: #56B4E9;  --sp-store-6-tint: #1F373F;  --sp-store-6-ink: #A2D6F3;
+  --sp-store-7: #F0E442;  --sp-store-7-tint: #3E411D;  --sp-store-7-ink: #F7F097;
+  --sp-store-8: #DDDDDD;  --sp-store-8-tint: #3A3F3C;  --sp-store-8-ink: #ECECEC;
+  --sp-shadow-float: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px rgb(0 0 0 / 0.4);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   3. Colour roles (aliases)
+
+   Declared on :root AND on every [data-theme] element. A custom property that refers to another
+   one is resolved where it is declared and then inherited as a finished colour, so an alias set
+   only on :root would carry the light accent into a nested dark panel. Redeclaring it at each
+   theme boundary makes it pick up that panel's palette.
+   ------------------------------------------------------------------------------------------------ */
+:root,
+[data-theme] {
+  --sp-focus: var(--sp-accent);             /* focus ring */
+  --sp-price-ink: var(--sp-ink);            /* every price that is not the best one */
+  --sp-price-best: var(--sp-accent);        /* the best price, in the hero and in its row */
+  --sp-price-unit-ink: var(--sp-ink-2);     /* "/lb" after a row price */
+  --sp-link: var(--sp-ink);                 /* links are ink + underline, as in the mockup */
+  --sp-link-hover: var(--sp-accent);
+  --sp-mark-stem: var(--sp-accent);         /* the sprout in the wordmark and the eyebrow */
+  --sp-mark-leaf: var(--sp-mint);
+  --sp-mark-basket: var(--sp-ink);
+  --sp-tag-shelf-bg: var(--sp-surface-tag); /* overridden to --sp-on-tint inside the hero */
+}
+
+/* ------------------------------------------------------------------------------------------------
+   4. Type, space, size, radius, border, motion (theme-independent)
+   ------------------------------------------------------------------------------------------------ */
+:root {
+  /* Font stacks live in fonts.css: --sp-font-display (Baloo 2) and --sp-font-body (DM Sans). */
+
+  /* Font sizes, named by their pixel size at the default 16px root. They are rem so they follow
+     the reader's text-size setting. Every size either mockup uses is here and nothing else. */
+  --sp-fs-10: 0.625rem;      /* monogram letters, 26px monogram */
+  --sp-fs-10-5: 0.65625rem;  /* capture-date footnote, phone */
+  --sp-fs-11: 0.6875rem;     /* tags and was-price, phone */
+  --sp-fs-11-5: 0.71875rem;  /* tab labels, eyebrow (phone), weekly-ad tag, monogram 32px, phone note */
+  --sp-fs-12: 0.75rem;       /* tags, eyebrow, item name (phone), was-price, footnote */
+  --sp-fs-12-5: 0.78125rem;  /* monogram 36px, hero detail lines (phone) */
+  --sp-fs-13: 0.8125rem;     /* item name, "per lb", Refine label, notes, chips (phone), location (phone) */
+  --sp-fs-13-5: 0.84375rem;  /* basis legend text */
+  --sp-fs-14: 0.875rem;      /* chips, location pill, store name (phone) */
+  --sp-fs-14-5: 0.90625rem;  /* weekly-ad item name */
+  --sp-fs-15: 0.9375rem;     /* body, store name, nav, buttons, hero detail, section title (phone) */
+  --sp-fs-16: 1rem;          /* search input (phone): never below 16px or iOS zooms on focus */
+  --sp-fs-17: 1.0625rem;     /* card title */
+  --sp-fs-18: 1.125rem;      /* section title, hero store name, search input */
+  --sp-fs-20: 1.25rem;       /* hero unit (phone) */
+  --sp-fs-23: 1.4375rem;     /* row price (phone) */
+  --sp-fs-25: 1.5625rem;     /* wordmark (phone) */
+  --sp-fs-26: 1.625rem;      /* row price */
+  --sp-fs-28: 1.75rem;       /* hero unit, weekly-ad price */
+  --sp-fs-29: 1.8125rem;     /* wordmark */
+  --sp-fs-50: 3.125rem;      /* hero price (phone) */
+  --sp-fs-80: 5rem;          /* hero price */
+
+  --sp-fw-regular: 400;
+  --sp-fw-medium: 500;
+  --sp-fw-semibold: 600;
+  --sp-fw-bold: 700;
+
+  /* Line heights, unitless, each within half a pixel of the mockup's fixed ones. */
+  --sp-lh-none: 1;           /* wordmark, hero price */
+  --sp-lh-price-tight: 1.05; /* row price, phone (24/23) */
+  --sp-lh-price: 1.15;       /* row price (30/26), weekly-ad price (30/28 ~ 1.07 reads the same) */
+  --sp-lh-snug: 1.25;        /* tags, labels, phone item names (15/12), tab labels (14/11.5) */
+  --sp-lh-body: 1.334;       /* 20/15, 24/18, 16/12, 18/13.5 */
+  --sp-lh-meta: 1.385;       /* 18/13 */
+  --sp-lh-relaxed: 1.46;     /* 19/13, longer notes */
+
+  --sp-ls-display: -0.01em;
+  --sp-ls-price-hero: -0.015em;
+  --sp-ls-eyebrow: 0.07em;
+  --sp-ls-eyebrow-compact: 0.06em;
+  --sp-ls-mono: 0.02em;
+
+  /* Baloo 2 sits high in a line-height:1 box, so the mockup pushes the wordmark down 4px at 29px
+     (0.14em). The fallback faces do not need that much; 0.06em centres them on the basket. When
+     the Baloo 2 files ship, set this back to 0.14em. */
+  --sp-wordmark-nudge: 0.06em;
+
+  /* Space, named by pixel size at a 16px root; rem so gaps grow with text. */
+  --sp-space-2: 0.125rem;
+  --sp-space-3: 0.1875rem;
+  --sp-space-4: 0.25rem;
+  --sp-space-5: 0.3125rem;
+  --sp-space-6: 0.375rem;
+  --sp-space-7: 0.4375rem;
+  --sp-space-8: 0.5rem;
+  --sp-space-9: 0.5625rem;
+  --sp-space-10: 0.625rem;
+  --sp-space-11: 0.6875rem;
+  --sp-space-12: 0.75rem;
+  --sp-space-13: 0.8125rem;
+  --sp-space-14: 0.875rem;
+  --sp-space-15: 0.9375rem;
+  --sp-space-16: 1rem;
+  --sp-space-18: 1.125rem;
+  --sp-space-20: 1.25rem;
+  --sp-space-22: 1.375rem;
+  --sp-space-24: 1.5rem;
+  --sp-space-26: 1.625rem;
+  --sp-space-28: 1.75rem;
+  --sp-space-32: 2rem;
+  --sp-space-40: 2.5rem;
+  --sp-space-50: 3.125rem;
+
+  /* Layout */
+  --sp-gutter: 1rem;              /* phone side gutter, and the floor everywhere */
+  --sp-gutter-wide: 3.125rem;     /* desktop side gutter (50px) */
+  --sp-page-max: 80rem;           /* 1280px */
+  --sp-col-main: 48.75rem;        /* 780px results column */
+  --sp-col-aside: 22.5rem;        /* 360px "This week" column */
+  --sp-col-gap: 2.5rem;           /* 40px between them */
+  --sp-row-tags-width: 11.5rem;   /* 184px tag column in a wide row */
+  --sp-row-price-width: 7.5rem;   /* 120px price column in a wide row */
+  --sp-legend-term-width: 8.25rem;/* 132px */
+
+  /* Sizes */
+  --sp-target: 2.75rem;           /* 44px: every primary touch target */
+  --sp-target-min: 1.5rem;        /* 24px: WCAG 2.5.8 floor for anything else */
+  --sp-header-height: 4.25rem;    /* 68px */
+  --sp-header-height-compact: 3rem;
+  --sp-tabbar-height: 3.5rem;     /* 56px */
+  --sp-field-height: 3.5rem;      /* search field 56px */
+  --sp-field-height-compact: 3rem;
+  --sp-chip-height: 2.25rem;      /* visible chip 36px inside a 44px target */
+  --sp-chip-height-compact: 2rem;
+  --sp-tag-height: 1.5rem;        /* 24px */
+  --sp-tag-height-sm: 1.375rem;   /* 22px */
+  --sp-tag-height-xs: 1.1875rem;  /* 19px */
+  --sp-eyebrow-height: 1.75rem;
+  --sp-eyebrow-height-compact: 1.625rem;
+  --sp-mono-size: 2.25rem;        /* 36px */
+  --sp-mono-size-sm: 2rem;        /* 32px */
+  --sp-mono-size-xs: 1.625rem;    /* 26px */
+  --sp-tab-pill-width: 3.25rem;   /* 52px */
+  --sp-tab-pill-height: 1.75rem;  /* 28px */
+  --sp-card-icon: 1.875rem;       /* 30px */
+  --sp-mark-size: 2.125rem;       /* 34px wordmark basket */
+  --sp-mark-size-compact: 1.75rem;
+  --sp-hero-art: 3.75rem;         /* 60px sprout drawing in the hero */
+  --sp-icon-14: 0.875rem;
+  --sp-icon-15: 0.9375rem;
+  --sp-icon-16: 1rem;
+  --sp-icon-18: 1.125rem;
+  --sp-icon-20: 1.25rem;
+  --sp-icon-22: 1.375rem;
+
+  /* Radii */
+  --sp-radius-pill: 999px;        /* buttons, chips, tags, search, nav, location */
+  --sp-radius-hero: 28px;         /* best-price hero, desktop */
+  --sp-radius-card: 24px;         /* cards; the hero on a phone */
+  --sp-radius-tile: 12px;         /* small cards and tiles; the 36px monogram */
+  --sp-radius-mono-sm: 11px;      /* 32px monogram */
+  --sp-radius-mono-xs: 9px;       /* 26px monogram */
+
+  /* Borders */
+  --sp-border-hairline: 1px;
+  --sp-border-control: 1px;
+  --sp-border-ring: 1.5px;        /* store monogram ring */
+  --sp-focus-width: 2px;
+  --sp-focus-offset: 2px;
+
+  --sp-shadow-none: none;
+
+  /* Motion. Only colour and background fades; nothing moves. */
+  --sp-dur-fast: 120ms;
+  --sp-dur-base: 180ms;
+  --sp-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --sp-ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sp-dur-fast: 0ms;
+    --sp-dur-base: 0ms;
+  }
+}

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Cartworth price tracker: one capture a day at 06:30.
+  NOT LOADED BY DEFAULT. Install with scripts/tracker/install.sh only once the owner has said yes;
+  remove with scripts/tracker/uninstall.sh.
+
+  Missed runs: when the Mac is ASLEEP at 06:30, launchd runs the job as soon as it wakes (missed
+  calendar events are coalesced into one). When it is switched OFF, the hourly :35 entry catches
+  the next hour it is on; `capture.js --daily` makes every run after the day's capture a no-op, and
+  launchd never starts a second copy of a job that is still running.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>app.cartworth.tracker</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>/Users/nicksoderstrom/Developer/claudecode/basket/scripts/tracker/run-daily.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Hour</key>
+      <integer>6</integer>
+      <key>Minute</key>
+      <integer>30</integer>
+    </dict>
+    <dict>
+      <key>Minute</key>
+      <integer>35</integer>
+    </dict>
+  </array>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>BASKET_DATA_DIR</key>
+    <string>/Users/nicksoderstrom/Library/Application Support/Cartworth/tracker</string>
+    <key>PATH</key>
+    <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+  </dict>
+  <key>WorkingDirectory</key>
+  <string>/Users/nicksoderstrom/Developer/claudecode/basket</string>
+  <key>StandardOutPath</key>
+  <string>/Users/nicksoderstrom/Library/Logs/Cartworth/tracker.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/nicksoderstrom/Library/Logs/Cartworth/tracker.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>Nice</key>
+  <integer>10</integer>
+</dict>
+</plist>

@@ -1,0 +1,4317 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-22T18:52:45.417Z",
+  "weekOf": "2026-09-21",
+  "coverage": {
+    "states": 6,
+    "zips": 12,
+    "chains": 19,
+    "stores": 44,
+    "samples": 616,
+    "priced": 586,
+    "noMatch": 28,
+    "errors": 0,
+    "shelfStores": 15,
+    "shopsChecked": 57,
+    "invariantFailures": 0
+  },
+  "notes": {
+    "basis": "shelf = in-store shelf price (ALDI in-store shops, Walmart \"No markups\" on Instacart). online = Instacart marketplace price, which Instacart labels \"Prices vary from in-store\" and which can run above the shelf price.",
+    "prices": "Sale prices count; loyalty-card prices do not. Each state figure is the best price found at the sampled stores in that state's largest metro(s), not a statewide average.",
+    "min": "Within any one scope (a state block, or national) min, median and max are computed over the same set of priced stores, so min <= median <= max always holds. Shelf-only figures are the separate shelfMin/shelfMedian fields and never redefine min.",
+    "states": "Only states with at least 2 priced stores are reported; item.confidence (low/medium/high) reflects how many states and stores back the superlatives."
+  },
+  "items": [
+    {
+      "id": "milk",
+      "label": "Milk, whole, 1 gallon",
+      "noun": "milk",
+      "unit": "gal",
+      "unitText": "/gal",
+      "national": {
+        "median": 3.42,
+        "min": 2.28,
+        "max": 7.99,
+        "stores": 44,
+        "states": 6,
+        "minState": "IL",
+        "minStore": "ALDI",
+        "minCity": "Peoria",
+        "minBasis": "shelf",
+        "maxState": "CA",
+        "maxStore": "Safeway",
+        "maxCity": "San Francisco",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 2.28,
+        "shelfMinState": "IL",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Peoria",
+        "shelfMedian": 2.91,
+        "onlineMedian": 3.99
+      },
+      "states": {
+        "CA": {
+          "median": 3.99,
+          "min": 2.92,
+          "max": 7.99,
+          "minStore": "ALDI",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Friendly Farms Whole Milk",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 2.92,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 3.33,
+          "onlineMin": 3.99,
+          "onlineMedian": 4.99,
+          "baseline": 3.99
+        },
+        "FL": {
+          "median": 3.99,
+          "min": 2.91,
+          "max": 4.41,
+          "minStore": "ALDI",
+          "minCity": "Tampa",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Friendly Farms Whole Milk",
+          "onSale": true,
+          "shelfStores": 2,
+          "shelfMin": 2.91,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Tampa",
+          "shelfMedian": 3.45,
+          "onlineMin": 2.99,
+          "onlineMedian": 4.2,
+          "baseline": 2.99
+        },
+        "IL": {
+          "median": 2.79,
+          "min": 2.28,
+          "max": 6.99,
+          "minStore": "ALDI",
+          "minCity": "Peoria",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Friendly Farms Whole Milk",
+          "shelfStores": 3,
+          "shelfMin": 2.28,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Peoria",
+          "shelfMedian": 2.37,
+          "onlineMin": 2.59,
+          "onlineMedian": 2.99,
+          "baseline": 2.99
+        },
+        "MT": {
+          "median": 5.99,
+          "min": 5.99,
+          "max": 6.99,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Meadow Gold Whole Milk",
+          "shelfStores": 0,
+          "onlineMin": 5.99,
+          "onlineMedian": 5.99,
+          "baseline": 5.99
+        },
+        "NY": {
+          "median": 3.69,
+          "min": 2.72,
+          "max": 4.99,
+          "minStore": "Walmart",
+          "minCity": "New York City",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Great Value Whole Vitamin D Milk",
+          "shelfStores": 4,
+          "shelfMin": 2.72,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 2.95,
+          "onlineMin": 3.49,
+          "onlineMedian": 3.79,
+          "baseline": 3.69
+        },
+        "TX": {
+          "median": 2.99,
+          "min": 2.29,
+          "max": 3.09,
+          "minStore": "ALDI",
+          "minCity": "Houston",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Friendly Farms Whole Milk",
+          "shelfStores": 2,
+          "shelfMin": 2.29,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Houston",
+          "shelfMedian": 2.38,
+          "onlineMin": 2.99,
+          "onlineMedian": 2.99,
+          "baseline": 2.99
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "IL",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 4,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 3.32,
+          "stores": 3,
+          "states": 2,
+          "wins": 1,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 2.91,
+          "stores": 9,
+          "states": 5,
+          "wins": 4,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 3.74,
+          "stores": 12,
+          "states": 6,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 4.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 5.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 7.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 6.5,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 4.41,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 6.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 3.59,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 2.99,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 2.37,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 6.49,
+          "stores": 2,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 4.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 4.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 3.49,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 3.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 2.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 3.09,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 3.34,
+        "cheapestState": "FL",
+        "cheapestPrice": 2.99,
+        "priciestState": "MT",
+        "priciestPrice": 5.99
+      }
+    },
+    {
+      "id": "eggs",
+      "label": "Eggs, Grade A large, dozen",
+      "noun": "eggs",
+      "unit": "dozen",
+      "unitText": "/dozen",
+      "national": {
+        "median": 1.99,
+        "min": 1.19,
+        "max": 4.69,
+        "stores": 43,
+        "states": 6,
+        "minState": "IL",
+        "minStore": "Kroger",
+        "minCity": "Peoria",
+        "minBasis": "online",
+        "maxState": "CA",
+        "maxStore": "Safeway",
+        "maxCity": "San Francisco",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 1.45,
+        "shelfMinState": "TX",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Houston",
+        "shelfMedian": 1.66,
+        "onlineMedian": 1.99
+      },
+      "states": {
+        "CA": {
+          "median": 1.99,
+          "min": 1.66,
+          "max": 4.69,
+          "minStore": "ALDI",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Goldhen Cage Free Large Grade A Eggs - 12 Count",
+          "shelfStores": 4,
+          "shelfMin": 1.66,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 1.67,
+          "onlineMin": 1.99,
+          "onlineMedian": 2.99,
+          "baseline": 1.99
+        },
+        "FL": {
+          "median": 1.99,
+          "min": 1.66,
+          "max": 2.43,
+          "minStore": "ALDI",
+          "minCity": "Tampa",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Goldhen Large Grade A Eggs - 1 Dozen",
+          "shelfStores": 2,
+          "shelfMin": 1.66,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Tampa",
+          "shelfMedian": 1.67,
+          "onlineMin": 1.99,
+          "onlineMedian": 2.21,
+          "baseline": 1.99
+        },
+        "IL": {
+          "median": 1.89,
+          "min": 1.19,
+          "max": 1.99,
+          "minStore": "Kroger",
+          "minCity": "Peoria",
+          "stores": 8,
+          "basis": "online",
+          "minProduct": "Kroger® Grade A Large White Eggs",
+          "shelfStores": 3,
+          "shelfMin": 1.66,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 1.66,
+          "onlineMin": 1.19,
+          "onlineMedian": 1.99,
+          "baseline": 1.99
+        },
+        "MT": {
+          "median": 1.99,
+          "min": 1.99,
+          "max": 1.99,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Good & Gather Grade A Cage-free Large Fresh Eggs",
+          "shelfStores": 0,
+          "onlineMin": 1.99,
+          "onlineMedian": 1.99,
+          "baseline": 1.99
+        },
+        "NY": {
+          "median": 1.94,
+          "min": 1.66,
+          "max": 3.39,
+          "minStore": "ALDI",
+          "minCity": "New York City",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Goldhen Large Grade A Eggs - 1 Dozen",
+          "shelfStores": 4,
+          "shelfMin": 1.66,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 1.77,
+          "onlineMin": 1.89,
+          "onlineMedian": 1.99,
+          "baseline": 1.89
+        },
+        "TX": {
+          "median": 1.99,
+          "min": 1.45,
+          "max": 1.99,
+          "minStore": "ALDI",
+          "minCity": "Houston",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Goldhen Large Grade A Eggs - 1 Dozen",
+          "shelfStores": 2,
+          "shelfMin": 1.45,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Houston",
+          "shelfMedian": 1.56,
+          "onlineMin": 1.79,
+          "onlineMedian": 1.99,
+          "baseline": 1.99
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "IL",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 4,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 1.67,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 1.66,
+          "stores": 9,
+          "states": 5,
+          "wins": 4,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 1.99,
+          "stores": 12,
+          "states": 6,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 2.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 2.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 4.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 4.29,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 2.43,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 1.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 1.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 1.99,
+          "stores": 3,
+          "states": 2,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 1.79,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 1.99,
+          "stores": 2,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 2.39,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 3.39,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 1.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 1.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 1.79,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 1.99,
+        "cheapestState": "NY",
+        "cheapestPrice": 1.89,
+        "priciestState": "TX",
+        "priciestPrice": 1.99
+      }
+    },
+    {
+      "id": "bread",
+      "label": "White sandwich bread, 20 oz loaf",
+      "noun": "white bread",
+      "unit": "loaf",
+      "unitText": " per 20-oz loaf",
+      "national": {
+        "median": 1.89,
+        "min": 1.35,
+        "max": 4.69,
+        "stores": 43,
+        "states": 6,
+        "minState": "TX",
+        "minStore": "ALDI",
+        "minCity": "Dallas",
+        "minBasis": "shelf",
+        "maxState": "CA",
+        "maxStore": "Vons",
+        "maxCity": "Los Angeles",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 1.35,
+        "shelfMinState": "TX",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Dallas",
+        "shelfMedian": 1.45,
+        "onlineMedian": 1.94
+      },
+      "states": {
+        "CA": {
+          "median": 1.69,
+          "min": 1.52,
+          "max": 4.69,
+          "minStore": "Walmart",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Great Value White Round Top Bread",
+          "shelfStores": 4,
+          "shelfMin": 1.52,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 1.56,
+          "onlineMin": 1.69,
+          "onlineMedian": 1.99,
+          "baseline": 1.69
+        },
+        "FL": {
+          "median": 1.89,
+          "min": 1.45,
+          "max": 2.65,
+          "minStore": "ALDI",
+          "minCity": "Miami",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "L'oven Fresh White Bread, 20 oz ver 3",
+          "shelfStores": 2,
+          "shelfMin": 1.45,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 1.45,
+          "onlineMin": 1.89,
+          "onlineMedian": 2.27,
+          "baseline": 1.89
+        },
+        "IL": {
+          "median": 1.69,
+          "min": 1.39,
+          "max": 4.69,
+          "minStore": "Hy-Vee",
+          "minCity": "Peoria",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "That's Smart! That's Smart White Bread",
+          "shelfStores": 3,
+          "shelfMin": 1.39,
+          "shelfMinStore": "Hy-Vee",
+          "shelfMinCity": "Peoria",
+          "shelfMedian": 1.45,
+          "onlineMin": 1.69,
+          "onlineMedian": 1.99,
+          "baseline": 1.69
+        },
+        "MT": {
+          "median": 2.44,
+          "min": 1.89,
+          "max": 2.99,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Market Pantry White Sandwich Bread",
+          "shelfStores": 0,
+          "onlineMin": 1.89,
+          "onlineMedian": 2.44,
+          "baseline": 1.89
+        },
+        "NY": {
+          "median": 1.89,
+          "min": 1.45,
+          "max": 3.99,
+          "minStore": "ALDI",
+          "minCity": "Buffalo",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "L'oven Fresh White Bread, 20 oz ver 3",
+          "shelfStores": 4,
+          "shelfMin": 1.45,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Buffalo",
+          "shelfMedian": 1.51,
+          "onlineMin": 1.79,
+          "onlineMedian": 1.89,
+          "baseline": 1.89
+        },
+        "TX": {
+          "median": 1.59,
+          "min": 1.35,
+          "max": 2.49,
+          "minStore": "ALDI",
+          "minCity": "Dallas",
+          "stores": 7,
+          "basis": "shelf",
+          "minProduct": "L'oven Fresh White Bread, 20 oz ver 3",
+          "shelfStores": 2,
+          "shelfMin": 1.35,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 1.35,
+          "onlineMin": 1.59,
+          "onlineMedian": 1.59,
+          "baseline": 1.59
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "TX",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 3,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 1.52,
+          "stores": 3,
+          "states": 2,
+          "wins": 1,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 1.45,
+          "stores": 9,
+          "states": 5,
+          "wins": 3,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 1.89,
+          "stores": 11,
+          "states": 6,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 1.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 4.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 4.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 3.49,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 2.65,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 4.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 2.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 1.59,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 1.39,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 2.99,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 2.39,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 3.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 3.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 1.79,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 1.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 2.49,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 1.79,
+        "cheapestState": "TX",
+        "cheapestPrice": 1.59,
+        "priciestState": "NY",
+        "priciestPrice": 1.89
+      }
+    },
+    {
+      "id": "bananas",
+      "label": "Bananas, per pound",
+      "noun": "bananas",
+      "unit": "lb",
+      "unitText": "/lb",
+      "national": {
+        "median": 0.695,
+        "min": 0.25,
+        "max": 1.49,
+        "stores": 44,
+        "states": 6,
+        "minState": "NY",
+        "minStore": "Walmart",
+        "minCity": "New York City",
+        "minBasis": "shelf",
+        "maxState": "CA",
+        "maxStore": "Target",
+        "maxCity": "Los Angeles",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 0.25,
+        "shelfMinState": "NY",
+        "shelfMinStore": "Walmart",
+        "shelfMinCity": "New York City",
+        "shelfMedian": 0.48,
+        "onlineMedian": 0.89
+      },
+      "states": {
+        "CA": {
+          "median": 0.79,
+          "min": 0.45,
+          "max": 1.49,
+          "minStore": "Walmart",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Banana",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 0.45,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 0.48,
+          "onlineMin": 0.79,
+          "onlineMedian": 0.99,
+          "baseline": 1.49
+        },
+        "FL": {
+          "median": 0.7,
+          "min": 0.49,
+          "max": 1.18,
+          "minStore": "ALDI",
+          "minCity": "Tampa",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Bananas, per lb",
+          "shelfStores": 2,
+          "shelfMin": 0.49,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Tampa",
+          "shelfMedian": 0.52,
+          "onlineMin": 0.7,
+          "onlineMedian": 0.94,
+          "baseline": 1.18
+        },
+        "IL": {
+          "median": 0.69,
+          "min": 0.44,
+          "max": 1.49,
+          "minStore": "ALDI",
+          "minCity": "Chicago",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Bananas, per lb",
+          "shelfStores": 3,
+          "shelfMin": 0.44,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 0.47,
+          "onlineMin": 0.59,
+          "onlineMedian": 0.89,
+          "baseline": 1.18
+        },
+        "MT": {
+          "median": 0.935,
+          "min": 0.69,
+          "max": 1.18,
+          "minStore": "Albertsons",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Banana",
+          "shelfStores": 0,
+          "onlineMin": 0.69,
+          "onlineMedian": 0.935,
+          "baseline": 1.18
+        },
+        "NY": {
+          "median": 0.59,
+          "min": 0.25,
+          "max": 1.49,
+          "minStore": "Walmart",
+          "minCity": "New York City",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Banana",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 0.25,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 0.47,
+          "onlineMin": 0.59,
+          "onlineMedian": 0.79,
+          "baseline": 1.18
+        },
+        "TX": {
+          "median": 0.59,
+          "min": 0.48,
+          "max": 1.18,
+          "minStore": "ALDI",
+          "minCity": "Houston",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Bananas, per lb",
+          "shelfStores": 2,
+          "shelfMin": 0.48,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Houston",
+          "shelfMedian": 0.485,
+          "onlineMin": 0.59,
+          "onlineMedian": 0.64,
+          "baseline": 1.18
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "NY",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 3,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 0.45,
+          "stores": 3,
+          "states": 2,
+          "wins": 2,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 0.48,
+          "stores": 9,
+          "states": 5,
+          "wins": 3,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 1.18,
+          "stores": 12,
+          "states": 6,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 0.79,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 0.89,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 0.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 0.79,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 0.7,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 0.89,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 0.79,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 0.59,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 0.57,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 0.69,
+          "stores": 2,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 0.79,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 0.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 0.59,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 0.59,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 0.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 0.59,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 1.18,
+        "cheapestState": "FL",
+        "cheapestPrice": 1.18,
+        "priciestState": "CA",
+        "priciestPrice": 1.49
+      }
+    },
+    {
+      "id": "chicken",
+      "label": "Boneless skinless chicken breast, per pound",
+      "noun": "chicken breast",
+      "unit": "lb",
+      "unitText": "/lb",
+      "national": {
+        "median": 2.99,
+        "min": 1.99,
+        "max": 6.49,
+        "stores": 37,
+        "states": 6,
+        "minState": "FL",
+        "minStore": "ALDI",
+        "minCity": "Miami",
+        "minBasis": "shelf",
+        "maxState": "NY",
+        "maxStore": "Tops",
+        "maxCity": "Buffalo",
+        "maxBasis": "online",
+        "shelfStores": 13,
+        "shelfMin": 1.99,
+        "shelfMinState": "FL",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Miami",
+        "shelfMedian": 1.99,
+        "onlineMedian": 2.99
+      },
+      "states": {
+        "CA": {
+          "median": 2.99,
+          "min": 2.99,
+          "max": 5.17,
+          "minStore": "Target",
+          "minCity": "Los Angeles",
+          "stores": 8,
+          "basis": "online",
+          "minProduct": "Good & Gather Value Pack Conventional Boneless Skinless Chicken Breast",
+          "shelfStores": 3,
+          "shelfMin": 2.99,
+          "shelfMinStore": "Lucky",
+          "shelfMinCity": "San Francisco",
+          "shelfMedian": 4.16,
+          "onlineMin": 2.99,
+          "onlineMedian": 2.99,
+          "baseline": 2.99
+        },
+        "FL": {
+          "median": 2.49,
+          "min": 1.99,
+          "max": 5.53,
+          "minStore": "ALDI",
+          "minCity": "Miami",
+          "stores": 4,
+          "basis": "shelf",
+          "minProduct": "Kirkwood Boneless Skinless Chicken Breasts Family Pack, per lb",
+          "onSale": true,
+          "shelfStores": 2,
+          "shelfMin": 1.99,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 1.99,
+          "onlineMin": 2.99,
+          "onlineMedian": 4.26,
+          "baseline": 2.99
+        },
+        "IL": {
+          "median": 2.38,
+          "min": 1.99,
+          "max": 2.99,
+          "minStore": "ALDI",
+          "minCity": "Chicago",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Kirkwood Boneless Skinless Chicken Breasts Family Pack, per lb",
+          "onSale": true,
+          "shelfStores": 3,
+          "shelfMin": 1.99,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 1.99,
+          "onlineMin": 1.99,
+          "onlineMedian": 2.69,
+          "baseline": 2.69
+        },
+        "MT": {
+          "median": 3.99,
+          "min": 2.69,
+          "max": 3.99,
+          "minStore": "Target",
+          "minCity": "Missoula",
+          "stores": 3,
+          "basis": "online",
+          "minProduct": "Good & Gather Value Pack Conventional Boneless Skinless Chicken Breast",
+          "shelfStores": 0,
+          "onlineMin": 2.69,
+          "onlineMedian": 3.99,
+          "baseline": 2.69
+        },
+        "NY": {
+          "median": 2.84,
+          "min": 1.99,
+          "max": 6.49,
+          "minStore": "ALDI",
+          "minCity": "New York City",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Kirkwood Boneless Skinless Chicken Breasts Family Pack, per lb",
+          "onSale": true,
+          "shelfStores": 3,
+          "shelfMin": 1.99,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 1.99,
+          "onlineMin": 2.69,
+          "onlineMedian": 2.99
+        },
+        "TX": {
+          "median": 2.84,
+          "min": 1.99,
+          "max": 3.44,
+          "minStore": "ALDI",
+          "minCity": "Dallas",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Kirkwood Boneless Skinless Chicken Breasts Family Pack, per lb",
+          "onSale": true,
+          "shelfStores": 2,
+          "shelfMin": 1.99,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 1.99,
+          "onlineMin": 2.69,
+          "onlineMedian": 2.99,
+          "baseline": 2.69
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "IL",
+      "priciestState": "CA",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 4,
+        "of": 4
+      },
+      "chains": {
+        "Walmart": {
+          "median": 4.16,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 2.69,
+          "stores": 8,
+          "states": 5,
+          "wins": 2,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 4.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 2.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 2.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 2.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 1.99,
+          "stores": 8,
+          "states": 4,
+          "wins": 4,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 5.53,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 1.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 2.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 2.99,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 2.27,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 3.99,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 2.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Wegmans": {
+          "median": 2.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 6.49,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 2.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 3.44,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 5,
+        "median": 2.69,
+        "cheapestState": "IL",
+        "cheapestPrice": 2.69,
+        "priciestState": "FL",
+        "priciestPrice": 2.99
+      },
+      "discarded": 1
+    },
+    {
+      "id": "beef",
+      "label": "Ground beef, 80/20, per pound",
+      "noun": "ground beef",
+      "unit": "lb",
+      "unitText": "/lb",
+      "national": {
+        "median": 6.68,
+        "min": 4.69,
+        "max": 10.99,
+        "stores": 36,
+        "states": 5,
+        "minState": "CA",
+        "minStore": "ALDI",
+        "minCity": "Los Angeles",
+        "minBasis": "shelf",
+        "maxState": "FL",
+        "maxStore": "Publix",
+        "maxCity": "Miami",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 4.69,
+        "shelfMinState": "CA",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Los Angeles",
+        "shelfMedian": 5.29,
+        "onlineMedian": 7.66
+      },
+      "states": {
+        "CA": {
+          "median": 6.99,
+          "min": 4.69,
+          "max": 9,
+          "minStore": "ALDI",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "80% Lean Ground Beef",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 4.69,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 6.93,
+          "onlineMin": 5.99,
+          "onlineMedian": 7.99,
+          "baseline": 8.99
+        },
+        "FL": {
+          "median": 7.99,
+          "min": 5.29,
+          "max": 10.99,
+          "minStore": "ALDI",
+          "minCity": "Miami",
+          "stores": 5,
+          "basis": "shelf",
+          "minProduct": "80% Lean Ground Beef",
+          "onSale": true,
+          "shelfStores": 2,
+          "shelfMin": 5.29,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 5.29,
+          "onlineMin": 7.99,
+          "onlineMedian": 10.99,
+          "baseline": 7.99
+        },
+        "IL": {
+          "median": 6.33,
+          "min": 5.29,
+          "max": 9.99,
+          "minStore": "ALDI",
+          "minCity": "Chicago",
+          "stores": 7,
+          "basis": "shelf",
+          "minProduct": "80% Lean Ground Beef",
+          "onSale": true,
+          "shelfStores": 3,
+          "shelfMin": 5.29,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 5.29,
+          "onlineMin": 6.33,
+          "onlineMedian": 7.58,
+          "baseline": 8.49
+        },
+        "NY": {
+          "median": 6.05,
+          "min": 5.29,
+          "max": 7.49,
+          "minStore": "ALDI",
+          "minCity": "New York City",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "80% Lean Ground Beef",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 5.29,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 6.14,
+          "onlineMin": 5.29,
+          "onlineMedian": 6.05,
+          "baseline": 6.5
+        },
+        "TX": {
+          "median": 6.66,
+          "min": 5.29,
+          "max": 7.99,
+          "minStore": "ALDI",
+          "minCity": "Dallas",
+          "stores": 7,
+          "basis": "shelf",
+          "minProduct": "80% Lean Ground Beef",
+          "onSale": true,
+          "shelfStores": 2,
+          "shelfMin": 5.29,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 5.29,
+          "onlineMin": 6.66,
+          "onlineMedian": 6.69,
+          "baseline": 7.99
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "CA",
+      "priciestState": "FL",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 5,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 6.93,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 5.29,
+          "stores": 9,
+          "states": 5,
+          "wins": 5,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 8.24,
+          "stores": 6,
+          "states": 5,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 7.66,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 7.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 5.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 6.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 10.99,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 9.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 6.33,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 6.66,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 6.29,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Stop & Shop": {
+          "median": 6.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 7.49,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 5.59,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 5.29,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 7.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 6.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 5,
+        "median": 7.99,
+        "cheapestState": "NY",
+        "cheapestPrice": 6.5,
+        "priciestState": "CA",
+        "priciestPrice": 8.99
+      }
+    },
+    {
+      "id": "butter",
+      "label": "Butter, salted, 1 lb",
+      "noun": "butter",
+      "unit": "lb",
+      "unitText": "/lb",
+      "national": {
+        "median": 3.69,
+        "min": 2.79,
+        "max": 6.99,
+        "stores": 44,
+        "states": 6,
+        "minState": "TX",
+        "minStore": "ALDI",
+        "minCity": "Dallas",
+        "minBasis": "shelf",
+        "maxState": "CA",
+        "maxStore": "Safeway",
+        "maxCity": "San Francisco",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 2.79,
+        "shelfMinState": "TX",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Dallas",
+        "shelfMedian": 2.89,
+        "onlineMedian": 3.99
+      },
+      "states": {
+        "CA": {
+          "median": 3.99,
+          "min": 2.89,
+          "max": 6.99,
+          "minStore": "ALDI",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Countryside Creamery Sweet Cream Butter - 4 Sticks",
+          "shelfStores": 4,
+          "shelfMin": 2.89,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 3.06,
+          "onlineMin": 3.99,
+          "onlineMedian": 4.99,
+          "baseline": 3.99
+        },
+        "FL": {
+          "median": 3.5,
+          "min": 2.89,
+          "max": 4.41,
+          "minStore": "ALDI",
+          "minCity": "Miami",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Countryside Creamery Sweet Cream Butter - 4 Sticks",
+          "shelfStores": 2,
+          "shelfMin": 2.89,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 2.89,
+          "onlineMin": 3.31,
+          "onlineMedian": 3.69,
+          "baseline": 3.69
+        },
+        "IL": {
+          "median": 3.59,
+          "min": 2.89,
+          "max": 4.99,
+          "minStore": "ALDI",
+          "minCity": "Chicago",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Countryside Creamery Sweet Cream Butter - 4 Sticks",
+          "shelfStores": 3,
+          "shelfMin": 2.89,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 2.89,
+          "onlineMin": 3.49,
+          "onlineMedian": 3.99,
+          "baseline": 3.69
+        },
+        "MT": {
+          "median": 3.84,
+          "min": 3.69,
+          "max": 3.99,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Good & Gather Salted Butter",
+          "shelfStores": 0,
+          "onlineMin": 3.69,
+          "onlineMedian": 3.84,
+          "baseline": 3.69
+        },
+        "NY": {
+          "median": 3.69,
+          "min": 2.89,
+          "max": 5.19,
+          "minStore": "ALDI",
+          "minCity": "New York City",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Countryside Creamery Sweet Cream Butter - 4 Sticks",
+          "shelfStores": 4,
+          "shelfMin": 2.89,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 2.98,
+          "onlineMin": 3.29,
+          "onlineMedian": 3.99,
+          "baseline": 3.69
+        },
+        "TX": {
+          "median": 3.69,
+          "min": 2.79,
+          "max": 5.75,
+          "minStore": "ALDI",
+          "minCity": "Dallas",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Countryside Creamery Sweet Cream Butter - 4 Sticks",
+          "shelfStores": 2,
+          "shelfMin": 2.79,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 2.79,
+          "onlineMin": 3.49,
+          "onlineMedian": 3.84,
+          "baseline": 3.69
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "TX",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 5,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 3.06,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 2.89,
+          "stores": 9,
+          "states": 5,
+          "wins": 5,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 3.69,
+          "stores": 12,
+          "states": 6,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 4.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 5.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 6.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 3.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 3.86,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 4.69,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 4.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 3.99,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 3.29,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 3.99,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 3.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 3.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 3.29,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 5.19,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 5.75,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 3.49,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 3.69,
+        "cheapestState": "FL",
+        "cheapestPrice": 3.69,
+        "priciestState": "CA",
+        "priciestPrice": 3.99
+      }
+    },
+    {
+      "id": "coffee",
+      "label": "Ground coffee, 9–13 oz, per ounce",
+      "noun": "ground coffee",
+      "unit": "oz",
+      "unitText": "/oz",
+      "national": {
+        "median": 0.635,
+        "min": 0.404,
+        "max": 0.833,
+        "stores": 44,
+        "states": 6,
+        "minState": "NY",
+        "minStore": "Walmart",
+        "minCity": "New York City",
+        "minBasis": "shelf",
+        "maxState": "CA",
+        "maxStore": "Target",
+        "maxCity": "San Francisco",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 0.404,
+        "shelfMinState": "NY",
+        "shelfMinStore": "Walmart",
+        "shelfMinCity": "New York City",
+        "shelfMedian": 0.524,
+        "onlineMedian": 0.666
+      },
+      "states": {
+        "CA": {
+          "median": 0.749,
+          "min": 0.524,
+          "max": 0.833,
+          "minStore": "ALDI",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Barissimo Breakfast Blend Medium Roast Ground Coffee",
+          "shelfStores": 4,
+          "shelfMin": 0.524,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 0.603,
+          "onlineMin": 0.666,
+          "onlineMedian": 0.796,
+          "baseline": 0.796
+        },
+        "FL": {
+          "median": 0.595,
+          "min": 0.461,
+          "max": 0.734,
+          "minStore": "Publix",
+          "minCity": "Miami",
+          "stores": 6,
+          "basis": "online",
+          "minProduct": "Don Francisco's Coffee 100% Colombia Supremo Medium Roast Ground Coffee",
+          "onSale": true,
+          "shelfStores": 2,
+          "shelfMin": 0.524,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 0.524,
+          "onlineMin": 0.461,
+          "onlineMedian": 0.666,
+          "baseline": 0.666
+        },
+        "IL": {
+          "median": 0.627,
+          "min": 0.524,
+          "max": 0.833,
+          "minStore": "ALDI",
+          "minCity": "Chicago",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Barissimo Breakfast Blend Medium Roast Ground Coffee",
+          "shelfStores": 3,
+          "shelfMin": 0.524,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 0.524,
+          "onlineMin": 0.619,
+          "onlineMedian": 0.635,
+          "baseline": 0.619
+        },
+        "MT": {
+          "median": 0.684,
+          "min": 0.619,
+          "max": 0.749,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Market Pantry Medium Roast Classic Roast Ground Coffee",
+          "shelfStores": 0,
+          "onlineMin": 0.619,
+          "onlineMedian": 0.684,
+          "baseline": 0.619
+        },
+        "NY": {
+          "median": 0.666,
+          "min": 0.404,
+          "max": 0.726,
+          "minStore": "Walmart",
+          "minCity": "New York City",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Eldorado Coffee Roasters Coffee Espresso",
+          "shelfStores": 4,
+          "shelfMin": 0.404,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 0.545,
+          "onlineMin": 0.583,
+          "onlineMedian": 0.674,
+          "baseline": 0.666
+        },
+        "TX": {
+          "median": 0.627,
+          "min": 0.524,
+          "max": 0.833,
+          "minStore": "ALDI",
+          "minCity": "Dallas",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Barissimo Breakfast Blend Medium Roast Ground Coffee",
+          "shelfStores": 2,
+          "shelfMin": 0.524,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 0.524,
+          "onlineMin": 0.619,
+          "onlineMedian": 0.635,
+          "baseline": 0.619
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "NY",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 3,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 0.596,
+          "stores": 3,
+          "states": 2,
+          "wins": 1,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 0.524,
+          "stores": 9,
+          "states": 5,
+          "wins": 3,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 0.666,
+          "stores": 12,
+          "states": 6,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 0.666,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 0.749,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 0.833,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 0.833,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 0.598,
+          "stores": 2,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 0.699,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 0.635,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 0.635,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 0.583,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 0.749,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 0.583,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 0.699,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 0.674,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 0.726,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 0.833,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 0.712,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 0.643,
+        "cheapestState": "IL",
+        "cheapestPrice": 0.619,
+        "priciestState": "CA",
+        "priciestPrice": 0.796
+      }
+    },
+    {
+      "id": "cheddar",
+      "label": "Cheddar cheese, 8 oz, per pound",
+      "noun": "cheddar cheese",
+      "unit": "lb",
+      "unitText": "/lb",
+      "national": {
+        "median": 3.98,
+        "min": 3.5,
+        "max": 9.98,
+        "stores": 44,
+        "states": 6,
+        "minState": "FL",
+        "minStore": "ALDI",
+        "minCity": "Miami",
+        "minBasis": "shelf",
+        "maxState": "CA",
+        "maxStore": "Safeway",
+        "maxCity": "San Francisco",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 3.5,
+        "shelfMinState": "FL",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Miami",
+        "shelfMedian": 3.7,
+        "onlineMedian": 4.58
+      },
+      "states": {
+        "CA": {
+          "median": 4.58,
+          "min": 3.74,
+          "max": 9.98,
+          "minStore": "Walmart",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Great Value Medium Cheddar Cheese",
+          "shelfStores": 4,
+          "shelfMin": 3.74,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 4.86,
+          "onlineMin": 3.98,
+          "onlineMedian": 4.58,
+          "baseline": 3.98
+        },
+        "FL": {
+          "median": 3.98,
+          "min": 3.5,
+          "max": 5.54,
+          "minStore": "ALDI",
+          "minCity": "Miami",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Happy Farms Sharp Cheddar Cheese Block",
+          "shelfStores": 2,
+          "shelfMin": 3.5,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 3.5,
+          "onlineMin": 3.98,
+          "onlineMedian": 4.76,
+          "baseline": 3.98
+        },
+        "IL": {
+          "median": 3.98,
+          "min": 3.5,
+          "max": 7.98,
+          "minStore": "ALDI",
+          "minCity": "Chicago",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Happy Farms Sharp Cheddar Cheese Block",
+          "shelfStores": 3,
+          "shelfMin": 3.5,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 3.5,
+          "onlineMin": 3.98,
+          "onlineMedian": 3.98,
+          "baseline": 3.98
+        },
+        "MT": {
+          "median": 4.87,
+          "min": 3.98,
+          "max": 5.76,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Good & Gather Sharp Cheddar Cheese",
+          "shelfStores": 0,
+          "onlineMin": 3.98,
+          "onlineMedian": 4.87,
+          "baseline": 3.98
+        },
+        "NY": {
+          "median": 3.98,
+          "min": 3.5,
+          "max": 5.38,
+          "minStore": "ALDI",
+          "minCity": "Buffalo",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Happy Farms Sharp Cheddar Cheese Block",
+          "shelfStores": 4,
+          "shelfMin": 3.5,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Buffalo",
+          "shelfMedian": 3.72,
+          "onlineMin": 3.98,
+          "onlineMedian": 4.58,
+          "baseline": 3.98
+        },
+        "TX": {
+          "median": 4.18,
+          "min": 3.5,
+          "max": 5.98,
+          "minStore": "ALDI",
+          "minCity": "Dallas",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Happy Farms Sharp Cheddar Cheese Block",
+          "shelfStores": 2,
+          "shelfMin": 3.5,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 3.5,
+          "onlineMin": 3.98,
+          "onlineMedian": 4.48,
+          "baseline": 3.98
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "FL",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 4,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 3.74,
+          "stores": 3,
+          "states": 2,
+          "wins": 1,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 3.5,
+          "stores": 9,
+          "states": 5,
+          "wins": 4,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 3.98,
+          "stores": 12,
+          "states": 6,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 4.58,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 9.38,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 9.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 5.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 5.54,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 7.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 4.58,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 4.58,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 4.96,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 5.76,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 4.78,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 4.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 4.58,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 5.38,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 5.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 4.38,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 3.98,
+        "cheapestState": "CA",
+        "cheapestPrice": 3.98,
+        "priciestState": "TX",
+        "priciestPrice": 3.98
+      }
+    },
+    {
+      "id": "potatoes",
+      "label": "Russet potatoes, 5 lb bag, per pound",
+      "noun": "russet potatoes",
+      "unit": "lb",
+      "unitText": "/lb",
+      "national": {
+        "median": 0.684,
+        "min": 0.558,
+        "max": 0.998,
+        "stores": 37,
+        "states": 6,
+        "minState": "NY",
+        "minStore": "ALDI",
+        "minCity": "New York City",
+        "minBasis": "shelf",
+        "maxState": "NY",
+        "maxStore": "Key Food",
+        "maxCity": "New York City",
+        "maxBasis": "shelf",
+        "shelfStores": 15,
+        "shelfMin": 0.558,
+        "shelfMinState": "NY",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "New York City",
+        "shelfMedian": 0.738,
+        "onlineMedian": 0.598
+      },
+      "states": {
+        "CA": {
+          "median": 0.758,
+          "min": 0.598,
+          "max": 0.858,
+          "minStore": "Ralphs",
+          "minCity": "Los Angeles",
+          "stores": 7,
+          "basis": "online",
+          "minProduct": "Kroger Russet Potatoes",
+          "shelfStores": 4,
+          "shelfMin": 0.648,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 0.741,
+          "onlineMin": 0.598,
+          "onlineMedian": 0.758,
+          "baseline": 0.758
+        },
+        "FL": {
+          "median": 0.768,
+          "min": 0.738,
+          "max": 0.798,
+          "minStore": "ALDI",
+          "minCity": "Miami",
+          "stores": 4,
+          "basis": "shelf",
+          "minProduct": "Farmer's Promise Baking Potatoes",
+          "shelfStores": 2,
+          "shelfMin": 0.738,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 0.738,
+          "onlineMin": 0.798,
+          "onlineMedian": 0.798,
+          "baseline": 0.798
+        },
+        "IL": {
+          "median": 0.598,
+          "min": 0.598,
+          "max": 0.738,
+          "minStore": "Target",
+          "minCity": "Chicago",
+          "stores": 7,
+          "basis": "online",
+          "minProduct": "Good & Gather Idaho Russet Potatoes",
+          "shelfStores": 3,
+          "shelfMin": 0.616,
+          "shelfMinStore": "Hy-Vee",
+          "shelfMinCity": "Peoria",
+          "shelfMedian": 0.738,
+          "onlineMin": 0.598,
+          "onlineMedian": 0.598,
+          "baseline": 0.598
+        },
+        "MT": {
+          "median": 0.598,
+          "min": 0.598,
+          "max": 0.598,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Good & Gather Idaho Russet Potatoes",
+          "shelfStores": 0,
+          "onlineMin": 0.598,
+          "onlineMedian": 0.598,
+          "baseline": 0.598
+        },
+        "NY": {
+          "median": 0.798,
+          "min": 0.558,
+          "max": 0.998,
+          "minStore": "ALDI",
+          "minCity": "New York City",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Farmer's Promise Baking Potatoes",
+          "shelfStores": 4,
+          "shelfMin": 0.558,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 0.816,
+          "onlineMin": 0.598,
+          "onlineMedian": 0.798,
+          "baseline": 0.738
+        },
+        "TX": {
+          "median": 0.638,
+          "min": 0.598,
+          "max": 0.698,
+          "minStore": "Target",
+          "minCity": "Dallas",
+          "stores": 6,
+          "basis": "online",
+          "minProduct": "Good & Gather Idaho Russet Potatoes",
+          "shelfStores": 2,
+          "shelfMin": 0.678,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 0.678,
+          "onlineMin": 0.598,
+          "onlineMedian": 0.598,
+          "baseline": 0.598
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "NY",
+      "priciestState": "FL",
+      "cheapestChain": {
+        "name": "Target",
+        "wins": 3,
+        "of": 6
+      },
+      "chains": {
+        "Walmart": {
+          "median": 0.684,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 0.738,
+          "stores": 9,
+          "states": 5,
+          "wins": 2,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 0.668,
+          "stores": 12,
+          "states": 6,
+          "wins": 3,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 0.598,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 0.798,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Mariano's": {
+          "median": 0.598,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 0.598,
+          "stores": 2,
+          "states": 2,
+          "wins": 2,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 0.616,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 0.598,
+          "stores": 2,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 0.598,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 0.998,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 0.818,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 0.998,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 0.698,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 0.668,
+        "cheapestState": "IL",
+        "cheapestPrice": 0.598,
+        "priciestState": "FL",
+        "priciestPrice": 0.798
+      }
+    },
+    {
+      "id": "rice",
+      "label": "White rice, long grain, 2–5 lb bag, per pound",
+      "noun": "white rice",
+      "unit": "lb",
+      "unitText": "/lb",
+      "national": {
+        "median": 0.883,
+        "min": 0.658,
+        "max": 1.4,
+        "stores": 43,
+        "states": 6,
+        "minState": "FL",
+        "minStore": "ALDI",
+        "minCity": "Miami",
+        "minBasis": "shelf",
+        "maxState": "CA",
+        "maxStore": "Safeway",
+        "maxCity": "San Francisco",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 0.658,
+        "shelfMinState": "FL",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Miami",
+        "shelfMedian": 0.883,
+        "onlineMedian": 0.948
+      },
+      "states": {
+        "CA": {
+          "median": 0.995,
+          "min": 0.674,
+          "max": 1.4,
+          "minStore": "Walmart",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Great Value Enriched Long Grain Rice",
+          "shelfStores": 4,
+          "shelfMin": 0.674,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 0.779,
+          "onlineMin": 0.995,
+          "onlineMedian": 0.998,
+          "baseline": 0.998
+        },
+        "FL": {
+          "median": 0.798,
+          "min": 0.658,
+          "max": 1.04,
+          "minStore": "ALDI",
+          "minCity": "Miami",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Aldi Enriched Long Grain White Rice",
+          "shelfStores": 2,
+          "shelfMin": 0.658,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 0.771,
+          "onlineMin": 0.774,
+          "onlineMedian": 0.798,
+          "baseline": 0.798
+        },
+        "IL": {
+          "median": 0.911,
+          "min": 0.798,
+          "max": 1.1,
+          "minStore": "Mariano's",
+          "minCity": "Chicago",
+          "stores": 8,
+          "basis": "online",
+          "minProduct": "Blue Ribbon Extra Long Grain Enriched Rice 5 Lb",
+          "shelfStores": 3,
+          "shelfMin": 0.883,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 0.883,
+          "onlineMin": 0.798,
+          "onlineMedian": 0.938,
+          "baseline": 0.798
+        },
+        "MT": {
+          "median": 0.999,
+          "min": 0.798,
+          "max": 1.2,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Good & Gather White Enriched Long Grain Rice",
+          "shelfStores": 0,
+          "onlineMin": 0.798,
+          "onlineMedian": 0.999,
+          "baseline": 0.798
+        },
+        "NY": {
+          "median": 0.883,
+          "min": 0.674,
+          "max": 0.998,
+          "minStore": "Walmart",
+          "minCity": "New York City",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Great Value Enriched Long Grain Rice",
+          "shelfStores": 4,
+          "shelfMin": 0.674,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 0.84,
+          "onlineMin": 0.798,
+          "onlineMedian": 0.918,
+          "baseline": 0.798
+        },
+        "TX": {
+          "median": 0.798,
+          "min": 0.658,
+          "max": 0.995,
+          "minStore": "ALDI",
+          "minCity": "Dallas",
+          "stores": 7,
+          "basis": "shelf",
+          "minProduct": "Aldi Enriched Long Grain White Rice",
+          "shelfStores": 2,
+          "shelfMin": 0.658,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 0.728,
+          "onlineMin": 0.798,
+          "onlineMedian": 0.938,
+          "baseline": 0.798
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "FL",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "Target",
+        "wins": 2,
+        "of": 6
+      },
+      "chains": {
+        "Walmart": {
+          "median": 0.674,
+          "stores": 3,
+          "states": 2,
+          "wins": 2,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 0.883,
+          "stores": 9,
+          "states": 5,
+          "wins": 2,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 0.798,
+          "stores": 11,
+          "states": 6,
+          "wins": 2,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 0.995,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 1.12,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 1.4,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 0.995,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 0.907,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 0.938,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 0.798,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 0.995,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 1.1,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 1.2,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 0.958,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 0.998,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 0.818,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 0.918,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 0.938,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 0.798,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 0.798,
+        "cheapestState": "FL",
+        "cheapestPrice": 0.798,
+        "priciestState": "CA",
+        "priciestPrice": 0.998
+      }
+    },
+    {
+      "id": "orange-juice",
+      "label": "Orange juice, 52–64 fl oz, per gallon",
+      "noun": "orange juice",
+      "unit": "gal",
+      "unitText": "/gal",
+      "national": {
+        "median": 9.98,
+        "min": 6.98,
+        "max": 14.01,
+        "stores": 41,
+        "states": 6,
+        "minState": "IL",
+        "minStore": "ALDI",
+        "minCity": "Peoria",
+        "minBasis": "shelf",
+        "maxState": "CA",
+        "maxStore": "Target",
+        "maxCity": "Los Angeles",
+        "maxBasis": "online",
+        "shelfStores": 14,
+        "shelfMin": 6.98,
+        "shelfMinState": "IL",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Peoria",
+        "shelfMedian": 9.23,
+        "onlineMedian": 9.98
+      },
+      "states": {
+        "CA": {
+          "median": 9.98,
+          "min": 7.36,
+          "max": 14.01,
+          "minStore": "Lucky",
+          "minCity": "San Francisco",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Sunnyside Farms Original Orange Juice",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 7.36,
+          "shelfMinStore": "Lucky",
+          "shelfMinCity": "San Francisco",
+          "shelfMedian": 8.54,
+          "onlineMin": 9.98,
+          "onlineMedian": 11.98,
+          "baseline": 11.98
+        },
+        "FL": {
+          "median": 9.61,
+          "min": 7.74,
+          "max": 13.61,
+          "minStore": "Publix",
+          "minCity": "Miami",
+          "stores": 6,
+          "basis": "online",
+          "minProduct": "Publix Original Orange Juice",
+          "shelfStores": 2,
+          "shelfMin": 9.23,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 9.23,
+          "onlineMin": 7.74,
+          "onlineMedian": 9.98,
+          "baseline": 9.98
+        },
+        "IL": {
+          "median": 9.98,
+          "min": 6.98,
+          "max": 10.83,
+          "minStore": "ALDI",
+          "minCity": "Peoria",
+          "stores": 7,
+          "basis": "shelf",
+          "minProduct": "Nature's Nectar Pulp Free Orange Juice from Concentrate",
+          "shelfStores": 3,
+          "shelfMin": 6.98,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Peoria",
+          "shelfMedian": 7.96,
+          "onlineMin": 9.98,
+          "onlineMedian": 9.98,
+          "baseline": 9.98
+        },
+        "MT": {
+          "median": 10.98,
+          "min": 9.98,
+          "max": 11.98,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Good & Gather Orange Juice",
+          "shelfStores": 0,
+          "onlineMin": 9.98,
+          "onlineMedian": 10.98,
+          "baseline": 9.98
+        },
+        "NY": {
+          "median": 9.98,
+          "min": 8.59,
+          "max": 12.28,
+          "minStore": "Tops",
+          "minCity": "Buffalo",
+          "stores": 7,
+          "basis": "online",
+          "minProduct": "Tops TOPS 50% Less Sugar No Pulp Orange Juice",
+          "shelfStores": 3,
+          "shelfMin": 9.23,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Buffalo",
+          "shelfMedian": 9.33,
+          "onlineMin": 8.59,
+          "onlineMedian": 9.98,
+          "baseline": 9.98
+        },
+        "TX": {
+          "median": 9.98,
+          "min": 6.98,
+          "max": 11.18,
+          "minStore": "ALDI",
+          "minCity": "Houston",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Nature's Nectar Pulp Free Orange Juice from Concentrate",
+          "shelfStores": 2,
+          "shelfMin": 6.98,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Houston",
+          "shelfMedian": 8.11,
+          "onlineMin": 9.98,
+          "onlineMedian": 9.98,
+          "baseline": 9.98
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "IL",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 2,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 8.54,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 9.23,
+          "stores": 9,
+          "states": 5,
+          "wins": 2,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 9.98,
+          "stores": 10,
+          "states": 6,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 9.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 11.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 9.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 7.36,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 10.68,
+          "stores": 2,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 10.83,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 9.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 9.98,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 7.96,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 11.98,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 11.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 12.28,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 9.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 8.59,
+          "stores": 1,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 11.18,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 9.98,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 9.98,
+        "cheapestState": "FL",
+        "cheapestPrice": 9.98,
+        "priciestState": "CA",
+        "priciestPrice": 11.98
+      }
+    },
+    {
+      "id": "peanut-butter",
+      "label": "Peanut butter, creamy, 15–18 oz, per ounce",
+      "noun": "peanut butter",
+      "unit": "oz",
+      "unitText": "/oz",
+      "national": {
+        "median": 0.124,
+        "min": 0.088,
+        "max": 0.237,
+        "stores": 44,
+        "states": 6,
+        "minState": "CA",
+        "minStore": "ALDI",
+        "minCity": "Los Angeles",
+        "minBasis": "shelf",
+        "maxState": "NY",
+        "maxStore": "Tops",
+        "maxCity": "Buffalo",
+        "maxBasis": "online",
+        "shelfStores": 15,
+        "shelfMin": 0.088,
+        "shelfMinState": "CA",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Los Angeles",
+        "shelfMedian": 0.088,
+        "onlineMedian": 0.127
+      },
+      "states": {
+        "CA": {
+          "median": 0.124,
+          "min": 0.088,
+          "max": 0.187,
+          "minStore": "ALDI",
+          "minCity": "Los Angeles",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Peanut Delight Creamy Peanut Butter",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 0.088,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Los Angeles",
+          "shelfMedian": 0.095,
+          "onlineMin": 0.124,
+          "onlineMedian": 0.168,
+          "baseline": 0.124
+        },
+        "FL": {
+          "median": 0.142,
+          "min": 0.088,
+          "max": 0.168,
+          "minStore": "ALDI",
+          "minCity": "Miami",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Peanut Delight Creamy Peanut Butter",
+          "onSale": true,
+          "shelfStores": 2,
+          "shelfMin": 0.088,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 0.088,
+          "onlineMin": 0.124,
+          "onlineMedian": 0.159,
+          "baseline": 0.124
+        },
+        "IL": {
+          "median": 0.124,
+          "min": 0.088,
+          "max": 0.187,
+          "minStore": "ALDI",
+          "minCity": "Chicago",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Peanut Delight Creamy Peanut Butter",
+          "onSale": true,
+          "shelfStores": 3,
+          "shelfMin": 0.088,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 0.088,
+          "onlineMin": 0.124,
+          "onlineMedian": 0.124,
+          "baseline": 0.124
+        },
+        "MT": {
+          "median": 0.156,
+          "min": 0.124,
+          "max": 0.187,
+          "minStore": "Target",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Good & Gather Creamy Peanut Butter",
+          "shelfStores": 0,
+          "onlineMin": 0.124,
+          "onlineMedian": 0.156,
+          "baseline": 0.124
+        },
+        "NY": {
+          "median": 0.124,
+          "min": 0.088,
+          "max": 0.237,
+          "minStore": "ALDI",
+          "minCity": "Buffalo",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Peanut Delight Creamy Peanut Butter",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 0.088,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Buffalo",
+          "shelfMedian": 0.1,
+          "onlineMin": 0.124,
+          "onlineMedian": 0.127,
+          "baseline": 0.124
+        },
+        "TX": {
+          "median": 0.124,
+          "min": 0.088,
+          "max": 0.187,
+          "minStore": "ALDI",
+          "minCity": "Dallas",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Peanut Delight Creamy Peanut Butter",
+          "onSale": true,
+          "shelfStores": 2,
+          "shelfMin": 0.088,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 0.088,
+          "onlineMin": 0.124,
+          "onlineMedian": 0.137,
+          "baseline": 0.124
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "CA",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 5,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 0.095,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 0.088,
+          "stores": 9,
+          "states": 5,
+          "wins": 5,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 0.124,
+          "stores": 12,
+          "states": 6,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 0.124,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 0.187,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 0.187,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 0.183,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 0.159,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 0.187,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 0.124,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 0.124,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 0.129,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 0.187,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 0.174,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 0.226,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 0.127,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 0.237,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tom Thumb": {
+          "median": 0.187,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 0.149,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 0.124,
+        "cheapestState": "CA",
+        "cheapestPrice": 0.124,
+        "priciestState": "TX",
+        "priciestPrice": 0.124
+      }
+    },
+    {
+      "id": "apples",
+      "label": "Gala apples, per pound",
+      "noun": "gala apples",
+      "unit": "lb",
+      "unitText": "/lb",
+      "national": {
+        "median": 1.66,
+        "min": 0.897,
+        "max": 3.59,
+        "stores": 42,
+        "states": 6,
+        "minState": "TX",
+        "minStore": "ALDI",
+        "minCity": "Dallas",
+        "minBasis": "shelf",
+        "maxState": "NY",
+        "maxStore": "Stop & Shop",
+        "maxCity": "New York City",
+        "maxBasis": "online",
+        "shelfStores": 14,
+        "shelfMin": 0.897,
+        "shelfMinState": "TX",
+        "shelfMinStore": "ALDI",
+        "shelfMinCity": "Dallas",
+        "shelfMedian": 0.963,
+        "onlineMedian": 2.41
+      },
+      "states": {
+        "CA": {
+          "median": 1.66,
+          "min": 0.907,
+          "max": 2.48,
+          "minStore": "Walmart",
+          "minCity": "Milpitas",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Gala Apple Bag",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 0.907,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "Milpitas",
+          "shelfMedian": 1.21,
+          "onlineMin": 1.66,
+          "onlineMedian": 1.99,
+          "baseline": 2.48
+        },
+        "FL": {
+          "median": 2.48,
+          "min": 0.963,
+          "max": 2.77,
+          "minStore": "ALDI",
+          "minCity": "Miami",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Gala Apples",
+          "shelfStores": 2,
+          "shelfMin": 0.963,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Miami",
+          "shelfMedian": 0.963,
+          "onlineMin": 2.48,
+          "onlineMedian": 2.63,
+          "baseline": 2.48
+        },
+        "IL": {
+          "median": 1.83,
+          "min": 0.963,
+          "max": 2.48,
+          "minStore": "ALDI",
+          "minCity": "Chicago",
+          "stores": 8,
+          "basis": "shelf",
+          "minProduct": "Gala Apples",
+          "shelfStores": 3,
+          "shelfMin": 0.963,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Chicago",
+          "shelfMedian": 0.963,
+          "onlineMin": 1.2,
+          "onlineMedian": 1.99,
+          "baseline": 2.48
+        },
+        "MT": {
+          "median": 2.41,
+          "min": 2.33,
+          "max": 2.48,
+          "minStore": "Albertsons",
+          "minCity": "Billings",
+          "stores": 4,
+          "basis": "online",
+          "minProduct": "Apples, Gala",
+          "shelfStores": 0,
+          "onlineMin": 2.33,
+          "onlineMedian": 2.41,
+          "baseline": 2.48
+        },
+        "NY": {
+          "median": 1.25,
+          "min": 0.907,
+          "max": 3.59,
+          "minStore": "Walmart",
+          "minCity": "New York City",
+          "stores": 9,
+          "basis": "shelf",
+          "minProduct": "Gala Apple Bag",
+          "onSale": true,
+          "shelfStores": 4,
+          "shelfMin": 0.907,
+          "shelfMinStore": "Walmart",
+          "shelfMinCity": "New York City",
+          "shelfMedian": 0.947,
+          "onlineMin": 1.16,
+          "onlineMedian": 1.66,
+          "baseline": 1.33
+        },
+        "TX": {
+          "median": 1.33,
+          "min": 0.897,
+          "max": 2.48,
+          "minStore": "ALDI",
+          "minCity": "Dallas",
+          "stores": 6,
+          "basis": "shelf",
+          "minProduct": "Gala Apples",
+          "shelfStores": 1,
+          "shelfMin": 0.897,
+          "shelfMinStore": "ALDI",
+          "shelfMinCity": "Dallas",
+          "shelfMedian": 0.897,
+          "onlineMin": 1.16,
+          "onlineMedian": 1.33,
+          "baseline": 2.48
+        }
+      },
+      "confidence": "low",
+      "cheapestState": "TX",
+      "priciestState": "MT",
+      "cheapestChain": {
+        "name": "ALDI",
+        "wins": 3,
+        "of": 5
+      },
+      "chains": {
+        "Walmart": {
+          "median": 0.907,
+          "stores": 3,
+          "states": 2,
+          "wins": 2,
+          "basis": "shelf"
+        },
+        "ALDI": {
+          "median": 0.963,
+          "stores": 8,
+          "states": 5,
+          "wins": 3,
+          "basis": "shelf"
+        },
+        "Target": {
+          "median": 2.48,
+          "stores": 12,
+          "states": 6,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Ralphs": {
+          "median": 1.66,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Vons": {
+          "median": 1.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Safeway": {
+          "median": 1.79,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Lucky": {
+          "median": 1.33,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Publix": {
+          "median": 2.77,
+          "stores": 2,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Jewel-Osco": {
+          "median": 1.99,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Mariano's": {
+          "median": 1.66,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Kroger": {
+          "median": 1.33,
+          "stores": 3,
+          "states": 2,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Hy-Vee": {
+          "median": 2,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Albertsons": {
+          "median": 2.33,
+          "stores": 2,
+          "states": 1,
+          "wins": 1,
+          "basis": "online"
+        },
+        "Stop & Shop": {
+          "median": 3.59,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Key Food": {
+          "median": 1.25,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "shelf"
+        },
+        "Wegmans": {
+          "median": 1.16,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "Tops": {
+          "median": 1.66,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        },
+        "H-E-B": {
+          "median": 1.16,
+          "stores": 1,
+          "states": 1,
+          "wins": 0,
+          "basis": "online"
+        }
+      },
+      "baseline": {
+        "chain": "Target",
+        "basis": "online",
+        "states": 6,
+        "median": 2.48,
+        "cheapestState": "NY",
+        "cheapestPrice": 1.33,
+        "priciestState": "TX",
+        "priciestPrice": 2.48
+      }
+    }
+  ],
+  "facts": [
+    {
+      "id": "bananas-cheapest-state",
+      "type": "cheapest-state",
+      "item": "bananas",
+      "state": "NY",
+      "value": 0.25,
+      "text": "Of the 6 states we checked, New York has the cheapest bananas this week — $0.25/lb at Walmart in New York City.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 9,
+      "states": 6
+    },
+    {
+      "id": "beef-cheapest-state",
+      "type": "cheapest-state",
+      "item": "beef",
+      "state": "CA",
+      "value": 4.69,
+      "text": "Of the 6 states we checked, California has the cheapest ground beef this week — $4.69/lb at ALDI in Los Angeles.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 9,
+      "states": 5
+    },
+    {
+      "id": "bread-cheapest-state",
+      "type": "cheapest-state",
+      "item": "bread",
+      "state": "TX",
+      "value": 1.35,
+      "text": "Of the 6 states we checked, Texas has the cheapest white bread this week — $1.35 per 20-oz loaf at ALDI in Dallas.",
+      "unit": "loaf",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 7,
+      "states": 6
+    },
+    {
+      "id": "coffee-cheapest-state",
+      "type": "cheapest-state",
+      "item": "coffee",
+      "state": "NY",
+      "value": 0.404,
+      "text": "Of the 6 states we checked, New York has the cheapest ground coffee this week — $0.40/oz at Walmart in New York City.",
+      "unit": "oz",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 9,
+      "states": 6
+    },
+    {
+      "id": "eggs-cheapest-state",
+      "type": "cheapest-state",
+      "item": "eggs",
+      "state": "IL",
+      "value": 1.19,
+      "text": "Of the 6 states we checked, Illinois has the cheapest eggs this week — $1.19/dozen at Kroger in Peoria (online price).",
+      "unit": "dozen",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 8,
+      "states": 6
+    },
+    {
+      "id": "milk-cheapest-state",
+      "type": "cheapest-state",
+      "item": "milk",
+      "state": "IL",
+      "value": 2.28,
+      "text": "Of the 6 states we checked, Illinois has the cheapest milk this week — $2.28/gal at ALDI in Peoria.",
+      "unit": "gal",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 8,
+      "states": 6
+    },
+    {
+      "id": "butter-priciest-state",
+      "type": "priciest-state",
+      "item": "butter",
+      "state": "MT",
+      "value": 3.69,
+      "text": "Of the 6 states we checked, butter is priciest in Montana — the lowest price we found there was $3.69/lb at Target in Billings (online price).",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 4,
+      "states": 6
+    },
+    {
+      "id": "cheddar-priciest-state",
+      "type": "priciest-state",
+      "item": "cheddar",
+      "state": "MT",
+      "value": 3.98,
+      "text": "Of the 6 states we checked, cheddar cheese is priciest in Montana — the lowest price we found there was $3.98/lb at Target in Billings (online price).",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 4,
+      "states": 6
+    },
+    {
+      "id": "chicken-priciest-state",
+      "type": "priciest-state",
+      "item": "chicken",
+      "state": "CA",
+      "value": 2.99,
+      "text": "Of the 6 states we checked, chicken breast is priciest in California — the lowest price we found there was $2.99/lb at Target in Los Angeles (online price).",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 8,
+      "states": 6
+    },
+    {
+      "id": "orange-juice-priciest-state",
+      "type": "priciest-state",
+      "item": "orange-juice",
+      "state": "MT",
+      "value": 9.98,
+      "text": "Of the 6 states we checked, orange juice is priciest in Montana — the lowest price we found there was $9.98/gal at Target in Billings (online price).",
+      "unit": "gal",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 4,
+      "states": 6
+    },
+    {
+      "id": "peanut-butter-priciest-state",
+      "type": "priciest-state",
+      "item": "peanut-butter",
+      "state": "MT",
+      "value": 0.124,
+      "text": "Of the 6 states we checked, peanut butter is priciest in Montana — the lowest price we found there was $0.12/oz at Target in Billings (online price).",
+      "unit": "oz",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 4,
+      "states": 6
+    },
+    {
+      "id": "eggs-state-spread",
+      "type": "spread",
+      "item": "eggs",
+      "state": "MT",
+      "value": 67,
+      "text": "Eggs costs 67% more in Montana than in Illinois this week — $1.99/dozen vs $1.19/dozen at the cheapest store we found in each.",
+      "unit": "dozen",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 4,
+      "states": 6
+    },
+    {
+      "id": "potatoes-state-spread",
+      "type": "spread",
+      "item": "potatoes",
+      "state": "FL",
+      "value": 32,
+      "text": "Russet potatoes costs 32% more in Florida than in New York this week — $0.74/lb vs $0.56/lb at the cheapest store we found in each.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 4,
+      "states": 6
+    },
+    {
+      "id": "apples-baseline-spread",
+      "type": "baseline-spread",
+      "item": "apples",
+      "state": "TX",
+      "value": 86,
+      "text": "At Target, a pound of gala apples costs 86% more in Texas ($2.48/lb) than in New York ($1.33/lb) — the same chain in 6 states.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 6,
+      "states": 6
+    },
+    {
+      "id": "bananas-baseline-spread",
+      "type": "baseline-spread",
+      "item": "bananas",
+      "state": "CA",
+      "value": 26,
+      "text": "At Target, a pound of bananas costs 26% more in California ($1.49/lb) than in Florida ($1.18/lb) — the same chain in 6 states.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 9,
+      "states": 6
+    },
+    {
+      "id": "coffee-baseline-spread",
+      "type": "baseline-spread",
+      "item": "coffee",
+      "state": "CA",
+      "value": 29,
+      "text": "At Target, ground coffee costs 29% more in California ($0.80/oz) than in Illinois ($0.62/oz) — the same chain in 6 states.",
+      "unit": "oz",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 9,
+      "states": 6
+    },
+    {
+      "id": "milk-baseline-spread",
+      "type": "baseline-spread",
+      "item": "milk",
+      "state": "MT",
+      "value": 100,
+      "text": "At Target, a gallon of whole milk costs 100% more in Montana ($5.99/gal) than in Florida ($2.99/gal) — the same chain in 6 states.",
+      "unit": "gal",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 4,
+      "states": 6
+    },
+    {
+      "id": "rice-baseline-spread",
+      "type": "baseline-spread",
+      "item": "rice",
+      "state": "CA",
+      "value": 25,
+      "text": "At Target, long grain white rice costs 25% more in California ($1.00/lb) than in Florida ($0.80/lb) — the same chain in 6 states.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 9,
+      "states": 6
+    },
+    {
+      "id": "bread-cheapest-chain",
+      "type": "chain",
+      "item": "bread",
+      "state": null,
+      "value": 3,
+      "text": "ALDI had the lowest white bread price in 3 of the 5 states where we checked it this week.",
+      "unit": "loaf",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 43,
+      "states": 6
+    },
+    {
+      "id": "potatoes-cheapest-chain",
+      "type": "chain",
+      "item": "potatoes",
+      "state": null,
+      "value": 3,
+      "text": "Target had the lowest russet potatoes price in 3 of the 6 states where we checked it this week.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 37,
+      "states": 6
+    },
+    {
+      "id": "beef-range",
+      "type": "range",
+      "item": "beef",
+      "state": "FL",
+      "value": 10.99,
+      "text": "Store to store, the cheapest ground beef ranged from $4.69/lb at ALDI in Los Angeles, California to $10.99/lb at Publix in Miami, Florida this week.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 5,
+      "states": 5
+    },
+    {
+      "id": "peanut-butter-range",
+      "type": "range",
+      "item": "peanut-butter",
+      "state": "NY",
+      "value": 0.237,
+      "text": "Store to store, the cheapest peanut butter ranged from $0.09/oz at ALDI in Los Angeles, California to $0.24/oz at Tops in Buffalo, New York this week.",
+      "unit": "oz",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 9,
+      "states": 6
+    },
+    {
+      "id": "apples-national-median",
+      "type": "median",
+      "item": "apples",
+      "state": null,
+      "value": 1.66,
+      "text": "The median price for a pound of gala apples was $1.66/lb this week, across 42 stores in 6 states.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 42,
+      "states": 6
+    },
+    {
+      "id": "butter-national-median",
+      "type": "median",
+      "item": "butter",
+      "state": null,
+      "value": 3.69,
+      "text": "The median price for a pound of salted butter was $3.69/lb this week, across 44 stores in 6 states.",
+      "unit": "lb",
+      "asOf": "2026-09-21",
+      "confidence": "low",
+      "stores": 44,
+      "states": 6
+    }
+  ]
+}

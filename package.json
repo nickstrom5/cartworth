@@ -1,0 +1,14 @@
+{
+  "name": "basket",
+  "version": "1.0.0",
+  "description": "Nationwide US grocery price comparison: live prices from the chains near any ZIP code, compared per unit and labelled by source, plus weekly ads.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch-path=server.js --watch-path=src --watch-path=shared server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/",
+    "smoke": "node --disable-warning=ExperimentalWarning scripts/smoke.js"
+  }
+}

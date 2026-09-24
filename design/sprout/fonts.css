@@ -1,0 +1,84 @@
+/* Sprout — fonts.
+ *
+ * Self-hosted only. The site's Content-Security-Policy is default-src 'self', so a Google Fonts
+ * <link> or any CDN would be blocked in production and is a third-party request besides. The files
+ * these rules point at are NOT in the repo yet: the owner has to approve downloading them. Until
+ * they land, every @font-face below fails quietly (a 404 on a same-origin URL) and the fallback
+ * stacks carry the design. The system was designed and checked on those fallbacks, so it is meant
+ * to look right without the files, not merely to survive.
+ *
+ * Expected files (Latin subset, WOFF2), served from the site root:
+ *   /fonts/baloo-2-600.woff2   /fonts/baloo-2-700.woff2
+ *   /fonts/dm-sans-400.woff2   /fonts/dm-sans-500.woff2   /fonts/dm-sans-600.woff2   /fonts/dm-sans-700.woff2
+ *
+ * font-display: swap — text paints at once in the fallback and swaps when the file arrives, so a
+ * price is never invisible while a font loads.
+ *
+ * unicode-range is the standard Latin subset. Every character the product prints is in it:
+ * $ ¢ · — ’ × (U+0024, U+00A2, U+00B7, U+2014, U+2019, U+00D7). A glyph outside it falls through
+ * to the fallback stack for that character only.
+ */
+
+@font-face {
+  font-family: "Baloo 2";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/baloo-2-600.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Baloo 2";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/baloo-2-700.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-sans-400.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/dm-sans-500.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/dm-sans-600.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/dm-sans-700.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* Display: the wordmark and the big prices. Without Baloo 2, ui-rounded picks up SF Pro
+     Rounded on Apple platforms (named again for older Safari that lacks the generic). The
+     rounded face is what gives Sprout its softness, so it comes before plain system-ui. */
+  --sp-font-display: "Baloo 2", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Body: everything else. DM Sans is a low-contrast geometric sans; the system UI faces are
+     the closest thing every platform already has. */
+  --sp-font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}

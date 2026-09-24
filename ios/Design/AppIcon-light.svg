@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Cartworth app icon (light)</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#26AC61"/>
+      <stop offset="1" stop-color="#0B5A32"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.33" r="0.74">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <!-- userSpaceOnUse so the rim and the body sample one continuous ramp -->
+    <linearGradient id="mark" gradientUnits="userSpaceOnUse" x1="0" y1="187" x2="0" y2="846">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E8F2EA"/>
+    </linearGradient>
+    <linearGradient id="best" gradientUnits="userSpaceOnUse" x1="0" y1="379" x2="0" y2="604">
+      <stop offset="0" stop-color="#FFD24A"/>
+      <stop offset="1" stop-color="#F5A81F"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+
+  <rect x="284" y="187" width="125" height="394" rx="20" fill="url(#mark)"/>
+  <rect x="457" y="283" width="125" height="298" rx="20" fill="url(#mark)"/>
+  <rect x="630" y="379" width="125" height="202" rx="20" fill="url(#best)"/>
+
+  <path d="M 172.00 552.00 A 38.00 38.00 0 0 1 210.00 514.00 L 814.00 514.00 A 38.00 38.00 0 0 1 852.00 552.00 L 852.00 586.00 A 18.00 18.00 0 0 1 834.00 604.00 L 798.14 604.00 A 18.00 18.00 0 0 0 780.65 617.74 L 741.00 780.37 A 86.00 86.00 0 0 1 657.45 846.00 L 366.55 846.00 A 86.00 86.00 0 0 1 283.00 780.37 L 243.35 617.74 A 18.00 18.00 0 0 0 225.86 604.00 L 190.00 604.00 A 18.00 18.00 0 0 1 172.00 586.00 Z" fill="url(#mark)"/>
+</svg>

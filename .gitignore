@@ -1,0 +1,12 @@
+data/
+node_modules/
+.DS_Store
+
+# Xcode: per-user state and build output
+ios/**/xcuserdata/
+*.xcuserstate
+DerivedData/
+ios/build/
+
+# This Mac's local tooling (launch configs point at session scratch folders)
+.claude/

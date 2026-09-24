@@ -1,0 +1,36 @@
+# Cloudflare Pages reads this file (Netlify does too). Vercel uses vercel.json.
+# Keep these in sync with netlify.toml and vercel.json when you change one.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  # Hand-written pages: no inline event handlers, no third-party scripts, no external fonts.
+  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  # cartworth.app is on the HSTS preload list because .app is a preloaded TLD, so HTTPS is
+  # mandatory and there is no http:// fallback to worry about.
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+/styles.css
+  Cache-Control: public, max-age=604800
+
+/img/*
+  Cache-Control: public, max-age=604800
+
+# Never cache the legal pages hard: the iOS app links to them and they must be correctable fast.
+/privacy
+  Cache-Control: public, max-age=300
+/terms
+  Cache-Control: public, max-age=300
+/support
+  Cache-Control: public, max-age=300
+
+# Maintenance notes and image build scripts ship inside the deployed root. robots.txt asks
+# crawlers not to fetch them, but a Disallow does not stop indexing of a URL discovered
+# elsewhere — only noindex does. Explicit paths, because _headers only wildcards a trailing /*.
+/README.md
+  X-Robots-Tag: noindex
+/img/README.md
+  X-Robots-Tag: noindex
+/tools/*
+  X-Robots-Tag: noindex

@@ -1,0 +1,1490 @@
+/* Sprout — components.
+ *
+ * Requires fonts.css and tokens.css first. Every class is prefixed sp-; every value comes from a
+ * token. Markup for each piece is in README.md and preview.html.
+ *
+ * THE GOVERNING RULE: never display an incorrect price, and never imply more precision than the
+ * source supports. For the stylesheet that means:
+ *   - nothing that holds a price, a basis tag ("Shelf price", "Online · Instacart", "National",
+ *     "Weekly ad"), a Sale tag or the "price looks wrong" flag is ever clipped, truncated or
+ *     ellipsised. No overflow:hidden, no text-overflow on any of them;
+ *   - a price amount never breaks inside itself. It may drop its unit onto the next line;
+ *   - a tag or flag that runs out of room wraps onto a second line inside its pill rather than
+ *     overflowing into the price beside it (in a flex-wrap group it moves whole to the next line
+ *     first, so this only happens when one tag is wider than the whole space it has);
+ *   - a row flagged "price looks wrong" can never be painted in the best-price green;
+ *   - fixed heights are min-heights, so 200% text grows the box instead of spilling out of it.
+ *
+ * Wide and compact layouts of the hero and the price rows switch on the width of their own
+ * container (container queries), not the viewport, so they are right in a sidebar, a phone, or
+ * a half-width review panel alike.
+ */
+
+/* ------------------------------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------------------------------ */
+.sp-base {
+  margin: 0;
+  background: var(--sp-bg);
+  color: var(--sp-ink);
+  font-family: var(--sp-font-body);
+  font-size: var(--sp-fs-15);
+  font-weight: var(--sp-fw-regular);
+  line-height: var(--sp-lh-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+:where(.sp-base) *,
+:where(.sp-base) *::before,
+:where(.sp-base) *::after {
+  box-sizing: border-box;
+}
+
+:where(.sp-base) :is(button, input, select, textarea) {
+  font: inherit;
+  color: inherit;
+}
+
+/* Focus ring: 2px accent, 2px off the element, so it always sits on the ground colour
+   (accent on white 5.21:1, on mint 4.58:1; dark 8.46:1 and 6.56:1). */
+:where(.sp-base) :focus-visible,
+.sp-focus-ring:focus-visible {
+  outline: var(--sp-focus-width) solid var(--sp-focus);
+  outline-offset: var(--sp-focus-offset);
+}
+
+.sp-link {
+  color: var(--sp-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  border-radius: 2px;
+}
+
+@media (hover: hover) {
+  .sp-link:hover {
+    color: var(--sp-link-hover);
+  }
+}
+
+.sp-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sp-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Wordmark with the sprout mark
+   ------------------------------------------------------------------------------------------------ */
+.sp-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-space-8);
+  min-height: var(--sp-target);
+  color: var(--sp-ink);
+  text-decoration: none;
+  border-radius: var(--sp-radius-tile);
+}
+
+.sp-wordmark__mark {
+  flex: none;
+  width: min(var(--sp-mark-size), 11vw);
+  height: min(var(--sp-mark-size), 11vw);
+}
+
+/* The wordmark is one unbreakable word, so it grows with the reader's text size only up to 11vw:
+   at 200% text on a phone it still fits the screen instead of pushing the page sideways. */
+.sp-wordmark__text {
+  font-family: var(--sp-font-display);
+  font-size: min(var(--sp-fs-29), 11vw);
+  font-weight: var(--sp-fw-bold);
+  line-height: var(--sp-lh-none);
+  letter-spacing: var(--sp-ls-display);
+  padding-top: var(--sp-wordmark-nudge);
+}
+
+.sp-wordmark--compact {
+  gap: var(--sp-space-6);
+}
+
+.sp-wordmark--compact .sp-wordmark__mark {
+  width: min(var(--sp-mark-size-compact), 11vw);
+  height: min(var(--sp-mark-size-compact), 11vw);
+}
+
+.sp-wordmark--compact .sp-wordmark__text {
+  font-size: min(var(--sp-fs-25), 11vw);
+}
+
+/* Sprout drawing parts. Colours come from here, not SVG attributes, so the theme reaches them. */
+.sp-mark__stem {
+  stroke: var(--sp-mark-stem);
+}
+
+.sp-mark__leaf {
+  fill: var(--sp-mark-leaf);
+  stroke: var(--sp-mark-stem);
+}
+
+.sp-mark__basket {
+  stroke: var(--sp-mark-basket);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------------------------------------------ */
+.sp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-space-8);
+  min-height: var(--sp-target);
+  min-width: var(--sp-target);
+  padding: 0 var(--sp-space-20) 0 var(--sp-space-22);
+  border: var(--sp-border-control) solid transparent;
+  border-radius: var(--sp-radius-pill);
+  background: transparent;
+  color: var(--sp-ink);
+  font-family: var(--sp-font-body);
+  font-size: var(--sp-fs-15);
+  font-weight: var(--sp-fw-bold);
+  line-height: var(--sp-lh-snug);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--sp-dur-fast) var(--sp-ease-standard),
+    border-color var(--sp-dur-fast) var(--sp-ease-standard),
+    color var(--sp-dur-fast) var(--sp-ease-standard);
+}
+
+.sp-btn svg {
+  flex: none;
+  width: var(--sp-icon-18);
+  height: var(--sp-icon-18);
+}
+
+/* The one primary action on a screen. */
+.sp-btn--primary {
+  background: var(--sp-accent);
+  color: var(--sp-accent-ink);
+}
+
+.sp-btn--primary:active {
+  background: var(--sp-accent-hover);
+}
+
+/* Outlined: the edge is the control boundary, so it uses the 3:1 control edge. */
+.sp-btn--secondary {
+  background: var(--sp-surface);
+  border-color: var(--sp-control-edge);
+  color: var(--sp-ink);
+}
+
+/* Text-only: identified by its label, like the nav links. */
+.sp-btn--ghost {
+  background: transparent;
+  color: var(--sp-ink);
+  padding: 0 var(--sp-space-14);
+}
+
+@media (hover: hover) {
+  .sp-btn--primary:hover {
+    background: var(--sp-accent-hover);
+  }
+
+  .sp-btn--secondary:hover,
+  .sp-btn--ghost:hover {
+    background: var(--sp-surface-soft);
+  }
+}
+
+.sp-btn--icon {
+  width: var(--sp-target);
+  padding: 0;
+}
+
+.sp-btn--icon svg {
+  width: var(--sp-icon-20);
+  height: var(--sp-icon-20);
+}
+
+.sp-btn:disabled,
+.sp-btn[aria-disabled="true"] {
+  background: var(--sp-surface-tag);
+  border-color: var(--sp-hairline-strong);
+  color: var(--sp-ink-3);
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Pill chips (toggle filters)
+   The button is the 44px target; the face inside is the 36px pill you see, as in the mockup.
+   Markup: <button class="sp-chip" type="button" aria-pressed="false">
+             <span class="sp-chip__face"><svg class="sp-chip__check" …/>Salted</span></button>
+   ------------------------------------------------------------------------------------------------ */
+.sp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--sp-space-8);
+}
+
+.sp-chips__label {
+  margin-right: var(--sp-space-2);
+  font-size: var(--sp-fs-13);
+  font-weight: var(--sp-fw-semibold);
+  color: var(--sp-ink-2);
+}
+
+.sp-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sp-target);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sp-ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sp-chip__face {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-space-6);
+  min-height: var(--sp-chip-height);
+  padding: 0 var(--sp-space-15);
+  border: var(--sp-border-control) solid var(--sp-control-edge);
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-surface);
+  font-size: var(--sp-fs-14);
+  font-weight: var(--sp-fw-medium);
+  line-height: var(--sp-lh-snug);
+  transition:
+    background-color var(--sp-dur-fast) var(--sp-ease-standard),
+    border-color var(--sp-dur-fast) var(--sp-ease-standard);
+}
+
+.sp-chip__check {
+  display: none;
+  flex: none;
+  width: var(--sp-icon-14);
+  height: var(--sp-icon-14);
+}
+
+@media (hover: hover) {
+  .sp-chip:hover .sp-chip__face {
+    background: var(--sp-surface-soft);
+  }
+}
+
+/* Selected: mint fill, a 3:1 green edge, bold label AND a check mark, so the state never rests on
+   colour alone. */
+.sp-chip:is([aria-pressed="true"], [aria-checked="true"]) .sp-chip__face {
+  padding-left: var(--sp-space-11);
+  background: var(--sp-mint);
+  border-color: var(--sp-selected-edge);
+  color: var(--sp-mint-ink);
+  font-weight: var(--sp-fw-bold);
+}
+
+.sp-chip:is([aria-pressed="true"], [aria-checked="true"]) .sp-chip__check {
+  display: block;
+}
+
+.sp-chip:focus-visible {
+  outline: none;
+}
+
+.sp-chip:focus-visible .sp-chip__face {
+  outline: var(--sp-focus-width) solid var(--sp-focus);
+  outline-offset: var(--sp-focus-offset);
+}
+
+.sp-chip--compact .sp-chip__face {
+  min-height: var(--sp-chip-height-compact);
+  padding: 0 var(--sp-space-13);
+  font-size: var(--sp-fs-13);
+}
+
+.sp-chip--compact:is([aria-pressed="true"], [aria-checked="true"]) .sp-chip__face {
+  padding-left: var(--sp-space-9);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Search field
+   ------------------------------------------------------------------------------------------------ */
+.sp-search {
+  margin: 0;
+  min-width: 0;
+}
+
+/* CHANGED from the mockup: the soft fill now has a 1px control edge (3:1), because a fill that is
+   1.09:1 against the page does not show where the field is. */
+.sp-search__field {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-space-12);
+  min-height: var(--sp-field-height);
+  padding: 0 var(--sp-space-5) 0 var(--sp-space-22);
+  border: var(--sp-border-control) solid var(--sp-control-edge);
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-surface-soft);
+}
+
+.sp-search__icon {
+  flex: none;
+  width: var(--sp-icon-20);
+  height: var(--sp-icon-20);
+  color: var(--sp-ink-2);
+}
+
+.sp-search__input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--sp-target);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sp-ink);
+  font-family: var(--sp-font-body);
+  font-size: var(--sp-fs-18);
+  font-weight: var(--sp-fw-medium);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.sp-search__input::placeholder {
+  color: var(--sp-ink-2);
+  opacity: 1;
+}
+
+.sp-search__submit {
+  flex: none;
+}
+
+/* The ring goes round the whole pill, not the bare input inside it. Browsers without :has() keep
+   the ring on the input itself. */
+@supports selector(:has(*)) {
+  .sp-search__input:focus-visible {
+    outline: none;
+  }
+
+  .sp-search__field:has(.sp-search__input:focus-visible) {
+    outline: var(--sp-focus-width) solid var(--sp-focus);
+    outline-offset: var(--sp-focus-offset);
+  }
+}
+
+.sp-search--compact .sp-search__field {
+  gap: var(--sp-space-10);
+  min-height: var(--sp-field-height-compact);
+  padding: 0 1px 0 var(--sp-space-15);
+}
+
+.sp-search--compact .sp-search__icon {
+  width: var(--sp-icon-18);
+  height: var(--sp-icon-18);
+}
+
+.sp-search--compact .sp-search__input {
+  font-size: var(--sp-fs-16);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Tags: price basis, Sale
+   Basis tags say where a price came from. They are part of the price and must always be readable
+   next to it. Never hide one to save room.
+   ------------------------------------------------------------------------------------------------ */
+.sp-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-space-4);
+  min-height: var(--sp-tag-height);
+  padding-block: var(--sp-space-2);
+  padding-inline: var(--sp-space-10);
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-surface-tag);
+  color: var(--sp-ink);
+  font-family: var(--sp-font-body);
+  font-size: var(--sp-fs-12);
+  font-weight: var(--sp-fw-semibold);
+  line-height: var(--sp-lh-snug);
+  vertical-align: middle;
+}
+
+.sp-tag svg {
+  flex: none;
+  width: var(--sp-icon-14);
+  height: var(--sp-icon-14);
+}
+
+.sp-tag--shelf {
+  background: var(--sp-tag-shelf-bg);
+  color: var(--sp-ink);
+}
+
+.sp-tag--online {
+  background: var(--sp-sky);
+  color: var(--sp-sky-ink);
+}
+
+/* National: Instacart's chain-wide listing, not a store near you. Same sky ink as Online, but an
+   open dashed outline instead of a fill, so it reads as "further away" at a glance. */
+.sp-tag--national {
+  padding-inline: calc(var(--sp-space-10) - 1px);
+  border: 1px dashed var(--sp-sky-edge);
+  background: var(--sp-surface);
+  color: var(--sp-sky-ink);
+}
+
+.sp-tag--weekly-ad,
+.sp-tag--sale {
+  background: var(--sp-peach);
+  color: var(--sp-peach-ink);
+}
+
+.sp-tag--sm {
+  min-height: var(--sp-tag-height-sm);
+  padding-inline: var(--sp-space-9);
+  font-size: var(--sp-fs-11-5);
+}
+
+.sp-tag--xs {
+  min-height: var(--sp-tag-height-xs);
+  padding-inline: var(--sp-space-8);
+  font-size: var(--sp-fs-11);
+}
+
+.sp-tag--national.sp-tag--sm {
+  padding-inline: calc(var(--sp-space-9) - 1px);
+}
+
+.sp-tag--national.sp-tag--xs {
+  padding-inline: calc(var(--sp-space-8) - 1px);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   "Price looks wrong" flag
+   Butter tint, a real outline, a warning icon and bold text: four cues, not one.
+   ------------------------------------------------------------------------------------------------ */
+.sp-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-space-5);
+  min-height: var(--sp-tag-height);
+  padding-block: var(--sp-space-2);
+  padding-inline: var(--sp-space-7) var(--sp-space-10);
+  border: var(--sp-border-control) solid var(--sp-warn-edge);
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-warn);
+  color: var(--sp-warn-ink);
+  font-family: var(--sp-font-body);
+  font-size: var(--sp-fs-12);
+  font-weight: var(--sp-fw-bold);
+  line-height: var(--sp-lh-snug);
+  vertical-align: middle;
+}
+
+.sp-flag svg {
+  flex: none;
+  width: var(--sp-icon-14);
+  height: var(--sp-icon-14);
+}
+
+.sp-flag--xs {
+  min-height: var(--sp-tag-height-sm);
+  padding-inline: var(--sp-space-6) var(--sp-space-8);
+  font-size: var(--sp-fs-11);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Store monogram
+   Pale tint of the store's colour, a 1.5px ring in the full colour, letters in a dark shade of it.
+   The letters are the identity; the colour is a second cue. Always aria-hidden next to the
+   store's name in text.
+   ------------------------------------------------------------------------------------------------ */
+.sp-mono {
+  --_ring: var(--sp-store-0);
+  --_tint: var(--sp-store-0-tint);
+  --_ink: var(--sp-store-0-ink);
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-mono-size);
+  height: var(--sp-mono-size);
+  border: var(--sp-border-ring) solid var(--_ring);
+  border-radius: var(--sp-radius-tile);
+  background: var(--_tint);
+  color: var(--_ink);
+  font-family: var(--sp-font-body);
+  font-size: var(--sp-fs-12-5);
+  font-weight: var(--sp-fw-bold);
+  line-height: var(--sp-lh-none);
+  letter-spacing: var(--sp-ls-mono);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sp-mono--sm {
+  width: var(--sp-mono-size-sm);
+  height: var(--sp-mono-size-sm);
+  border-radius: var(--sp-radius-mono-sm);
+  font-size: var(--sp-fs-11-5);
+}
+
+.sp-mono--xs {
+  width: var(--sp-mono-size-xs);
+  height: var(--sp-mono-size-xs);
+  border-radius: var(--sp-radius-mono-xs);
+  font-size: var(--sp-fs-10);
+}
+
+.sp-mono--s0 { --_ring: var(--sp-store-0); --_tint: var(--sp-store-0-tint); --_ink: var(--sp-store-0-ink); }
+.sp-mono--s1 { --_ring: var(--sp-store-1); --_tint: var(--sp-store-1-tint); --_ink: var(--sp-store-1-ink); }
+.sp-mono--s2 { --_ring: var(--sp-store-2); --_tint: var(--sp-store-2-tint); --_ink: var(--sp-store-2-ink); }
+.sp-mono--s3 { --_ring: var(--sp-store-3); --_tint: var(--sp-store-3-tint); --_ink: var(--sp-store-3-ink); }
+.sp-mono--s4 { --_ring: var(--sp-store-4); --_tint: var(--sp-store-4-tint); --_ink: var(--sp-store-4-ink); }
+.sp-mono--s5 { --_ring: var(--sp-store-5); --_tint: var(--sp-store-5-tint); --_ink: var(--sp-store-5-ink); }
+.sp-mono--s6 { --_ring: var(--sp-store-6); --_tint: var(--sp-store-6-tint); --_ink: var(--sp-store-6-ink); }
+.sp-mono--s7 { --_ring: var(--sp-store-7); --_tint: var(--sp-store-7-tint); --_ink: var(--sp-store-7-ink); }
+.sp-mono--s8 { --_ring: var(--sp-store-8); --_tint: var(--sp-store-8-tint); --_ink: var(--sp-store-8-ink); }
+
+/* ------------------------------------------------------------------------------------------------
+   Price
+   <p class="sp-price"><span class="sp-price__amount">$2.89</span><span class="sp-price__unit">/lb</span></p>
+   The amount never wraps inside itself; the unit may drop to the next line.
+   ------------------------------------------------------------------------------------------------ */
+.sp-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin: 0;
+  font-family: var(--sp-font-display);
+  line-height: var(--sp-lh-price);
+  font-variant-numeric: tabular-nums;
+}
+
+.sp-price__amount {
+  font-weight: var(--sp-fw-bold);
+  color: var(--sp-price-ink);
+  white-space: nowrap;
+}
+
+.sp-price__unit {
+  font-weight: var(--sp-fw-semibold);
+  color: var(--sp-price-unit-ink);
+  white-space: nowrap;
+}
+
+.sp-price--best .sp-price__amount {
+  color: var(--sp-price-best);
+}
+
+.sp-price--row {
+  justify-content: flex-end;
+  line-height: var(--sp-lh-price-tight);
+}
+
+.sp-price--row .sp-price__amount {
+  font-size: var(--sp-fs-23);
+}
+
+.sp-price--row .sp-price__unit {
+  font-size: var(--sp-fs-13);
+}
+
+.sp-price--deal {
+  flex: none;
+  justify-content: flex-end;
+  line-height: var(--sp-lh-price);
+}
+
+.sp-price--deal .sp-price__amount {
+  font-size: var(--sp-fs-28);
+}
+
+.sp-price-was {
+  margin: 0;
+  font-size: var(--sp-fs-11);
+  line-height: var(--sp-lh-snug);
+  color: var(--sp-ink-2);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Best-price hero
+   Compact (phone) by default; wide from a 40rem container. Never put a row flagged "price looks
+   wrong" here: the best price is chosen from trustworthy rows only.
+   ------------------------------------------------------------------------------------------------ */
+.sp-hero {
+  container: sp-hero / inline-size;
+  margin: 0;
+}
+
+.sp-hero__inner {
+  --sp-tag-shelf-bg: var(--sp-on-tint);
+  position: relative;
+  padding: var(--sp-space-12) var(--sp-space-16);
+  border-radius: var(--sp-radius-card);
+  background: var(--sp-mint);
+  color: var(--sp-ink);
+}
+
+.sp-hero__lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-space-10);
+}
+
+.sp-hero__eyebrow {
+  order: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-space-5);
+  min-height: var(--sp-eyebrow-height-compact);
+  margin: 0;
+  padding: 0 var(--sp-space-11) 0 var(--sp-space-7);
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-on-tint);
+  color: var(--sp-mint-ink);
+  font-family: var(--sp-font-body);
+  font-size: var(--sp-fs-11-5);
+  font-weight: var(--sp-fw-bold);
+  line-height: var(--sp-lh-snug);
+  letter-spacing: var(--sp-ls-eyebrow-compact);
+  text-transform: uppercase;
+}
+
+.sp-hero__eyebrow svg {
+  flex: none;
+  width: var(--sp-icon-16);
+  height: var(--sp-icon-16);
+}
+
+.sp-price--hero {
+  order: 1;
+  column-gap: var(--sp-space-3);
+  line-height: var(--sp-lh-none);
+}
+
+/* The cap (22% of the hero's width) keeps even a seven-character price like $129.99 inside the
+   block at 200% text on a 320px screen, so it can never be clipped or overflow. */
+.sp-price--hero .sp-price__amount {
+  font-size: var(--sp-fs-50);
+  font-size: min(var(--sp-fs-50), 22cqi);
+  letter-spacing: var(--sp-ls-display);
+  color: var(--sp-price-best);
+}
+
+.sp-price--hero .sp-price__unit {
+  font-size: var(--sp-fs-20);
+  color: var(--sp-ink);
+}
+
+.sp-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-space-8);
+  margin-top: var(--sp-space-8);
+}
+
+.sp-hero__store {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-space-7);
+  margin: 0;
+  font-size: var(--sp-fs-14);
+  font-weight: var(--sp-fw-bold);
+  line-height: var(--sp-lh-snug);
+}
+
+.sp-hero__store .sp-mono {
+  width: var(--sp-mono-size-xs);
+  height: var(--sp-mono-size-xs);
+  border-radius: var(--sp-radius-mono-xs);
+  font-size: var(--sp-fs-10);
+}
+
+.sp-hero__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-4);
+}
+
+.sp-hero__tags :is(.sp-tag, .sp-flag) {
+  min-height: var(--sp-tag-height-xs);
+  padding-inline: var(--sp-space-8);
+  font-size: var(--sp-fs-11);
+}
+
+.sp-hero__detail,
+.sp-hero__saving {
+  margin: var(--sp-space-8) 0 0;
+  font-size: var(--sp-fs-12-5);
+  line-height: 1.28;
+  color: var(--sp-ink);
+}
+
+.sp-hero__saving {
+  margin-top: var(--sp-space-2);
+  font-weight: var(--sp-fw-semibold);
+  color: var(--sp-mint-ink);
+}
+
+.sp-hero__art {
+  display: none;
+}
+
+.sp-hero__art .sp-mark__leaf {
+  fill: var(--sp-on-tint);
+}
+
+@container sp-hero (min-width: 40rem) {
+  .sp-hero__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-space-32);
+    padding: var(--sp-space-24) var(--sp-space-28);
+    border-radius: var(--sp-radius-hero);
+  }
+
+  .sp-hero__lead {
+    display: block;
+    flex: none;
+  }
+
+  .sp-hero__eyebrow {
+    gap: var(--sp-space-6);
+    min-height: var(--sp-eyebrow-height);
+    padding: 0 var(--sp-space-12) 0 var(--sp-space-9);
+    font-size: var(--sp-fs-12);
+    letter-spacing: var(--sp-ls-eyebrow);
+  }
+
+  .sp-price--hero {
+    margin-top: var(--sp-space-8);
+    column-gap: var(--sp-space-4);
+  }
+
+  .sp-price--hero .sp-price__amount {
+    font-size: var(--sp-fs-80);
+    font-size: min(var(--sp-fs-80), 10.5cqi);
+    letter-spacing: var(--sp-ls-price-hero);
+  }
+
+  .sp-price--hero .sp-price__unit {
+    font-size: var(--sp-fs-28);
+  }
+
+  .sp-hero__body {
+    flex: 1;
+    min-width: 0;
+    padding-right: calc(var(--sp-hero-art) + var(--sp-space-16));
+  }
+
+  .sp-hero__meta {
+    display: block;
+    margin-top: 0;
+  }
+
+  .sp-hero__store {
+    gap: var(--sp-space-10);
+    font-size: var(--sp-fs-18);
+    line-height: var(--sp-lh-body);
+  }
+
+  .sp-hero__store .sp-mono {
+    width: var(--sp-mono-size);
+    height: var(--sp-mono-size);
+    border-radius: var(--sp-radius-tile);
+    font-size: var(--sp-fs-12-5);
+  }
+
+  .sp-hero__tags {
+    margin-top: var(--sp-space-10);
+    gap: var(--sp-space-6);
+  }
+
+  .sp-hero__tags :is(.sp-tag, .sp-flag) {
+    min-height: var(--sp-tag-height);
+    padding-inline: var(--sp-space-10);
+    font-size: var(--sp-fs-12);
+  }
+
+  .sp-hero__detail {
+    margin-top: var(--sp-space-12);
+    font-size: var(--sp-fs-15);
+    line-height: var(--sp-lh-body);
+  }
+
+  .sp-hero__saving {
+    margin-top: var(--sp-space-4);
+    font-size: var(--sp-fs-15);
+    line-height: var(--sp-lh-body);
+  }
+
+  .sp-hero__art {
+    display: block;
+    position: absolute;
+    right: var(--sp-space-22);
+    bottom: var(--sp-space-16);
+    width: var(--sp-hero-art);
+    height: var(--sp-hero-art);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Store / price rows
+   <ol class="sp-rows"> of <li class="sp-row">: monogram, store + item, tags, price.
+   Compact by default: the Sale tag sits beside the price, the was-price and basis tag stack under
+   it (the phone mockup). Wide from a 37.5rem list: tags and price get their own columns.
+   Each child has its own grid cell or its own auto row, so no two can ever overlap.
+   ------------------------------------------------------------------------------------------------ */
+.sp-rows {
+  container: sp-rows / inline-size;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sp-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-space-6) var(--sp-space-10);
+  padding: var(--sp-space-6) 0;
+}
+
+.sp-row + .sp-row {
+  border-top: var(--sp-border-hairline) solid var(--sp-hairline);
+}
+
+.sp-row > .sp-mono {
+  width: var(--sp-mono-size-sm);
+  height: var(--sp-mono-size-sm);
+  border-radius: var(--sp-radius-mono-sm);
+  font-size: var(--sp-fs-11-5);
+}
+
+.sp-row__main {
+  flex: 1 1 6rem;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.sp-row__store {
+  margin: 0;
+  font-size: var(--sp-fs-14);
+  font-weight: var(--sp-fw-bold);
+  line-height: 1.286;
+}
+
+.sp-row__item {
+  margin: 0;
+  font-size: var(--sp-fs-12);
+  line-height: var(--sp-lh-snug);
+  color: var(--sp-ink-2);
+}
+
+.sp-row__end {
+  /* If the price block cannot fit beside the name (very large text on a phone), it drops to its
+     own line, still right-aligned, and may then narrow to the row: its tags wrap, the unit drops
+     under the amount, and the amount itself never breaks. */
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
+  justify-items: end;
+  align-items: center;
+  column-gap: var(--sp-space-6);
+  row-gap: var(--sp-space-3);
+  text-align: right;
+}
+
+.sp-row__tags,
+.sp-row__price {
+  display: contents;
+}
+
+.sp-row__end .sp-price {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.sp-row__end .sp-tag--sale {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.sp-row__end .sp-price-was {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.sp-row__end :is(.sp-tag:not(.sp-tag--sale), .sp-flag) {
+  grid-column: 1 / -1;
+}
+
+.sp-row .sp-tag {
+  min-height: var(--sp-tag-height-xs);
+  padding-inline: var(--sp-space-8);
+  font-size: var(--sp-fs-11);
+}
+
+.sp-row .sp-tag--national {
+  padding-inline: calc(var(--sp-space-8) - 1px);
+}
+
+.sp-row .sp-flag {
+  min-height: var(--sp-tag-height-sm);
+  padding-inline: var(--sp-space-6) var(--sp-space-8);
+  font-size: var(--sp-fs-11);
+}
+
+/* A suspect price is never the best price, whatever class it arrives with. */
+.sp-row--suspect .sp-price .sp-price__amount {
+  color: var(--sp-price-ink);
+}
+
+@container sp-rows (min-width: 37.5rem) {
+  .sp-row {
+    flex-wrap: nowrap;
+    gap: var(--sp-space-16);
+    padding: var(--sp-space-10) var(--sp-space-4);
+  }
+
+  .sp-row > .sp-mono {
+    width: var(--sp-mono-size);
+    height: var(--sp-mono-size);
+    border-radius: var(--sp-radius-tile);
+    font-size: var(--sp-fs-12-5);
+  }
+
+  .sp-row__store {
+    font-size: var(--sp-fs-15);
+    line-height: var(--sp-lh-body);
+  }
+
+  .sp-row__item {
+    font-size: var(--sp-fs-13);
+    line-height: var(--sp-lh-meta);
+  }
+
+  .sp-row__end {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--sp-space-16);
+  }
+
+  .sp-row__tags {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    gap: var(--sp-space-6);
+    width: var(--sp-row-tags-width);
+    text-align: left;
+  }
+
+  .sp-row__price {
+    display: block;
+    flex: none;
+    width: var(--sp-row-price-width);
+  }
+
+  .sp-row .sp-tag {
+    min-height: var(--sp-tag-height);
+    padding-inline: var(--sp-space-10);
+    font-size: var(--sp-fs-12);
+  }
+
+  .sp-row .sp-tag--national {
+    padding-inline: calc(var(--sp-space-10) - 1px);
+  }
+
+  .sp-row .sp-flag {
+    min-height: var(--sp-tag-height);
+    padding-inline: var(--sp-space-7) var(--sp-space-10);
+    font-size: var(--sp-fs-12);
+  }
+
+  .sp-price--row {
+    line-height: var(--sp-lh-price);
+  }
+
+  .sp-price--row .sp-price__amount {
+    font-size: var(--sp-fs-26);
+  }
+
+  .sp-price--row .sp-price__unit {
+    font-size: var(--sp-fs-14);
+  }
+
+  .sp-row .sp-price-was {
+    font-size: var(--sp-fs-12);
+    line-height: var(--sp-lh-body);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Weekly-ad deal row (inside a card)
+   ------------------------------------------------------------------------------------------------ */
+.sp-deals {
+  list-style: none;
+  margin: var(--sp-space-14) 0 0;
+  padding: 0;
+}
+
+.sp-deal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-space-6) var(--sp-space-12);
+  padding: var(--sp-space-14) 0;
+  border-top: var(--sp-border-hairline) solid var(--sp-hairline);
+}
+
+.sp-deal__main {
+  flex: 1 1 6rem;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.sp-deal__name {
+  margin: 0;
+  font-size: var(--sp-fs-14-5);
+  font-weight: var(--sp-fw-semibold);
+  line-height: 1.38;
+}
+
+.sp-deal__main .sp-tag {
+  margin-top: var(--sp-space-6);
+}
+
+.sp-deal .sp-price {
+  margin-left: auto;
+  line-height: 1.07;
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Card
+   A hairline outline, no shadow. 24px corners as drawn; --tile for the 12px small card.
+   ------------------------------------------------------------------------------------------------ */
+.sp-card {
+  padding: var(--sp-space-20) var(--sp-space-22) var(--sp-space-6);
+  border: var(--sp-border-hairline) solid var(--sp-hairline);
+  border-radius: var(--sp-radius-card);
+  background: var(--sp-surface);
+  color: var(--sp-ink);
+}
+
+.sp-card--tile {
+  padding: var(--sp-space-16);
+  border-radius: var(--sp-radius-tile);
+}
+
+.sp-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-space-10);
+}
+
+.sp-card__icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--sp-card-icon);
+  height: var(--sp-card-icon);
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-peach);
+  color: var(--sp-peach-ink);
+}
+
+.sp-card__icon svg {
+  width: var(--sp-icon-16);
+  height: var(--sp-icon-16);
+}
+
+.sp-card__icon--mint {
+  background: var(--sp-mint);
+  color: var(--sp-mint-ink);
+}
+
+.sp-card__icon--sky {
+  background: var(--sp-sky);
+  color: var(--sp-sky-ink);
+}
+
+.sp-card__title {
+  margin: 0;
+  font-size: var(--sp-fs-17);
+  font-weight: var(--sp-fw-bold);
+  line-height: 1.294;
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Section heading, basis legend, notes
+   ------------------------------------------------------------------------------------------------ */
+.sp-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: var(--sp-space-12);
+}
+
+.sp-section-title {
+  margin: 0;
+  font-size: var(--sp-fs-18);
+  font-weight: var(--sp-fw-bold);
+  line-height: var(--sp-lh-body);
+}
+
+.sp-section-title--compact {
+  font-size: var(--sp-fs-15);
+}
+
+.sp-section-aside {
+  font-size: var(--sp-fs-13);
+  line-height: var(--sp-lh-meta);
+  color: var(--sp-ink-2);
+}
+
+.sp-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-space-10);
+  margin: var(--sp-space-12) 0 0;
+}
+
+.sp-legend__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--sp-space-10);
+  row-gap: var(--sp-space-4);
+}
+
+.sp-legend__term {
+  flex: none;
+  width: min(var(--sp-legend-term-width), 100%);
+  margin: 0;
+}
+
+.sp-legend__desc {
+  flex: 1 1 10rem;
+  margin: 0;
+  font-size: var(--sp-fs-13-5);
+  line-height: var(--sp-lh-body);
+  color: var(--sp-ink);
+}
+
+.sp-note {
+  margin: 0;
+  font-size: var(--sp-fs-13);
+  line-height: var(--sp-lh-relaxed);
+  color: var(--sp-ink-2);
+}
+
+.sp-footnote {
+  margin: 0;
+  font-size: var(--sp-fs-12);
+  line-height: var(--sp-lh-body);
+  color: var(--sp-ink-3);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Top bar and nav (desktop). Wraps instead of scrolling when the window is narrow.
+   ------------------------------------------------------------------------------------------------ */
+.sp-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--sp-space-16);
+  min-height: var(--sp-header-height);
+  /* 12px above, 11px + the 1px rule below: 68px overall, as drawn. */
+  padding: var(--sp-space-12) clamp(var(--sp-gutter), 4vw, var(--sp-gutter-wide)) calc(var(--sp-space-12) - var(--sp-border-hairline));
+  border-bottom: var(--sp-border-hairline) solid var(--sp-hairline);
+  background: var(--sp-bg);
+}
+
+.sp-topbar__start,
+.sp-topbar__end {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+}
+
+.sp-topbar__end {
+  justify-content: flex-end;
+}
+
+.sp-topbar--compact {
+  justify-content: space-between;
+  min-height: var(--sp-header-height-compact);
+  padding: var(--sp-space-4) var(--sp-space-12) 0 var(--sp-gutter);
+  border-bottom: 0;
+}
+
+.sp-topbar--compact :is(.sp-topbar__start, .sp-topbar__end) {
+  flex: 0 1 auto;
+}
+
+.sp-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sp-nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-space-7);
+  min-height: var(--sp-target);
+  padding: 0 var(--sp-space-18) 0 var(--sp-space-14);
+  border-radius: var(--sp-radius-pill);
+  color: var(--sp-ink-2);
+  font-size: var(--sp-fs-15);
+  font-weight: var(--sp-fw-medium);
+  line-height: var(--sp-lh-snug);
+  text-decoration: none;
+  transition:
+    background-color var(--sp-dur-fast) var(--sp-ease-standard),
+    color var(--sp-dur-fast) var(--sp-ease-standard);
+}
+
+.sp-nav__link svg {
+  flex: none;
+  width: var(--sp-icon-18);
+  height: var(--sp-icon-18);
+}
+
+@media (hover: hover) {
+  .sp-nav__link:hover {
+    background: var(--sp-surface-soft);
+    color: var(--sp-ink);
+  }
+}
+
+/* Current page: mint pill, ink, bold, and the 3:1 selected edge (ADDED; the mint alone is 1.14:1). */
+.sp-nav__link[aria-current="page"] {
+  background: var(--sp-mint);
+  box-shadow: inset 0 0 0 var(--sp-border-control) var(--sp-selected-edge);
+  color: var(--sp-ink);
+  font-weight: var(--sp-fw-bold);
+}
+
+/* Location pill: a 44px button around a 36px face. */
+.sp-loc {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sp-target);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sp-ink);
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sp-loc__face {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-space-6);
+  min-height: var(--sp-chip-height);
+  padding: 0 var(--sp-space-14) 0 var(--sp-space-11);
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-surface-soft);
+  font-size: var(--sp-fs-14);
+  font-weight: var(--sp-fw-semibold);
+  line-height: var(--sp-lh-snug);
+  transition: background-color var(--sp-dur-fast) var(--sp-ease-standard);
+}
+
+.sp-loc__face svg {
+  flex: none;
+  width: var(--sp-icon-16);
+  height: var(--sp-icon-16);
+}
+
+@media (hover: hover) {
+  .sp-loc:hover .sp-loc__face {
+    background: var(--sp-mint);
+  }
+}
+
+.sp-loc:focus-visible {
+  outline: none;
+}
+
+.sp-loc:focus-visible .sp-loc__face {
+  outline: var(--sp-focus-width) solid var(--sp-focus);
+  outline-offset: var(--sp-focus-offset);
+}
+
+.sp-loc--compact .sp-loc__face {
+  gap: var(--sp-space-5);
+  min-height: var(--sp-chip-height-compact);
+  padding: 0 var(--sp-space-12) 0 var(--sp-space-9);
+  font-size: var(--sp-fs-13);
+}
+
+.sp-loc--compact .sp-loc__face svg {
+  width: var(--sp-icon-15);
+  height: var(--sp-icon-15);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Bottom tab bar (phone)
+   ------------------------------------------------------------------------------------------------ */
+.sp-tabbar {
+  display: flex;
+  min-height: var(--sp-tabbar-height);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-top: var(--sp-border-hairline) solid var(--sp-hairline);
+  background: var(--sp-surface);
+}
+
+.sp-tab {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-space-2);
+  min-width: 0;
+  min-height: var(--sp-tabbar-height);
+  padding: var(--sp-space-2);
+  border-radius: var(--sp-radius-tile);
+  color: var(--sp-ink-2);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sp-tab__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(var(--sp-tab-pill-width), 100%);
+  height: var(--sp-tab-pill-height);
+  border-radius: var(--sp-radius-pill);
+  transition: background-color var(--sp-dur-fast) var(--sp-ease-standard);
+}
+
+.sp-tab__icon svg {
+  width: var(--sp-icon-22);
+  height: var(--sp-icon-22);
+}
+
+.sp-tab__label {
+  font-size: var(--sp-fs-11-5);
+  font-weight: var(--sp-fw-medium);
+  line-height: var(--sp-lh-snug);
+  text-align: center;
+}
+
+@media (hover: hover) {
+  .sp-tab:hover .sp-tab__icon {
+    background: var(--sp-surface-soft);
+  }
+}
+
+.sp-tab[aria-current="page"] {
+  color: var(--sp-ink);
+}
+
+.sp-tab[aria-current="page"] .sp-tab__icon {
+  background: var(--sp-mint);
+  box-shadow: inset 0 0 0 var(--sp-border-control) var(--sp-selected-edge);
+}
+
+.sp-tab[aria-current="page"] .sp-tab__label {
+  font-weight: var(--sp-fw-bold);
+}
+
+/* The tabs fill the bar edge to edge, so the ring is drawn inside the tab. */
+.sp-tab:focus-visible {
+  outline-offset: calc(var(--sp-focus-width) * -2);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Layout helpers: the wide top bar needs about 54rem (brand + four nav pills + location), so below
+   60rem use the compact top bar and the bottom tab bar instead. Mark the wide bar .sp-wide-only and
+   the compact bar and tab bar .sp-narrow-only. rem in a media query follows the browser's default
+   text size, so a reader with large text gets the compact layout sooner, which is what they need.
+   ------------------------------------------------------------------------------------------------ */
+@media (max-width: 59.999rem) {
+  .sp-wide-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 60rem) {
+  .sp-narrow-only {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Windows High Contrast / forced colours: fills and inset shadows disappear, so every shape that
+   relied on one gets a real border, and every selected or current state keeps a visible mark.
+   ------------------------------------------------------------------------------------------------ */
+@media (forced-colors: active) {
+  .sp-tag,
+  .sp-hero__inner,
+  .sp-hero__eyebrow,
+  .sp-loc__face,
+  .sp-card__icon {
+    border: 1px solid CanvasText;
+  }
+
+  .sp-btn {
+    border-color: ButtonText;
+  }
+
+  .sp-nav__link[aria-current="page"],
+  .sp-tab[aria-current="page"] .sp-tab__icon {
+    border: 2px solid Highlight;
+  }
+
+  .sp-chip:is([aria-pressed="true"], [aria-checked="true"]) .sp-chip__face {
+    border: 2px solid Highlight;
+  }
+
+  .sp-mark__stem,
+  .sp-mark__basket {
+    stroke: CanvasText;
+  }
+
+  .sp-mark__leaf {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+}

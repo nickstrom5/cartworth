@@ -1,0 +1,10 @@
+# Netlify. The iOS app links to these exact extensionless paths from Settings and the paywall
+# (see ios/App/UI/Settings/SettingsView.swift and PaywallView.swift), so they must resolve.
+/privacy   /privacy.html   200
+/terms     /terms.html     200
+/support   /support.html   200
+
+# The free web app is served by server.js. Point /app/* at wherever it is deployed and
+# uncomment. Until then /app/ returns the landing page rather than a 404.
+# /app/*   https://app.cartworth.app/:splat   200
+/app/*     /index.html     200

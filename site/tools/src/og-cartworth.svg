@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <title>Cartworth social card</title>
+  <!-- Authored on a 1200x1200 square because qlmanage (the only SVG rasteriser on
+       this machine) only renders square canvases at the requested size. The real
+       1200x630 card is the centred band y=285..915; make-site-images.sh crops it. -->
+  <desc>Square working canvas. The shipped card is the centre 1200x630 band.</desc>
+  <defs>
+    <!-- Vertical, not diagonal, and no radial glow on top: both of those make the
+         renderer dither across two axes, which defeats PNG's per-row filters and
+         blew the card up to ~490 KB. Some scrapers refuse files that size. A
+         gradient that is constant along each row compresses to ~55 KB. -->
+    <linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="600" y1="285" x2="600" y2="915">
+      <stop offset="0" stop-color="#27AE63"/>
+      <stop offset="0.55" stop-color="#16884A"/>
+      <stop offset="1" stop-color="#0B5A32"/>
+    </linearGradient>
+    <linearGradient id="mark" gradientUnits="userSpaceOnUse" x1="0" y1="187" x2="0" y2="846">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E8F2EA"/>
+    </linearGradient>
+    <linearGradient id="best" gradientUnits="userSpaceOnUse" x1="0" y1="379" x2="0" y2="604">
+      <stop offset="0" stop-color="#FFD24A"/>
+      <stop offset="1" stop-color="#F5A81F"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+
+  <!-- ==== the 1200x630 card starts here (origin moved to the card's top-left) ==== -->
+  <g transform="translate(0,285)">
+
+    <!-- The Cartworth mark: three price bars over a basket, from ios/Design/AppIcon-light.svg.
+         Drawn in the icon's own 1024 space and scaled to 248x240, centred at x=600 so it
+         survives a square centre-crop (WhatsApp and friends crop to 1:1). -->
+    <g transform="translate(413.6,26.9) scale(0.36419)">
+      <rect x="284" y="187" width="125" height="394" rx="20" fill="url(#mark)"/>
+      <rect x="457" y="283" width="125" height="298" rx="20" fill="url(#mark)"/>
+      <rect x="630" y="379" width="125" height="202" rx="20" fill="url(#best)"/>
+      <path d="M 172.00 552.00 A 38.00 38.00 0 0 1 210.00 514.00 L 814.00 514.00 A 38.00 38.00 0 0 1 852.00 552.00 L 852.00 586.00 A 18.00 18.00 0 0 1 834.00 604.00 L 798.14 604.00 A 18.00 18.00 0 0 0 780.65 617.74 L 741.00 780.37 A 86.00 86.00 0 0 1 657.45 846.00 L 366.55 846.00 A 86.00 86.00 0 0 1 283.00 780.37 L 243.35 617.74 A 18.00 18.00 0 0 0 225.86 604.00 L 190.00 604.00 A 18.00 18.00 0 0 1 172.00 586.00 Z" fill="url(#mark)"/>
+    </g>
+
+    <!-- No small type, no prices, no store names: this is shown at ~300px wide on a
+         dark chat background and is routinely re-cropped. Everything below sits inside
+         the centre 630x630 square. -->
+    <text x="600" y="452" text-anchor="middle" fill="#FFFFFF"
+          font-family="-apple-system, system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif"
+          font-size="112" font-weight="800" letter-spacing="-2">Cartworth</text>
+
+    <text x="600" y="526" text-anchor="middle" fill="#DFF3E6"
+          font-family="-apple-system, system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif"
+          font-size="50" font-weight="600" letter-spacing="0.2">Compare grocery prices</text>
+
+  </g>
+</svg>

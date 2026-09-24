@@ -1,0 +1,1888 @@
+/* Cartworth — design tokens + components. Light and dark are both designed (not an auto-invert). */
+:root {
+  color-scheme: light;
+  --page: #f5f4f0;
+  --surface: #fcfcfb;
+  --surface-2: #f1f0ec;
+  --surface-3: #e9e8e2;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6f6d68;
+  --line: #e1e0d9;
+  --line-strong: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+  --accent: #0b0b0b;
+  --accent-ink: #ffffff;
+  --focus: #2a78d6;
+  --link: #1c5cab;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --good-bg: #e6f4e4;
+  --warn: #fab219;
+  --warn-ink: #7a5100;
+  --warn-bg: #fff3d3;
+  --bad: #d03b3b;
+  --bad-ink: #a51f1f;
+  --bad-bg: #fce9e8;
+  --deal-ink: #b23a0c;
+  --deal-bg: #ffeee3;
+  --info-bg: #eaf2fc;
+  --info-ink: #1c5cab;
+  /* Store colours: the Okabe-Ito colour-vision-deficiency-safe categorical palette, unmodified.
+
+     Measured on THESE tokens, light on --surface #fcfcfb: minimum separation 10.7 dE, and that
+     worst case is TRITAN (slot 1 #e69f00 vs slot 4 #cc79a7). Protanopia is 20.5 dE and deuteranopia
+     16.3 dE. The dark variant below is weaker: 5.8 dE worst case (tritan, slot 2 vs slot 3), and
+     slot 2 #4a9fdc and slot 6 #56b4e9 are only 9.5 dE apart even under NORMAL vision — at ZIP 60618
+     those are Cermak and Tony's, which appear in the same chart.
+
+     Do not read a green `node scripts/check-palette.js` as verification of the above: that script
+     scores its own hard-coded PALETTES constant, which is four colours out of eight from what ships
+     here, so it currently says nothing about this interface. Until it reads these tokens, the
+     numbers above are what has actually been measured.
+
+     No eight-colour palette survives every deficiency, so colour is never the only cue here: every
+     dot is aria-hidden and paired with the store's name in text. */
+  /* 0.28 left the ring over the Okabe-Ito yellow at 2.51:1 against the card — under the 3:1 that
+     SC 1.4.11 asks of a graphical object — so the one slot the comment above names was the one the
+     ring did not rescue. 0.38 puts it at 3.14:1; a darker ring only raises the other slots. */
+  --dot-ring: rgb(0 0 0 / 0.38);
+  --store-0: #898781;
+  --store-1: #e69f00;
+  --store-2: #0072b2;
+  --store-3: #009e73;
+  --store-4: #cc79a7;
+  --store-5: #d55e00;
+  --store-6: #56b4e9;
+  --store-7: #f0e442;
+  --store-8: #3a3a3a;
+  /* Bar fills are the graphical object that carries the price comparison, so SC 1.4.11 wants 3:1
+     against the card they sit on. #86b6ef was 2.06:1 and #1c5cab only cleared the ordinary bars by
+     3.14:1; these clear the card at 3.09:1 and 10.25:1 and each other at 3.31:1. */
+  --bar: #5b93d8;
+  --bar-best: #173f73;
+  /* A 1px edge that identifies a control against the surface behind it, both themes >= 3:1:
+     the selected segment of a segmented control, and the off state of a switch. */
+  --control-edge: #8a8980;
+  /* The switch track when off. It has to be dark enough that the WHITE KNOB reads against it
+     (3.52:1 here), because knob position — not the green — is the non-colour state cue. At the
+     old --line-strong the knob was 1.79:1 against its own track and the whole control was
+     1.75:1 against the card: invisible, and indistinguishable from on. */
+  --switch-off: #8a8980;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.05);
+  --shadow-pop: 0 10px 40px rgba(0, 0, 0, 0.18);
+  --radius: 14px;
+  --radius-sm: 9px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme='light'])) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #222220;
+    --surface-3: #2c2c2a;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #9c9a93;
+    --line: #2c2c2a;
+    --line-strong: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+    --accent: #ffffff;
+    --accent-ink: #0b0b0b;
+    --focus: #5598e7;
+    --link: #86b6ef;
+    --good-ink: #3dc43d;
+    --good-bg: #14301a;
+    --warn-ink: #fab219;
+    --warn-bg: #33280c;
+    --bad-ink: #ff8a8a;
+    --bad-bg: #3a1716;
+    --deal-ink: #ff9a6b;
+    --deal-bg: #3a1f10;
+    --info-bg: #13263d;
+    --info-ink: #86b6ef;
+    --store-1: #e69f00;
+    --store-2: #4a9fdc;
+    --store-3: #009e73;
+    --store-4: #cc79a7;
+    --store-5: #e2711d;
+    --store-6: #56b4e9;
+    --store-7: #f0e442;
+    --store-8: #dddddd;
+    --bar: #256abf;
+    /* #86b6ef cleared the ordinary bars by only 2.56:1; this is 3.22:1. */
+    --bar-best: #a9cbf5;
+    --control-edge: #6c6c66;
+    --switch-off: #383835;
+    --dot-ring: rgb(255 255 255 / 0.35);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-pop: 0 10px 40px rgba(0, 0, 0, 0.6);
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-2: #222220;
+  --surface-3: #2c2c2a;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #9c9a93;
+  --line: #2c2c2a;
+  --line-strong: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #ffffff;
+  --accent-ink: #0b0b0b;
+  --focus: #5598e7;
+  --link: #86b6ef;
+  --good-ink: #3dc43d;
+  --good-bg: #14301a;
+  --warn-ink: #fab219;
+  --warn-bg: #33280c;
+  --bad-ink: #ff8a8a;
+  --bad-bg: #3a1716;
+  --deal-ink: #ff9a6b;
+  --deal-bg: #3a1f10;
+  --info-bg: #13263d;
+  --info-ink: #86b6ef;
+  --store-1: #e69f00;
+  --store-2: #4a9fdc;
+  --store-3: #009e73;
+  --store-4: #cc79a7;
+  --store-5: #e2711d;
+  --store-6: #56b4e9;
+  --store-7: #f0e442;
+  --store-8: #dddddd;
+  --dot-ring: rgb(255 255 255 / 0.35);
+  --bar: #256abf;
+  /* #86b6ef cleared the ordinary bars by only 2.56:1; this is 3.22:1. */
+  --bar-best: #a9cbf5;
+  --control-edge: #6c6c66;
+  --switch-off: #383835;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 15px/1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+img {
+  max-width: 100%;
+}
+.boot {
+  padding: 48px;
+  text-align: center;
+  color: var(--muted);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- shell ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--page) 86%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: var(--ink-2);
+  font-weight: 550;
+  font-size: 14px;
+  white-space: nowrap;
+  text-decoration: none !important;
+  position: relative;
+}
+.tab:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.tab[aria-current='page'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.tab .count {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--bad);
+  color: #fff;
+  display: inline-grid;
+  place-items: center;
+}
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.zip-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.zip-pill:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+main {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 18px 16px 80px;
+}
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 6px 0 14px;
+}
+.page-head h1 {
+  font-size: 22px;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+.page-head p {
+  margin: 4px 0 0;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.footer-note {
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .hide-sm {
+    display: none;
+  }
+  .topbar-inner {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .topbar {
+    /* backdrop-filter would make .topbar a containing block for the fixed tab bar below,
+       pinning it to the header instead of the viewport. */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--page);
+  }
+  main {
+    padding: 14px 12px calc(66px + env(safe-area-inset-bottom));
+  }
+
+  /* On a phone the sections move to a bottom bar. Squeezed into the header they ended up inside a
+     150px horizontal scroller, which hid Watchlist, List and Settings entirely. */
+  .tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    flex: none;
+    gap: 0;
+    overflow: visible;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--page) 92%, transparent);
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    border-top: 1px solid var(--border);
+  }
+  .tabs .tab {
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px 2px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 10px;
+    justify-content: center;
+    min-height: 46px;
+  }
+  /* Keep the selected tab readable without the full-bleed pill swallowing the row. */
+  .tabs .tab[aria-current='page'] {
+    background: transparent;
+    color: var(--accent);
+  }
+  .tabs .tab[aria-current='page'] svg {
+    transform: scale(1.08);
+  }
+  .tabs .tab .count {
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    margin-left: 6px;
+  }
+}
+
+/* ---------- primitives ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card-pad {
+  padding: 16px;
+}
+.card h2,
+.section-title {
+  font-size: 15px;
+  margin: 0 0 10px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 22px 0 10px;
+}
+.section-title .sub {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 13px;
+}
+.muted {
+  color: var(--muted);
+}
+.ink2 {
+  color: var(--ink-2);
+}
+.small {
+  font-size: 12.5px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wrap {
+  flex-wrap: wrap;
+}
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+.spacer {
+  flex: 1;
+}
+.stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.card {
+  min-width: 0;
+}
+.hr {
+  height: 1px;
+  background: var(--line);
+  margin: 12px 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 4px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none !important;
+  transition: background 0.12s, border-color 0.12s, transform 0.06s;
+}
+.btn:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--accent) 86%, var(--page));
+  border-color: transparent;
+}
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+.btn-ghost:hover {
+  background: var(--surface-2);
+  border-color: transparent;
+}
+.btn-sm {
+  min-height: 30px;
+  padding: 3px 10px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+.btn-icon {
+  width: 34px;
+  padding: 0;
+}
+.btn-icon.btn-sm {
+  width: 30px;
+}
+.btn-danger {
+  color: var(--bad-ink);
+}
+.btn.on {
+  background: var(--info-bg);
+  color: var(--info-ink);
+  border-color: transparent;
+}
+
+.input,
+.select {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  min-width: 0;
+}
+.input:focus,
+.select:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+.input::placeholder {
+  color: var(--muted);
+}
+.select {
+  padding-right: 28px;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 16px, calc(100% - 10px) 16px;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+.select-sm,
+.input-sm {
+  height: 30px;
+  font-size: 13px;
+  padding: 0 10px;
+  border-radius: 8px;
+}
+.select-sm {
+  padding-right: 26px;
+  background-position: calc(100% - 14px) 12px, calc(100% - 9px) 12px;
+}
+label.field {
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+label.field .hint {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* min-height, not height: under a text-only zoom (or a large minimum-font setting) the box has
+     to grow with its label or the text spills out of it. Fifty controls overflowed at 2x. */
+  min-height: 30px;
+  padding: 3px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.chip:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.chip[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+.chip.soft[aria-pressed='true'] {
+  background: var(--surface-2);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.chip.soft[aria-pressed='false'] {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.chip.neg[aria-pressed='true'] {
+  background: var(--bad-bg);
+  color: var(--bad-ink);
+  text-decoration: line-through;
+}
+.chip .n {
+  font-size: 11.5px;
+  /* 0.7 put this at 3.63:1 in light — the only text-contrast failure in the app's default state,
+     and it is the number the user reads to decide whether a filter is worth applying. 0.8 is
+     4.61:1. The base colour alone is 7.73:1, so the opacity was the entire shortfall. */
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chips.scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  line-height: 1;
+}
+.badge-sale {
+  background: var(--deal-bg);
+  color: var(--deal-ink);
+}
+.badge-good {
+  background: var(--good-bg);
+  color: var(--good-ink);
+}
+.badge-warn {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+.badge-bad {
+  background: var(--bad-bg);
+  color: var(--bad-ink);
+}
+.badge-info {
+  background: var(--info-bg);
+  color: var(--info-ink);
+}
+.badge-outline {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+}
+
+.store-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  display: inline-block;
+  background: var(--store-0);
+  /* Keeps light slots (the Okabe-Ito yellow) visible against a white card. */
+  box-shadow: inset 0 0 0 1px var(--dot-ring);
+}
+.store-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--ink);
+  animation: spin 0.8s linear infinite;
+  flex: none;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+  background-size: 200% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Slowing a loop to 3s is not honouring the preference, it is honouring it quietly: a search on
+     this project takes 10-16s, so the shimmer still ran several cycles with no way to pause it.
+     Stop the loops outright — the spinner stays visible as a static mark and the skeleton stays a
+     placeholder block — and drop the one-shot transitions too, which were not covered at all. */
+  .skeleton,
+  .spinner {
+    animation: none;
+  }
+  .skeleton {
+    background: var(--surface-2);
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.empty {
+  text-align: center;
+  padding: 36px 16px;
+  color: var(--ink-2);
+}
+.empty h3 {
+  margin: 8px 0 4px;
+  color: var(--ink);
+  font-size: 16px;
+}
+.empty p {
+  margin: 0 auto;
+  max-width: 460px;
+  font-size: 14px;
+}
+.notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  background: var(--info-bg);
+  color: var(--info-ink);
+}
+.notice.warn {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+.notice.bad {
+  background: var(--bad-bg);
+  color: var(--bad-ink);
+}
+.notice.good {
+  background: var(--good-bg);
+  color: var(--good-ink);
+}
+.notice svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* ---------- search ---------- */
+.searchbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+.searchbar .field-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.searchbar .field-wrap svg {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.searchbar input {
+  flex: 1;
+  height: 46px;
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  padding: 0 12px 0 40px;
+  outline: none;
+  min-width: 0;
+}
+.searchbar .btn-primary {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 11px;
+  font-size: 15px;
+}
+.suggest {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-pop);
+}
+.suggest button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.suggest button[aria-selected='true'],
+.suggest button:hover {
+  background: var(--surface-2);
+}
+.quick {
+  margin-top: 12px;
+}
+
+.status-strip {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 12px 0 0;
+}
+.sstat {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12.5px;
+  color: var(--ink-2);
+  cursor: default;
+}
+.sstat.err {
+  border-color: color-mix(in srgb, var(--bad) 45%, transparent);
+  color: var(--bad-ink);
+  cursor: pointer;
+}
+.sstat.off {
+  opacity: 0.55;
+}
+.sstat b {
+  color: var(--ink);
+  font-weight: 650;
+}
+.sstat.err b {
+  color: var(--bad-ink);
+}
+
+/* ---------- compare layout ---------- */
+.cmp-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 16px;
+  margin-top: 16px;
+  align-items: start;
+}
+@media (max-width: 1020px) {
+  .cmp-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.side-sticky {
+  position: sticky;
+  top: 70px;
+  display: grid;
+  gap: 16px;
+}
+@media (max-width: 1020px) {
+  .side-sticky {
+    position: static;
+  }
+}
+.hero-best {
+  padding: 16px;
+  display: grid;
+  gap: 6px;
+}
+.hero-label {
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.hero-value {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.hero-value .per {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-2);
+  letter-spacing: 0;
+}
+.hero-sub {
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.toolbar .lbl {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.seg button {
+  min-height: 26px;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  /* The background change alone is 1.11:1 in light and 1.09:1 in dark, and the drop shadow is
+     invisible on the dark surface — so which segment is selected was carried almost entirely by a
+     colour shift SC 1.4.11 does not consider perceivable. The inset edge is >= 3:1 against the
+     track in both themes. aria-pressed was already correct, so this is a low-vision fix only. */
+  box-shadow: inset 0 0 0 1px var(--control-edge), 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+/* product rows */
+.plist {
+  display: grid;
+}
+.prow {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto auto;
+  gap: 12px;
+  padding: 11px 12px;
+  border-top: 1px solid var(--line);
+  align-items: center;
+  position: relative;
+}
+.plist > .prow:first-child {
+  border-top: 0;
+}
+/* A weak match is MARKED, not faded.
+   opacity: 0.55 dropped nine text styles on the row below 4.5:1 — store name 2.61, size 2.18,
+   package price 2.61, the struck-through was-price 2.18, every badge — on rows that are fully
+   interactive (price history, watch, add to list, open at store), so the WCAG exemption for
+   inactive controls does not apply. The opacity that would make the smallest of them legible is
+   0.95, which is no signal at all. So the signal moves to something that costs no contrast: a
+   tinted row and a left edge, plus the "weak match" badge the row now carries in compare.js. */
+.prow.dim {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  box-shadow: inset 3px 0 0 var(--line-strong);
+}
+.prow.best {
+  background: color-mix(in srgb, var(--good-bg) 55%, transparent);
+}
+.prow:hover {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+.pimg {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  object-fit: contain;
+  display: block;
+}
+.pimg.ph {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: var(--surface-2);
+}
+.pmain {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.pname {
+  font-weight: 600;
+  font-size: 14.5px;
+  line-height: 1.3;
+  color: var(--ink);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  cursor: pointer;
+}
+.pname:hover {
+  text-decoration: underline;
+}
+.pmeta {
+  display: flex;
+  align-items: center;
+  gap: 6px 8px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.pprice {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  text-align: right;
+  min-width: 128px;
+}
+.unit-big {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.unit-big .u {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+/* The package line may wrap, but only BETWEEN prices: each amount is its own nowrap chunk
+   (.nw, .was) and the spaces between them are the only break points. It used to be one
+   white-space: nowrap run — "$1.69/lb $1.79 · ~$10.85/pkg" — which at 320px ran 15px past the
+   screen edge in the list (horizontal page scroll, SC 1.4.10) and, inside a By-store card, whose
+   overflow is hidden, cut the estimated package price off mid-number. A clipped price is a wrong
+   price, so the fix is to wrap, never to clip or ellipsise. */
+.pkg {
+  font-size: 13px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+  overflow-wrap: normal;
+}
+.nw {
+  white-space: nowrap;
+}
+.was {
+  text-decoration: line-through;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pactions {
+  display: grid;
+  grid-template-columns: repeat(2, 28px);
+  gap: 2px;
+}
+.pactions .btn {
+  height: 26px;
+  width: 28px;
+  padding: 0;
+  color: var(--muted);
+}
+.pactions .btn:hover {
+  color: var(--ink);
+}
+.pactions .btn.on {
+  color: var(--info-ink);
+}
+@media (max-width: 560px) {
+  .prow {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .pactions {
+    grid-column: 2;
+    grid-template-columns: repeat(4, 32px);
+  }
+  .pimg {
+    width: 44px;
+    height: 44px;
+  }
+  /* One line when it fits, two when it does not: a flex row that wraps, instead of a grid that
+     forced the unit price and the whole package line side by side at any width. */
+  .pprice {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 2px 10px;
+    min-width: 0;
+  }
+}
+
+.store-col {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  padding: 12px;
+}
+.store-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.store-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  font-weight: 650;
+  font-size: 14px;
+}
+.store-card .prow {
+  grid-template-columns: 40px minmax(0, 1fr) auto auto;
+  padding: 9px 10px;
+}
+.store-card .pimg {
+  width: 40px;
+  height: 40px;
+}
+.store-card .pprice {
+  min-width: 96px;
+}
+
+/* ads strip */
+.ads-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(210px, 240px);
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  scroll-snap-type: x proximity;
+}
+.ad-card {
+  scroll-snap-align: start;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.ad-card img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+}
+.ad-price {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* ---------- deals ---------- */
+.deals-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .deals-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.filters {
+  display: grid;
+  gap: 16px;
+  padding: 14px;
+}
+.filters h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+.fopt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  cursor: pointer;
+  text-align: left;
+}
+.fopt:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.fopt[aria-pressed='true'] {
+  background: var(--surface-3);
+  color: var(--ink);
+  font-weight: 600;
+}
+.fopt .n {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.deal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.deal {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+  position: relative;
+}
+.deal-img {
+  aspect-ratio: 4 / 3;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
+.deal-img img {
+  max-width: 88%;
+  max-height: 88%;
+  object-fit: contain;
+}
+.deal-pct {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+.deal-body {
+  display: grid;
+  gap: 5px;
+  padding: 10px 12px 12px;
+  align-content: start;
+}
+.deal-price {
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+.deal-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.deal-desc {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.deal-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.deal-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.deal-actions .btn {
+  flex: 1;
+}
+
+/* ---------- watch ---------- */
+.watch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 14px;
+}
+@media (max-width: 420px) {
+  .watch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.wcard {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+.wcard.alert {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--good) 60%, transparent), var(--shadow);
+}
+.wtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.wtable td {
+  padding: 5px 4px;
+  border-top: 1px solid var(--line);
+  vertical-align: middle;
+}
+.wtable td.r {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.wtable tr.best td {
+  background: color-mix(in srgb, var(--good-bg) 60%, transparent);
+}
+
+/* ---------- list ---------- */
+.list-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .list-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.litem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+}
+.litem.done .ltext {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.ltext {
+  flex: 1;
+  min-width: 0;
+}
+.qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.qty button {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.qty span {
+  min-width: 26px;
+  text-align: center;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.plan-card {
+  padding: 14px;
+  display: grid;
+  gap: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.plan-card.win {
+  border-color: color-mix(in srgb, var(--good) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--good) 40%, transparent);
+}
+.plan-total {
+  font-size: 26px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+.mtable-wrap {
+  overflow-x: auto;
+}
+.mtable {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 13px;
+}
+.mtable th,
+.mtable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.mtable th:first-child,
+.mtable td:first-child {
+  text-align: left;
+  white-space: normal;
+  min-width: 150px;
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+}
+.mtable th {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 650;
+}
+.mtable td.cheap {
+  color: var(--good-ink);
+  font-weight: 700;
+}
+.mtable td.cheap::after {
+  content: ' ✓';
+}
+.trip-store {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.trip-store-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: var(--surface-2);
+  font-weight: 650;
+}
+.trip-store ul {
+  margin: 0;
+  padding: 4px 12px 8px;
+  list-style: none;
+}
+.trip-store li {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13.5px;
+}
+.trip-store li:first-child {
+  border-top: 0;
+}
+
+/* ---------- settings ---------- */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.srow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.srow:first-child {
+  border-top: 0;
+}
+.switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  flex: none;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+  margin: 0;
+}
+.switch span {
+  position: absolute;
+  inset: 0;
+  border-radius: 11px;
+  background: var(--switch-off);
+  box-shadow: inset 0 0 0 1px var(--control-edge);
+  transition: background 0.15s;
+  pointer-events: none;
+}
+.switch span::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+.switch input:checked + span {
+  background: var(--good);
+}
+.switch input:checked + span::after {
+  transform: translateX(16px);
+}
+.switch input:focus-visible + span {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+.kv dt {
+  color: var(--muted);
+}
+.kv dd {
+  margin: 0;
+}
+ol.steps {
+  margin: 6px 0;
+  padding-left: 20px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+ol.steps li {
+  margin: 3px 0;
+}
+code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+
+/* ---------- modal / drawer ---------- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  animation: fade 0.12s ease-out;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+.modal {
+  width: min(720px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: var(--shadow-pop);
+  border: 1px solid var(--border);
+}
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 16px 8px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.modal-head h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.3;
+}
+.modal-body {
+  padding: 8px 16px 18px;
+  display: grid;
+  gap: 14px;
+}
+
+/* ---------- charts ---------- */
+.chart {
+  position: relative;
+}
+.chart svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+.chart .grid line {
+  stroke: var(--line);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.chart .axis text,
+.chart text.axis {
+  fill: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.chart .baseline {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.tip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-pop);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  min-width: 140px;
+  max-width: 260px;
+  transform: translate(-50%, calc(-100% - 12px));
+  white-space: normal;
+}
+.tip .t-title {
+  font-weight: 650;
+}
+.tip .t-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--ink-2);
+}
+.tip .t-row b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.bars {
+  display: grid;
+  gap: 8px;
+}
+.bar-row {
+  /* A real button now (see charts.js) — strip the UA chrome, keep the grid. */
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+  display: grid;
+  /* em, not px: a fixed 96px column minus the dot and gap left 81px for the label, which already
+     ellipsised "Whole Foods" under text-only zoom and truncates 19 of the 119 catalog chain names
+     (Metro Market, Piggly Wiggly, Grocery Outlet, Natural Grocers...) at normal size. A store name
+     cut to "Whole F..." in a price chart is loss of content under SC 1.4.4. */
+  grid-template-columns: 8.5em minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  font-size: 12.5px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.bar-row:hover .bar-label {
+  color: var(--ink);
+}
+.bar-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-weight: 600;
+  min-width: 0;
+}
+/* Wrap, never ellipsise.
+   A store name cut to "Whole F…" in a price-comparison chart is loss of content under SC 1.4.4,
+   and no column width fixes it for every case: 19 of the 119 catalog short names are longer than
+   "Whole Foods" (Natural Grocers needs 96.6px against a column that gives about 91), and text-only
+   zoom makes every one of them overflow. Letting the label take a second line costs a few pixels
+   of row height and loses nothing at any text size. */
+.bar-label span.nm {
+  overflow-wrap: anywhere;
+}
+.bar-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.bar-fill {
+  height: 18px;
+  border-radius: 0 4px 4px 0;
+  background: var(--bar);
+  min-width: 3px;
+  flex: none;
+}
+.bar-row.best .bar-fill {
+  background: var(--bar-best);
+}
+.bar-val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend i {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* ---------- toasts ---------- */
+.toasts {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  display: grid;
+  gap: 8px;
+  width: min(460px, calc(100% - 24px));
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--shadow-pop);
+  font-size: 14px;
+  animation: rise 0.18s ease-out;
+}
+.toast.bad {
+  background: var(--bad);
+  color: #fff;
+}
+.toast button {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+@keyframes rise {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+
+/* ---------- onboarding ---------- */
+.onboard {
+  max-width: 560px;
+  margin: 40px auto;
+  padding: 26px;
+  display: grid;
+  gap: 16px;
+}
+.onboard h1 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+.store-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media print {
+  .topbar,
+  .no-print,
+  .toasts {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .card {
+    box-shadow: none;
+    border-color: #ccc;
+  }
+}

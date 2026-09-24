@@ -1,0 +1,102 @@
+{
+  "identifier" : "9C3A2B7E-5F4D-4E61-9A8B-2F6C1D0E7A11",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "29.99",
+      "familyShareable" : true,
+      "internalID" : "6751000003",
+      "localizations" : [
+        {
+          "description" : "All Pro features, forever. One payment.",
+          "displayName" : "Cartworth Pro Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "app.cartworth.ios.pro.lifetime",
+      "referenceName" : "Pro Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21500001",
+      "localizations" : [
+
+      ],
+      "name" : "Cartworth Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "3.99",
+          "familyShareable" : true,
+          "groupNumber" : 2,
+          "internalID" : "6751000001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited searches, alerts and trip plans",
+              "displayName" : "Cartworth Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "app.cartworth.ios.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro Monthly",
+          "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "19.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "6751000002",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "A year of Pro. Best value, about $1.67/mo",
+              "displayName" : "Cartworth Pro Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "app.cartworth.ios.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Pro Yearly",
+          "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

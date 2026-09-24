@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<!-- Still false, now deliberately, on a universal app. The reasons are unchanged by
+		     going universal: app state lives in process-wide singletons (AppState.shared,
+		     DealsModel.shared, UsageMeter.shared, NationalStats.shared), and the WindowGroup's
+		     .task in CartworthApp.swift does one-time startup work — Entitlements.load,
+		     NationalStats.refresh, BackgroundRefresh.schedule, Cache.purge — that runs once per
+		     SCENE, not once per process. A second window would therefore share one mutable
+		     model, re-run that startup (including a concurrent cache purge), and drive its own
+		     Deals and Search fetches at the same retailer hosts, doubling third-party traffic.
+		     Nothing in the app is a document, so a second window buys the user nothing to pay
+		     for that. Set this true only together with per-scene state and a startup path that
+		     runs once per process. Note that false does NOT stop the app running in a resizable
+		     iPadOS 26 window — it only stops a second window of the same app. -->
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your location is used only to find the grocery stores near you. Cartworth sends your ZIP code, and for some retailers your approximate coordinates, to those retailers’ own websites to look up their local prices and weekly ads.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Scan a cookbook page or recipe card with your camera and Cartworth turns its ingredients into a shopping list priced at the stores near you. The photo is read on your device and is never uploaded.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose a photo of a recipe and Cartworth turns its ingredients into a shopping list. The photo is read on your device and is never uploaded.</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER).refresh</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>cartworth</string>
+			</array>
+		</dict>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+</dict>
+</plist>

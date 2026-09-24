@@ -1,0 +1,90 @@
+name: Cartworth
+options:
+  bundleIdPrefix: app.cartworth
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: "4C8TU6U7MQ"
+    CODE_SIGN_STYLE: Automatic
+    # Universal (1 = iPhone, 2 = iPad). Setting it here is not enough on its own — see the note
+    # on the App target, which is the value that actually reaches the build.
+    TARGETED_DEVICE_FAMILY: "1,2"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+targets:
+  App:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    settings:
+      base:
+        PRODUCT_NAME: Cartworth
+        PRODUCT_BUNDLE_IDENTIFIER: app.cartworth.ios
+        INFOPLIST_FILE: App/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SUPPORTS_MACCATALYST: NO
+        ENABLE_PREVIEWS: YES
+        # Universal, and it MUST be set here, not only under the project-wide `settings.base`
+        # above: XcodeGen's built-in preset for an iOS application injects
+        # TARGETED_DEVICE_FAMILY = "1,2" at target level, which wins over the project base — so
+        # the base value alone can neither raise nor lower what the build actually sees.
+        #
+        # Where the iPad layout stands, all of it looked at on a booted iPad Pro 13" (M5)
+        # simulator running iPadOS 26, full screen and in a narrow resizable window:
+        #   Adapted for regular width: SearchView (two columns), DealsView (wider grid with
+        #   bigger cards, so store names stop truncating), ListsView (readable column),
+        #   OnboardingView (two-column welcome, capped store picker), PaywallView (two columns
+        #   in a page-size sheet), DealDetailView, OccasionView.
+        #   Presented as iPad form sheets: ProductDetailView and RecipeImportView. A form sheet
+        #   is 580pt wide and reports a COMPACT horizontal size class, so size-class work inside
+        #   one does nothing; both read correctly at that size. RecipeImportView's document
+        #   scanner is now a fullScreenCover rather than a sheet inside a sheet.
+        #   NOT adapted: SettingsView's and TrackingView's own screens still run edge to edge on
+        #   iPad — only their sub-screens (AboutPricesView, FavoriteDealsView) call
+        #   readableWidth(). Those files belong to another agent; fix them before shipping.
+        # Shipping "1,2" also makes an iPad screenshot set mandatory in App Store Connect.
+        # UIApplicationSupportsMultipleScenes stays false on purpose — see Info.plist.
+        TARGETED_DEVICE_FAMILY: "1,2"
+    scheme:
+      storeKitConfiguration: App/Resources/Products.storekit
+      testTargets:
+        - AppTests
+        - AppUITests
+  AppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+      # The on-screen price rules the UI tests enforce. One file, compiled into both test
+      # targets, so the thresholds the guards actually run are the ones PriceLabelGeometryTests
+      # pins — there used to be a second, hand-kept copy in DuoTests that nothing checked. See
+      # the header of that file.
+      - path: UITests/PriceLabelGeometry.swift
+    dependencies:
+      - target: App
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Cartworth.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Cartworth
+        BUNDLE_LOADER: $(TEST_HOST)
+  AppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: App
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: App

@@ -1,0 +1,19 @@
+# Cartworth (https://cartworth.app)
+# The marketing pages are meant to be indexed. The live web app is not: it performs
+# real, slow lookups against retailer websites on every request, so sending crawlers
+# through it wastes their time and, more importantly, is rude to those retailers.
+
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /api/
+# Build sources for the site images; served because they sit inside the deployed root.
+Disallow: /tools/
+# Maintenance notes that also sit inside the deployed root. They are not content and must not
+# be indexed; the *.md wildcard is honoured by Google and Bing, the explicit paths by everyone.
+Disallow: /README.md
+Disallow: /img/README.md
+Disallow: /*.md$
+Crawl-delay: 2
+
+Sitemap: https://cartworth.app/sitemap.xml

@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cartworth: compare grocery prices at every store near you</title>
+<meta name="description" content="Compare grocery prices at every store near you, anywhere in the US. Live prices, normalized per unit so package sizes compare fairly, plus every weekly ad.">
+<link rel="canonical" href="https://cartworth.app/">
+<meta name="theme-color" content="#f4faf6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1410" media="(prefers-color-scheme: dark)">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Cartworth">
+<meta property="og:url" content="https://cartworth.app/">
+<meta property="og:title" content="Cartworth: compare grocery prices at every store near you">
+<meta property="og:description" content="Compare grocery prices at every store near you, anywhere in the US. Live prices, normalized per unit so package sizes compare fairly, plus every weekly ad.">
+<meta property="og:image" content="https://cartworth.app/img/og-cartworth.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Cartworth mark, three price bars over a shopping basket, above the wordmark and the line Compare grocery prices.">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cartworth: compare grocery prices at every store near you">
+<meta name="twitter:description" content="Compare grocery prices at every store near you, anywhere in the US. Live prices, normalized per unit so package sizes compare fairly, plus every weekly ad.">
+<meta name="twitter:image" content="https://cartworth.app/img/og-cartworth.png">
+<meta name="twitter:image:alt" content="The Cartworth mark, three price bars over a shopping basket, above the wordmark and the line Compare grocery prices.">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2315803d'/%3E%3Cpath d='M14 26h36l-4 22a4 4 0 0 1-4 3H22a4 4 0 0 1-4-3z' fill='%23fff'/%3E%3Cpath d='M22 26l8-12M42 26l-8-12' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18l-1.7 9.4a2 2 0 0 1-2 1.6H7.7a2 2 0 0 1-2-1.6L4 6Z"/><path d="M8 6 10.5 2M16 6 13.5 2"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/></svg>
+      </span>
+      Cartworth
+    </a>
+    <nav class="site-nav" aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#honest">Where prices come from</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-primary header-cta" href="/app/"><span class="cta-long">Open the free web app</span><span class="cta-short">Open web app</span></a>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- ================= hero ================= -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Free on the web. iPhone app on the way.</p>
+        <h1 class="h-display">Which store near you is actually cheaper?</h1>
+        <p class="lede">Type an item. Cartworth prices it at the grocery stores that are really around you, all at the same time, and converts every price to one shared unit so a 12 oz box and a 42 oz canister can be compared honestly.</p>
+        <ul class="hero-points">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>
+            <span>Anywhere in the US. Set a ZIP and Cartworth finds the chains that actually have a store near you.</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>
+            <span>Every price normalized to per pound, per gallon, per dozen or per count.</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>
+            <span>In-store shelf prices and online delivery prices are labeled separately, because they are not the same number.</span>
+          </li>
+        </ul>
+        <div class="cta-row">
+          <a class="btn btn-primary btn-lg" href="/app/">Open the free web app</a>
+          <a class="btn btn-lg btn-soon" href="#pricing" data-appstore="Download on the App Store"><span data-appstore-label>Coming to the App Store</span></a>
+        </div>
+        <p class="cta-note">No account. No sign-up. The web version is free and does the full comparison.</p>
+      </div>
+
+      <div>
+        <!-- Illustration, hand-built in HTML. Not a screenshot, and labeled as such below. -->
+        <div class="demo" role="img" aria-label="Illustration of a Cartworth search for rolled oats. Store C lists a 42 ounce canister at 3 dollars 61 cents per pound from a shelf price, the cheapest. Store A lists an 18 ounce box at 3 dollars 81 cents per pound from a shelf price. Store B lists a 12 ounce box at 3 dollars 99 cents per pound from an online price, even though its sticker price is the lowest of the three.">
+          <div class="demo-head">
+            <span class="demo-query">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              rolled oats
+            </span>
+            <span class="badge">3 stores near 60601</span>
+          </div>
+
+          <div class="row-item is-best">
+            <div class="row-store"><span class="store-dot" style="background: var(--store-3)"></span> Store C <span class="badge badge-good">shelf price</span></div>
+            <div class="row-name">Rolled oats, 42 oz canister</div>
+            <div class="row-price"><span class="amount num">$3.61</span><span class="unit num">per lb &middot; $9.49 tag</span></div>
+          </div>
+
+          <div class="row-item">
+            <div class="row-store"><span class="store-dot" style="background: var(--store-2)"></span> Store A <span class="badge badge-good">shelf price</span></div>
+            <div class="row-name">Rolled oats, 18 oz box</div>
+            <div class="row-price"><span class="amount num">$3.81</span><span class="unit num">per lb &middot; $4.29 tag</span></div>
+          </div>
+
+          <div class="row-item">
+            <div class="row-store"><span class="store-dot" style="background: var(--store-5)"></span> Store B <span class="badge badge-info">online price</span></div>
+            <div class="row-name">Rolled oats, 12 oz box</div>
+            <div class="row-price"><span class="amount num">$3.99</span><span class="unit num">per lb &middot; $2.99 tag</span></div>
+          </div>
+
+          <p class="demo-foot">The lowest sticker price here is the worst buy per pound. That is the whole idea.<br>
+          Illustration, not a screenshot. Example prices, September 2026. Varies by location. Store names are stand-ins.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= how it works ================= -->
+  <section id="how" class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">How it works</p>
+        <h2 class="h-section">One search, every store around you</h2>
+        <p class="lede">Three steps, and the first one is the only thing you have to type.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <h3>Say where you are</h3>
+          <p>Enter a five digit ZIP. On iPhone you can tap once to use your location instead. That is the only thing Cartworth asks you for: no email, no account, no card.</p>
+        </li>
+        <li>
+          <h3>It finds the stores that are really there</h3>
+          <p>Cartworth checks which chains publish a weekly circular for your postal code, then asks each of those chains' own sites whether they have a store near you and how far away it is. Nothing is assumed from a list of chain names.</p>
+        </li>
+        <li>
+          <h3>It prices your item at all of them at once</h3>
+          <p>Each store's closest real match comes back with its price converted to a shared unit, the distance to that store, and a label saying exactly what kind of number it is: a shelf price, an online listing, a chain-wide price, or a weekly ad price.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ================= the honesty story ================= -->
+  <section id="honest">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Where the prices come from</p>
+        <h2 class="h-section">Nothing crowdsourced. Nothing guessed.</h2>
+        <p class="lede">Cartworth reads the prices retailers publish online for the store nearest you. A few chains publish a catalogue on their own site; most publish theirs through Instacart's storefront for that chain, so that is where Cartworth reads them, and it is why many of those prices are labeled online rather than shelf. Weekly ad prices come from the circular service that stores distribute their flyers through. Nothing is crowdsourced, nothing is bought in from a third-party price database, and nothing is estimated from other data.</p>
+      </div>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 5 4h14l2 5.5"/><path d="M4 9.5h16V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19Z"/><path d="M9 9.5a3 3 0 0 1-6 0M15 9.5a3 3 0 0 1-6 0M21 9.5a3 3 0 0 1-6 0"/></svg>
+          </span>
+          <h3 class="h-card">Shelf price or online price, always labeled</h3>
+          <p>Some retailers publish their in-store shelf prices. Others only publish a delivery listing, which those retailers themselves say can run above the shelf. Cartworth never blends the two. Every price carries its source.</p>
+          <div class="pricelabel">
+            <div><span class="badge badge-good">shelf</span><span>The price the store publishes for shopping in the aisle.</span></div>
+            <div><span class="badge badge-info">online</span><span>A delivery or pickup listing for the store nearest you. Useful, but it can be higher than the tag.</span></div>
+            <div><span class="badge badge-info">national</span><span>Some chains publish one price rather than your store's. Walmart is the common case. Treated as a guide, and labeled so you know.</span></div>
+            <div><span class="badge badge-sale">weekly ad</span><span>Straight from that store's own circular, conditions included.</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M6 7 3 13h6ZM18 7l-3 6h6Z"/><path d="M3 13a3 3 0 0 0 6 0M15 13a3 3 0 0 0 6 0"/><path d="M8 21h8"/><path d="M6 7h12"/></svg>
+          </span>
+          <h3 class="h-card">One unit, so sizes compare</h3>
+          <p>A 12 oz box and an 18 oz bag do not line up, which is exactly why the shelf is confusing. Cartworth converts everything to per pound, per gallon, per dozen or per count. When a store lists something only as "each" and a typical weight has to be used, the number is marked as an estimate rather than quietly presented as fact.</p>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M8.5 11h5"/></svg>
+          </span>
+          <h3 class="h-card">Only real matches count</h3>
+          <p>A comparison is worthless if the stores are not showing the same thing. Cartworth matches on what the item actually is, so milk chocolate never wins a search for milk and a store that has no honest match says so instead of filling the row with something close enough.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top: 14px">
+        <div class="card">
+          <h3 class="h-card">More than 70 chains, and the ads from more</h3>
+          <p>Cartworth knows how to price more than seventy national and regional grocery chains, from the big nationals down to regional names. Not every chain publishes prices Cartworth can read: a few block automated lookups, and others simply put out a circular and nothing else. For those, Cartworth shows the weekly ad rather than pretending it has prices it does not have.</p>
+        </div>
+        <div class="card">
+          <h3 class="h-card">A guide, not a guarantee</h3>
+          <p>Stores change prices without notice, and published listings can be out of date or plain wrong. Cartworth tells you what each retailer is publishing right now. Check the shelf tag when you get there. Anyone who promises you a guaranteed saving on groceries is guessing.</p>
+        </div>
+      </div>
+
+      <p class="notice" style="margin-top: 14px">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <span>Cartworth is independent. It is not affiliated with, endorsed by, sponsored by or partnered with any retailer, and it shows no retailer logos or branding. Store names appear as plain text, as a statement of which store a price came from.</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= features ================= -->
+  <section id="features" class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Features</p>
+        <h2 class="h-section">Everything the weekly shop actually needs</h2>
+        <p class="lede">The comparison is the core. Around it sits the rest of the job: the ads, the list, the trip, and knowing whether today's "sale" is really a sale.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2a2 2 0 0 1-.6-1.4V4a1 1 0 0 1 1-1h8a2 2 0 0 1 1.4.6l7.4 7.4a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg></span>
+          <h3 class="h-card">The weekly ad, including the fine print</h3>
+          <p>Browse this week's circulars for the stores near you. "2 for $5", BOGO, digital coupon prices and loyalty card prices all show their conditions: the limit, whether you must buy two, and what the item costs without the coupon.</p>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6Z"/><path d="M10.5 20a1.8 1.8 0 0 0 3 0"/></svg></span>
+          <h3 class="h-card">Price watches and target prices</h3>
+          <p>Track the items you buy often, set the price you would stock up at, and Cartworth keeps checking. The iPhone app tells you when something hits your target or reaches its lowest price yet.</p>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4"/><path d="M4 20h16"/><path d="m7 15 4-5 3 3 5-6"/></svg></span>
+          <h3 class="h-card">Price history</h3>
+          <p>Every price Cartworth sees for a product you follow is kept, so you can see what it normally costs. A yellow tag on a price that has not moved in four months is not a sale, and the chart says so.</p>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="m3 6 1.2 1.2L6.4 5M3 12l1.2 1.2L6.4 11M3 18l1.2 1.2L6.4 17"/></svg></span>
+          <h3 class="h-card">A list that knows what it costs</h3>
+          <p>Add items with a size, like "milk 1 gal", and Cartworth prices that exact amount at every store you follow. The total is not a surprise at the register.</p>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18l-1.7 9.4a2 2 0 0 1-2 1.6H7.7a2 2 0 0 1-2-1.6L4 6Z"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/></svg></span>
+          <h3 class="h-card">Cheapest trip planning</h3>
+          <p>Once the list is priced, Cartworth works out the cheapest single store, the best two store and three store split, and what the trip would cost if you cherry picked every item at its cheapest store. Then you decide whether the second stop is worth the drive.</p>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.4"/></svg></span>
+          <h3 class="h-card">Recipe photo to priced list <span class="badge badge-warn">iPhone</span></h3>
+          <p>Photograph a cookbook page, scan a recipe card or paste a recipe link. The ingredients are pulled out, pantry staples you already own are skipped, and the rest lands on your list with prices. The text recognition and the ingredient parsing both run on the phone.</p>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 16.9 6.7 19.7l1.1-5.9L3.5 9.7l5.9-.8Z"/></svg></span>
+          <h3 class="h-card">Favorite brand sale alerts <span class="badge badge-warn">iPhone</span></h3>
+          <p>Name the brands and ingredients you actually buy. Cartworth checks them against every weekly ad for your stores and tells you when one turns up on sale.</p>
+        </div>
+
+        <div class="card">
+          <span class="icon-tile" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+          <h3 class="h-card">Next week's ads and seasonal guides</h3>
+          <p>Stores post next week's circular days early, and Cartworth shows it as soon as it appears. Ahead of the moments that move grocery prices, from Thanksgiving to back to school, it points you at what is worth buying and when.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= the app ================= -->
+  <section id="app">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Cartworth for iPhone</p>
+        <h2 class="h-section">The personal layer, in your pocket</h2>
+        <p class="lede">The website does the comparison for anyone, free. The iPhone app adds the parts that only work on a phone you carry: your location, alerts that arrive while you are not looking, and a camera pointed at a recipe.</p>
+      </div>
+
+      <figure class="shot shot-wide" style="margin-bottom: 26px">
+        <div class="shot-frame">
+          <img src="img/iphone-duo.png" alt="Two iPhones side by side running Cartworth: a search result list on the left and a weekly ad deal with its conditions on the right." width="1600" height="1000" loading="lazy" decoding="async">
+        </div>
+        <figcaption><b>Cartworth on iPhone</b>Search results and the weekly ad, side by side.</figcaption>
+      </figure>
+
+      <div class="shots">
+        <figure class="shot">
+          <div class="shot-frame">
+            <img src="img/iphone-max-search.png" alt="Cartworth search results for milk, showing the best price first and then each store's closest match with its price per gallon, distance, and a shelf or online label." width="1290" height="2322" loading="lazy" decoding="async">
+          </div>
+          <figcaption><b>Every store, one unit</b>The best price first, then each store's closest real match.</figcaption>
+        </figure>
+
+        <figure class="shot">
+          <div class="shot-frame">
+            <img src="img/iphone-max-deal.png" alt="A weekly ad deal open in Cartworth with its conditions spelled out: the purchase minimum, the limit and the price without the digital coupon." width="1290" height="2322" loading="lazy" decoding="async">
+          </div>
+          <figcaption><b>The fine print, attached</b>Limits, must-buy quantities and the price without the coupon.</figcaption>
+        </figure>
+
+        <figure class="shot">
+          <div class="shot-frame">
+            <img src="img/iphone-max-trip.png" alt="Cartworth trip planning for a shopping list, comparing the cheapest single store total with a two store split and a cherry picked total." width="1290" height="2322" loading="lazy" decoding="async">
+          </div>
+          <figcaption><b>One store or two?</b>What each version of the trip actually costs.</figcaption>
+        </figure>
+      </div>
+
+      <div class="cta-row">
+        <a class="btn btn-lg btn-soon" href="#pricing" data-appstore="Download on the App Store"><span data-appstore-label>Coming to the App Store</span></a>
+        <a class="btn btn-lg" href="/app/">Use the free web version now</a>
+      </div>
+      <p class="cta-note">Requires iOS 17 or later. The phone images are illustrations of the app in development, not screenshots. Example prices, September 2026. Varies by location.</p>
+    </div>
+  </section>
+
+  <!-- ================= web vs app ================= -->
+  <section id="compare" class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Free web vs paid app</p>
+        <h2 class="h-section">The website is not a demo</h2>
+        <p class="lede">Plenty of products put a crippled taster on the web to push you to the paid app. This one does not. The website does the whole comparison, the weekly ads, the watches, the history and the trip planning, free, with unlimited searching and up to 60 price watches. The app is worth paying for because of what a phone can do that a browser tab cannot.</p>
+      </div>
+
+      <div class="table-scroll">
+        <table class="compare">
+          <caption>The iPhone app has a free tier of three searches a day and one price watch. "Pro" means the feature is part of a Cartworth Pro subscription or the lifetime unlock.</caption>
+          <colgroup><col class="c-feature"><col class="c-plan"><col class="c-plan"></colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Feature</th>
+              <th scope="col">cartworth.app<br><span class="badge badge-good">free</span></th>
+              <th scope="col">iPhone app<br><span class="badge">free + Pro</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Finds the stores near your ZIP</th><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+            <tr><th scope="row">Use your current location instead of a ZIP</th><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><th scope="row">Price an item at every store at once</th><td class="yes">Unlimited</td><td class="yes">3 a day free, unlimited with Pro</td></tr>
+            <tr><th scope="row">Unit price normalization</th><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+            <tr><th scope="row">Shelf and online price labels</th><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+            <tr><th scope="row">This week's ads with their conditions</th><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+            <tr><th scope="row">Next week's ads as soon as stores post them</th><td class="yes">Yes</td><td class="yes">Pro</td></tr>
+            <tr><th scope="row">Shopping list priced at each store</th><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+            <tr><th scope="row">Cheapest trip planning across stores</th><td class="yes">Yes</td><td class="yes">Pro</td></tr>
+            <tr><th scope="row">Price watches</th><td class="yes">Up to 60</td><td class="yes">1 free, unlimited with Pro</td></tr>
+            <tr><th scope="row">Price history charts</th><td class="yes">Yes</td><td class="yes">Pro</td></tr>
+            <tr><th scope="row">Alerts when a watched item hits your price</th><td class="no">No</td><td class="yes">Pro</td></tr>
+            <tr><th scope="row">Favorite brand sale alerts</th><td class="no">No</td><td class="yes">Pro</td></tr>
+            <tr><th scope="row">Recipe photo or link to a priced list</th><td class="no">No</td><td class="yes">Pro</td></tr>
+            <tr><th scope="row">Seasonal and holiday shopping guides</th><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><th scope="row">Account required</th><td class="no">Never</td><td class="no">Never</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= pricing ================= -->
+  <section id="pricing">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Pricing</p>
+        <h2 class="h-section">Free on the web. Three ways to buy the app.</h2>
+        <p class="lede">All three options unlock exactly the same thing. There is no higher tier and nothing else to buy.</p>
+      </div>
+
+      <div class="plans">
+        <div class="plan">
+          <div class="plan-name">Website <span class="badge badge-good">free</span></div>
+          <div class="plan-price">$0</div>
+          <p>The full comparison in any browser, on any device.</p>
+          <ul>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Unlimited searches</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Weekly ads, this week and next</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Watches, history and trip planning</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>No account, no card</li>
+          </ul>
+          <a class="btn btn-primary" href="/app/" style="margin-top: 6px">Open it</a>
+        </div>
+
+        <div class="plan">
+          <div class="plan-name">Pro monthly</div>
+          <div class="plan-price">$3.99 <small>/ month</small></div>
+          <p>Everything in the iPhone app, billed every month. Cancel any time.</p>
+          <ul>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Unlimited searches and watches</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Price and favorite brand alerts</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Recipe import, trip planning, history</li>
+          </ul>
+        </div>
+
+        <div class="plan is-featured">
+          <div class="plan-name">Pro yearly <span class="badge badge-sale">best value</span></div>
+          <div class="plan-price">$19.99 <small>/ year</small></div>
+          <p>About $1.67 a month. Renews once a year until you cancel.</p>
+          <ul>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Everything in Pro monthly</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Family Sharing included</li>
+          </ul>
+        </div>
+
+        <div class="plan">
+          <div class="plan-name">Pro lifetime</div>
+          <div class="plan-price">$29.99 <small>once</small></div>
+          <p>A one time purchase, not a subscription. Nothing renews.</p>
+          <ul>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Everything in Pro, permanently</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5.2 5.2L20 6.8"/></svg>Family Sharing included</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="cta-note" style="max-width: 78ch">Prices are in US dollars and are the US App Store prices. Subscriptions are billed through your Apple Account and renew automatically until cancelled; you can cancel any time in your Apple Account settings. The free tier of the iPhone app is three searches a day and one price watch, with weekly ads, store discovery and your shopping list included. Full detail is in the <a href="/terms">terms</a>.</p>
+
+      <div class="cta-row">
+        <a class="btn btn-lg btn-soon" href="#pricing" data-appstore="Download on the App Store"><span data-appstore-label>Coming to the App Store</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= privacy teaser ================= -->
+  <section class="band">
+    <div class="wrap">
+      <div class="grid grid-2">
+        <div>
+          <p class="eyebrow">Privacy</p>
+          <h2 class="h-section">There is nothing to sign up for, so there is nothing to leak</h2>
+          <p class="lede" style="margin-top: 14px">No account. No email address. No analytics SDK, no advertising SDK, no tracking, and nothing sold to anybody. Your searches, lists, watches and price history live on your own device.</p>
+          <p class="lede" style="margin-top: 14px">What does leave your device is the obvious part: to look up a price, your area and your search term reach the retailer's own website. On iPhone that request goes straight from your phone. On the web it is made by our server on your behalf, so the retailer sees the server rather than you. We say so plainly rather than burying it.</p>
+          <div class="cta-row">
+            <a class="btn" href="/privacy">Read the privacy policy</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="h-card">What Cartworth never does</h3>
+          <ul class="nevers">
+            <li>Ask you to create an account</li>
+            <li>Ask for an email address</li>
+            <li>Load a third party analytics or advertising SDK</li>
+            <li>Track you across apps or websites</li>
+            <li>Sell, rent or share your data</li>
+            <li>Keep a profile of you, or tie your searches to a person. The iPhone app has no server at all. The web version needs one to fetch prices, and it caches the result by store, ZIP and search term for twenty minutes so every visitor is not another request to the retailer. No account, no visitor id, nothing that says which searches were yours.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= faq ================= -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">FAQ</p>
+        <h2 class="h-section">Reasonable questions</h2>
+      </div>
+
+      <div class="faq">
+        <details>
+          <summary>Is Cartworth really free?</summary>
+          <div class="answer"><p>The website at cartworth.app is free, with no account and no limits on searching. The iPhone app has a free tier of three searches a day and one price watch. Cartworth Pro, which lifts those limits and adds alerts, recipe import, trip planning and price history, costs $3.99 a month, $19.99 a year, or $29.99 once for lifetime access.</p></div>
+        </details>
+
+        <details>
+          <summary>Where do the prices come from?</summary>
+          <div class="answer"><p>From what the retailers publish online for the store nearest you. A few chains publish a catalogue on their own site; most publish theirs through Instacart's storefront for that chain, and that is where Cartworth reads them. Weekly ad prices come from the circular service stores distribute their flyers through. Nothing is crowdsourced, nothing is estimated from other data, and no third-party price database sits in the middle.</p></div>
+        </details>
+
+        <details>
+          <summary>What is the difference between a shelf price and an online price?</summary>
+          <div class="answer"><p>Some retailers publish the price you would pay standing in the aisle. Others only publish a delivery or pickup listing, and those retailers commonly state that the online price can be higher than the in-store price. Both are real numbers and both are useful, but they are not interchangeable, so Cartworth labels which one you are looking at instead of averaging them into something that is true of neither.</p></div>
+        </details>
+
+        <details>
+          <summary>Which stores does it cover?</summary>
+          <div class="answer"><p>More than seventy national and regional grocery chains, plus warehouse clubs and supercenters. Which ones you see depends entirely on where you are: Cartworth works out which chains actually have a store near your ZIP rather than showing you a national list. Some chains publish no prices Cartworth can read — a few block automated lookups, others only put out a circular — and for those Cartworth shows the weekly ad and says plainly that it has no prices for them.</p></div>
+        </details>
+
+        <details>
+          <summary>Do I need an account?</summary>
+          <div class="answer"><p>No, and there is no way to make one. There is no sign-up, no email address and no password anywhere in Cartworth, on the web or in the app.</p></div>
+        </details>
+
+        <details>
+          <summary>Is Cartworth affiliated with any of these stores?</summary>
+          <div class="answer"><p>No. Cartworth is independent and is not affiliated with, endorsed by, sponsored by or partnered with any retailer. It shows no retailer logos or branding. Store names appear only as plain text, to tell you which store a given price came from.</p></div>
+        </details>
+
+        <details>
+          <summary>How much will it save me?</summary>
+          <div class="answer"><p>Nobody can honestly answer that, and anybody who gives you a number is making it up. It depends on what you buy, which stores are near you and what they happen to be charging this week. What Cartworth can do is show you, in one unit, what each store near you is publishing right now, so the decision is an informed one.</p></div>
+        </details>
+
+        <details>
+          <summary>Can I cancel a subscription?</summary>
+          <div class="answer"><p>Yes, any time, from your Apple Account settings on your iPhone. Cancelling stops the next renewal and you keep Pro until the period you already paid for runs out. The lifetime option is a one time purchase, so there is nothing to cancel. Step by step instructions are on the <a href="/support">support page</a>.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= closing ================= -->
+  <section class="band">
+    <div class="wrap wrap-narrow" style="text-align: center">
+      <h2 class="h-section">Stop guessing which store is cheaper</h2>
+      <p class="lede" style="margin: 14px auto 0">One search, every store near you, in the same unit. Free in your browser, right now.</p>
+      <div class="cta-row" style="justify-content: center">
+        <a class="btn btn-primary btn-lg" href="/app/">Open the free web app</a>
+        <a class="btn btn-lg btn-soon" href="#pricing" data-appstore="Download on the App Store"><span data-appstore-label>Coming to the App Store</span></a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18l-1.7 9.4a2 2 0 0 1-2 1.6H7.7a2 2 0 0 1-2-1.6L4 6Z"/><path d="M8 6 10.5 2M16 6 13.5 2"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/></svg>
+        </span>
+        Cartworth
+      </a>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/app/">Free web app</a>
+        <a href="/support">Support</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+    </div>
+    <div class="footer-fine">
+      <p>Cartworth is independent and is not affiliated with, endorsed by, sponsored by or partnered with any retailer. Retailer names are used only to identify the store a price was published by.</p>
+      <p>Prices shown anywhere on this site are illustrations. Example prices, September 2026. Varies by location. Stores change prices without notice and published listings can be wrong, so always check the shelf tag. Cartworth is a guide, not a guarantee, and makes no promise of any particular saving.</p>
+      <p>Apple and App Store are trademarks of Apple Inc. &copy; 2026 Nicholas Soderstrom.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="appstore.js" defer></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://cartworth.app/#organization",
+      "name": "Cartworth",
+      "url": "https://cartworth.app/",
+      "description": "Cartworth compares grocery prices across the stores near you, normalized to a common unit.",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://cartworth.app/img/cartworth-logo.png",
+        "width": 512,
+        "height": 512
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://cartworth.app/#website",
+      "url": "https://cartworth.app/",
+      "name": "Cartworth",
+      "publisher": {
+        "@id": "https://cartworth.app/#organization"
+      },
+      "inLanguage": "en-US"
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://cartworth.app/#webapp",
+      "name": "Cartworth for the web",
+      "url": "https://cartworth.app/app/",
+      "applicationCategory": "ShoppingApplication",
+      "browserRequirements": "Requires a modern browser with JavaScript enabled.",
+      "operatingSystem": "Any",
+      "isAccessibleForFree": true,
+      "publisher": {
+        "@id": "https://cartworth.app/#organization"
+      },
+      "description": "The free browser version of Cartworth: price any grocery item at every store near your ZIP, normalized to a common unit, with weekly ads, price watches, price history and cheapest-trip planning.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://cartworth.app/#ios-app",
+      "name": "Cartworth: Grocery Prices",
+      "applicationCategory": "ShoppingApplication",
+      "operatingSystem": "iOS 17.0 or later",
+      "url": "https://cartworth.app/",
+      "publisher": {
+        "@id": "https://cartworth.app/#organization"
+      },
+      "description": "Search the grocery stores near you at once, compare every price in the same unit, read the weekly ad with its fine print, watch the prices you care about and plan the cheapest trip.",
+      "featureList": [
+        "Prices one item at every grocery store near you at the same time",
+        "Converts every price to a common unit: per pound, per gallon, per dozen or per count",
+        "Labels in-store shelf prices separately from online and delivery prices",
+        "Weekly ad circulars with their conditions, limits and coupon fine print",
+        "Price watches with target price and lowest price alerts",
+        "Price history for the items you follow",
+        "Shopping list priced at every store, with cheapest-trip planning across one, two or three stores",
+        "Recipe photo or link turned into a priced shopping list, parsed on the device",
+        "Favorite brand and ingredient sale alerts",
+        "Seasonal and holiday shopping guides",
+        "No account, no analytics and no tracking"
+      ],
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Cartworth Pro monthly",
+          "price": "3.99",
+          "priceCurrency": "USD",
+          "category": "subscription",
+          "description": "Cartworth Pro billed monthly, renews automatically until cancelled."
+        },
+        {
+          "@type": "Offer",
+          "name": "Cartworth Pro yearly",
+          "price": "19.99",
+          "priceCurrency": "USD",
+          "category": "subscription",
+          "description": "Cartworth Pro billed yearly, renews automatically until cancelled."
+        },
+        {
+          "@type": "Offer",
+          "name": "Cartworth Pro lifetime",
+          "price": "29.99",
+          "priceCurrency": "USD",
+          "category": "one-time purchase",
+          "description": "A one-time purchase that unlocks Cartworth Pro permanently. Nothing renews."
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is Cartworth really free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The website at cartworth.app is free, with no account and no limits on searching. The iPhone app has a free tier of three searches a day and one price watch. Cartworth Pro, which lifts those limits and adds alerts, recipe import, trip planning and price history, costs $3.99 a month, $19.99 a year, or $29.99 once for lifetime access."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where do the prices come from?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "From what the retailers publish online for the store nearest you. A few chains publish a catalogue on their own site; most publish theirs through Instacart's storefront for that chain, and that is where Cartworth reads them. Weekly ad prices come from the circular service stores distribute their flyers through. Nothing is crowdsourced, nothing is estimated from other data, and no third-party price database sits in the middle."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between a shelf price and an online price?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Some retailers publish the price you would pay standing in the aisle. Others only publish a delivery or pickup listing, and those retailers commonly state that the online price can be higher than the in-store price. Both are real numbers and both are useful, but they are not interchangeable, so Cartworth labels which one you are looking at instead of averaging them into something that is true of neither."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which stores does it cover?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "More than seventy national and regional grocery chains, plus warehouse clubs and supercenters. Which ones you see depends entirely on where you are: Cartworth works out which chains actually have a store near your ZIP rather than showing you a national list. Some chains publish no prices Cartworth can read — a few block automated lookups, others only put out a circular — and for those Cartworth shows the weekly ad and says plainly that it has no prices for them."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need an account?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, and there is no way to make one. There is no sign-up, no email address and no password anywhere in Cartworth, on the web or in the app."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Cartworth affiliated with any of these stores?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Cartworth is independent and is not affiliated with, endorsed by, sponsored by or partnered with any retailer. It shows no retailer logos or branding. Store names appear only as plain text, to tell you which store a given price came from."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much will it save me?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nobody can honestly answer that, and anybody who gives you a number is making it up. It depends on what you buy, which stores are near you and what they happen to be charging this week. What Cartworth can do is show you, in one unit, what each store near you is publishing right now, so the decision is an informed one."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I cancel a subscription?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, any time, from your Apple Account settings on your iPhone. Cancelling stops the next renewal and you keep Pro until the period you already paid for runs out. The lifetime option is a one time purchase, so there is nothing to cancel. Step by step instructions are on the support page ."
+          }
+        }
+      ]
+    }
+  ]
+}
+  </script>
+</body>
+</html>

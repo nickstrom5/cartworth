@@ -1,0 +1,53 @@
+# Cartworth price tracker: the search terms priced every day, at every store near every tracked ZIP.
+#
+# One term per line. Blank lines and lines starting with # are ignored. A [section] line tags the
+# terms beneath it; stats.js uses the tags (e.g. `stats.js basket --terms thanksgiving`).
+# A term listed twice (butter is in both lists) is priced ONCE and keeps both tags.
+#
+# Adding a term costs roughly one request per store per ZIP per day (about 50 requests, ~1 minute
+# of a daily run). Removing one stops its history; old rows stay in tracker.db.
+
+[thanksgiving]
+turkey
+whole turkey
+turkey breast
+stuffing mix
+cranberry sauce
+fresh cranberries
+sweet potatoes
+yams
+green beans
+cream of mushroom soup
+french fried onions
+pumpkin puree
+pumpkin pie
+evaporated milk
+dinner rolls
+butter
+heavy cream
+gravy
+chicken broth
+russet potatoes
+yellow onion
+celery
+brown sugar
+marshmallows
+pecans
+whipped cream
+apple cider
+aluminum foil
+
+[staples]
+milk
+eggs
+butter
+bread
+bananas
+chicken breast
+ground beef
+coffee
+orange juice
+cheddar cheese
+apples
+rice
+pasta
