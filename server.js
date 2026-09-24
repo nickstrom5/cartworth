@@ -191,6 +191,7 @@ route('GET', '/api/health', async () => ({
   stores: search.getHealth(),
   http: httpStats,
   guard: guardStats(),
+  kroger: kroger.krogerUsage(),
 }));
 
 route('GET', '/api/directory', async (req, url) => {

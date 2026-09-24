@@ -40,8 +40,13 @@ export async function cached(key, ttlMs, fn, { persist = true, fresh = false, st
   const p = (async () => {
     try {
       const value = await fn();
-      remember(key, value, ttlMs);
-      if (persist) cacheSet(key, value, ttlMs);
+      // A source may say how long its answer may be kept (Kroger's terms: no longer than its own
+      // cache headers allow), so the TTL can be a function of the value. 0 means do not keep it.
+      const ttl = typeof ttlMs === 'function' ? ttlMs(value) : ttlMs;
+      if (ttl > 0) {
+        remember(key, value, ttl);
+        if (persist) cacheSet(key, value, ttl);
+      }
       return value;
     } catch (err) {
       if (staleOnError) {

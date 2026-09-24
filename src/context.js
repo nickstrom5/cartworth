@@ -171,8 +171,14 @@ function parseKroger(headers = {}) {
   if (clientId.length > LIMITS.krogerKey.max || clientSecret.length > LIMITS.krogerKey.max) throw bad('Kroger key looks too long');
   // Both or neither. A half-configured pair is simply "not configured" rather than an error, so a
   // stray header can never break an otherwise valid search.
-  if (!clientId || !clientSecret) return { clientId: '', clientSecret: '' };
-  return { clientId, clientSecret };
+  if (clientId && clientSecret) return { clientId, clientSecret, server: false };
+  // The owner's own keys, for every visitor, once Kroger has approved the use (see
+  // marketing/outreach/permission-requests.md). Read per request so a key rotated in the environment
+  // takes effect on restart without code changes; never sent back in any response.
+  const envId = String(process.env.KROGER_CLIENT_ID || '').trim();
+  const envSecret = String(process.env.KROGER_CLIENT_SECRET || '').trim();
+  if (envId && envSecret) return { clientId: envId, clientSecret: envSecret, server: true };
+  return { clientId: '', clientSecret: '', server: false };
 }
 
 /**

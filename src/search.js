@@ -53,7 +53,8 @@ function publicError(message) {
 export function sourceFor(storeId, settings) {
   const store = STORE_BY_ID[storeId];
   if (!store) return null;
-  if (store.alt?.type === 'kroger' && kroger.hasKeys(settings)) return { type: 'kroger', chain: store.alt.chain };
+  // kroger.available: keys present, and (for the server's own keys) today's API budget not spent.
+  if (store.alt?.type === 'kroger' && kroger.available(settings)) return { type: 'kroger', chain: store.alt.chain };
   return store.price || null;
 }
 
@@ -92,8 +93,11 @@ export async function searchStore(storeId, query, settings, { fresh = false } = 
   // A lookup that would reach the retailer is asked for first (src/guard.js admitCold): shed when
   // the store's queue is long or this visitor is out of new lookups. Then the last saved answer is
   // served, marked stale, or the store says it is busy. No request goes out either way.
+  // Kroger's terms allow keeping its content only as long as its cache headers say, so a Kroger
+  // answer is never served past its TTL: no saved-price fallback for it, here or on error below.
+  const maxStaleMs = src.type === 'kroger' ? 0 : 3 * 24 * 60 * MIN;
   if (!wasCached && settings.admitCold && !settings.admitCold(sourceHosts(src))) {
-    const saved = peekStale(key, 3 * 24 * 60 * MIN);
+    const saved = maxStaleMs ? peekStale(key, maxStaleMs) : undefined;
     if (saved === undefined) {
       return { storeId, status: 'busy', items: [], source: src.type, message: `Cartworth is busy, so ${STORE_BY_ID[storeId].name} was not asked just now. Try again in a minute.` };
     }
@@ -104,9 +108,9 @@ export async function searchStore(storeId, query, settings, { fresh = false } = 
     // this search may take: at one request in flight per host, a store near the back of a trip
     // plan's queue waits its turn. See withStallTimeout in src/http.js.
     const r = shedStale
-      ? peekStale(key, 3 * 24 * 60 * MIN)
+      ? peekStale(key, maxStaleMs)
       : await withStallTimeout(
-        cached(key, 20 * MIN, () => runAdapter(storeId, src, query, zip, settings), { fresh, maxStaleMs: 3 * 24 * 60 * MIN, onStale: (e) => (staleErr = e) }),
+        cached(key, (v) => (v?.cacheTtlMs != null ? Math.min(20 * MIN, v.cacheTtlMs) : 20 * MIN), () => runAdapter(storeId, src, query, zip, settings), { fresh, staleOnError: maxStaleMs > 0, maxStaleMs, onStale: (e) => (staleErr = e) }),
         STORE_TIMEOUT,
         sourceHosts(src),
         { label: STORE_BY_ID[storeId].name },

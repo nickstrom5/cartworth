@@ -39,6 +39,52 @@ export function hasKeys(ctx) {
   return !!(ctx?.kroger?.clientId && ctx?.kroger?.clientSecret);
 }
 
+// The public API's daily limits (developer.kroger.com, public tier): about 10,000 product calls and
+// 1,600 location calls a day per application. A visitor's own keys carry their own limits; the
+// server's keys are shared by every visitor, so they get a budget a little under Kroger's, and once
+// it is spent the store is priced from Instacart again until the next UTC day.
+const BUDGET = { products: +process.env.KROGER_DAILY_PRODUCTS || 9000, locations: +process.env.KROGER_DAILY_LOCATIONS || 1400 };
+const usage = { day: '', products: 0, locations: 0 };
+function today() {
+  const d = new Date().toISOString().slice(0, 10);
+  if (usage.day !== d) Object.assign(usage, { day: d, products: 0, locations: 0 });
+  return usage;
+}
+function spend(settings, path) {
+  if (!settings?.kroger?.server) return;
+  const u = today();
+  if (path.startsWith('/locations')) u.locations += 1;
+  else if (path.startsWith('/products')) u.products += 1;
+}
+/** Keys present and, for the server's own keys, budget left today. */
+export function available(ctx) {
+  if (!hasKeys(ctx)) return false;
+  if (!ctx.kroger.server) return true;
+  const u = today();
+  return u.products < BUDGET.products && u.locations < BUDGET.locations;
+}
+export function krogerUsage() {
+  return { ...today(), budget: { ...BUDGET } };
+}
+/** Tests only: a small budget, so spending it does not take 9,000 calls. */
+export function _setBudgetForTests(b) {
+  Object.assign(BUDGET, b);
+  Object.assign(usage, { day: '', products: 0, locations: 0 });
+}
+
+/**
+ * How long an answer may be kept, from Kroger's own Cache-Control (their terms: cache content only
+ * as long as the cache headers allow). no-store/no-cache: not at all. max-age: that long. Absent:
+ * null, and the caller's default applies.
+ */
+export function ttlFromCacheControl(value) {
+  const v = String(value || '').toLowerCase();
+  if (!v) return null;
+  if (/\bno-store\b|\bno-cache\b|\bprivate\b/.test(v)) return 0;
+  const m = /(?:^|,)\s*max-age\s*=\s*(\d+)/.exec(v);
+  return m ? +m[1] * 1000 : null;
+}
+
 function rememberToken(secretHash, token, ttlMs) {
   if (tokens.size >= MAX_TOKENS) tokens.delete(tokens.keys().next().value);
   tokens.set(secretHash, { token, exp: Date.now() + ttlMs });
@@ -67,16 +113,19 @@ async function getToken(settings, { force = false } = {}) {
   return d.access_token;
 }
 
-async function api(settings, path) {
+async function api(settings, path, { withTtl = false } = {}) {
   const t = await getToken(settings);
-  const r = await request(`${API}${path}`, { headers: { authorization: `Bearer ${t}` }, timeout: 15000 });
+  spend(settings, path);
+  let r = await request(`${API}${path}`, { headers: { authorization: `Bearer ${t}` }, timeout: 15000 });
   if (r.status === 401) {
     const t2 = await getToken(settings, { force: true });
-    const r2 = await request(`${API}${path}`, { headers: { authorization: `Bearer ${t2}` }, timeout: 15000, okOnly: true });
-    return r2.json();
+    spend(settings, path);
+    r = await request(`${API}${path}`, { headers: { authorization: `Bearer ${t2}` }, timeout: 15000, okOnly: true });
   }
-  if (!r.ok) throw new Error(`Kroger API HTTP ${r.status}: ${r.text.slice(0, 160)}`);
-  return r.json();
+  // Kroger's own error text is not shown to shoppers or logged with a body (it can echo the query).
+  if (!r.ok) throw Object.assign(new Error(`Kroger API HTTP ${r.status}`), { status: r.status === 429 ? 503 : 502 });
+  const body = r.json();
+  return withTtl ? { body, ttlMs: ttlFromCacheControl(r.headers?.get?.('cache-control')) } : body;
 }
 
 // Each Kroger banner's own site, for product links. Every search used to link to marianos.com, so
@@ -130,7 +179,10 @@ export async function resolveStore(settings, zip, chain = 'MARIANOS', { fresh = 
 export async function search(settings, storeId, query, zip, { limit = 40, chain = 'MARIANOS', site = siteFor(chain) } = {}) {
   const store = await resolveStore(settings, zip, chain);
   if (!store || store.none) return { items: [], location: null, message: `No ${chain} store near ${zip}` };
-  const d = await api(settings, `/products?filter.term=${encodeURIComponent(query.slice(0, 80))}&filter.locationId=${store.id}&filter.limit=${Math.min(limit, 50)}`);
+  // The API needs a term of at least 3 characters; "oj" would come back as a 400.
+  const term = query.trim().slice(0, 80);
+  if (term.length < 3) return { items: [], location: null, message: 'Kroger’s search needs at least 3 letters' };
+  const { body: d, ttlMs } = await api(settings, `/products?filter.term=${encodeURIComponent(term)}&filter.locationId=${encodeURIComponent(store.id)}&filter.limit=${Math.min(limit, 50)}`, { withTtl: true });
   const list = d.data || [];
   const items = [];
   list.forEach((p, i) => {
@@ -163,7 +215,7 @@ export async function search(settings, storeId, query, zip, { limit = 40, chain 
       priceBasis: 'shelf',
     }));
   });
-  return { items, location: { name: store.name, address: store.address, distance: store.distance, id: store.id, priceNote: 'Exact store prices from the Kroger API (card prices shown as sale)' } };
+  return { items, cacheTtlMs: ttlMs, location: { name: store.name, address: store.address, distance: store.distance, id: store.id, priceNote: 'Exact store prices from the Kroger API (card prices shown as sale)' } };
 }
 
 export async function testKeys(settings, zip) {
