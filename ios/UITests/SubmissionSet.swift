@@ -75,6 +75,9 @@ final class SubmissionSet: XCTestCase {
         continueAfterFailure = true
         app = XCUIApplication()
         app.launchArguments = ["-qaZip", env("QA_ZIP") ?? "60618", "-proUnlocked"]
+        // Website and App Store frames (scripts/capture-site-shots.sh sets MARKETING=1): no paid
+        // placements and no other companies' packaging photos in a marketing image. See QAShot.
+        if env("MARKETING") == "1" { app.launchArguments += ["-qaHideSponsored", "-qaHideRemoteImages"] }
     }
 
     // MARK: - plumbing
