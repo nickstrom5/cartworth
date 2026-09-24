@@ -98,5 +98,32 @@ def main():
     save(im, OUT)
 
 
+def real(iphone_a, iphone_b, ipad):
+    """--real: the same two images from REAL simulator frames (scripts/capture-site-shots.sh).
+    iphone_a and iphone_b go side by side in iphone-duo.png; ipad replaces the iPad in
+    devices-ipad-duo.png, beside the two iPhone frames. Look at every frame before running this:
+    what goes on the website is a published price."""
+    im = field().convert('RGBA')
+    a = device(Path(iphone_a), 400, 16, 60)
+    b = device(Path(iphone_b), 400, 16, 60)
+    gap = 60
+    x = (W - (a.width - 80) - (b.width - 80) - gap) // 2 - 40
+    y = max(10, (H - a.height) // 2)
+    im.alpha_composite(a, (x, y))
+    im.alpha_composite(b, (x + a.width - 80 + gap, y))
+    save(im, ROOT / 'site' / 'img' / 'iphone-duo.png')
+    im = field().convert('RGBA')
+    pad = device(Path(ipad), 600, 22, 44)
+    im.alpha_composite(pad, (110, (H - pad.height) // 2))
+    for i, f in enumerate((iphone_a, iphone_b)):
+        ph = device(Path(f), 250, 12, 40)
+        im.alpha_composite(ph, (850 + i * 330, (H - ph.height) // 2 + (30 if i == 0 else -30)))
+    save(im, OUT)
+
+
 if __name__ == '__main__':
-    main()
+    import sys
+    if len(sys.argv) == 5 and sys.argv[1] == '--real':
+        real(*sys.argv[2:])
+    else:
+        main()

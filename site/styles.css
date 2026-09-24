@@ -5,8 +5,8 @@
    default-src 'self'). The owner chose Sprout for the website; it replaced a greener, heavier look.
 
    The variable names below are the site's own; every value is the Sprout token named beside it, so
-   the contrast measured in design/sprout/CONTRAST.md holds here. scripts/check-palette.js re-measures
-   the site's pairs. Dark is Sprout's designed dark palette, not an inversion. No build step. */
+   the contrast measured in design/sprout/CONTRAST.md holds here. Light only, by the owner's choice.
+   No build step. */
 
 @font-face { font-family: 'Baloo 2'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/baloo-2-600.woff2') format('woff2'); }
 @font-face { font-family: 'Baloo 2'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/baloo-2-700.woff2') format('woff2'); }
@@ -63,44 +63,9 @@
   --measure: 1120px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme='light'])) {
-    color-scheme: dark;
-    --page: #111814;
-    --surface: #111814;
-    --surface-2: #1a2320;
-    --surface-3: #1f2924;
-    --ink: #e6efea;
-    --ink-2: #9eada5;
-    --muted: #8e9d95;
-    --line: #2a3530;
-    --line-strong: #6f8078;
-    --border: #2a3530;
-    --accent: #5cc592;
-    --accent-strong: #7ad4a7;
-    --accent-soft: #183124;
-    --accent-ink: #07170f;
-    --focus: #5cc592;
-    --link: #5cc592;
-    --good-ink: #8fddb4;
-    --good-bg: #183124;
-    --warn-ink: #f4cb63;
-    --warn-bg: #352a0e;
-    --bad-ink: #ff8a8a;
-    --bad-bg: #3a1716;
-    --deal-ink: #ffbc98;
-    --deal-bg: #3a2519;
-    --info-bg: #172a3f;
-    --info-ink: #a9cdf5;
-    --dot-ring: rgb(255 255 255 / 0.35);
-    --store-2: #4a9fdc;
-    --store-5: #e2711d;
-    --bar: #256abf;
-    --bar-best: #5cc592;
-    --shadow: 0 0 0 1px #2a3530;
-    --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px rgb(0 0 0 / 0.4);
-  }
-}
+/* Light only. The owner wants the site light, like the Sprout mockups, whatever the visitor's OS
+   setting: in dark mode the Sprout dark palette read as the old dark site. `color-scheme: light`
+   also keeps form controls and scrollbars light. (Sprout's dark tokens stay in design/sprout/.) */
 
 *,
 *::before,
