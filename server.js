@@ -64,11 +64,13 @@ const SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
   'x-frame-options': 'DENY',
+  // Ignored over plain http (localhost); over https, the browser never downgrades.
+  'strict-transport-security': 'max-age=31536000',
   'content-security-policy': "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
 };
 function send(res, status, body, headers = {}) {
   const data = typeof body === 'string' ? body : JSON.stringify(body);
-  res.writeHead(status, { 'content-type': typeof body === 'string' ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers });
+  res.writeHead(status, { 'content-type': typeof body === 'string' ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', ...headers });
   res.end(data);
 }
 async function readBody(req) {
@@ -112,7 +114,16 @@ function serveStatic(req, res, pathname) {
       if (!path.extname(rel)) return serveStatic(req, res, '/');
       return send(res, 404, 'Not found');
     }
-    res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-cache', 'content-length': st.size, ...SECURITY_HEADERS });
+    // 'no-cache' means "check with me first", which only saves anything with a validator: without
+    // one every visit re-downloaded every script, font and stylesheet in full (launch review).
+    const etag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
+    const headers = { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-cache', etag, 'last-modified': st.mtime.toUTCString(), ...SECURITY_HEADERS };
+    if (String(req.headers['if-none-match'] || '').split(/\s*,\s*/).includes(etag)) {
+      res.writeHead(304, headers);
+      return res.end();
+    }
+    res.writeHead(200, { ...headers, 'content-length': st.size });
+    if (req.method === 'HEAD') return res.end();
     fs.createReadStream(file).pipe(res);
   });
 }
@@ -490,12 +501,27 @@ if (RUN_DIRECTLY) server.listen(PORT, HOST, () => {
   }
 });
 
+// Graceful stop. A deploy or restart sends SIGTERM; closing and exiting at once cut off every
+// search in progress (they stream for up to a minute). Stop accepting, let what is running finish
+// for up to BASKET_SHUTDOWN_GRACE_MS, then close. A second signal stops at once.
+const SHUTDOWN_GRACE_MS = +process.env.BASKET_SHUTDOWN_GRACE_MS || 10_000;
+let stopping = false;
+function stop(code = 0) {
+  try {
+    db.close();
+  } catch {}
+  process.exit(code);
+}
 for (const sig of RUN_DIRECTLY ? ['SIGINT', 'SIGTERM'] : []) {
   process.on(sig, () => {
-    server.close();
-    try {
-      db.close();
-    } catch {}
-    process.exit(0);
+    if (stopping) return stop(0);
+    stopping = true;
+    console.log(`[${sig}] finishing requests in progress (up to ${Math.round(SHUTDOWN_GRACE_MS / 1000)}s)…`);
+    server.close(() => stop(0));
+    server.closeIdleConnections();
+    setTimeout(() => {
+      server.closeAllConnections();
+      stop(0);
+    }, SHUTDOWN_GRACE_MS).unref();
   });
 }
