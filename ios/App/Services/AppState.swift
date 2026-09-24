@@ -93,6 +93,17 @@ final class AppState {
         }
     }
 
+    /// Re-ask the chains whose lookup failed. Switches on only what it finds: during onboarding a
+    /// plain reload resets the selection to the defaults, which would undo the shopper's choices.
+    func recheckDirectory() async {
+        let waiting = Set(directory?.unresolved ?? [])
+        let chosen = selectedChainIds
+        await loadDirectory(fresh: true)
+        guard let dir = directory else { selectedChainIds = chosen; return }
+        let found = dir.chains.filter { waiting.contains($0.id) && [.shelf, .online, .national].contains($0.status) }.map(\.id)
+        selectedChainIds = chosen + found.filter { !chosen.contains($0) }
+    }
+
     func setPlace(_ p: UserPlace) async {
         let changed = p.zip != place?.zip
         place = p

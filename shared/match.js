@@ -236,7 +236,9 @@ const WANTS_BABY_RE = /\bbaby (?:food|formula|cereal|wipes?)\b|\bformula\b|\bger
 const FRESH_FRUIT_RE = /\b(?:bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberries|blueberries|raspberries|blackberries|cherries|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\b/;
 // Supplements named after a food: Natural Grocers' "NaturesPlus Apple Pectin 500 mg Tablets",
 // 180 count, was Dallas's best "apples" at an estimated $0.30/lb (the nationwide audit).
-const SUPPLEMENT_RE = /\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewable)\b|\b\d+(?:\.\d+)?\s?(?:mg|mcg|iu)\b/i;
+// A dose alone is not enough: "Lactaid Milk with Vitamin D 400 IU" and "Eggland's Best, 125 mg
+// Omega-3" are groceries. The pill's own form word is.
+const SUPPLEMENT_RE = /\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewables?)\b/i;
 const WANTS_SUPPLEMENT_RE = /\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\b/i;
 const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
 const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
@@ -293,9 +295,10 @@ export function relevance(query, product, opts = {}) {
   // Spreads", which contains "butter", and chicken thighs under "Chicken & Turkey".
   // A category that names a processed FORM covers only a shopper who asked for that form: "Dried
   // Bananas" filed Key Food's freeze-dried banana snack, and "Frozen Bananas" Kroger's frozen
-  // slices, as each store's price for "bananas" (the capture sweep). Only for fresh fruit:
+  // slices, as each store's price for "bananas" (the capture sweep). Only when the query's head is a
+  // fresh fruit (not "apple juice" or "tomato sauce"):
   // frozen raw chicken breasts are chicken breasts, frozen green beans are green beans.
-  const processedCat = FRESH_FRUIT_RE.test(normalize(query)) && [...catTok].some((w) => ['dried', 'dehydrated', 'freeze', 'canned', 'frozen'].includes(w) && !qt.includes(w));
+  const processedCat = FRESH_FRUIT_RE.test(qt[qt.length - 1] || '') && [...catTok].some((w) => ['dried', 'dehydrated', 'freeze', 'canned', 'frozen'].includes(w) && !qt.includes(w));
   const catCoversQuery =
     catTok.size > 0 && qt.every((t) => catTok.has(t)) && !processedCat && ![...catTok].some((w) => TRAPS.has(w) && !new Set(qt).has(w));
 
@@ -372,7 +375,8 @@ export function relevance(query, product, opts = {}) {
   if (WATER_DRINK_RE.test(nameNorm) && !WANTS_WATER_RE.test(normalize(query))) mult *= 0.3;
   // "Chicken a la King" is a frozen dinner and "Coffee a la Jaggery" (Kimbala, 10.2 oz, Dallas's
   // best coffee in the audit) a sweetened mix: "<the thing> a la <style>" names a prepared dish.
-  { const q = normalize(query); if (!/\ba la\b/.test(q) && nameNorm.includes(`${q} a la `)) mult *= 0.3; }
+  // Not "a la carte" (sold separately) or "a la mode".
+  { const q = normalize(query); if (!/\ba la\b/.test(q) && new RegExp(`(?:^|\\s)${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} a la (?!carte\\b|mode\\b)`).test(nameNorm)) mult *= 0.3; }
   if (/\bjuice\b/.test(normalize(query)) && JUICE_IMPOSTOR_RE.test(nameNorm) && !WANTS_JUICE_DRINK_RE.test(normalize(query))) mult *= 0.3;
   if (BABY_PRODUCT_RE.test(nameNorm) && !WANTS_BABY_RE.test(normalize(query))) mult *= 0.2;
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the

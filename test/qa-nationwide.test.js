@@ -172,8 +172,9 @@ test('control: real juice, juice cocktail and a shopper who asks for punch are u
 // failed all 14-20 chains behind it, and onboarding showed 3 stores instead of 13.
 import { PROBE_TIMEOUT } from '../src/directory.js';
 import { STOREFRONT_TIMEOUT } from '../src/adapters/instacart.js';
-test('DEFECT (Charlotte): the directory waits longer than one permitted Instacart request', () => {
-  assert.ok(PROBE_TIMEOUT > STOREFRONT_TIMEOUT, `${PROBE_TIMEOUT} ms must outlast a ${STOREFRONT_TIMEOUT} ms request`);
+test('DEFECT (Charlotte): the directory waits longer than one permitted Instacart request, retry included', () => {
+  // http.js request() retries once after a timeout, 500 ms later: two storefront timeouts of silence.
+  assert.ok(PROBE_TIMEOUT > 2 * STOREFRONT_TIMEOUT + 500, `${PROBE_TIMEOUT} ms must outlast two ${STOREFRONT_TIMEOUT} ms attempts`);
 });
 
 // DEFECT (Dallas audit): Kimbala "Coffee a la Jaggery", 10.2 oz, was Dallas's best coffee, and
@@ -186,6 +187,8 @@ test('DEFECT (Dallas): "<the thing> a la <style>" is a prepared dish, not the th
 test('control: asking for the dish finds it, and "La" in a brand is not a dish', () => {
   assert.ok(relevance('chicken a la king', { name: 'Stouffers Chicken a la King' }) >= RELEVANT);
   assert.ok(relevance('coffee', { name: 'La Colombe Coffee' }) >= RELEVANT);
+  // "a la carte" is how it is sold, not a dish.
+  assert.equal(relevance('chicken', { name: 'Chicken A La Carte Tenders' }), relevance('chicken', { name: 'Chicken Tenders' }));
 });
 
 // DEFECT (capture sweep, 616 searches in 7 states): a category naming a processed FORM was read as
@@ -219,4 +222,7 @@ test('control: apples, and a shopper who asks for the supplement, are unchanged'
   assert.ok(relevance('apples', { name: 'Gala Apples' }) >= RELEVANT);
   assert.equal(produceWeightLb('Gala Apple'), 0.4);
   assert.ok(relevance('apple pectin', { name: 'NaturesPlus Apple Pectin 500 mg Tablets' }) >= RELEVANT);
+  // A dose on a grocery is a nutrition claim, not a pill (the review of this rule).
+  assert.ok(relevance('milk', { name: 'Lactaid Milk with Vitamin D 400 IU' }) >= RELEVANT);
+  assert.ok(relevance('eggs', { name: "Eggland's Best Large Eggs, 125 mg Omega-3" }) >= RELEVANT);
 });

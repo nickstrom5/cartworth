@@ -37,7 +37,8 @@ const STORE_TIMEOUT = 35000;
 // v13: a "Dried/Frozen Bananas" category no longer makes a snack the shopper's bananas; -ade drinks
 // are not juice.
 // v14: supplements named after a food (apple pectin tablets) are not the food.
-const CACHE_VERSION = 14;
+// v15: a dose on a grocery ("Milk with Vitamin D 400 IU") is not a supplement; "a la carte" is not a dish.
+const CACHE_VERSION = 15;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

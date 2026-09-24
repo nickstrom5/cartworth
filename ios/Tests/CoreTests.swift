@@ -1732,6 +1732,7 @@ final class NationwideAuditTests: XCTestCase {
         XCTAssertNil(Units.produceWeightLb("NaturesPlus Apple Pectin 500 mg Tablets"))
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "apples", name: "Gala Apples"), Match.relevant)
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "apple pectin", name: "NaturesPlus Apple Pectin 500 mg Tablets"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "milk", name: "Lactaid Milk with Vitamin D 400 IU"), Match.relevant)
     }
 
     /// Charlotte: a lookup that failed is recorded as unresolved, not "no store". A directory cached

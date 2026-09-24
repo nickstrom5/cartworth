@@ -615,8 +615,11 @@ test('DEFECT (nationwide sweep): a rural ZIP with nothing in 25 miles is offered
 test('DEFECT (nationwide audit): lookups that timed out are named, and "Check again" adds what they find', { skip: SKIP }, async () => {
   let calls = 0;
   const base = { ...fx.directory, zip: '28205', city: 'Charlotte', state: 'NC', otherMerchants: [], maxMiles: 25 };
-  const partial = { ...base, chains: [{ id: 'aldi', name: 'ALDI', short: 'ALDI', status: 'shelf', hasAds: true, distance: 2.1, address: '1 A St' }], suggested: ['aldi'], unresolved: ['foodlion', 'harristeeter'] };
-  const full = { ...base, chains: [...partial.chains, { id: 'foodlion', name: 'Food Lion', short: 'Food Lion', status: 'shelf', hasAds: true, distance: 1.2, address: '2 B St' }], suggested: ['foodlion', 'aldi'], unresolved: [] };
+  // Costco was found the first time but is not switched on (not in `suggested`); the re-check must
+  // not switch on anything but what it found.
+  const costco = { id: 'costco', name: 'Costco', short: 'Costco', status: 'online', hasAds: true, distance: 6.3, address: '3 C St' };
+  const partial = { ...base, chains: [{ id: 'aldi', name: 'ALDI', short: 'ALDI', status: 'shelf', hasAds: true, distance: 2.1, address: '1 A St' }, costco], suggested: ['aldi'], unresolved: ['foodlion', 'harristeeter'] };
+  const full = { ...base, chains: [...partial.chains, { id: 'foodlion', name: 'Food Lion', short: 'Food Lion', status: 'shelf', hasAds: true, distance: 1.2, address: '2 B St' }], suggested: ['foodlion', 'aldi', 'costco'], unresolved: [] };
   await srv.close();
   srv = await startAppServer({ api: api({ 'GET /api/directory': () => (++calls === 1 ? partial : full) }) });
   try {
@@ -627,9 +630,10 @@ test('DEFECT (nationwide audit): lookups that timed out are named, and "Check ag
     await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
     await page.waitFor(`/2 more stores didn’t answer in time/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the short-list notice' });
     await page.eval(`[...document.querySelectorAll('button')].find((b) => /Check again/.test(b.textContent)).click()`);
-    await page.waitFor(`!/didn’t answer in time/.test(document.querySelector('.onboard').innerText) && /found 2 stores/.test(document.querySelector('.onboard').innerText)`, { what: 'the complete result' });
+    await page.waitFor(`!/didn’t answer in time/.test(document.querySelector('.onboard').innerText) && /found 3 stores/.test(document.querySelector('.onboard').innerText)`, { what: 'the complete result' });
     const stores = await page.eval(`JSON.parse(localStorage.getItem('cartworth:v1:settings')).stores`);
     assert.ok(stores.includes('foodlion') && stores.includes('aldi'), `the late store is switched on and ALDI kept: ${stores}`);
+    assert.ok(!stores.includes('costco'), `a store the re-check did not find is not switched on: ${stores}`);
   } finally {
     await srv.close();
     srv = await startAppServer({ api: api() });

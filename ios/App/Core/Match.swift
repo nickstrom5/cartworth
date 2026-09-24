@@ -93,7 +93,9 @@ enum Match {
     /// lands in "Turkey in Disguise (Hardcover)". Mirrors shared/match.js.
     /// Supplements named after a food ("NaturesPlus Apple Pectin 500 mg Tablets" was Dallas's best
     /// "apples"). Port of SUPPLEMENT_RE in shared/match.js.
-    private static let supplementRx = Rx("\\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewable)\\b|\\b\\d+(?:\\.\\d+)?\\s?(?:mg|mcg|iu)\\b")
+    /// A dose alone is not enough ("Milk with Vitamin D 400 IU" is milk); the pill's form word is.
+    private static let aLaRx = Rx("\\ba la\\b")
+    private static let supplementRx = Rx("\\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewables?)\\b")
     private static let wantsSupplementRx = Rx("\\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\\b")
     private static let nonGroceryRx = Rx("\\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\\b")
 
@@ -261,7 +263,7 @@ enum Match {
         let qsetAll = Set(qt)
         // A category that names a processed FORM covers only a shopper who asked for that form
         // ("Dried Bananas", "Frozen Bananas" were each store's "bananas"). Only for fresh fruit. Port of `processedCat` in shared/match.js.
-        let freshFruit = freshFruitRx.test(normalize(query))
+        let freshFruit = freshFruitRx.test(qt.last ?? "") // the head, not "apple juice"
         let processedCat = freshFruit && catTok.contains(where: { w in
             ["dried", "dehydrated", "freeze", "canned", "frozen"].contains(w) && !qt.contains(w)
         })
@@ -337,7 +339,8 @@ enum Match {
         if waterDrinkRx.test(nameNorm) && !wantsWaterRx.test(qNormForImitation) { mult *= 0.3 }
         // "Chicken a la King" is a frozen dinner, "Coffee a la Jaggery" a sweetened mix: "<the thing>
         // a la <style>" names a prepared dish. Port of the same rule in shared/match.js.
-        if !qNormForImitation.contains(" a la ") && !qNormForImitation.hasPrefix("a la ") && nameNorm.contains("\(qNormForImitation) a la ") { mult *= 0.3 }
+        // Not "a la carte" (sold separately) or "a la mode".
+        if !aLaRx.test(qNormForImitation) && Rx("(?:^|\\s)\(NSRegularExpression.escapedPattern(for: qNormForImitation)) a la (?!carte\\b|mode\\b)").test(nameNorm) { mult *= 0.3 }
         if juiceWordRx.test(qNormForImitation) && juiceImpostorRx.test(nameNorm) && !wantsJuiceDrinkRx.test(qNormForImitation) { mult *= 0.3 }
         if babyProductRx.test(nameNorm) && !wantsBabyRx.test(qNormForImitation) { mult *= 0.2 }
         // Books, cookware and apparel that happen to name a food. Applied to the whole name because

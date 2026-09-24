@@ -229,7 +229,7 @@ struct StorePickerList: View {
                     Section {
                         Text("\(pending.count) more \(pending.count == 1 ? "store" : "stores") didn’t answer in time, so this list may be short.")
                             .font(.subheadline)
-                        Button("Check again") { Task { await app.loadDirectory(fresh: true) } }
+                        Button("Check again") { Task { await app.recheckDirectory() } }
                             .disabled(app.isLoadingDirectory)
                     }
                 }

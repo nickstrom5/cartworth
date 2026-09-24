@@ -13,7 +13,8 @@ enum PriceSearch {
     // 8: "<thing> a la <style>" is a prepared dish (Chicken a la King is not chicken).
     // 9: a processed-form category (Dried/Frozen Bananas) does not cover the plain query; -ade is not juice.
     // 10: supplements named after a food (apple pectin tablets) are not the food.
-    static let cacheVersion = 10
+    // 11: a dose on a grocery (Vitamin D 400 IU) is not a supplement; "a la carte" is not a dish.
+    static let cacheVersion = 11
 
     struct Payload: Codable {
         var items: [Product]

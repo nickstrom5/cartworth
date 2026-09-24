@@ -92,9 +92,11 @@ export function Onboarding() {
     setRechecking(true);
     try {
       const before = new Set(getState().settings?.stores || []);
+      const waiting = new Set(getState().directory?.unresolved || []);
       const dir = await loadDirectory(true);
-      // Switching on what was found is what onboarding does anyway; keep every store already on.
-      const add = (dir?.suggested || []).filter((id) => !before.has(id));
+      // Switch on only what the re-check FOUND (a chain that had not answered): one the shopper
+      // switched off stays off, and every store already on stays on.
+      const add = (dir?.suggested || []).filter((id) => waiting.has(id) && !before.has(id));
       if (add.length) await saveSettings({ stores: [...before, ...add] }, { quiet: true });
     } finally {
       setRechecking(false);
