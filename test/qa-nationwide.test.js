@@ -92,3 +92,39 @@ test('control: lookalike names stay with their own chain or with none', () => {
   assert.equal(storeForMerchant('Town & Country'), null);
   assert.equal(storeForMerchant('Central Market'), null);
 });
+
+// DEFECT: when zippopotam.us failed (not a 404), the Nominatim fallback stored the state's NAME.
+// The catalog's state lists are postal codes, so the ZIP matched no regional chain, for the year
+// the geocode is cached: a Seattle shopper would have lost PCC, QFC and every other WA chain.
+import { geocodeZip, stateCode } from '../src/geo.js';
+import { chainsInState } from '../shared/catalog.js';
+
+test('DEFECT: a ZIP geocoded by the Nominatim fallback keeps its regional chains', async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes('zippopotam.us')) return new Response('down', { status: 503 });
+    if (u.includes('nominatim.openstreetmap.org')) {
+      return new Response(JSON.stringify([{ lat: '47.66', lon: '-122.34', address: { city: 'Seattle', state: 'Washington', 'ISO3166-2-lvl4': 'US-WA' } }]), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    throw new Error(`unexpected request ${u}`);
+  };
+  try {
+    const geo = await geocodeZip('98199');
+    assert.equal(geo.state, 'WA');
+    assert.ok(chainsInState(geo.state).some((c) => c.id === 'pcc'));
+  } finally { globalThis.fetch = realFetch; }
+});
+
+test('DEFECT: a state name without the ISO code is still read as its postal code', () => {
+  assert.equal(stateCode({ state: 'Washington' }), 'WA');
+  assert.equal(stateCode({ state: 'District of Columbia' }), 'DC');
+  assert.equal(stateCode({ state: 'Puerto Rico' }), 'PR');
+});
+
+test('control: an unknown state asks the national chains only, never every chain', () => {
+  assert.equal(stateCode({ state: 'CA' }), 'CA');
+  const st = stateCode({ state: 'Atlantis' });
+  assert.ok(st);
+  assert.ok(chainsInState(st).every((c) => c.states === 'US'));
+});

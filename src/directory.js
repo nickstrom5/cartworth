@@ -23,7 +23,7 @@ import * as kroger from './adapters/kroger.js';
 import { cached, peek, DAY, MIN } from './cache.js';
 import { cacheGetStale } from './db.js';
 import { withStallTimeout } from './http.js';
-import { geocodeZip } from './geo.js';
+import { geocodeZip, stateCode } from './geo.js';
 
 // Chains whose weekly ad we read from their OWN site rather than from Flipp's flyer list.
 // `hasAds` below is derived from Flipp, so without this Whole Foods was reported as having no
@@ -228,7 +228,8 @@ function previouslyNearby(key) {
 
 async function build(zip, { maxMiles, remembered = [] }) {
   const geo = await geocodeZip(zip);
-  const state = (geo.state || '').toUpperCase();
+  // stateCode: a geocode cached before the Nominatim fix may still carry the state's name.
+  const state = geo.state ? stateCode({ state: geo.state }) : '';
 
   // 1. Who publishes a circular for this ZIP? Flipp carries hardware stores, pharmacies and
   //    department stores too, so only grocery flyers count towards "stores near you".

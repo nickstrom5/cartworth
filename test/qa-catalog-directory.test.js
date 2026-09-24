@@ -531,3 +531,15 @@ test('DEFECT C2e: a Walmart answer cached before the fix is neither served with 
   assert.ok(r.items.length > 0 && r.items.every((p) => p.priceBasis === 'national'), 'Walmart’s chain-wide prices are still priced, as national');
   assert.ok(!/Antioch|Lone Tree|1801/.test(JSON.stringify(r.location)), `served with the canonical storefront attached: ${JSON.stringify(r.location)}`);
 });
+
+// DEFECT: a geocode made by the Nominatim fallback before the fix carries the state's NAME and is
+// cached for a year. Read as-is it matched no chain's state list, so Metro Market — 0.6 mi away,
+// fully priced, no circular this week — was never asked.
+test('DEFECT: a cached geocode that names its state ("Wisconsin") still finds the in-state chains', async () => {
+  seedZip('53211');
+  invalidate('geo:zip:53211');
+  cacheSet('geo:zip:53211', { ...GEO[53211], state: 'Wisconsin' }, 365 * DAY);
+  invalidate('dir:');
+  const c = byId(await directory('53211', { maxMiles: 25, fresh: true }));
+  assert.ok([STATUS.shelf, STATUS.online].includes(c.metromarket?.status), `Metro Market: ${c.metromarket?.status}`);
+});
