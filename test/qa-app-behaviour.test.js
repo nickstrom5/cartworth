@@ -506,3 +506,18 @@ test('DEFECT (nationwide sweep): a chain-wide price is not counted as a store fo
   await srv.close();
   srv = await startAppServer({ api: api() });
 });
+
+test('DEFECT (Apple-device review): the watch card headline says when its best price is an Instacart listing', { skip: SKIP }, async () => {
+  // The rows under the headline named the source, the "Best right now" number did not.
+  const watch = {
+    id: 'w-eggs', query: 'eggs', label: 'eggs', include: [], exclude: [], dim: 'count', displayUnit: 'dozen', target: null,
+    createdAt: Date.now() - 2 * DAY, lastChecked: Date.now(), lastError: null,
+    result: { dim: 'count', stores: { meijer: { name: 'Meijer Large Eggs', size: '12 ct', price: 2.49, unitPerBase: 2.49 / 12, priceBasis: 'online' }, aldi: { name: 'Goldhen Eggs', size: '12 ct', price: 2.79, unitPerBase: 2.79 / 12, priceBasis: 'shelf' } } },
+    points: [],
+  };
+  await page.viewport(1280, 900);
+  await openApp(page, srv.origin, { storage: { ...STORAGE(), 'cartworth:v1:watches': JSON.stringify([watch]) }, hash: '#/watch' });
+  await page.waitFor(`/best right now/i.test(document.body.innerText)`, { what: "the watch card" });
+  const head = await page.eval(`(() => { const h = [...document.querySelectorAll('.hero-label')].find((e) => /best right now/i.test(e.textContent)); return h.parentElement.innerText.replace(/\\s+/g, ' '); })()`);
+  assert.match(head, /Instacart/, head);
+});

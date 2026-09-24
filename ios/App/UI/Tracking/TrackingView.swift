@@ -222,6 +222,12 @@ struct WatchCard: View {
                     if status.atTarget { Badge(text: "at your target", kind: .good, symbol: "checkmark") }
                     else if let t = watch.target { Badge(text: "target \(Money.full(t))", kind: .neutral) }
                     if status.lowest { Badge(text: "lowest seen", kind: .good) }
+                    // Where the headline number came from (the owner's rule): an Instacart or
+                    // chain-wide listing is not the shelf price, and an estimate is not exact.
+                    if let b = watch.result?.stores[bestId] {
+                        if let tag = PriceProvenance.badge(b.priceBasis) { Badge(text: tag, kind: .outline) }
+                        if b.est { Badge(text: "est.", kind: .outline) }
+                    }
                 }
             } else if let err = watch.lastError {
                 Text(err).font(.footnote).foregroundStyle(.secondary)
@@ -234,7 +240,7 @@ struct WatchCard: View {
                     StoreTag(storeId: storeId)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(best.name).font(.caption).lineLimit(1)
-                        Text([best.size, Money.full(best.price) + (best.soldBy == .lb ? "/lb" : ""), best.onSale ? "sale" : nil].compactMap { $0 }.joined(separator: " · "))
+                        Text([best.size, Money.full(best.price) + (best.soldBy == .lb ? "/lb" : ""), best.onSale ? "sale" : nil, PriceProvenance.badge(best.priceBasis), best.est ? "est." : nil].compactMap { $0 }.joined(separator: " · "))
                             .font(.caption2).foregroundStyle(.secondary)
                     }
                     Spacer()
