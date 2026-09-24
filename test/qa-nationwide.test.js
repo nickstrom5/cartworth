@@ -53,3 +53,27 @@ test('control: a real failure still fails, and a store is still found', async ()
   const r = await withFetch(200, () => resolveStore('38750', { fresh: true }));
   assert.equal(r.id, '88888');
 });
+
+// ---------------------------------------------------------------------------
+// The nationwide staples audit (live, Sept 2026): LA, Houston, Manhattan, Miami, Seattle.
+// ---------------------------------------------------------------------------
+import { makeProduct } from '../src/normalize.js';
+import { sizeFromName } from '../shared/units.js';
+import { relevance, RELEVANT } from '../shared/match.js';
+
+test('DEFECT (LA): a milk named "Paper Quart" but listed as 1 gal is a size conflict, not $1.98 a gallon', () => {
+  const p = makeProduct({ storeId: 'walmart', id: 'ad', name: 'Alta Dena Whole Milk, Paper Quart', sizeText: '1 gal', price: 1.98 });
+  assert.ok(p.sizeConflict, 'the name says a quart');
+  assert.equal(p.unit.volume, undefined, 'no unit price from a size we cannot trust');
+  assert.equal(sizeFromName('Lucerne 2% Milk Gallon').base, 128);
+});
+
+test('control: a container word on something that is not a liquid is not a size', () => {
+  assert.equal(sizeFromName('Ziploc Quart Freezer Bags'), null);
+  assert.equal(sizeFromName("Ben & Jerry's Pint"), null);
+});
+
+test('DEFECT (LA): a surprise egg toy is not eggs', () => {
+  assert.ok(relevance('eggs', { name: 'Surprise Crystal Egg' }) < RELEVANT);
+  assert.ok(relevance('eggs', { name: "Eggland's Best Large Eggs" }) >= RELEVANT);
+});

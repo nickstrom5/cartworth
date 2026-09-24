@@ -26,7 +26,7 @@ const TRAPS = new Set([
   'drink', 'juice', 'smoothie', 'shake', 'yogurt', 'creamer', 'cheese', 'noodle', 'pasta', 'ramen', 'ricotta',
   'soap', 'shampoo', 'conditioner', 'lotion', 'candle', 'freshener', 'spray', 'wipe', 'detergent', 'cleaner', 'filter', 'mug',
   'treat', 'dog', 'cat', 'pet', 'kibble', 'bone', 'infant', 'toddler', 'gummy', 'gummies', 'vitamin', 'supplement',
-  'extract', 'syrup', 'spread', 'dip', 'jam', 'jelly', 'preserve', 'pudding', 'gelatin', 'hash', 'fry', 'popsicle', 'bar', 'bite', 'chip', 'crisp',
+  'extract', 'syrup', 'spread', 'dip', 'jam', 'jelly', 'preserve', 'pudding', 'gelatin', 'hash', 'fry', 'surprise', 'popsicle', 'bar', 'bite', 'chip', 'crisp',
   'nugget', 'tender', 'patty', 'burger', 'sausage', 'jerky', 'salad', 'sandwich', 'wrap', 'pizza', 'meal', 'entree', 'kit',
   // Compound-modifier nouns: "peanut butter", "cream cheese", "macaroni and cheese", "beef base",
   // "butter lettuce". Without these the head noun matched and the product scored as a real hit.

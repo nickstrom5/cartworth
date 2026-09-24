@@ -1673,3 +1673,12 @@ extension UnitPriceFormatTests {
         XCTAssertEqual(o.whenText, "is tomorrow")
     }
 }
+
+/// The nationwide staples audit (mirrors test/qa-nationwide.test.js).
+final class NationwideAuditTests: XCTestCase {
+    func testDefectBareQuartOnALiquid() {
+        XCTAssertEqual(Units.sizeFromName("Alta Dena Whole Milk, Paper Quart")?.base, 32)
+        XCTAssertNil(Units.sizeFromName("Ziploc Quart Freezer Bags"))
+        XCTAssertLessThan(Match.relevance(query: "eggs", name: "Surprise Crystal Egg"), Match.relevant)
+    }
+}

@@ -327,7 +327,13 @@ export function sizeFromName(name) {
     if (p && !p.perWeight) return p.countAfter ? packIfContainers(p, name) : p;
   }
   const m = String(name).match(new RegExp(`(\\d+\\s*(?:x|pk|pack|ct)?\\s*(?:\\/|x|-)?\\s*)?${NUM}\\s*(${UNIT_PATTERN})\\b`, 'i'));
-  return m ? parseSize(m[0]) : null;
+  if (m) return parseSize(m[0]);
+  // A container word with no number: "Alta Dena Whole Milk, Paper Quart" is one quart. Walmart listed
+  // it as "1 gal" at $1.98 and, with the name read as having no size, it became Los Angeles's best
+  // milk at $1.98 a GALLON (the nationwide audit). Only for liquids: a "Quart Freezer Bag" is not.
+  const bare = /\b(gallon|quart|pint)\b/i.exec(String(name));
+  if (bare && looksLiquid(name)) return parseSize(`1 ${bare[1]}`);
+  return null;
 }
 
 /** "Yogurt Cups, 5.3 oz, 12 Count": the name counts containers, so the count-after reading is N of M. */

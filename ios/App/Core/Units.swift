@@ -416,6 +416,9 @@ enum Units {
             if let s = parseSize(p), !s.perWeight { return packIfContainers(s, name) }
         }
         if let m = nameSizeRx.match(name), let whole = m[0] { return parseSize(whole) }
+        // A container word with no number ("Alta Dena Whole Milk, Paper Quart") is one of it, for
+        // liquids only. Mirrors sizeFromName in shared/units.js.
+        if looksLiquid(name), let m = Rx("\\b(gallon|quart|pint)\\b").match(name), let w = m[1] { return parseSize("1 \(w)") }
         return nil
     }
 
