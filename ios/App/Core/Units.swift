@@ -426,7 +426,7 @@ enum Units {
     /// as a weight it dropped out of a heavy-cream search compared by volume (Costco's Maola quart,
     /// the cheapest in Chicago, among 14 captured listings). Not whipped cream or table cream,
     /// which are sold by NET WT. Mirrors LIQUID_RE in shared/units.js.
-    private static let liquidRx = Rx("\\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half)\\b")
+    private static let liquidRx = Rx("\\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half|egg ?nog|buttermilk)\\b")
     // "Cut Sweet Potatoes in Syrup", "Tuna in Water": what follows "in" is the packing medium, not
     // the product, and the can is still sold by NET WEIGHT. Without this, two 40 oz cans of the
     // same cut sweet potato at the same $4.99 on one Mariano's shelf landed in different

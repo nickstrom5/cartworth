@@ -1,5 +1,6 @@
 // Formatting helpers.
 import { DISPLAY_UNITS } from '/shared/units.js';
+import { calendarDaysUntil } from '/shared/deals.js';
 
 export function money(n, { cents = true } = {}) {
   if (n == null || !Number.isFinite(n)) return '—';
@@ -74,10 +75,12 @@ export function dateRange(a, b) {
 export function endsLabel(validTo) {
   if (!validTo) return null;
   const to = Date.parse(validTo);
-  const days = (to - Date.now()) / 86400000;
-  if (days < 0) return 'Ended';
-  if (days < 1) return 'Ends today';
-  if (days < 2) return 'Ends tomorrow';
+  if (Number.isNaN(to)) return null;
+  const now = Date.now();
+  if (to < now) return 'Ended';
+  const days = calendarDaysUntil(to, now);
+  if (days === 0) return 'Ends today';
+  if (days === 1) return 'Ends tomorrow';
   if (days < 7) return `Ends ${weekday(to)}`;
   return `Thru ${shortDate(to)}`;
 }

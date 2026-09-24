@@ -162,8 +162,8 @@ struct DealsView: View {
                         .padding(.bottom, 4)
                     }
 
-                    if let occasion = Seasonal.upcoming(within: 21).first {
-                        let matches = model.matches(terms: occasion.keywords, week: week).flatMap(\.value)
+                    ForEach(Seasonal.featured()) { occasion in
+                        let matches = model.matchingDeals(terms: occasion.keywords, week: week)
                         NavigationLink { OccasionView(occasion: occasion) } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: occasion.symbol).font(.title3).foregroundStyle(Color.accentColor)
@@ -496,11 +496,4 @@ struct DealMiniCard: View {
     }
 }
 
-func endsText(_ to: Date) -> String {
-    let days = Calendar.current.dateComponents([.day], from: Date(), to: to).day ?? 0
-    if days < 0 { return "Ended" }
-    if days == 0 { return "Ends today" }
-    if days == 1 { return "Ends tomorrow" }
-    if days < 7 { return "Ends \(to.formatted(.dateTime.weekday(.abbreviated)))" }
-    return "Thru \(to.formatted(.dateTime.month(.abbreviated).day()))"
-}
+func endsText(_ to: Date) -> String { SaleDates.endsText(to) }

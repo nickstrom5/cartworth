@@ -104,8 +104,13 @@ const TRAPS = new Set([
  * lands in "Turkey in Disguise (Hardcover)". Sam's Club returned that children's book at 0.87 for
  * a turkey search, and Meijer returned an "Owala ... Stainless Steel Bottle" at $28.66/lb for
  * marshmallows. Matching the whole name sidesteps the position rules entirely.
+ *
+ * Holiday decor joined the list in the Christmas run: Walmart's "LED Light-Up Christmas Candy Cane
+ * Lawn Stakes" (10 ct, $12.88) was Chicago's best price for candy canes. Not 'christmas tree' (Little
+ * Debbie's Christmas Tree Cakes are food), 'decorations' (cake decorations are baking aisle) or
+ * 'stocking' (a candy-filled stocking is candy).
  */
-const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt)\b/i;
+const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater)\b/i;
 
 /**
  * Qualifiers that turn a trap noun back into an ordinary description of the searched product.
@@ -117,7 +122,10 @@ const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?r
  * Only the occurrence immediately after the qualifier is forgiven, so "Sweet Cream ICE Cream" is
  * still trapped on its second 'cream'.
  */
-const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']) };
+// From the Christmas run: "Sprinkles Mix" is sprinkles; "Ocean Spray" is a brand, not a household
+// spray (its Jellied Cranberry Sauce scored 0.37 and was refused in every cranberry search); and a
+// "Juice Cocktail" is juice, not alcohol.
+const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['sprinkle']), spray: new Set(['ocean']), cocktail: new Set(['juice']) };
 /** The mirror image: a trap noun forgiven when the word right AFTER it names what it is. "King
  * Oyster Mushrooms" are mushrooms, so 'oyster' must not bury them in a mushroom search. */
 const BENIGN_BEFORE = { oyster: new Set(['mushroom']) };
@@ -136,6 +144,11 @@ const STORAGE_STATE = new Set(['frozen', 'chilled', 'refrigerated']);
 
 // Flavors make it a different product for price comparison ("chocolate milk" vs "milk").
 const FLAVOR = new Set(['chocolate', 'strawberry', 'vanilla', 'banana', 'caramel', 'mocha', 'cinnamon', 'honey', 'maple', 'pumpkin', 'peppermint', 'cookie', 'cherry', 'blueberry', 'raspberry', 'peach', 'mango', 'coconut', 'hazelnut', 'flavored', 'flavor']);
+// Flavours that ARE the product when the shopper names it: candy canes are peppermint, fudge and
+// brownies are chocolate. Without this, "Brach's Peppermint Candy Canes" scored 0.46 against
+// "candy canes" and every real cane was refused, leaving a light-up lawn stake as the best price
+// (the Christmas run). Keyed by a word of the query.
+const INHERENT_FLAVOR = { cane: new Set(['peppermint']), bark: new Set(['peppermint', 'chocolate']), fudge: new Set(['chocolate']), brownie: new Set(['chocolate']), truffle: new Set(['chocolate']), cocoa: new Set(['chocolate']) };
 
 // Qualifiers that are just variants (never penalized).
 const SOFT = new Set(['organic', 'lactose', 'free', 'ultra', 'filtered', 'reduced', 'fat', 'low', 'whole', 'skim', 'natural', 'grass', 'fed', 'pasture', 'raised', 'cage', 'large', 'medium', 'small', 'extra', 'jumbo', 'grade', 'fresh', 'boneless', 'skinless', 'lean', 'ground']);
@@ -209,6 +222,12 @@ export function queryTokens(q) {
  * opts: { include:[], exclude:[] }
  */
 // Imitation markers: a product that says it merely tastes like the thing is not the thing.
+// Flavoured waters named after the drink they taste of. Whole Foods' "Spiced Cider Sparkling Water"
+// was Chicago's best price for sparkling cider in the Christmas run, "63% less" than real cider.
+// Whole-name, because 'water' alone is not a trap: Carr's Table Water Crackers are crackers.
+const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
+const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
+
 const IMITATION_RE = /\btastes?\s+like\b|\bimitation\b|\b(?:butter|cheese|milk|meat|crab)[- ]style\b|\balternative to\b|\bsubstitute\b/i;
 // ...unless the shopper is looking for the imitation category itself, in which case a name like
 // "Tastes Like Butter Margarine" is exactly what they asked for.
@@ -308,7 +327,7 @@ export function relevance(query, product, opts = {}) {
       // product and must score the same. Anchoring these to the head noun meant word order alone
       // changed the score by a factor of two.
       if (ALT_BASE.has(w)) alt += 1;
-      else if (FLAVOR.has(w)) flavor += 1;
+      else if (FLAVOR.has(w) && !qt.some((q) => INHERENT_FLAVOR[q]?.has(w))) flavor += 1;
       // When the retailer filed the product under exactly what was searched, a storage word in the
       // name describes a variant OF that category rather than a different product. "Jennie-O Whole
       // Frozen Turkey" in category "Frozen Whole Turkey" scored 0.510 against a 0.55 cut purely
@@ -325,6 +344,7 @@ export function relevance(query, product, opts = {}) {
   // "Tastes Like Butter" is margarine. Only penalize when the shopper did not ask for it.
   const wantsImitation = IMITATION_RE.test(normalize(query)) || IMITATION_CATEGORY_RE.test(normalize(query));
   if (IMITATION_RE.test(nameNorm) && !wantsImitation) mult *= 0.3;
+  if (WATER_DRINK_RE.test(nameNorm) && !WANTS_WATER_RE.test(normalize(query))) mult *= 0.3;
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the
   // position rules deliberately look past "in"/"with" phrases, which is where the giveaway sits.
   if (NON_GROCERY_RE.test(nameNorm)) mult *= 0.15;

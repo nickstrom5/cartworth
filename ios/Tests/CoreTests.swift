@@ -49,6 +49,11 @@ final class UnitsTests: XCTestCase {
         XCTAssertEqual(yogurt?.dim, .weight)
         let beef = Units.coerceLiquid(size("16 oz"), name: "Ground Beef")
         XCTAssertEqual(beef?.dim, .weight)
+        // The Christmas run: a 64 oz carton of eggnog was compared per pound, not per gallon.
+        XCTAssertEqual(Units.coerceLiquid(size("64 oz"), name: "Southern Comfort Traditional Eggnog")?.dim, .volume)
+        XCTAssertEqual(Units.coerceLiquid(size("32 oz"), name: "Borden Egg Nog")?.dim, .volume)
+        XCTAssertEqual(Units.coerceLiquid(size("32 oz"), name: "Dean's Cultured Lowfat Buttermilk")?.dim, .volume)
+        XCTAssertEqual(Units.coerceLiquid(size("7 oz"), name: "Eggnog Cookies")?.dim, .weight)
     }
 
     func testSizeFromName() {
@@ -1498,5 +1503,78 @@ final class NonFoodTrapTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(score(q, n), Match.relevant, "\(q) -> \(n) was rejected")
         }
         XCTAssertGreaterThanOrEqual(score("body wash", "Dove Body Wash"), Match.relevant)
+    }
+}
+
+/// The Christmas run (mirrors test/qa-christmas-dates.test.js): sale and weekly-ad dates are calendar
+/// days, read in the shopper's time zone. "DEFECT" cases failed before the fix.
+final class ChristmasDatesTests: XCTestCase {
+    private var chicago: Calendar = {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "America/Chicago")!
+        return c
+    }()
+    private func at(_ y: Int, _ mo: Int, _ d: Int, _ h: Int, _ mi: Int = 0) -> Date {
+        chicago.date(from: DateComponents(year: y, month: mo, day: d, hour: h, minute: mi))!
+    }
+    private func ends(_ to: Date?, _ now: Date) -> String { SaleDates.endsText(to!, now: now, calendar: chicago) }
+
+    func testDefectWholeFoodsSaleStillOnDuringItsLastDay() {
+        let to = SaleDates.saleDay("2026-12-29T06:00:00Z", end: true, calendar: chicago)
+        XCTAssertEqual(ends(to, at(2026, 12, 29, 10)), "Ends today")
+        XCTAssertEqual(ends(to, at(2026, 12, 28, 10)), "Ends tomorrow")
+        XCTAssertEqual(ends(to, at(2026, 12, 30, 0, 30)), "Ended")
+        // September's page sends 05:00Z for the same wall-clock midnight: same last day.
+        XCTAssertEqual(SaleDates.saleDay("2026-09-29T05:00:00Z", end: true, calendar: chicago), chicago.date(from: DateComponents(year: 2026, month: 9, day: 29, hour: 23, minute: 59, second: 59)))
+    }
+
+    func testDefectFlippAdIsItsPrintedDays() {
+        let from = SaleDates.wallClock("2026-12-30T00:00:00-05:00", calendar: chicago)!
+        XCTAssertEqual(chicago.component(.day, from: from), 30, "an Eastern-time start is not the day before in Chicago")
+        let xmasEve = SaleDates.wallClock("2026-12-24T23:59:59-05:00", calendar: chicago)
+        XCTAssertEqual(ends(xmasEve, at(2026, 12, 24, 23, 15)), "Ends today")
+        XCTAssertEqual(ends(xmasEve, at(2026, 12, 23, 23, 30)), "Ends tomorrow")
+        XCTAssertEqual(ends(xmasEve, at(2026, 12, 25, 0, 1)), "Ended")
+    }
+
+    func testControlNewYear() {
+        let to = SaleDates.wallClock("2027-01-05T23:59:59-05:00", calendar: chicago)
+        XCTAssertEqual(ends(to, at(2026, 12, 20, 12)), "Thru Jan 5")
+        XCTAssertEqual(SaleDates.calendarDaysUntil(at(2027, 1, 1, 10), now: at(2026, 12, 31, 22), calendar: chicago), 1)
+        XCTAssertNil(SaleDates.wallClock("Dec 24"))
+        XCTAssertNil(SaleDates.saleDay(nil, end: true))
+    }
+}
+
+/// The Christmas basket (mirrors test/qa-christmas-pricing.test.js).
+final class ChristmasPricingTests: XCTestCase {
+    private func score(_ q: String, _ name: String) -> Double { Match.relevance(query: q, name: name) }
+
+    func testDefectDecorIsNotGroceries() {
+        XCTAssertLessThan(score("candy canes", "Holiday Time Indoor/Outdoor LED Light-Up Christmas Candy Cane Lawn Stakes - Red & White"), Match.relevant)
+        XCTAssertLessThan(score("gingerbread", "Gingerbread Man Scented Candle, 14 oz"), Match.relevant)
+    }
+
+    func testDefectRealCandyCanesMatch() {
+        XCTAssertGreaterThanOrEqual(score("candy canes", "Brach's Peppermint Candy Canes, 12 ct"), Match.relevant)
+        XCTAssertLessThan(score("candy canes", "Cherry Candy Canes"), Match.relevant)
+        XCTAssertLessThan(score("milk", "Peppermint Milk"), Match.relevant)
+    }
+
+    func testDefectSprinklesMix() {
+        XCTAssertGreaterThanOrEqual(score("sprinkles", "Wilton Christmas Sprinkles Mix"), Match.relevant)
+        XCTAssertLessThan(score("sprinkles", "Betty Crocker Cake Mix Sprinkles"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("christmas tree cakes", "Little Debbie Christmas Tree Cakes, 10 ct"), Match.relevant)
+    }
+}
+
+extension ChristmasPricingTests {
+    func testDefectFlavouredWaterAndOceanSpray() {
+        XCTAssertLessThan(score("sparkling cider", "Spiced Cider Sparkling Water 12pk"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("sparkling cider", "Martinelli's Sparkling Cider, 25.4 fl oz"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("crackers", "Carr's Table Water Crackers"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("cranberry sauce", "Ocean Spray Jellied Cranberry Sauce"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("cranberry juice", "Ocean Spray Cranberry Juice Cocktail"), Match.relevant)
+        XCTAssertLessThan(score("cranberry juice", "Cranberry Vodka Cocktail"), Match.relevant)
     }
 }

@@ -91,9 +91,13 @@ enum Match {
     /// The position-aware trap loop cannot see these: it skips any word sitting behind an "in" or
     /// "with" phrase (so "tuna in oil" is not penalised), and that is exactly where the giveaway
     /// lands in "Turkey in Disguise (Hardcover)". Mirrors shared/match.js.
-    private static let nonGroceryRx = Rx("\\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt)\\b")
+    private static let nonGroceryRx = Rx("\\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater)\\b")
 
     /// Imitation markers: a product that says it merely tastes like the thing is not the thing.
+    /// Flavoured waters named after the drink they taste of ("Spiced Cider Sparkling Water" is not
+    /// sparkling cider). Mirrors WATER_DRINK_RE / WANTS_WATER_RE in shared/match.js.
+    private static let waterDrinkRx = Rx("\\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\\b|\\bseltzer\\b|\\bla croix\\b")
+    private static let wantsWaterRx = Rx("\\bwater\\b|\\bseltzer\\b|\\bla croix\\b")
     private static let imitationRx = Rx("\\btastes?\\s+like\\b|\\bimitation\\b|\\b(?:butter|cheese|milk|meat|crab)[- ]style\\b|\\balternative to\\b|\\bsubstitute\\b")
     /// ...unless the shopper is looking for the imitation category itself, in which case a name
     /// like "Tastes Like Butter Margarine" is exactly what they asked for.
@@ -104,7 +108,8 @@ enum Match {
     /// "Sweet Cream Butter" is the standard US label for plain butter — Land O'Lakes, Kirkland and
     /// every ALDI store brand use it — but 'cream' is a trap so that "cream cheese" does not score
     /// as cheese. Plain butter scored 0.40 and lost to spreadable blends at 0.97.
-    private static let benignAfter: [String: Set<String>] = ["cream": ["sweet", "whipping"]]
+    /// From the Christmas run: "Sprinkles Mix" is sprinkles, "Ocean Spray" is a brand, a "Juice Cocktail" is juice.
+    private static let benignAfter: [String: Set<String>] = ["cream": ["sweet", "whipping"], "mix": ["sprinkle"], "spray": ["ocean"], "cocktail": ["juice"]]
     /// A trap noun forgiven when the next word names what it is: "King Oyster Mushrooms" are
     /// mushrooms. Mirrors BENIGN_BEFORE in shared/match.js.
     private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"]]
@@ -119,6 +124,9 @@ enum Match {
     private static let mild: Set<String> = ["frozen", "dried", "liquid", "breaded", "stuffed", "rotisserie", "cooked", "grilled", "fried", "marinated", "seasoned", "smoked", "glazed", "sweetened", "mini", "snack", "kids"]
     /// Flavors make it a different product for comparison ("chocolate milk" vs "milk").
     private static let flavor: Set<String> = ["chocolate", "strawberry", "vanilla", "banana", "caramel", "mocha", "cinnamon", "honey", "maple", "pumpkin", "peppermint", "cookie", "cherry", "blueberry", "raspberry", "peach", "mango", "coconut", "hazelnut", "flavored", "flavor"]
+    /// Flavours that ARE the product when the shopper names it: candy canes are peppermint. Keyed by
+    /// a word of the query. Mirrors INHERENT_FLAVOR in shared/match.js.
+    private static let inherentFlavor: [String: Set<String>] = ["cane": ["peppermint"], "bark": ["peppermint", "chocolate"], "fudge": ["chocolate"], "brownie": ["chocolate"], "truffle": ["chocolate"], "cocoa": ["chocolate"]]
     /// Qualifiers that are just variants (never penalized).
     private static let soft: Set<String> = ["organic", "lactose", "free", "ultra", "filtered", "reduced", "fat", "low", "whole", "skim", "natural", "grass", "fed", "pasture", "raised", "cage", "large", "medium", "small", "extra", "jumbo", "grade", "fresh", "boneless", "skinless", "lean", "ground"]
     /// Product words that imply another ("ground chuck" is ground beef).
@@ -289,7 +297,7 @@ enum Match {
                 // same product and must score the same. Anchoring these to the head noun meant
                 // word order alone changed the score by a factor of two.
                 if altBase.contains(w) { alt += 1 }
-                else if flavor.contains(w) { flavorN += 1 }
+                else if flavor.contains(w) && !qt.contains(where: { inherentFlavor[$0]?.contains(w) == true }) { flavorN += 1 }
                 // When the retailer filed the product under exactly what was searched, a storage
                 // word in the name describes a variant OF that category rather than a different
                 // product. "Jennie-O Whole Frozen Turkey" in category "Frozen Whole Turkey" scored
@@ -305,6 +313,7 @@ enum Match {
         let qNormForImitation = normalize(query)
         let wantsImitation = imitationRx.test(qNormForImitation) || imitationCategoryRx.test(qNormForImitation)
         if imitationRx.test(nameNorm) && !wantsImitation { mult *= 0.3 }
+        if waterDrinkRx.test(nameNorm) && !wantsWaterRx.test(qNormForImitation) { mult *= 0.3 }
         // Books, cookware and apparel that happen to name a food. Applied to the whole name because
         // the position rules deliberately look past "in"/"with" phrases, which is where the
         // giveaway sits.

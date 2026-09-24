@@ -147,4 +147,14 @@ final class DealsModel {
         }
         return out
     }
+
+    /// Deals matching any of the terms, each deal once, best first. `matches(terms:)` is keyed by
+    /// term, so "Butter Cookies" came back under both "butter" and "cookies": the Christmas card
+    /// counted it twice, and OccasionView's ForEach got two rows with one id.
+    func matchingDeals(terms: [String], week: AdWeek = .current) -> [Deal] {
+        var seen = Set<String>()
+        return matches(terms: terms, week: week).values.joined()
+            .filter { seen.insert($0.id).inserted }
+            .sorted { $0.score != $1.score ? $0.score > $1.score : $0.id < $1.id }
+    }
 }

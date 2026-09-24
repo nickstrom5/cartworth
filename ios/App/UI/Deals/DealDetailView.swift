@@ -105,7 +105,7 @@ struct OccasionView: View {
     @State private var model = DealsModel.shared
     @State private var added = false
 
-    private var matches: [Deal] { model.matches(terms: occasion.keywords).flatMap(\.value).sorted { $0.score > $1.score } }
+    private var matches: [Deal] { model.matchingDeals(terms: occasion.keywords) }
 
     var body: some View {
         ScrollView {

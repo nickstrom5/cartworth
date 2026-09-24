@@ -9,6 +9,7 @@ import { cached, HOUR, DAY } from '../cache.js';
 import { geocodeZip, miles } from '../geo.js';
 import { makeProduct, titleCase } from '../normalize.js';
 import { parseSize } from '../../shared/units.js';
+import { saleDay, wallClock } from '../../shared/deals.js';
 
 const BASE = 'https://www.wholefoodsmarket.com';
 const round2 = (n) => (n == null || !Number.isFinite(n) ? null : Math.round(n * 100) / 100);
@@ -104,7 +105,11 @@ function splitNameSize(name) {
  */
 export function toProduct(r, { storeId = null, rank = 0, total = 1, now = Date.now() } = {}) {
   const [name, sizeText] = splitNameSize(r.name);
-  const saleActive = r.salePrice != null && (!r.saleEndDate || Date.parse(r.saleEndDate) >= now) && (!r.saleStartDate || Date.parse(r.saleStartDate) <= now + 12 * HOUR);
+  // Sale dates are calendar days written as UTC ("2026-12-24T23:59:59Z" is the whole of Christmas
+  // Eve, not 5:59 pm Central): read them as wall-clock times, as the weekly ads are.
+  const saleStart = wallClock(r.saleStartDate);
+  const saleEnd = wallClock(r.saleEndDate);
+  const saleActive = r.salePrice != null && (!saleEnd || Date.parse(saleEnd) >= now) && (!saleStart || Date.parse(saleStart) <= now + 12 * HOUR);
   const regular = r.regularPrice ?? null;
 
   // A multi-buy arrives as the TOTAL, not the each price: "2 for $7.78" is salePrice 7.78 with
@@ -143,7 +148,7 @@ export function toProduct(r, { storeId = null, rank = 0, total = 1, now = Date.n
     soldBy: byLb ? 'lb' : 'each',
     onSale: sale != null,
     promo: promo.join(' · ') || null,
-    saleEnds: saleActive ? r.saleEndDate : null,
+    saleEnds: saleActive ? saleEnd : null,
     image: r.imageThumbnail || null,
     url: `${BASE}/product/${r.slug}`,
     tags: [r.isLocal ? 'local' : null, /organic/i.test(r.name) ? 'organic' : null, /365/i.test(r.brand || '') ? 'storeBrand' : null].filter(Boolean),
@@ -168,32 +173,37 @@ export async function search(query, zip, { limit = 40 } = {}) {
   return { items, location: { name: store.name, address: store.address, distance: store.distance, id: store.id, priceNote: 'Store shelf prices; Prime price shown separately' } };
 }
 
+/** One promotion from the sales page's embedded data, as a sale item. */
+export function saleItem(p, storeId) {
+  return {
+    id: `wfm-${p.promotionId}`,
+    storeId: 'wholefoods',
+    name: [p.originBrandName, p.productName].filter(Boolean).join(' '),
+    brand: p.originBrandName || '',
+    description: [p.packageSize, p.headline && p.headline !== p.productName ? p.headline : null].filter(Boolean).join(' · '),
+    priceText: p.salePrice || '',
+    regularText: p.regularPrice || '',
+    memberText: p.primePrice || '',
+    image: p.productImage || null,
+    validFrom: saleDay(p.startDate),
+    validTo: saleDay(p.endDate, { end: true }),
+    url: `${BASE}/sales-flyer?store-id=${storeId}`,
+    disclaimer: p.description || '',
+    rank: p.rank ?? null,
+    tier: p.tier || null,
+  };
+}
+
 /** Weekly sales flyer promotions for the store. */
 export async function sales(zip) {
   const store = await resolveStore(zip);
   if (!store || store.none) return { store: null, items: [] };
-  return cached(`wfm:sales:${store.id}`, 6 * HOUR, async () => {
+  return cached(`wfm:sales:v2:${store.id}`, 6 * HOUR, async () => {
     const html = (await request(`${BASE}/sales-flyer?store-id=${store.id}`, { timeout: 15000, okOnly: true, headers: { accept: 'text/html' } })).text;
     const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
     if (!m) throw new Error('Whole Foods sales flyer format changed');
     const pp = JSON.parse(m[1])?.props?.pageProps || {};
-    const items = (pp.promotions || []).map((p) => ({
-      id: `wfm-${p.promotionId}`,
-      storeId: 'wholefoods',
-      name: [p.originBrandName, p.productName].filter(Boolean).join(' '),
-      brand: p.originBrandName || '',
-      description: [p.packageSize, p.headline && p.headline !== p.productName ? p.headline : null].filter(Boolean).join(' · '),
-      priceText: p.salePrice || '',
-      regularText: p.regularPrice || '',
-      memberText: p.primePrice || '',
-      image: p.productImage || null,
-      validFrom: p.startDate || null,
-      validTo: p.endDate || null,
-      url: `${BASE}/sales-flyer?store-id=${store.id}`,
-      disclaimer: p.description || '',
-      rank: p.rank ?? null,
-      tier: p.tier || null,
-    }));
+    const items = (pp.promotions || []).map((p) => saleItem(p, store.id));
     return { store: { id: store.id, name: store.name }, items };
   });
 }

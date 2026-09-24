@@ -4,7 +4,10 @@ import Foundation
 enum PriceSearch {
     // 4: "M oz, N ct" read as the package; a listing whose own unit line contradicts its size is a
     // size conflict; Instacart pack lines are now passed through. Each changes a price.
-    static let cacheVersion = 4
+    // 5: Whole Foods sale dates are calendar days (SaleDates.wallClock); a sale was dropped at 7 pm
+    // Central on its last day. Eggnog and buttermilk are liquids (Units.liquidRx),
+    // and the Christmas-run matcher fixes change which listing wins.
+    static let cacheVersion = 5
 
     struct Payload: Codable {
         var items: [Product]

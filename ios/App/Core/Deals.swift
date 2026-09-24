@@ -219,3 +219,48 @@ enum GroceryCategory: String, CaseIterable, Codable, Identifiable {
         return .other
     }
 }
+
+/// Sale and weekly-ad dates as calendar days. Mirrors saleDay / wallClock / calendarDaysUntil in
+/// shared/deals.js and endsLabel in public/js/format.js.
+enum SaleDates {
+    /// Flipp states every ad in Eastern time ("2026-12-24T23:59:59-05:00" for a Chicago store's
+    /// Christmas Eve). The circular means that wall-clock day wherever the store is, so the offset is
+    /// dropped and the date and time are read in the shopper's time zone.
+    static func wallClock(_ s: String?, calendar: Calendar = .current) -> Date? {
+        guard let s, let m = Rx("^(\\d{4})-(\\d{2})-(\\d{2})(?:T(\\d{2}):(\\d{2})(?::(\\d{2}))?)?").match(s) else { return nil }
+        let n = { (i: Int) -> Int? in i < m.count ? m[i].flatMap { Int($0) } : nil }
+        guard let y = n(1), let mo = n(2), let d = n(3) else { return nil }
+        return calendar.date(from: DateComponents(year: y, month: mo, day: d, hour: n(4) ?? 0, minute: n(5) ?? 0, second: n(6) ?? 0))
+    }
+
+    /// Whole Foods encodes "Valid 12/23 - 12/29" as the instants those days START in Central time,
+    /// so its end date is 12:00 am on the last day. Keep the UTC calendar date (the same day for any
+    /// US time zone): the first day's start, or the last second of the last day, in local time.
+    static func saleDay(_ s: String?, end: Bool, calendar: Calendar = .current) -> Date? {
+        guard let s, let t = ISO8601DateFormatter().date(from: s) else { return nil }
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = TimeZone(identifier: "UTC")!
+        var c = utc.dateComponents([.year, .month, .day], from: t)
+        c.hour = end ? 23 : 0
+        c.minute = end ? 59 : 0
+        c.second = end ? 59 : 0
+        return calendar.date(from: c)
+    }
+
+    /// Days on the calendar from `now` to `to`: 0 today, 1 tomorrow. Not hours left: at 11:30 pm on
+    /// Dec 23 an ad that runs through Christmas Eve ends tomorrow.
+    static func calendarDaysUntil(_ to: Date, now: Date = Date(), calendar: Calendar = .current) -> Int {
+        calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: to)).day ?? 0
+    }
+
+    static func endsText(_ to: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
+        if to < now { return "Ended" }
+        let days = calendarDaysUntil(to, now: now, calendar: calendar)
+        var style = Date.FormatStyle.dateTime
+        style.timeZone = calendar.timeZone
+        if days == 0 { return "Ends today" }
+        if days == 1 { return "Ends tomorrow" }
+        if days < 7 { return "Ends \(to.formatted(style.weekday(.abbreviated)))" }
+        return "Thru \(to.formatted(style.month(.abbreviated).day()))"
+    }
+}

@@ -111,7 +111,7 @@ struct SearchView: View {
 
     private var idleContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            if let occasion = Seasonal.upcoming(within: 21).first {
+            ForEach(Seasonal.featured()) { occasion in
                 NavigationLink {
                     OccasionView(occasion: occasion)
                 } label: {

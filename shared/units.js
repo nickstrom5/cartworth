@@ -431,7 +431,7 @@ export function unitLabel(unit) {
 // 40% Heavy Whipping Cream, 32 oz" at $4.84 — the cheapest quart in Chicago — were weights in a
 // heavy-cream search that compares by volume, and dropped out of it (14 captured listings). Not
 // "whipped" cream or "table cream": Reddi-wip and Nestlé Media Crema are sold by NET WT.
-const LIQUID_RE = /\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half)\b/i;
+const LIQUID_RE = /\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half|egg ?nog|buttermilk)\b/i;
 // Containers that only imply a liquid alongside a real liquid word.
 const CONTAINER_RE = /\b(cans?|bottles?|jugs?|cartons?)\b/i;
 // "Cut Sweet Potatoes in Syrup", "Peaches in Light Syrup", "Tuna in Water": what follows "in" is

@@ -10,44 +10,54 @@ import { request, mapLimit } from '../http.js';
 import { cached, HOUR } from '../cache.js';
 import { db } from '../db.js';
 import { storeForMerchant } from '../../shared/stores.js';
-import { parseDeal, categorize, freeOffer } from '../../shared/deals.js';
+import { parseDeal, categorize, freeOffer, wallClock } from '../../shared/deals.js';
 
 const API = 'https://backflipp.wishabi.com/flipp';
 const https = (u) => (u ? String(u).replace(/^http:\/\//, 'https://') : null);
 
+/** One flyer from Flipp's /flyers list. */
+export function flyerRow(f) {
+  return {
+    id: f.id,
+    merchant: String(f.merchant || '').trim(),
+    storeId: storeForMerchant(f.merchant),
+    name: f.name,
+    validFrom: wallClock(f.valid_from),
+    validTo: wallClock(f.valid_to),
+    thumbnail: https(f.thumbnail_url),
+    categories: f.categories || [],
+    merchantLogo: https(f.merchant_logo),
+  };
+}
+
+/** One item from a Flipp flyer. */
+export function flyerItemRow(i) {
+  return {
+    id: i.id,
+    flyerId: i.flyer_id,
+    name: String(i.name).trim(),
+    brand: i.brand || '',
+    price: i.price,
+    discount: i.discount,
+    image: https(i.cutout_image_url),
+    validFrom: wallClock(i.valid_from),
+    validTo: wallClock(i.valid_to),
+  };
+}
+
 export async function flyers(zip, { fresh = false, onStale } = {}) {
-  return cached(`flipp:flyers:${zip}`, 3 * HOUR, async () => {
+  return cached(`flipp:v2:flyers:${zip}`, 3 * HOUR, async () => {
     const d = (await request(`${API}/flyers?locale=en-us&postal_code=${zip}`, { timeout: 16000, retries: 0, okOnly: true })).json();
-    return (d.flyers || []).map((f) => ({
-      id: f.id,
-      merchant: String(f.merchant || '').trim(),
-      storeId: storeForMerchant(f.merchant),
-      name: f.name,
-      validFrom: f.valid_from,
-      validTo: f.valid_to,
-      thumbnail: https(f.thumbnail_url),
-      categories: f.categories || [],
-      merchantLogo: https(f.merchant_logo),
-    }));
+    return (d.flyers || []).map(flyerRow);
   }, { fresh, onStale });
 }
 
 export async function flyerItems(flyerId, { fresh = false, onStale } = {}) {
-  return cached(`flipp:flyer:${flyerId}`, 6 * HOUR, async () => {
+  return cached(`flipp:v2:flyer:${flyerId}`, 6 * HOUR, async () => {
     const d = (await request(`${API}/flyers/${flyerId}?locale=en-us`, { timeout: 20000, okOnly: true })).json();
     return (d.items || [])
       .filter((i) => i.name && String(i.name).trim().length > 1)
-      .map((i) => ({
-        id: i.id,
-        flyerId: i.flyer_id,
-        name: String(i.name).trim(),
-        brand: i.brand || '',
-        price: i.price,
-        discount: i.discount,
-        image: https(i.cutout_image_url),
-        validFrom: i.valid_from,
-        validTo: i.valid_to,
-      }));
+      .map(flyerItemRow);
   }, { fresh, onStale, maxStaleMs: 10 * 24 * HOUR });
 }
 
@@ -110,7 +120,7 @@ export function enrichFlyer(flyerId, items) {
 }
 
 export async function searchItems(query, zip) {
-  return cached(`flipp:search:${zip}:${query.toLowerCase()}`, HOUR, async () => {
+  return cached(`flipp:v2:search:${zip}:${query.toLowerCase()}`, HOUR, async () => {
     const d = (await request(`${API}/items/search?locale=en-us&postal_code=${zip}&q=${encodeURIComponent(query)}`, { timeout: 15000, okOnly: true })).json();
     return (d.items || [])
       .filter((i) => i.name && i.merchant_name)
@@ -122,8 +132,8 @@ export async function searchItems(query, zip) {
         brand: '',
         price: i.current_price,
         image: https(i.clean_image_url || i.clipping_image_url),
-        validFrom: i.valid_from,
-        validTo: i.valid_to,
+        validFrom: wallClock(i.valid_from),
+        validTo: wallClock(i.valid_to),
         detail: {
           pre: i.pre_price_text || null,
           post: i.post_price_text || null,

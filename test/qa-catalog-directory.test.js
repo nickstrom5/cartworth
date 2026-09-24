@@ -186,7 +186,7 @@ function seedZip(zip, { skip = [], shops = SHOPS[zip] || {}, flyers = FLYERS[zip
     if (value !== undefined) cacheSet(key, value, ttl);
   };
   put(`geo:zip:${zip}`, GEO[zip], 365 * DAY);
-  put(`flipp:flyers:${zip}`, flyers.map(([merchant, categories], i) => ({
+  put(`flipp:v2:flyers:${zip}`, flyers.map(([merchant, categories], i) => ({
     id: 9000 + i, merchant, storeId: null, name: 'Weekly Ad', validFrom: '2026-09-17T00:00:00-04:00', validTo: '2026-09-29T23:59:59-04:00', categories,
   })), 3 * HOUR);
   let i = 0;

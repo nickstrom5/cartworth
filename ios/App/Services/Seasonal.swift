@@ -135,6 +135,13 @@ enum Seasonal {
             .sorted { $0.date < $1.date }
     }
 
+    /// The occasions to feature: the soonest two in the window. One card was not enough when two
+    /// holidays share a season: in 2027 Hanukkah begins Dec 24, and the single "next occasion" card
+    /// showed Hanukkah instead of Christmas for the whole three weeks before Christmas.
+    static func featured(from now: Date = Date(), within days: Int = 21) -> [Occasion] {
+        Array(upcoming(from: now, within: days).prefix(2))
+    }
+
     struct Season: Hashable {
         var name: String
         var symbol: String
