@@ -1576,5 +1576,14 @@ extension ChristmasPricingTests {
         XCTAssertGreaterThanOrEqual(score("cranberry sauce", "Ocean Spray Jellied Cranberry Sauce"), Match.relevant)
         XCTAssertGreaterThanOrEqual(score("cranberry juice", "Ocean Spray Cranberry Juice Cocktail"), Match.relevant)
         XCTAssertLessThan(score("cranberry juice", "Cranberry Vodka Cocktail"), Match.relevant)
+        XCTAssertLessThan(score("sparkling cider", "Samuel Smith Organic Perry Sparkling Pear Cider"), Match.relevant)
+    }
+}
+
+extension ChristmasPricingTests {
+    func testDefectGelatinAndScrub() {
+        XCTAssertLessThan(score("eggnog", "D'Gari Gelatin Dessert, Eggnog"), Match.relevant)
+        XCTAssertLessThan(score("candy canes", "Tree Hut TH Candy Cane Scrub"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("gelatin", "Knox Unflavored Gelatin"), Match.relevant)
     }
 }

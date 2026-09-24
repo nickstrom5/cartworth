@@ -114,3 +114,31 @@ test('control: an air-freshener spray and a vodka cocktail are still not cranber
   assert.ok(score('cranberry sauce', 'Cranberry Scented Room Spray') < RELEVANT);
   assert.ok(score('cranberry juice', 'Cranberry Vodka Cocktail') < RELEVANT);
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 6 (found on the phone walkthrough, after DEFECT 1 made eggnog a liquid): a 4.2 oz packet of
+// "D'Gari Gelatin Dessert, Eggnog" scored 0.92 as eggnog, was read as 4.2 FLUID ounces, and became
+// Tony's cheapest eggnog, so the headline said Woodman's carton was "74% less than Tony's".
+// A "Tree Hut Candy Cane Scrub" (body scrub, $12.99) was listed as a candy cane match.
+// ---------------------------------------------------------------------------
+test('DEFECT 6: gelatin dessert mix is not eggnog, and is sold by weight', () => {
+  assert.ok(score('eggnog', "D'Gari Gelatin Dessert, Eggnog") < RELEVANT);
+  assert.equal(coerceLiquid(parseSize('4.2 oz'), "D'Gari Gelatin Dessert, Eggnog").dim, 'weight');
+});
+
+test('DEFECT 6: a body scrub is not candy', () => {
+  assert.ok(score('candy canes', 'Tree Hut TH Candy Cane Scrub') < RELEVANT);
+});
+
+test('control: gelatin and pie crusts still find themselves', () => {
+  assert.ok(score('gelatin', 'Knox Unflavored Gelatin') >= RELEVANT);
+  assert.ok(score('pie crust', 'Pillsbury Refrigerated Pie Crusts Dessert') >= RELEVANT);
+  assert.ok(score('eggnog', 'Lactaid Eggnog') >= RELEVANT);
+});
+
+// DEFECT 7: Samuel Smith's Organic Perry is a 5% ABV pear cider, and it listed as a sparkling cider
+// match at Woodman's. Flyers and listings name the drink, not the word "alcoholic".
+test('DEFECT 7: perry is alcohol', () => {
+  assert.ok(score('sparkling cider', 'Samuel Smith Organic Perry Sparkling Pear Cider') < RELEVANT);
+  assert.ok(score('perry', 'Samuel Smith Organic Perry') >= RELEVANT, 'control: asking for perry still finds it');
+});

@@ -477,7 +477,7 @@ export function looksLiquid(name) {
 // 'butter' does not fire on "Butter Chicken": that is a curry, not a dairy fat. Kettle & Fire's
 // "Organic Butter Chicken Bone Broth" and "Organic Classic Chicken Bone Broth", both 16.9 OZ at the
 // same $7.99, landed in different dimensions because of it and so could never be compared.
-const SOLID_RE = /\b(bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\b/i;
+const SOLID_RE = /\b(gelatin|jell-?o|bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\b/i;
 
 export function coerceLiquid(size, name) {
   if (!size || size.dim !== 'weight' || size.perWeight) return size;

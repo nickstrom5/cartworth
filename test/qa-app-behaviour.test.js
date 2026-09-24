@@ -454,3 +454,30 @@ test('DEFECT (W6b): the theme a visitor picked is applied again on the next load
   await page.waitFor(`!!document.querySelector('.topbar')`, { what: 'reload' });
   assert.equal(await page.eval('document.documentElement.dataset.theme || null'), 'dark', 'the theme picked before the reload was lost');
 });
+
+test('DEFECT (Christmas run): a listing whose size and name disagree says so on the row', { skip: SKIP }, async () => {
+  // Jewel's live row for "sparkling cider": the listing says 750 ml, its name and URL say a case of
+  // 12, and it costs $48.99. The server flagged it (sizeConflict), but the row showed "750 ml · $48.99"
+  // with nothing to say the price was not for one bottle.
+  // Served here as Pick 'n Save, a store in this fixture's ZIP; the row is otherwise Jewel's.
+  const row = (items) => ({ storeId: 'picknsave', status: 'ok', items, location: { name: "Pick 'n Save", distance: 1.2 } });
+  const conflicted = { id: 'j1', storeId: 'picknsave', name: "Martinelli's Gold Medal Sparkling Apple Cider", size: '750 ml', sizeText: '750 ml', price: 48.99, unit: {}, priceBasis: 'online', score: 0.9, sizeConflict: { text: '750 ml', name: '12 × 750 ml' }, url: 'https://www.instacart.com/products/3350910?retailerSlug=jewel-osco' };
+  const plain = { ...conflicted, id: 'j2', name: "Martinelli's Sparkling Cider", size: '25.4 fl oz', sizeText: '25.4 fl oz', price: 4.69, unit: { volume: { perBase: 4.69 / 25.4, est: false } }, sizeConflict: null };
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/search': (req, url) => {
+    const asked = (url.searchParams.get('stores') || '').split(',').filter(Boolean);
+    const events = [['start', { query: 'sparkling cider', stores: asked, zip: fx.zip }]];
+    for (const id of asked) events.push(['store', id === 'picknsave' ? row([plain, conflicted]) : { storeId: id, status: 'empty', items: [] }]);
+    events.push(['ads', { deals: [] }], ['done', { ms: 5 }]);
+    return { sse: events };
+  } }) });
+  await search('sparkling cider');
+  const badges = await page.eval(`[...document.querySelectorAll('.prow')].map((r) => [r.querySelector('.pname')?.textContent.trim(), [...r.querySelectorAll('.badge')].map((b) => b.textContent.trim())])`);
+  const gold = badges.find(([n]) => /Gold Medal/.test(n));
+  const ok = badges.find(([n]) => n === "Martinelli's Sparkling Cider");
+  assert.ok(gold, `no Gold Medal row: ${JSON.stringify(badges)}`);
+  assert.ok(gold[1].includes('size unclear'), `the case-priced row is not marked: ${JSON.stringify(gold)}`);
+  assert.ok(ok && !ok[1].includes('size unclear'), `control: a clean row is not marked: ${JSON.stringify(ok)}`);
+  await srv.close();
+  srv = await startAppServer({ api: api() });
+});

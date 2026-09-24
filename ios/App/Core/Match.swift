@@ -22,7 +22,7 @@ enum Match {
         "drink", "juice", "smoothie", "shake", "yogurt", "creamer", "cheese", "noodle", "pasta", "ramen", "ricotta",
         "soap", "shampoo", "conditioner", "lotion", "candle", "freshener", "spray", "wipe", "detergent", "cleaner", "filter", "mug",
         "treat", "dog", "cat", "pet", "kibble", "bone", "baby", "infant", "toddler", "gummy", "gummies", "vitamin", "supplement",
-        "extract", "syrup", "spread", "dip", "jam", "jelly", "preserve", "pudding", "popsicle", "bar", "bite", "chip", "crisp",
+        "extract", "syrup", "spread", "dip", "jam", "jelly", "preserve", "pudding", "gelatin", "popsicle", "bar", "bite", "chip", "crisp",
         "nugget", "tender", "patty", "burger", "sausage", "jerky", "salad", "sandwich", "wrap", "pizza", "meal", "entree", "kit",
         // Compound-modifier nouns: "peanut butter", "cream cheese", "macaroni and cheese",
         // "beef base", "butter lettuce". Without these the head noun matched and the product
@@ -77,7 +77,7 @@ enum Match {
         // Flyers print the grape, not the word "wine": JaM Cellars' "Butter" Chardonnay scored as
         // butter in the weekly-ad search. Mirrors shared/match.js.
         "chardonnay", "merlot", "cabernet", "pinot", "sauvignon", "riesling", "moscato", "zinfandel", "malbec",
-        "prosecco", "stout", "cellars", "winery", "vineyard", "brewery", "brewing",
+        "prosecco", "stout", "perry", "cellars", "winery", "vineyard", "brewery", "brewing",
         // Health and beauty that borrows a food word: "Redken All Soft Heavy Cream Treatment" at
         // $632/gal was a relevant match for "heavy cream".
         "treatment", "tonic", "detox", "scalp", "hair", "cosmetic", "makeup", "deodorant",
@@ -91,7 +91,7 @@ enum Match {
     /// The position-aware trap loop cannot see these: it skips any word sitting behind an "in" or
     /// "with" phrase (so "tuna in oil" is not penalised), and that is exactly where the giveaway
     /// lands in "Turkey in Disguise (Hardcover)". Mirrors shared/match.js.
-    private static let nonGroceryRx = Rx("\\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater)\\b")
+    private static let nonGroceryRx = Rx("\\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub)\\b")
 
     /// Imitation markers: a product that says it merely tastes like the thing is not the thing.
     /// Flavoured waters named after the drink they taste of ("Spiced Cider Sparkling Water" is not

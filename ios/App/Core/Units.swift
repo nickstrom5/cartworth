@@ -454,7 +454,7 @@ enum Units {
     // search whose real broths sat near $10/gal. 'butter' does not fire on "Butter Chicken", a
     // curry: Kettle & Fire's Butter Chicken and Classic Chicken bone broths, both 16.9 OZ at the
     // same price, landed in different dimensions because of it. Mirrors SOLID_RE in shared/units.js.
-    private static let solidRx = Rx("\\b(bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\\b")
+    private static let solidRx = Rx("\\b(gelatin|jell-?o|bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\\b")
 
     static func looksLiquid(_ name: String) -> Bool {
         let n = packingMediumRx.replace(name, with: " ")

@@ -26,7 +26,7 @@ const TRAPS = new Set([
   'drink', 'juice', 'smoothie', 'shake', 'yogurt', 'creamer', 'cheese', 'noodle', 'pasta', 'ramen', 'ricotta',
   'soap', 'shampoo', 'conditioner', 'lotion', 'candle', 'freshener', 'spray', 'wipe', 'detergent', 'cleaner', 'filter', 'mug',
   'treat', 'dog', 'cat', 'pet', 'kibble', 'bone', 'baby', 'infant', 'toddler', 'gummy', 'gummies', 'vitamin', 'supplement',
-  'extract', 'syrup', 'spread', 'dip', 'jam', 'jelly', 'preserve', 'pudding', 'popsicle', 'bar', 'bite', 'chip', 'crisp',
+  'extract', 'syrup', 'spread', 'dip', 'jam', 'jelly', 'preserve', 'pudding', 'gelatin', 'popsicle', 'bar', 'bite', 'chip', 'crisp',
   'nugget', 'tender', 'patty', 'burger', 'sausage', 'jerky', 'salad', 'sandwich', 'wrap', 'pizza', 'meal', 'entree', 'kit',
   // Compound-modifier nouns: "peanut butter", "cream cheese", "macaroni and cheese", "beef base",
   // "butter lettuce". Without these the head noun matched and the product scored as a real hit.
@@ -85,7 +85,7 @@ const TRAPS = new Set([
   // pound of Land O Lakes (handoff from the round-2 directory fixer). Grapes and producer words
   // only; not 'champagne' or 'rose', which also name grapes, vinegars and rose water.
   'chardonnay', 'merlot', 'cabernet', 'pinot', 'sauvignon', 'riesling', 'moscato', 'zinfandel', 'malbec',
-  'prosecco', 'stout', 'cellars', 'winery', 'vineyard', 'brewery', 'brewing',
+  'prosecco', 'stout', 'perry', 'cellars', 'winery', 'vineyard', 'brewery', 'brewing',
   // Health and beauty that borrows a food word. "Redken All Soft Heavy Cream Treatment" at
   // $632/gal was a relevant match for "heavy cream", and a "Rosemary Apple Cider Scalp Detox
   // Tonic" for apple cider.
@@ -110,7 +110,7 @@ const TRAPS = new Set([
  * Debbie's Christmas Tree Cakes are food), 'decorations' (cake decorations are baking aisle) or
  * 'stocking' (a candy-filled stocking is candy).
  */
-const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater)\b/i;
+const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub)\b/i;
 
 /**
  * Qualifiers that turn a trap noun back into an ordinary description of the searched product.

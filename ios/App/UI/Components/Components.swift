@@ -320,6 +320,9 @@ struct ProductRowView: View {
                         // A price we do not believe stays visible, but says so. It has already been
                         // excluded from "best price" in Compare.bestPerStore.
                         if p.implausible != nil { Badge(text: "price looks wrong", kind: .warn) }
+                        // The listing's size and its own name disagree ("750 ml" priced as a 12-bottle
+                        // case): the price may not be for the size shown. Excluded from best price too.
+                        if p.sizeConflict != nil && p.implausible == nil { Badge(text: "size unclear", kind: .warn) }
                         if p.sponsored { Badge(text: "Ad", kind: .neutral) }
             }
         }

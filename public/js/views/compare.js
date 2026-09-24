@@ -539,6 +539,12 @@ export function ProductRow({ p, displayUnit, best, prefs, q, compact }) {
           title=${`This works out ${p.implausible.ratio}\u00d7 the typical unit price for this search. Usually it means the listing's size is wrong, for example a multi-pack priced as one unit. Check the label before trusting it.`}
           >price looks wrong</span
         >`}
+        ${p.sizeConflict && !p.implausible &&
+        html`<span
+          class="badge warn"
+          title=${`The store lists this as ${p.sizeConflict.text}, but its name says ${p.sizeConflict.name}. The price may be for a different amount than the size shown, so no unit price is given and it is never counted as the best price. Check the label.`}
+          >size unclear</span
+        >`}
         ${p.sponsored && html`<span class="badge" title="The store’s search promoted this item">Ad</span>`}
       </div>
     </div>
