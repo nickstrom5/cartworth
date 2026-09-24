@@ -83,4 +83,20 @@ milk, eggs, orange juice, cheddar, rice, apples, coffee, chicken thighs.
   Onboarding (web and iOS) now says the list may be short and offers "Check again"; iOS no longer
   caches a failed lookup as "no store" for three days; the directory's stall limit now outlasts
   the slowest permitted Instacart request.
-- Still to do: re-run Dallas and St. Louis once Instacart has cooled down.
+- Re-run once Instacart cooled down: Dallas 16 priced stores, St. Louis 11, nothing unresolved.
+  Fixed from it: an apple pectin supplement (180 tablets) was Dallas's best "apples" at an estimated
+  $0.30/lb.
+
+Capture sweep (offline): the matcher replayed over the 616 searches in `stats/samples.jsonl`.
+Kroger's "bananas" was frozen banana slices and Key Food's a freeze-dried snack, each carried by
+a "Frozen/Dried Bananas" category; Snapple Orangeade by "Orange Juice". Fixed; 15 of ~24,000
+listings change, all of them those.
+
+Third round: Nashville 37206 (13), Salt Lake City 84105 (11), Burlington VT 05401 (5), New Orleans
+70115 (8); ground turkey, yogurt, spaghetti, tomatoes, peanut butter, potatoes, bacon, cereal.
+- Fixed: tomato ketchup was the best "tomatoes" in three cities and diced canned tomatoes in the
+  fourth; spaghetti squash was the best "spaghetti"; cherry tomatoes were hidden.
+- A review of this day's commits found five more defects in the new rules (vitamin D milk hidden,
+  "a la carte", the retry-blind timeout, and "Check again" re-enabling stores on web and iOS); fixed.
+- Suspect, not changed: Whole Foods' Kimbala "Neat Coffee", 10.2 oz at $3.99, won Dallas coffee by
+  3%. Its sibling "Coffee a la Jaggery" is a sweetened mix; this one's name gives nothing to go on.
