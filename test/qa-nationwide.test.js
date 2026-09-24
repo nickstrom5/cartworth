@@ -23,3 +23,33 @@ test('control: the catalog spellings, and chains that merely look alike, stay as
   assert.equal(chainForName('Seafood City')?.id, 'seafoodcity');
   assert.equal(chainForName('Restaurant Depot'), null);
 });
+
+// DEFECT: Whole Foods answers "no store near this ZIP" with a 404. The adapter threw on it, so in 11
+// of the 30 ZIPs the sweep built for real (every rural one) Whole Foods was "unresolved": the
+// directory said its counts might be low and rebuilt the ZIP every few minutes, asking again.
+import { resolveStore } from '../src/adapters/wholefoods.js';
+
+async function withFetch(closestStatus, fn) {
+  const realFetch = globalThis.fetch;
+  const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.endsWith('/api/csrf')) return json({ token: 't' });
+    if (u.includes('/api/wwos/location/store/closest')) return json(closestStatus === 200 ? { storeCode: '88888' } : { message: 'Not Found' }, closestStatus);
+    if (u.includes('/api/stores/88888/summary')) return json({ storeId: 88888, displayName: 'Test', primaryLocation: { latitude: 41.9, longitude: -87.7, address: {} } });
+    if (u.includes('zippopotam.us')) return json({ places: [{ latitude: '41.9', longitude: '-87.7', 'place name': 'Test', 'state abbreviation': 'IL' }] });
+    throw new Error(`unexpected request ${u}`);
+  };
+  try { return await fn(); } finally { globalThis.fetch = realFetch; }
+}
+
+test('DEFECT: a ZIP with no Whole Foods near it is "none", not a failed lookup', async () => {
+  const r = await withFetch(404, () => resolveStore('38748', { fresh: true }));
+  assert.deepEqual(r, { none: true });
+});
+
+test('control: a real failure still fails, and a store is still found', async () => {
+  await assert.rejects(withFetch(500, () => resolveStore('38749', { fresh: true })), /500/);
+  const r = await withFetch(200, () => resolveStore('38750', { fresh: true }));
+  assert.equal(r.id, '88888');
+});

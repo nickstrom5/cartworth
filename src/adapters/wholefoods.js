@@ -29,14 +29,23 @@ async function getCsrf() {
 export async function resolveStore(zip, { fresh = false } = {}) {
   return cached(`wfm:store:${zip}`, 7 * DAY, async () => {
     const token = await getCsrf();
-    const r = await request(`${BASE}/api/wwos/location/store/closest`, {
-      method: 'POST',
-      jar,
-      headers: { 'content-type': 'application/json', 'x-amzn-csrf': token },
-      body: JSON.stringify({ zipCode: zip }),
-      timeout: 12000,
-      okOnly: true,
-    });
+    let r;
+    try {
+      r = await request(`${BASE}/api/wwos/location/store/closest`, {
+        method: 'POST',
+        jar,
+        headers: { 'content-type': 'application/json', 'x-amzn-csrf': token },
+        body: JSON.stringify({ zipCode: zip }),
+        timeout: 12000,
+        okOnly: true,
+      });
+    } catch (err) {
+      // "No store near this ZIP" is a 404, not a failure. Read as a failure, the nationwide sweep
+      // left Whole Foods "unresolved" in 11 of 30 ZIPs (every rural one): the directory said its
+      // counts might be low and rebuilt the ZIP every few minutes, asking again each time.
+      if (err.status === 404) return { none: true };
+      throw err;
+    }
     const d = r.json();
     const id = d.pickupStoreCode || d.storeCode;
     if (!id) return { none: true };

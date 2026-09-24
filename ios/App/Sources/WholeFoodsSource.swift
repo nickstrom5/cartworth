@@ -47,6 +47,8 @@ actor WholeFoodsSource {
     }
 
     private func store(from r: HTTPResponse, place: UserPlace) async throws -> Store {
+        // "No store near this ZIP" is a 404, not a failure (the nationwide sweep: every rural ZIP).
+        if r.status == 404 { return Store(none: true) }
         guard r.ok else { throw HTTPError(status: r.status, message: "Whole Foods store lookup failed (\(r.status))") }
         let d = try r.json()
         guard let id = d["pickupStoreCode"].string ?? d["storeCode"].string else { return Store(none: true) }
