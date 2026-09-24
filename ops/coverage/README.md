@@ -50,6 +50,9 @@ and Walmart); 7 of 51 towns and 11 of 51 rural ZIPs have none but Costco/Walmart
   Ridley's (ID/UT/WY/NV/MT) and Macey's (UT). Not on Instacart: Shaw's, Harps, Coborn's, Sunshine
   Foods, Lidl, H-E-B. Six Kroger banners (Metro Market, Food 4 Less, Gerbes, JayC, City Market,
   Baker's) now price through the Kroger API once the server's keys are set.
+- A Seattle staples audit added PCC Community Markets, Metropolitan Market and Town & Country Markets
+  (WA). Winn-Dixie stays ads-only: its Instacart storefront only answers from a canonical store ~385 mi
+  from Miami, so it would be a chain-wide price at best. Fresco y Más is not on Instacart.
 - Onboarding offers "Look within 40 miles" when nothing priceable is within the chosen radius.
 - Flipp spells two priced chains "Wegman's" and "FoodCity"; their weekly ads never reached the Sales tab.
 - Whole Foods answers "no store near this ZIP" with a 404, which was read as a failed lookup: every rural

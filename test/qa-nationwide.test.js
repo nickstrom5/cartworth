@@ -77,3 +77,18 @@ test('DEFECT (LA): a surprise egg toy is not eggs', () => {
   assert.ok(relevance('eggs', { name: 'Surprise Crystal Egg' }) < RELEVANT);
   assert.ok(relevance('eggs', { name: "Eggland's Best Large Eggs" }) >= RELEVANT);
 });
+
+// DEFECT (Seattle audit): three Puget Sound grocers on Instacart were not in the catalog, so a
+// Seattle shopper saw none of them. Each slug was verified against a nearby store by find-slugs.js.
+test('DEFECT (Seattle): PCC, Metropolitan Market and Town & Country Markets are priced chains', () => {
+  assert.equal(storeForMerchant('PCC Community Markets'), 'pcc');
+  assert.equal(storeForMerchant('Metropolitan Market'), 'metropolitanmarket');
+  assert.equal(storeForMerchant('Town & Country Markets'), 'townandcountry');
+  for (const id of ['pcc', 'metropolitanmarket', 'townandcountry']) assert.equal(chainForName(id === 'pcc' ? 'PCC' : id === 'metropolitanmarket' ? 'Metropolitan Market' : 'Town and Country Markets')?.id, id);
+});
+
+test('control: lookalike names stay with their own chain or with none', () => {
+  assert.equal(storeForMerchant('Metro Market'), 'metromarket');
+  assert.equal(storeForMerchant('Town & Country'), null);
+  assert.equal(storeForMerchant('Central Market'), null);
+});

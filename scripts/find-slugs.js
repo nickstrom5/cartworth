@@ -104,6 +104,12 @@ const CANDIDATES = {
   maceys: [['84043', '84604'], 'maceys', 'maceys-food'],
   lidl: [['22101', '19103'], 'lidl', 'lidl-us'],
   pigglysouth: [['29407', '29406'], 'piggly-wiggly'],
+  // From the nationwide staples audit (Miami, Seattle).
+  winndixie: [['33176', '33186'], 'winn-dixie', 'winndixie'],
+  frescoymas: [['33135', '33165'], 'fresco-y-mas', 'fresco-y-mas-supermarket'],
+  pcc: [['98103', '98115'], 'pcc-community-markets', 'pcc-markets', 'pcc'],
+  metropolitanmarket: [['98109', '98119'], 'metropolitan-market', 'met-market'],
+  townandcountry: [['98110', '98370'], 'town-country-markets', 'town-and-country-markets'],
 };
 
 // After the adapter import, which sets its own (faster, concurrent) limits for these hosts.

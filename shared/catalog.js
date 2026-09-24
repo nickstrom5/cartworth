@@ -196,6 +196,9 @@ export const CHAINS = [
   { id: 'hornbachers', name: 'Hornbacher’s', short: 'Hornbacher’s', aliases: ["hornbacher's", 'hornbachers'], price: ic('hornbachers'), ads: ["Hornbacher's"], states: ['ND', 'MN'] },
   { id: 'ridleys', name: 'Ridley’s Family Markets', short: 'Ridley’s', aliases: ["ridley's", 'ridleys'], price: ic('ridleys'), ads: ["Ridley's Family Markets", "Ridley's"], states: ['ID', 'UT', 'WY', 'NV', 'MT'] },
   { id: 'maceys', name: 'Macey’s', short: 'Macey’s', aliases: ["macey's", 'maceys'], price: ic('maceys'), ads: ["Macey's"], states: ['UT'] },
+  { id: 'pcc', name: 'PCC Community Markets', short: 'PCC', aliases: ['pcc community markets', 'pcc markets', 'pcc'], price: ic('pcc-community-markets'), ads: ['PCC Community Markets'], states: ['WA'] },
+  { id: 'metropolitanmarket', name: 'Metropolitan Market', short: 'Metropolitan', aliases: ['metropolitan market', 'met market'], price: ic('metropolitan-market'), ads: ['Metropolitan Market'], states: ['WA'] },
+  { id: 'townandcountry', name: 'Town & Country Markets', short: 'Town & Country', aliases: ['town & country markets', 'town and country markets'], price: ic('town-country-markets'), ads: ['Town & Country Markets'], states: ['WA'] },
   // Priced since 23 Sep 2026 from Piggly Wiggly MIDWEST's own store site. The marketplace's
   // 'piggly-wiggly' storefront is the Southern chain: it answers Milwaukee and Kenosha only with its
   // canonical store 844-878 mi away, which must never be read as a local price (see chainWide above),
