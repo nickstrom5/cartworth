@@ -219,6 +219,10 @@ export const stats = { requests: 0, errors: 0, byHost: {}, limited: {}, refused:
  * Returns { status, ok, headers, url, text, json() }.
  */
 export async function request(url, opts = {}) {
+  // BASKET_OFFLINE=1: nothing leaves this process. For load tests and rehearsals, where a retailer
+  // must not feel the traffic: unsetting proxy variables is not enough on a network with a
+  // transparent proxy (the launch review's load test reached Instacart that way).
+  if (process.env.BASKET_OFFLINE === '1') throw Object.assign(new Error('Offline (BASKET_OFFLINE=1): no request was sent'), { code: 'OFFLINE' });
   const {
     method = 'GET',
     headers = {},

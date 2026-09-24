@@ -9,8 +9,10 @@ From the pre-launch security review (Sept 2026). Defaults are safe; these are th
 | `BASKET_TRUST_CF` | off | Set `1` only when the server is behind Cloudflare: then `CF-Connecting-IP` identifies the visitor. |
 | `BASKET_RATE_LIMIT` | 90 | API requests per visitor per minute. |
 | `BASKET_COLD_LIMIT` | 600 | Requests to retailer sites per visitor per 10 minutes (cache hits are free). |
-| `BASKET_MAX_BACKLOG` | 40 | Requests waiting for one retailer host before new lookups there are shed (visitors get saved prices or "busy"). |
+| `BASKET_MAX_BACKLOG` | 20 | Requests waiting for one retailer host before new lookups there are shed (visitors get saved prices or "busy"). |
 | `BASKET_FRESH_LIMIT` | 12 | Cache-bypassing refreshes per visitor per 10 minutes. |
+| `BASKET_SHUTDOWN_GRACE_MS` | 10000 | On SIGTERM, how long requests in progress may finish before the server stops. |
+| `BASKET_OFFLINE` | off | `1` refuses every outbound request (load tests, rehearsals). Never set it in production. |
 | `BASKET_HEALTH_TOKEN` | unset | Lets a remote monitor see `/api/health` details by sending `X-Health-Token`. Without it, only requests from the machine itself see them; everyone else gets `{ ok }`. |
 | `KROGER_CLIENT_ID` / `KROGER_CLIENT_SECRET` | unset | See `kroger-launch.md`. |
 | `KROGER_PER_VISITOR_HOURLY` | 150 | Each visitor's hourly share of the server's Kroger calls. |

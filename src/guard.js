@@ -22,8 +22,12 @@ const MAX_BUCKETS = 5000;
 // minutes, and about one request a second sustained.
 const COLD_WINDOW_MS = 10 * 60_000;
 const MAX_COLD_PER_WINDOW = +process.env.BASKET_COLD_LIMIT || 600;
-// Requests waiting for one retailer host before new lookups are shed (see http.js hostBacklog).
-const MAX_BACKLOG = +process.env.BASKET_MAX_BACKLOG || 40;
+// Requests waiting for one retailer host before new lookups are shed (see http.js hostBacklog). At one
+// request in flight and 700 ms apart, each queued request is ~1.5-2 s of wait for the one behind it:
+// the launch review's load test (200 shoppers, real retailer latency) saw searches wait up to ~110 s
+// at 40. At 20 the worst wait is ~30-40 s, and past it the shopper gets saved prices or "busy, try
+// again" at once instead of a two-minute spinner.
+const MAX_BACKLOG = +process.env.BASKET_MAX_BACKLOG || 20;
 
 const buckets = new Map();
 

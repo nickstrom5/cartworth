@@ -35,3 +35,20 @@ test('index.html preloads exactly the modules the app imports', () => {
   const preloaded = new Set([...html.matchAll(/<link rel="modulepreload" href="([^"]+)"/g)].map((m) => m[1]));
   assert.deepEqual([...preloaded].sort(), [...seen].sort());
 });
+
+// BASKET_OFFLINE=1 must stop every outbound request before it is sent: the load test depends on it
+// (a network with a transparent proxy let the first load test reach Instacart).
+test('BASKET_OFFLINE=1 refuses outbound requests without sending them', async () => {
+  const { request } = await import('../src/http.js');
+  const realFetch = globalThis.fetch;
+  let sent = 0;
+  globalThis.fetch = async () => { sent += 1; return new Response('{}'); };
+  process.env.BASKET_OFFLINE = '1';
+  try {
+    await assert.rejects(request('https://www.instacart.com/'), (e) => e.code === 'OFFLINE');
+    assert.equal(sent, 0);
+  } finally {
+    delete process.env.BASKET_OFFLINE;
+    globalThis.fetch = realFetch;
+  }
+});
