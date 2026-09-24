@@ -15,7 +15,8 @@ enum PriceSearch {
     // 10: supplements named after a food (apple pectin tablets) are not the food.
     // 11: a dose on a grocery (Vitamin D 400 IU) is not a supplement; "a la carte" is not a dish.
     // 12: ketchup and canned tomatoes are not "tomatoes"; spaghetti squash is not "spaghetti".
-    static let cacheVersion = 12
+    // 13: the holiday matrix (Match.queryAllows, compounds, canned vegetables and meats).
+    static let cacheVersion = 13
 
     struct Payload: Codable {
         var items: [Product]

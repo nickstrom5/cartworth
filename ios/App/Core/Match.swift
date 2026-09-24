@@ -12,6 +12,8 @@ enum Match {
         "oj": ["orange", "juice"], "tp": ["toilet", "paper"], "evoo": ["extra", "virgin", "olive", "oil"],
         "pb": ["peanut", "butter"], "pj": ["pajama"], "bsb": ["boneless", "skinless", "breast"], "bscb": ["boneless", "skinless", "chicken", "breast"],
         "hh": ["half", "half"], "half-and-half": ["half", "half"],
+        // One spelling each ("bbq sauce" finds Barbecue Sauce, "black-eyed peas" Blackeye Peas).
+        "barbecue": ["bbq"], "bar-b-q": ["bbq"], "blackeye": ["black", "eyed"], "blackeyed": ["black", "eyed"],
     ]
 
     /// Words that turn a product into something else when they follow the searched noun
@@ -97,7 +99,7 @@ enum Match {
     /// "apples"). Port of SUPPLEMENT_RE in shared/match.js.
     /// A dose alone is not enough ("Milk with Vitamin D 400 IU" is milk); the pill's form word is.
     /// A processed form of fresh fruit ("Diced Canned Tomatoes"). Port of PROCESSED_FORM_RE.
-    private static let processedFormRx = Rx("\\b(?:canned|diced|crushed|stewed|sun[- ]?dried|freeze[- ]?dried|dried|dehydrated|pureed?|frozen)\\b")
+    private static let processedFormRx = Rx("\\bin (?:light |heavy )?(?:syrup|juice)\\b|\\b(?:canned|diced|crushed|stewed|sun[- ]?dried|freeze[- ]?dried|dried|dehydrated|pureed?|frozen)\\b")
     private static let aLaRx = Rx("\\ba la\\b")
     private static let supplementRx = Rx("\\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewables?)\\b")
     private static let wantsSupplementRx = Rx("\\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\\b")
@@ -111,7 +113,7 @@ enum Match {
     private static let babyProductRx = Rx("\\bbaby (?:foods?|formula|wipes?|puree|cereal|shampoo|lotion|wash|oil|powder|snacks?|puffs|teethers?|yogurt melts)\\b|\\bgerber\\b|\\bbeech-?nut\\b|\\bstage [1-4]\\b|\\bfor babies\\b")
     private static let wantsBabyRx = Rx("\\bbaby (?:food|formula|cereal|wipes?)\\b|\\bformula\\b|\\bgerber\\b|\\bbeech-?nut\\b|\\binfant\\b|\\btoddler\\b")
     /// Fresh fruit bought loose (not vegetables: frozen green beans answer "green beans"). Port of FRESH_FRUIT_RE.
-    private static let freshFruitRx = Rx("\\b(?:bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberr(?:y|ies)|blueberr(?:y|ies)|raspberr(?:y|ies)|blackberr(?:y|ies)|cherr(?:y|ies)|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\\b")
+    private static let freshFruitRx = Rx("\\b(?:mandarins?|clementines?|tangerines?|bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberr(?:y|ies)|blueberr(?:y|ies)|raspberr(?:y|ies)|blackberr(?:y|ies)|cherr(?:y|ies)|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\\b")
     private static let waterDrinkRx = Rx("\\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\\b|\\bseltzer\\b|\\bla croix\\b")
     private static let wantsWaterRx = Rx("\\bwater\\b|\\bseltzer\\b|\\bla croix\\b")
     /// Juice-flavoured drinks: Costco's "Sunny D Citrus Punch", filed under Orange Juice, was
@@ -149,9 +151,43 @@ enum Match {
     /// a word of the query. Mirrors INHERENT_FLAVOR in shared/match.js.
     private static let inherentFlavor: [String: Set<String>] = ["cane": ["peppermint"], "bark": ["peppermint", "chocolate"], "fudge": ["chocolate"], "brownie": ["chocolate"], "truffle": ["chocolate"], "cocoa": ["chocolate"], "tomato": ["cherry"], "tomatoes": ["cherry"]]
     /// Qualifiers that are just variants (never penalized).
+    /// Words that describe, rather than change, what a particular query asks for ("Beef Ribeye
+    /// Steak" answers "steak", a Cabernet answers "wine"). Port of QUERY_ALLOWS in shared/match.js.
+    private static let animals = ["beef", "pork", "chicken", "turkey", "lamb", "bone", "frozen", "smoked"]
+    private static let alcoholWords = ["wine", "red", "white", "rose", "sparkling", "chardonnay", "merlot", "cabernet", "pinot", "sauvignon", "riesling", "moscato", "zinfandel", "malbec", "prosecco", "cellars", "winery", "vineyard", "brut", "champagne", "cava"]
+    private static let queryAllows: [String: Set<String>] = [
+        "wine": Set(alcoholWords), "prosecco": Set(alcoholWords), "champagne": Set(alcoholWords),
+        "steak": Set(animals), "ribeye": Set(animals), "brisket": Set(animals), "rib": Set(animals), "chop": Set(animals), "roast": Set(animals), "tenderloin": Set(animals),
+        "sirloin": Set(animals), "wing": Set(animals), "dog": Set(animals + ["frank"]), "frank": Set(animals), "brat": Set(animals + ["beer"]), "sausage": Set(animals),
+        "turkey": ["frozen"], "ham": ["honey", "spiral", "smoked", "pork"],
+        "bun": ["hot", "dog", "hamburger", "seed", "sesame"], "croissant": ["butter", "mini"], "flower": ["bouquet", "cut", "mixed"],
+        "pumpkin": ["pie", "carving"], "stuffing": ["mix", "turkey", "chicken", "cornbread", "herb", "seasoned"],
+        "candy": ["snack", "halloween", "chocolate", "assortment"], "wrapper": ["wrap", "round"], "chip": ["potato", "tortilla", "kettle"],
+        "tortilla": ["taco", "soft"], "tortillas": ["taco", "soft"], "chocolate": ["bar", "dark"], "pea": ["dry", "dried"], "peas": ["dry", "dried"], "filling": ["mix"],
+        "watermelon": ["mini", "seedless", "personal"], "bar": ["oat", "honey"],
+        "bacon": ["smoked", "hardwood", "pork"],
+    ]
+    /// Products that normally come in flavours. Port of FLAVOR_OK_HEADS.
+    private static let flavorOkHeads: Set<String> = ["bar", "chip", "cereal", "candy", "soda", "bread", "ham", "meat", "cracker", "cookie", "sauce", "bean", "granola"]
+    /// Compound names that are a different product. Ports of HEAD_COMPOUNDS / MODIFIER_COMPOUNDS.
+    private static let headCompounds = ["peanut butter cup", "bacon bit", "corn flake", "corn tortilla", "flour tortilla", "celery salt", "celery seed",
+        "onion salt", "garlic salt", "yogurt raisin", "yogurt covered", "yogurt pretzel", "wine glass", "glass set", "champagne flute",
+        "sugar free", "charcoal toothpaste", "chocolate milk"].map { tokens($0) }
+    private static let modifierCompounds = ["baking soda", "cooking wine", "creme egg", "cadbury egg", "chocolate egg", "plastic egg", "mini egg",
+        "candy corn", "corned beef brisket"].map { tokens($0) }
+    private static func stem(_ w: String) -> String { w.hasSuffix("s") ? String(w.dropLast()) : w }
+    private static func hasPhrase(_ words: [String], _ phrase: [String]) -> Bool {
+        guard !phrase.isEmpty, words.count >= phrase.count else { return false }
+        for i in 0...(words.count - phrase.count) where phrase.indices.allSatisfy({ stem(words[i + $0]) == stem(phrase[$0]) }) { return true }
+        return false
+    }
+    /// Canned and dried forms of vegetables and meats. Ports of FRESH_VEG_MEAT_RE / SHELF_FORM_RE.
+    private static let freshVegMeatRx = Rx("^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$")
+    private static let shelfFormRx = Rx("\\b(?:canned|dehydrated|freeze[- ]?dried)\\b")
+
     private static let soft: Set<String> = ["organic", "lactose", "free", "ultra", "filtered", "reduced", "fat", "low", "whole", "skim", "natural", "grass", "fed", "pasture", "raised", "cage", "large", "medium", "small", "extra", "jumbo", "grade", "fresh", "boneless", "skinless", "lean", "ground"]
     /// Product words that imply another ("ground chuck" is ground beef).
-    private static let implies: [String: String] = ["chuck": "beef", "sirloin": "beef", "brisket": "beef", "ribeye": "beef", "kcup": "coffee", "k-cup": "coffee", "espresso": "coffee", "cage": "egg", "clementine": "mandarin", "cutie": "mandarin", "tp": "toilet"]
+    private static let implies: [String: String] = ["frank": "dog", "chuck": "beef", "sirloin": "beef", "brisket": "beef", "ribeye": "beef", "kcup": "coffee", "k-cup": "coffee", "espresso": "coffee", "cage": "egg", "clementine": "mandarin", "cutie": "mandarin", "tp": "toilet"]
     private static let chipNoise: Set<String> = ["carton", "bottle", "jug", "container", "package", "bag", "box", "can", "jar", "each", "value", "family", "size", "select", "original", "classic", "premium", "organic", "brand", "pack", "count", "ounce", "gallon", "gal", "quart", "half", "pint", "fl", "lb", "lbs", "oz", "ct", "with", "made", "great", "best", "store", "kroger", "signature", "good", "gather", "market", "pantry", "farm", "farms", "simple", "truth", "nature", "kirkland", "365", "everyday", "item", "items"]
 
     private static let percentRx = Rx("(\\d)\\s*%")
@@ -301,6 +337,7 @@ enum Match {
                 mult *= 0.3
             }
         }
+        let allowed = Set(qt.flatMap { Array(queryAllows[$0] ?? []) })
         if let hi = headIdx {
             var strong = 0
             // Look on BOTH sides of the head noun. A trap word before it is just as disqualifying
@@ -309,7 +346,7 @@ enum Match {
             for i in words.indices {
                 if i == hi { continue }
                 let w = words[i]
-                if qset.contains(w) || soft.contains(w) { continue }
+                if qset.contains(w) || soft.contains(w) || allowed.contains(w) { continue }
                 let prev = i >= 1 ? words[i - 1] : nil
                 let prev2 = i >= 2 ? words[i - 2] : nil
                 if prev == "in" || prev == "with" || prev2 == "in" { continue } // "tuna in oil", "with sauce"
@@ -319,12 +356,12 @@ enum Match {
             }
             var alt = 0, mildN = 0, flavorN = 0
             for w in words {
-                if qset.contains(w) { continue }
+                if qset.contains(w) || allowed.contains(w) { continue }
                 // Position-independent: "Frozen Orange Juice" and "Orange Juice Frozen" are the
                 // same product and must score the same. Anchoring these to the head noun meant
                 // word order alone changed the score by a factor of two.
                 if altBase.contains(w) { alt += 1 }
-                else if flavor.contains(w) && !qt.contains(where: { inherentFlavor[$0]?.contains(w) == true }) { flavorN += 1 }
+                else if flavor.contains(w) && !qt.contains(where: { inherentFlavor[$0]?.contains(w) == true }) && !flavorOkHeads.contains(head) { flavorN += 1 }
                 // When the retailer filed the product under exactly what was searched, a storage
                 // word in the name describes a variant OF that category rather than a different
                 // product. "Jennie-O Whole Frozen Turkey" in category "Frozen Whole Turkey" scored
@@ -333,7 +370,7 @@ enum Match {
             }
             mult *= pow(0.4, Double(min(strong, 3))) * pow(0.55, Double(min(alt, 2))) * pow(0.58, Double(min(mildN, 3))) * (flavorN > 0 ? 0.5 : 1)
         } else {
-            let trapCount = Set(words).filter { traps.contains($0) && !qset.contains($0) }.count
+            let trapCount = Set(words).filter { traps.contains($0) && !qset.contains($0) && !allowed.contains($0) }.count
             mult *= pow(0.6, Double(min(trapCount, 3)))
         }
         // "Tastes Like Butter" is margarine. Only penalize when the shopper did not ask for it.
@@ -352,6 +389,13 @@ enum Match {
             let forms = processedFormRx.matches(nameNorm).compactMap { $0.first ?? nil }
             if !forms.isEmpty && !forms.contains(where: { q.contains($0.replacingOccurrences(of: "-", with: " ")) }) { mult *= 0.3 }
         }
+        do {
+            let qstems = Set(qt.map(stem))
+            let inQ = { (w: String) in qstems.contains(stem(w)) }
+            if headCompounds.contains(where: { hasPhrase(words, $0) && $0.dropLast().contains(where: inQ) && !inQ($0.last!) }) { mult *= 0.2 }
+            if modifierCompounds.contains(where: { hasPhrase(words, $0) && inQ($0.last!) && !inQ($0.first!) }) { mult *= 0.2 }
+        }
+        if freshVegMeatRx.test(head), let m = shelfFormRx.match(nameNorm)?.first ?? nil, !qNormForImitation.contains(m) { mult *= 0.3 }
         if juiceWordRx.test(qNormForImitation) && juiceImpostorRx.test(nameNorm) && !wantsJuiceDrinkRx.test(qNormForImitation) { mult *= 0.3 }
         if babyProductRx.test(nameNorm) && !wantsBabyRx.test(qNormForImitation) { mult *= 0.2 }
         // Books, cookware and apparel that happen to name a food. Applied to the whole name because

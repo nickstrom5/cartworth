@@ -39,7 +39,9 @@ const STORE_TIMEOUT = 35000;
 // v14: supplements named after a food (apple pectin tablets) are not the food.
 // v15: a dose on a grocery ("Milk with Vitamin D 400 IU") is not a supplement; "a la carte" is not a dish.
 // v16: ketchup, paste and canned tomatoes are not "tomatoes"; spaghetti squash is not "spaghetti".
-const CACHE_VERSION = 16;
+// v17: the holiday matrix: query-specific descriptors (Beef Ribeye Steak, Red Wine, Hot Dog Buns),
+// compound look-alikes (baking soda, cooking wine, creme eggs, celery salt), canned vegetables/meats.
+const CACHE_VERSION = 17;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

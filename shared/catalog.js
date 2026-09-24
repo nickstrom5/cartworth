@@ -261,7 +261,9 @@ export const CHAIN_BY_ID = Object.fromEntries(CHAINS.map((c) => [c.id, c]));
 export const ALWAYS_PROBE = ['walmart', 'aldi', 'target', 'costco', 'samsclub', 'wholefoods', 'traderjoes'];
 
 function norm(s) {
-  return String(s || '').toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, ' ').trim();
+  // Accents folded: the catalog's own "Northgate González" did not find its chain, and a Flipp
+  // merchant spelled with the accent would never reach the Sales tab (the every-state tests).
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, ' ').trim();
 }
 
 /**

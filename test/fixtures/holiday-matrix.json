@@ -1,0 +1,943 @@
+[
+ {
+  "query": "sparkling wine",
+  "match": [
+   "La Marca Prosecco Sparkling Wine 750 ml",
+   "Cook's California Champagne Brut Sparkling Wine"
+  ],
+  "reject": [
+   "Martinelli's Sparkling Cider",
+   "Sparkling Wine Glass Set"
+  ]
+ },
+ {
+  "query": "shrimp cocktail",
+  "match": [
+   "Censea Shrimp Cocktail with Sauce 16 oz",
+   "Shrimp Cocktail Ring"
+  ],
+  "reject": [
+   "Kelchner's Cocktail Sauce"
+  ]
+ },
+ {
+  "query": "cheese",
+  "match": [
+   "Kraft Singles American Cheese Slices",
+   "Tillamook Medium Cheddar Cheese Block"
+  ],
+  "reject": [
+   "Cheez-It Original Crackers",
+   "Kraft Macaroni & Cheese Dinner",
+   "Philadelphia Cream Cheese"
+  ]
+ },
+ {
+  "query": "crackers",
+  "match": [
+   "Ritz Original Crackers",
+   "Triscuit Original Crackers"
+  ],
+  "reject": [
+   "Oyster Crackers Soup"
+  ]
+ },
+ {
+  "query": "black-eyed peas",
+  "match": [
+   "Bush's Best Blackeye Peas 15.8 oz",
+   "Camellia Black Eyed Peas Dry 1 lb"
+  ],
+  "reject": []
+ },
+ {
+  "query": "cabbage",
+  "match": [
+   "Green Cabbage",
+   "Red Cabbage per lb"
+  ],
+  "reject": [
+   "Dole Coleslaw Mix Shredded Cabbage & Carrots"
+  ]
+ },
+ {
+  "query": "chicken wings",
+  "match": [
+   "Tyson Chicken Wings Frozen 2.5 lb",
+   "Fresh Chicken Party Wings"
+  ],
+  "reject": [
+   "Buffalo Wild Wings Sauce",
+   "Tyson Any'tizers Boneless Chicken Wyngz"
+  ]
+ },
+ {
+  "query": "tortilla chips",
+  "match": [
+   "Tostitos Scoops Tortilla Chips",
+   "Mission Tortilla Triangles Chips"
+  ],
+  "reject": [
+   "Mission Flour Tortillas"
+  ]
+ },
+ {
+  "query": "salsa",
+  "match": [
+   "Pace Chunky Salsa Medium",
+   "Tostitos Chunky Salsa Mild"
+  ],
+  "reject": [
+   "Doritos Salsa Verde Flavored Tortilla Chips"
+  ]
+ },
+ {
+  "query": "avocados",
+  "match": [
+   "Hass Avocados",
+   "Avocados 4 ct Bag"
+  ],
+  "reject": [
+   "Wholly Guacamole Classic",
+   "Chosen Foods Avocado Oil"
+  ]
+ },
+ {
+  "query": "sour cream",
+  "match": [
+   "Daisy Pure & Natural Sour Cream 16 oz",
+   "Breakstone's Sour Cream"
+  ],
+  "reject": [
+   "Lay's Sour Cream & Onion Potato Chips",
+   "Sour Cream & Onion Dip"
+  ]
+ },
+ {
+  "query": "soda",
+  "match": [
+   "Coca-Cola Soda 12 pk 12 fl oz Cans",
+   "Sprite Lemon Lime Soda 2 L"
+  ],
+  "reject": [
+   "Arm & Hammer Baking Soda",
+   "Club Soda Canada Dry"
+  ]
+ },
+ {
+  "query": "frozen pizza",
+  "match": [
+   "DiGiorno Rising Crust Pepperoni Frozen Pizza",
+   "Red Baron Classic Crust Pepperoni Pizza Frozen"
+  ],
+  "reject": [
+   "Totino's Pizza Rolls"
+  ]
+ },
+ {
+  "query": "strawberries",
+  "match": [
+   "Driscoll's Strawberries 1 lb",
+   "Organic Strawberries 2 lb"
+  ],
+  "reject": [
+   "Strawberry Yogurt",
+   "Frozen Sliced Strawberries in Syrup",
+   "Smucker's Strawberry Jam"
+  ]
+ },
+ {
+  "query": "chocolate",
+  "match": [
+   "Hershey's Milk Chocolate Bar",
+   "Ghirardelli Dark Chocolate Squares"
+  ],
+  "reject": [
+   "Nesquik Chocolate Milk",
+   "Hershey's Chocolate Syrup"
+  ]
+ },
+ {
+  "query": "steak",
+  "match": [
+   "USDA Choice Beef Ribeye Steak",
+   "New York Strip Steak"
+  ],
+  "reject": [
+   "A.1. Original Steak Sauce",
+   "McCormick Montreal Steak Seasoning"
+  ]
+ },
+ {
+  "query": "asparagus",
+  "match": [
+   "Green Asparagus Bunch",
+   "Organic Asparagus"
+  ],
+  "reject": [
+   "Del Monte Asparagus Spears Canned"
+  ]
+ },
+ {
+  "query": "wine",
+  "match": [
+   "Barefoot Cabernet Sauvignon Red Wine 750 ml",
+   "Josh Cellars Chardonnay White Wine"
+  ],
+  "reject": [
+   "Pompeian Red Wine Vinegar",
+   "Holland House Cooking Wine"
+  ]
+ },
+ {
+  "query": "corned beef",
+  "match": [
+   "Corned Beef Brisket Point Cut",
+   "Frick's Corned Beef Brisket Flat Cut"
+  ],
+  "reject": [
+   "Hormel Mary Kitchen Corned Beef Hash",
+   "Libby's Corned Beef Canned 12 oz"
+  ]
+ },
+ {
+  "query": "potatoes",
+  "match": [
+   "Russet Potatoes 5 lb Bag",
+   "Red Potatoes 3 lb"
+  ],
+  "reject": [
+   "Lay's Classic Potato Chips",
+   "Ore-Ida Golden Crinkles French Fried Potatoes",
+   "Idahoan Mashed Potatoes Buttery Homestyle"
+  ]
+ },
+ {
+  "query": "carrots",
+  "match": [
+   "Carrots 2 lb Bag",
+   "Organic Baby Carrots 1 lb"
+  ],
+  "reject": [
+   "Carrot Cake",
+   "Del Monte Sliced Carrots Canned"
+  ]
+ },
+ {
+  "query": "irish soda bread",
+  "match": [
+   "Irish Soda Bread with Raisins",
+   "Bakery Fresh Irish Soda Bread"
+  ],
+  "reject": []
+ },
+ {
+  "query": "spiral ham",
+  "match": [
+   "Smithfield Spiral Sliced Honey Ham",
+   "HoneyBaked Spiral Ham Half"
+  ],
+  "reject": []
+ },
+ {
+  "query": "eggs",
+  "match": [
+   "Eggland's Best Large Eggs 12 ct",
+   "Great Value Large White Eggs 18 ct"
+  ],
+  "reject": [
+   "Egg Noodles Wide",
+   "Cadbury Creme Eggs",
+   "Reese's Peanut Butter Eggs"
+  ]
+ },
+ {
+  "query": "dinner rolls",
+  "match": [
+   "Sister Schubert's Parker House Style Yeast Dinner Rolls",
+   "Pillsbury Crescent Dinner Rolls"
+  ],
+  "reject": [
+   "Pepperidge Farm Cinnamon Rolls"
+  ]
+ },
+ {
+  "query": "jelly beans",
+  "match": [
+   "Jelly Belly Jelly Beans",
+   "Brach's Classic Jelly Beans"
+  ],
+  "reject": [
+   "Bush's Black Beans"
+  ]
+ },
+ {
+  "query": "limes",
+  "match": [
+   "Limes",
+   "Persian Limes 2 lb Bag"
+  ],
+  "reject": [
+   "Lime Juice ReaLime",
+   "Lime Sparkling Water"
+  ]
+ },
+ {
+  "query": "tortillas",
+  "match": [
+   "Mission Flour Tortillas Soft Taco",
+   "Guerrero Corn Tortillas"
+  ],
+  "reject": [
+   "Tostitos Tortilla Chips",
+   "Tortilla Soup"
+  ]
+ },
+ {
+  "query": "ground beef",
+  "match": [
+   "80/20 Ground Beef 1 lb",
+   "Lean Ground Beef 93/7"
+  ],
+  "reject": [
+   "Hamburger Helper Cheeseburger Macaroni",
+   "Beef Broth"
+  ]
+ },
+ {
+  "query": "cilantro",
+  "match": [
+   "Cilantro Bunch",
+   "Organic Cilantro"
+  ],
+  "reject": [
+   "Cilantro Lime Rice Mix",
+   "Cilantro Dressing"
+  ]
+ },
+ {
+  "query": "bacon",
+  "match": [
+   "Oscar Mayer Naturally Hardwood Smoked Bacon",
+   "Wright Brand Thick Cut Bacon"
+  ],
+  "reject": [
+   "Bacon Bits Hormel",
+   "Bacon Ranch Dressing"
+  ]
+ },
+ {
+  "query": "orange juice",
+  "match": [
+   "Tropicana Pure Premium Orange Juice No Pulp",
+   "Simply Orange Juice Pulp Free"
+  ],
+  "reject": [
+   "Sunny D Tangy Original",
+   "Orange Soda"
+  ]
+ },
+ {
+  "query": "croissants",
+  "match": [
+   "Butter Croissants 6 ct",
+   "Mini Croissants 12 ct"
+  ],
+  "reject": [
+   "Croissant Sandwich Jimmy Dean"
+  ]
+ },
+ {
+  "query": "flowers",
+  "match": [
+   "Fresh Cut Flowers Bouquet",
+   "Mixed Flower Bouquet"
+  ],
+  "reject": []
+ },
+ {
+  "query": "hot dogs",
+  "match": [
+   "Ball Park Beef Franks Hot Dogs",
+   "Oscar Mayer Classic Wieners Hot Dogs"
+  ],
+  "reject": [
+   "Hot Dog Buns",
+   "Hot Dog Chili Sauce"
+  ]
+ },
+ {
+  "query": "hamburger buns",
+  "match": [
+   "Ball Park Hamburger Buns 8 ct",
+   "Sesame Seed Hamburger Buns"
+  ],
+  "reject": [
+   "Hamburger Helper"
+  ]
+ },
+ {
+  "query": "hot dog buns",
+  "match": [
+   "Hot Dog Buns 8 ct",
+   "Ball Park Hot Dog Buns"
+  ],
+  "reject": [
+   "Ball Park Beef Franks Hot Dogs"
+  ]
+ },
+ {
+  "query": "corn",
+  "match": [
+   "Sweet Corn on the Cob",
+   "Yellow Corn 4 ct"
+  ],
+  "reject": [
+   "Corn Flakes Kellogg's",
+   "Corn Tortillas",
+   "Corn Chips Fritos",
+   "Candy Corn"
+  ]
+ },
+ {
+  "query": "watermelon",
+  "match": [
+   "Seedless Watermelon",
+   "Mini Watermelon"
+  ],
+  "reject": [
+   "Jolly Rancher Hard Candy Watermelon",
+   "Gatorade Thirst Quencher Watermelon Sports Drink"
+  ]
+ },
+ {
+  "query": "charcoal",
+  "match": [
+   "Kingsford Original Charcoal Briquettes 16 lb"
+  ],
+  "reject": [
+   "Activated Charcoal Capsules",
+   "Charcoal Toothpaste"
+  ]
+ },
+ {
+  "query": "ribeye steak",
+  "match": [
+   "USDA Choice Ribeye Steak Boneless",
+   "Beef Ribeye Steak Bone-In"
+  ],
+  "reject": []
+ },
+ {
+  "query": "baby back ribs",
+  "match": [
+   "Pork Baby Back Ribs",
+   "Smithfield Baby Back Ribs"
+  ],
+  "reject": [
+   "Baby Back Rib Sauce"
+  ]
+ },
+ {
+  "query": "bbq sauce",
+  "match": [
+   "Sweet Baby Ray's Barbecue Sauce",
+   "KC Masterpiece Original BBQ Sauce"
+  ],
+  "reject": [
+   "BBQ Potato Chips Lay's"
+  ]
+ },
+ {
+  "query": "buns",
+  "match": [
+   "Hamburger Buns 8 ct",
+   "Hot Dog Buns 8 ct"
+  ],
+  "reject": []
+ },
+ {
+  "query": "potato chips",
+  "match": [
+   "Lay's Classic Potato Chips",
+   "Kettle Brand Sea Salt Potato Chips"
+  ],
+  "reject": [
+   "Russet Potatoes 5 lb Bag"
+  ]
+ },
+ {
+  "query": "blueberries",
+  "match": [
+   "Blueberries 1 pint",
+   "Driscoll's Blueberries 6 oz"
+  ],
+  "reject": [
+   "Blueberry Muffins",
+   "Frozen Blueberries Wyman's",
+   "Blueberry Yogurt"
+  ]
+ },
+ {
+  "query": "bread",
+  "match": [
+   "Wonder Classic White Bread",
+   "Nature's Own Honey Wheat Bread"
+  ],
+  "reject": [
+   "Bread Crumbs Progresso",
+   "Banana Bread Mix"
+  ]
+ },
+ {
+  "query": "peanut butter",
+  "match": [
+   "Jif Creamy Peanut Butter",
+   "Skippy Super Chunk Peanut Butter"
+  ],
+  "reject": [
+   "Reese's Peanut Butter Cups",
+   "Peanut Butter Crackers Lance"
+  ]
+ },
+ {
+  "query": "turkey lunch meat",
+  "match": [
+   "Oscar Mayer Deli Fresh Oven Roasted Turkey Breast Lunch Meat",
+   "Hillshire Farm Ultra Thin Honey Roasted Turkey Lunch Meat"
+  ],
+  "reject": []
+ },
+ {
+  "query": "string cheese",
+  "match": [
+   "Frigo Cheese Heads String Cheese 12 ct",
+   "Sargento Light String Cheese"
+  ],
+  "reject": []
+ },
+ {
+  "query": "granola bars",
+  "match": [
+   "Nature Valley Crunchy Granola Bars Oats n Honey",
+   "Quaker Chewy Granola Bars"
+  ],
+  "reject": []
+ },
+ {
+  "query": "apples",
+  "match": [
+   "Gala Apples 3 lb Bag",
+   "Honeycrisp Apples"
+  ],
+  "reject": [
+   "Mott's Applesauce",
+   "Apple Juice Mott's",
+   "Apple Pie"
+  ]
+ },
+ {
+  "query": "juice boxes",
+  "match": [
+   "Juicy Juice 100% Juice Boxes Apple 8 ct",
+   "Honest Kids Juice Boxes"
+  ],
+  "reject": []
+ },
+ {
+  "query": "brats",
+  "match": [
+   "Johnsonville Original Brats",
+   "Johnsonville Beer Brats"
+  ],
+  "reject": []
+ },
+ {
+  "query": "potato salad",
+  "match": [
+   "Deli Potato Salad Classic",
+   "Reser's American Potato Salad"
+  ],
+  "reject": []
+ },
+ {
+  "query": "chips",
+  "match": [
+   "Lay's Classic Potato Chips",
+   "Tostitos Tortilla Chips"
+  ],
+  "reject": [
+   "Nestle Toll House Chocolate Chips"
+  ]
+ },
+ {
+  "query": "halloween candy",
+  "match": [
+   "Hershey's Halloween Candy Assortment Snack Size",
+   "Mars Halloween Candy Variety Pack"
+  ],
+  "reject": []
+ },
+ {
+  "query": "pumpkin",
+  "match": [
+   "Pie Pumpkin",
+   "Carving Pumpkin Large"
+  ],
+  "reject": [
+   "Libby's Pumpkin Pie Mix",
+   "Pumpkin Spice Coffee Creamer",
+   "Pumpkin Seeds"
+  ]
+ },
+ {
+  "query": "apple cider",
+  "match": [
+   "Martinelli's Apple Cider",
+   "Fresh Pressed Apple Cider 1 gal"
+  ],
+  "reject": [
+   "Bragg Apple Cider Vinegar",
+   "Angry Orchard Hard Cider"
+  ]
+ },
+ {
+  "query": "caramel apples",
+  "match": [
+   "Caramel Apples 4 ct",
+   "Gourmet Caramel Apples 2 ct"
+  ],
+  "reject": []
+ },
+ {
+  "query": "whole turkey",
+  "match": [
+   "Butterball Whole Turkey Frozen 12-16 lb",
+   "Jennie-O Whole Turkey"
+  ],
+  "reject": [
+   "Turkey Breast Deli Sliced"
+  ]
+ },
+ {
+  "query": "stuffing",
+  "match": [
+   "Stove Top Stuffing Mix Turkey",
+   "Pepperidge Farm Herb Seasoned Stuffing"
+  ],
+  "reject": []
+ },
+ {
+  "query": "cranberry sauce",
+  "match": [
+   "Ocean Spray Jellied Cranberry Sauce",
+   "Ocean Spray Whole Berry Cranberry Sauce"
+  ],
+  "reject": [
+   "Ocean Spray Cranberry Juice Cocktail"
+  ]
+ },
+ {
+  "query": "sweet potatoes",
+  "match": [
+   "Sweet Potatoes per lb",
+   "Organic Sweet Potatoes 3 lb"
+  ],
+  "reject": [
+   "Alexia Sweet Potato Fries"
+  ]
+ },
+ {
+  "query": "russet potatoes",
+  "match": [
+   "Russet Potatoes 5 lb Bag",
+   "Idaho Russet Potatoes 10 lb"
+  ],
+  "reject": [
+   "Russet Potato Chips"
+  ]
+ },
+ {
+  "query": "green beans",
+  "match": [
+   "Fresh Green Beans per lb",
+   "Del Monte Cut Green Beans"
+  ],
+  "reject": [
+   "Green Bean Casserole French's Crispy Fried Onions"
+  ]
+ },
+ {
+  "query": "butter",
+  "match": [
+   "Land O Lakes Salted Butter 4 Sticks",
+   "Kerrygold Pure Irish Butter"
+  ],
+  "reject": [
+   "Jif Creamy Peanut Butter",
+   "Butter Popcorn Orville",
+   "Country Crock Spread"
+  ]
+ },
+ {
+  "query": "heavy cream",
+  "match": [
+   "Horizon Organic Heavy Whipping Cream",
+   "Great Value Heavy Whipping Cream 16 oz"
+  ],
+  "reject": [
+   "Coffee Mate Creamer"
+  ]
+ },
+ {
+  "query": "pumpkin pie filling",
+  "match": [
+   "Comstock Pumpkin Pie Filling",
+   "Libby's Easy Pumpkin Pie Filling Mix"
+  ],
+  "reject": []
+ },
+ {
+  "query": "pie crust",
+  "match": [
+   "Pillsbury Refrigerated Pie Crusts 2 ct",
+   "Keebler Ready Crust Graham Pie Crust"
+  ],
+  "reject": []
+ },
+ {
+  "query": "celery",
+  "match": [
+   "Celery Stalk",
+   "Organic Celery Hearts"
+  ],
+  "reject": [
+   "Celery Salt McCormick",
+   "Celery Seed"
+  ]
+ },
+ {
+  "query": "onions",
+  "match": [
+   "Yellow Onions 3 lb Bag",
+   "Red Onion"
+  ],
+  "reject": [
+   "French's Crispy Fried Onions",
+   "Onion Powder McCormick",
+   "Onion Rings Frozen"
+  ]
+ },
+ {
+  "query": "chicken broth",
+  "match": [
+   "Swanson Chicken Broth 32 oz",
+   "Pacific Organic Free Range Chicken Broth"
+  ],
+  "reject": []
+ },
+ {
+  "query": "flour",
+  "match": [
+   "Gold Medal All Purpose Flour 5 lb",
+   "King Arthur Unbleached All-Purpose Flour"
+  ],
+  "reject": [
+   "Flour Tortillas Mission"
+  ]
+ },
+ {
+  "query": "sugar",
+  "match": [
+   "Domino Granulated Sugar 4 lb",
+   "C&H Pure Cane Sugar"
+  ],
+  "reject": [
+   "Sugar Cookies",
+   "Sugar Free Jell-O"
+  ]
+ },
+ {
+  "query": "chocolate chips",
+  "match": [
+   "Nestle Toll House Semi-Sweet Chocolate Chips",
+   "Ghirardelli Semi-Sweet Chocolate Chips"
+  ],
+  "reject": [
+   "Chips Ahoy Chocolate Chip Cookies"
+  ]
+ },
+ {
+  "query": "eggnog",
+  "match": [
+   "Southern Comfort Eggnog",
+   "Horizon Organic Eggnog"
+  ],
+  "reject": []
+ },
+ {
+  "query": "cream cheese",
+  "match": [
+   "Philadelphia Original Cream Cheese Brick",
+   "Great Value Cream Cheese 8 oz"
+  ],
+  "reject": []
+ },
+ {
+  "query": "vegetable oil",
+  "match": [
+   "Crisco Pure Vegetable Oil 48 fl oz",
+   "Wesson Vegetable Oil"
+  ],
+  "reject": []
+ },
+ {
+  "query": "applesauce",
+  "match": [
+   "Mott's Original Applesauce",
+   "Musselman's Unsweetened Applesauce"
+  ],
+  "reject": []
+ },
+ {
+  "query": "brisket",
+  "match": [
+   "Beef Brisket Flat Cut",
+   "Whole Packer Beef Brisket"
+  ],
+  "reject": [
+   "Corned Beef Brisket Point Cut"
+  ]
+ },
+ {
+  "query": "ghee",
+  "match": [
+   "4th & Heart Original Ghee",
+   "Ancient Organics Ghee"
+  ],
+  "reject": []
+ },
+ {
+  "query": "basmati rice",
+  "match": [
+   "Royal Basmati Rice 10 lb",
+   "Tilda Pure Basmati Rice"
+  ],
+  "reject": []
+ },
+ {
+  "query": "lentils",
+  "match": [
+   "Goya Lentils 16 oz",
+   "Bob's Red Mill Red Lentils"
+  ],
+  "reject": [
+   "Lentil Soup Progresso"
+  ]
+ },
+ {
+  "query": "milk",
+  "match": [
+   "Great Value Whole Milk 1 gal",
+   "Lactaid 2% Reduced Fat Milk"
+  ],
+  "reject": [
+   "Hershey's Milk Chocolate Bar",
+   "Milk Bone Dog Treats",
+   "Nesquik Chocolate Milk"
+  ]
+ },
+ {
+  "query": "cashews",
+  "match": [
+   "Planters Deluxe Whole Cashews",
+   "Kirkland Signature Whole Fancy Cashews"
+  ],
+  "reject": []
+ },
+ {
+  "query": "dumpling wrappers",
+  "match": [
+   "Twin Marquis Dumpling Wrappers",
+   "Nasoya Round Wraps Dumpling Wrappers"
+  ],
+  "reject": [
+   "Bibigo Pork Dumplings"
+  ]
+ },
+ {
+  "query": "ground pork",
+  "match": [
+   "Ground Pork 1 lb",
+   "Smithfield Ground Pork"
+  ],
+  "reject": [
+   "Jimmy Dean Pork Sausage"
+  ]
+ },
+ {
+  "query": "noodles",
+  "match": [
+   "Nissin Chow Mein Noodles",
+   "Lo Mein Noodles"
+  ],
+  "reject": []
+ },
+ {
+  "query": "mandarins",
+  "match": [
+   "Cuties Clementine Mandarins 3 lb",
+   "Halos Mandarins"
+  ],
+  "reject": [
+   "Dole Mandarin Oranges in Syrup"
+  ]
+ },
+ {
+  "query": "bok choy",
+  "match": [
+   "Baby Bok Choy",
+   "Bok Choy per lb"
+  ],
+  "reject": []
+ },
+ {
+  "query": "dates",
+  "match": [
+   "Medjool Dates",
+   "Sun-Maid Pitted Dates"
+  ],
+  "reject": []
+ },
+ {
+  "query": "lamb",
+  "match": [
+   "Lamb Loin Chops",
+   "Ground Lamb 1 lb"
+  ],
+  "reject": [
+   "Lamb Chop Dog Toy"
+  ]
+ },
+ {
+  "query": "yogurt",
+  "match": [
+   "Chobani Plain Greek Yogurt",
+   "Dannon Plain Whole Milk Yogurt 32 oz"
+  ],
+  "reject": [
+   "Yogurt Covered Pretzels",
+   "Yogurt Raisins"
+  ]
+ },
+ {
+  "query": "pistachios",
+  "match": [
+   "Wonderful Pistachios Roasted & Salted",
+   "Kirkland Signature Shelled Pistachios"
+  ],
+  "reject": [
+   "Pistachio Ice Cream"
+  ]
+ }
+]

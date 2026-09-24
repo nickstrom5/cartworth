@@ -173,7 +173,8 @@ enum RetailerCatalog {
     static let byId: [String: Chain] = Dictionary(chains.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
 
     private static func norm(_ s: String) -> String {
-        s.lowercased()
+        // Accents folded ("Northgate González"), as in shared/catalog.js norm().
+        s.folding(options: .diacriticInsensitive, locale: nil).lowercased()
             .replacingOccurrences(of: "’", with: "'")
             .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespaces)
@@ -186,8 +187,10 @@ enum RetailerCatalog {
         for c in chains {
             for a in c.aliases {
                 let alias = norm(a)
-                // word-ish boundary match; prefer the longest alias ("giant eagle" over "giant")
-                if n.contains(" " + alias) || n.contains(alias + " ") || n.hasPrefix(" " + alias) {
+                // Whole-word match on both sides; prefer the longest alias ("giant eagle" over "giant").
+                // The old test (" " + alias OR alias + " ") matched "h mart" inside "healt|h mart
+                // pharmacy", the bug shared/catalog.js containsWhole fixed. Port of containsWhole.
+                if containsWhole(n, alias) {
                     if best == nil || alias.count > best!.1 { best = (c, alias.count) }
                 }
             }
@@ -195,12 +198,33 @@ enum RetailerCatalog {
         return best?.0
     }
 
+    /// True when `needle` appears in `haystack` with a non-alphanumeric character on both sides.
+    private static func containsWhole(_ haystack: String, _ needle: String) -> Bool {
+        guard !needle.isEmpty else { return false }
+        var from = haystack.startIndex
+        while let r = haystack.range(of: needle, range: from..<haystack.endIndex) {
+            let before = r.lowerBound == haystack.startIndex ? " " : haystack[haystack.index(before: r.lowerBound)]
+            let after = r.upperBound == haystack.endIndex ? " " : haystack[r.upperBound]
+            if !(before.isLetter || before.isNumber) && !(after.isLetter || after.isNumber) { return true }
+            from = haystack.index(after: r.lowerBound)
+        }
+        return false
+    }
+
     /// Match a Flipp merchant name to a known chain.
     static func chain(forMerchant merchant: String) -> Chain? {
         let m = norm(merchant)
         for c in chains where c.flipp.contains(where: { norm($0) == m }) { return c }
-        return chain(forStoreName: merchant)
+        guard let c = chain(forStoreName: merchant) else { return nil }
+        // "Publix Liquors" is Publix's liquor store, not its supermarket: its circular (Grey Goose,
+        // Josh Cellars) was shown as Publix's weekly ad. Judge only what the name adds to the
+        // alias. Port of NOT_A_GROCER in shared/catalog.js.
+        let alias = c.aliases.map(norm).filter { containsWhole(" \(m) ", $0) }.max(by: { $0.count < $1.count }) ?? ""
+        let rest = alias.isEmpty ? m : " \(m) ".components(separatedBy: alias).joined(separator: " ")
+        return notAGrocerRx.test(rest) ? nil : c
     }
+
+    private static let notAGrocerRx = Rx("(?:^|[^a-z0-9])(?:liquors?|wines?|spirits|beer|pharmac(?:y|ies)|rx|fuel|gas|optical|hearing|tires?)(?=$|[^a-z0-9])")
 
     /// Flipp merchants that are grocery-relevant even when not in the catalog.
     static let groceryFlyerCategories: Set<String> = ["Groceries"]
