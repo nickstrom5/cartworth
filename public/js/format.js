@@ -20,8 +20,11 @@ export function unitPrice(perBase, displayUnit) {
   if (perBase == null || !d) return null;
   const v = perBase * d.factor;
   let s;
+  // Dollars from $1.00 only. The cut was 0.995, so 99.5¢ (a $1.99 two-pound bag, a common shape)
+  // printed "$0.99": toFixed(2) of 0.995 is "0.99", half a cent under the real price, beside a
+  // true 99¢ printed "99¢". Under a dollar the tenth of a cent is exact; 99.95¢ and up is $1.00.
   if (v >= 100) s = `$${v.toFixed(0)}`;
-  else if (v >= 0.995) s = `$${v.toFixed(2)}`;
+  else if (v >= 0.9995) s = `$${v.toFixed(2)}`;
   else if (v >= 0.1) s = `${(v * 100).toFixed(1).replace(/\.0$/, '')}¢`;
   else s = `${(v * 100).toFixed(2)}¢`;
   return { value: v, text: s, unit: d.label };
@@ -34,7 +37,7 @@ export function unitPrice(perBase, displayUnit) {
  */
 export function unitPriceStep(v) {
   if (v >= 100) return 1;
-  if (v >= 0.995) return 0.01;
+  if (v >= 0.9995) return 0.01;
   if (v >= 0.1) return 0.001;
   return 0.0001;
 }
@@ -83,6 +86,19 @@ export function endsLabel(validTo) {
   if (days === 1) return 'Ends tomorrow';
   if (days < 7) return `Ends ${weekday(to)}`;
   return `Thru ${shortDate(to)}`;
+}
+
+/**
+ * A promo badge's text, shortened only where that cannot change a price: a promo that names one
+ * ("Mix & match 5 for $12.50") is never cut (it was cut to "Mix & match 5 for $1…"); any other is
+ * cut at a word boundary. The full text stays in the badge's title.
+ */
+export function shortPromo(text, max = 28) {
+  const t = String(text || '').trim();
+  if (t.length <= max || /[$¢]|\d\s*(?:for|\/)/i.test(t)) return t;
+  const cut = t.slice(0, max - 1);
+  const sp = cut.lastIndexOf(' ');
+  return `${(sp > max / 2 ? cut.slice(0, sp) : cut).replace(/[\s,;:&–-]+$/, '')}…`;
 }
 
 export function plural(n, one, many = one + 's') {

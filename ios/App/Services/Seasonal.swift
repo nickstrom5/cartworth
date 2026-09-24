@@ -12,6 +12,9 @@ struct Occasion: Identifiable, Hashable {
     /// Starter shopping list
     var list: [String]
 
+    /// "is today", "is tomorrow", "in 9 days" ("in 1 days" before).
+    var whenText: String { daysAway == 0 ? "is today" : daysAway == 1 ? "is tomorrow" : "in \(daysAway) days" }
+
     var daysAway: Int { max(0, Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: Date()), to: Calendar.current.startOfDay(for: date)).day ?? 0) }
 }
 

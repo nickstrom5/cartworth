@@ -349,6 +349,14 @@ enum Compare {
         return nil
     }
 
+    /// True when a store's price is within the price-basis margin of the winner's: the savings line
+    /// could not call it dearer, so no chart may draw it as beaten. `standings`' rule, for callers
+    /// that hold rows rather than `Best` entries.
+    static func isClose(winner a: Double, _ aBasis: PriceBasis, _ aEst: Bool, to b: Double, _ bBasis: PriceBasis, _ bEst: Bool) -> Bool {
+        let rel = relation(a, aBasis, aEst, b, bBasis, bEst)
+        return !(rel == "exact" || rel == "ahead")
+    }
+
     static func standings(_ stores: [String: Best]) -> [Standing] {
         var rows: [Standing] = stores.compactMap { id, b in
             guard b.perBase > 0 else { return nil }
@@ -409,6 +417,17 @@ enum Compare {
 // MARK: - Money & unit formatting
 
 enum Money {
+    /// A promo badge's text, shortened only where that cannot change a price: one that names a price
+    /// is never cut ("Mix & match 5 for $1…"), any other at a word boundary. Mirrors shortPromo in
+    /// public/js/format.js.
+    static func shortPromo(_ text: String, max: Int = 22) -> String {
+        let t = text.trimmingCharacters(in: .whitespaces)
+        if t.count <= max || t.contains("$") || t.contains("¢") || t.range(of: "\\d\\s*(for|/)", options: [.regularExpression, .caseInsensitive]) != nil { return t }
+        let cut = String(t.prefix(max - 1))
+        let body = cut.lastIndex(of: " ").map { i in cut.distance(from: cut.startIndex, to: i) > max / 2 ? String(cut[..<i]) : cut } ?? cut
+        return body.trimmingCharacters(in: CharacterSet(charactersIn: " ,;:&–-")) + "…"
+    }
+
     /// "$2.49", or "89¢" under a dollar
     static func short(_ n: Double?) -> String {
         guard let n, n.isFinite else { return "—" }
@@ -432,7 +451,8 @@ enum Money {
         guard let perBase, perBase.isFinite else { return "—" }
         let v = perBase * du.factor
         if v >= 100 { return String(format: "$%.0f", v) }
-        if v >= 0.995 { return String(format: "$%.2f", v) }
+        // Dollars from $1.00 only: at 0.995, 99.5¢ printed "$0.99" (mirrors public/js/format.js).
+        if v >= 0.9995 { return String(format: "$%.2f", v) }
         if v >= 0.1 {
             let c = (v * 1000).rounded() / 10
             return c == c.rounded() ? "\(Int(c))¢" : String(format: "%.1f¢", c)

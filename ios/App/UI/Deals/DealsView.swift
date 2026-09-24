@@ -170,8 +170,8 @@ struct DealsView: View {
                             HStack(spacing: 12) {
                                 Image(systemName: occasion.symbol).font(.title3).foregroundStyle(Color.accentColor)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("\(occasion.name) \(occasion.daysAway == 0 ? "today" : "in \(occasion.daysAway) days")").font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                                    Text(matches.isEmpty ? occasion.blurb : "\(matches.count) matching deals in this week’s ads").font(.caption).foregroundStyle(.secondary)
+                                    Text("\(occasion.name) \(occasion.whenText)").font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                                    Text(matches.isEmpty ? occasion.blurb : "\(matches.count) matching deals in \(week == .next ? "next" : "this") week’s ads").font(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)

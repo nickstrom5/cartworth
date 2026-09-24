@@ -116,3 +116,19 @@ test('DEFECT: a gridline label never states a unit price the gridline is not at 
     for (const t of axis.ticks) assert.ok(Math.abs(readBack(fmt(t)) - t) < 1e-9, `#${i}: gridline ${t} is labelled ${fmt(t)}`);
   }
 });
+
+// Found in the Apple-device review's chart check: a $1.99 two-pound bag is 99.5¢/lb and printed
+// "$0.99" (toFixed(2) of 0.995), half a cent under the real price, right beside a true 99¢ printed
+// "99¢". Under a dollar the tenth of a cent is shown; dollars start at $1.00.
+test('DEFECT: 99.5¢ is printed as 99.5¢, not "$0.99"', () => {
+  assert.equal(unitPrice(1.99 / 32, 'lb').text, '99.5¢');
+  assert.equal(unitPrice(0.99 / 16, 'lb').text, '99¢');
+});
+
+test('DEFECT: the axis step moves with the switch to dollars (and a dollar and up keep dollars)', () => {
+  assert.equal(unitPrice(1 / 16, 'lb').text, '$1.00');
+  assert.equal(unitPrice(0.99996 / 16, 'lb').text, '$1.00');
+  assert.equal(unitPrice(2.49 / 16, 'lb').text, '$2.49');
+  assert.equal(unitPriceStep(0.995), 0.001);
+  assert.equal(unitPriceStep(1), 0.01);
+});

@@ -698,6 +698,16 @@ label.field .hint {
   color: var(--ink-2);
   line-height: 1;
 }
+.badge.badge-promo {
+  /* A promo with a price in it is never shortened (format.js shortPromo), so it may wrap instead of
+     running past the edge of a phone-width row. */
+  white-space: normal;
+  height: auto;
+  min-height: 20px;
+  padding-block: 3px;
+  line-height: 1.2;
+  max-width: 100%;
+}
 .badge-sale {
   background: var(--deal-bg);
   color: var(--deal-ink);
@@ -1820,8 +1830,14 @@ code {
 .bar-track {
   display: flex;
   align-items: center;
-  gap: 8px;
+  /* The fill reserves room for the number and "Best" only; the "≈ same" and source labels wrap
+     under the bar when a narrow screen has no room for them, rather than pushing past the edge. */
+  flex-wrap: wrap;
+  gap: 2px 8px;
   min-width: 0;
+}
+.bar-basis {
+  white-space: nowrap;
 }
 .bar-fill {
   height: 18px;

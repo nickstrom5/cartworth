@@ -58,7 +58,7 @@ struct ProductDetailView: View {
                                 Text("\(label): \(Money.full(mp))\(Compare.usesMember(product, prefs) ? " (used in comparisons)" : " (not counted — change in Settings)")")
                                     .font(.caption).foregroundStyle(Color.accentColor)
                             }
-                            if let promo = product.promo { Text(promo).font(.caption.weight(.medium)).foregroundStyle(Color(hex: 0xB23A0C)) }
+                            if let promo = product.promo { Text(promo).font(.caption.weight(.medium)).foregroundStyle(Color.dealInk) }
                             if let est = product.estPkg { Text("Typical package ≈ \(Money.full(est)) (weighed at the register)").font(.caption).foregroundStyle(.secondary) }
                         }
                     }
@@ -197,5 +197,6 @@ struct ProductDetailView: View {
         try? ctx.save()
         watched = true
         Task { await WatchService.refresh(w, fresh: false) }
+        Task { _ = await BackgroundRefresh.requestPermission() }  // see TrackingView.addWatch
     }
 }

@@ -119,6 +119,9 @@ struct TrackingView: View {
         try? ctx.save()
         newWatch = ""
         Task { await refresh(w) }
+        // Watch alerts need notification permission, and until now only adding a favorite asked for
+        // it: someone who only watched prices never got their target alert. Asks once; a no is kept.
+        Task { _ = await BackgroundRefresh.requestPermission() }
     }
 
     private func addFavorite() {

@@ -1641,3 +1641,35 @@ final class DealBadgeTests: XCTestCase {
         XCTAssertNil(DealParser.parse("30% off")?.offerBadge)
     }
 }
+
+final class UnitPriceFormatTests: XCTestCase {
+    /// A $1.99 two-pound bag is 99.5¢/lb; the 0.995 cut printed it "$0.99" (mirrors qa-chart-scale).
+    func testDefectNinetyNineAndAHalfCents() {
+        XCTAssertEqual(Money.unit(1.99 / 32, .lb), "99.5¢")
+        XCTAssertEqual(Money.unit(0.99 / 16, .lb), "99¢")
+        XCTAssertEqual(Money.unit(1.0 / 16, .lb), "$1.00")
+    }
+}
+
+extension UnitPriceFormatTests {
+    /// The per-store chart's "≈ same" follows `standings`: an Instacart price a few cents over a shelf
+    /// price is not beaten; a clearly dearer one is.
+    func testChartCloseFollowsStandings() {
+        XCTAssertTrue(Compare.isClose(winner: 0.25, .shelf, false, to: 0.27, .online, false))
+        XCTAssertFalse(Compare.isClose(winner: 0.25, .shelf, false, to: 0.40, .online, false))
+        XCTAssertFalse(Compare.isClose(winner: 0.25, .shelf, false, to: 0.30, .shelf, false))
+    }
+}
+
+extension UnitPriceFormatTests {
+    func testDefectPromoNeverCutThroughAPrice() {
+        XCTAssertEqual(Money.shortPromo("Mix & match 5 for $12.50 with card"), "Mix & match 5 for $12.50 with card")
+        XCTAssertEqual(Money.shortPromo("Select varieties while supplies last"), "Select varieties…")
+    }
+
+    func testDefectOneDayAway() {
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date())!
+        let o = Occasion(id: "t", name: "Christmas", date: tomorrow, symbol: "gift", blurb: "", keywords: [], list: [])
+        XCTAssertEqual(o.whenText, "is tomorrow")
+    }
+}

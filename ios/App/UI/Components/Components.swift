@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import Charts
 
 // MARK: - Store identity
@@ -161,11 +162,22 @@ struct WordFlow: Layout {
 
 // MARK: - Badges
 
+extension Color {
+    /// The deal/promo text colour: the brand's dark orange on light, a light orange on dark (the dark
+    /// hue was about 3:1 on Dark Mode's background).
+    static let dealInk = Color(UIColor { t in
+        t.userInterfaceStyle == .dark
+            ? UIColor(red: 0xFF / 255, green: 0x9A / 255, blue: 0x6B / 255, alpha: 1)
+            : UIColor(red: 0xB2 / 255, green: 0x3A / 255, blue: 0x0C / 255, alpha: 1)
+    })
+}
+
 struct Badge: View {
     enum Kind { case neutral, sale, good, warn, info, outline }
     let text: String
     var kind: Kind = .neutral
     var symbol: String?
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         HStack(spacing: 3) {
@@ -201,13 +213,17 @@ struct Badge: View {
         }
     }
 
+    /// The light-mode inks are dark hues; on Dark Mode's near-black, under a translucent tint, they
+    /// fell to roughly 2:1 — "% off", "Best", "price looks wrong" and member prices were hard to read.
+    /// Dark Mode gets light hues of the same colours, each above 4.5:1 on its tinted pill.
     private var fg: Color {
+        let dark = scheme == .dark
         switch kind {
         case .neutral, .outline: return .secondary
-        case .sale: return Color(hex: 0xB23A0C)
-        case .good: return Color(hex: 0x146B14)
-        case .warn: return Color(hex: 0x7A5100)
-        case .info: return Color(hex: 0x1C5CAB)
+        case .sale: return Color(hex: dark ? 0xFF9A6B : 0xB23A0C)
+        case .good: return Color(hex: dark ? 0x6FD08C : 0x146B14)
+        case .warn: return Color(hex: dark ? 0xF2C95C : 0x7A5100)
+        case .info: return Color(hex: dark ? 0x7DB4FF : 0x1C5CAB)
         }
     }
 }
@@ -309,7 +325,7 @@ struct ProductRowView: View {
                         if isBest { Badge(text: "Best", kind: .good, symbol: "checkmark") }
                         if let pct = p.pctOff, p.onSale { Badge(text: "\(pct)% off", kind: .sale) }
                         else if p.onSale { Badge(text: "Sale", kind: .sale) }
-                        if let promo = p.promo { Badge(text: promo.count > 22 ? String(promo.prefix(20)) + "…" : promo, kind: .sale) }
+                        if let promo = p.promo { Badge(text: Money.shortPromo(promo), kind: .sale) }
                         if let mp = p.memberPrice, let label = p.memberLabel { Badge(text: "\(label) \(Money.full(mp))", kind: .info) }
                         if let h = row.hist, h.n >= 3, p.price <= h.low + 0.004 { Badge(text: "Lowest seen", kind: .good) }
                         else if let prev = row.hist?.prev, prev > p.price { Badge(text: "was \(Money.full(prev))", kind: .good, symbol: "arrow.down") }
@@ -554,7 +570,7 @@ enum ChartScale {
 /// How one price axis renders every one of its tick labels.
 ///
 /// `Money.unit` picks its format per value — it switches to whole dollars at 100 and to cents
-/// under 0.995 — which is right for a single figure in a row and wrong for an axis, where it
+/// under 0.9995 — which is right for a single figure in a row and wrong for an axis, where it
 /// produced `$200`, `$150`, `$100`, `$50.00` and `0.00¢` as the five labels of one scale. The
 /// format is chosen once from the domain so that every tick on an axis reads the same way.
 enum PriceAxisFormat {
@@ -599,6 +615,7 @@ struct BestPerStoreChart: View {
     @ScaledMetric(relativeTo: .caption) private var nameColumn: CGFloat = 92
     @ScaledMetric(relativeTo: .caption) private var priceSlot: CGFloat = 96
     @ScaledMetric(relativeTo: .caption) private var priceSlotWide: CGFloat = 150
+    @ScaledMetric(relativeTo: .caption) private var tagSlot: CGFloat = 112
     @ScaledMetric(relativeTo: .caption) private var rowHeight: CGFloat = 18
     @ScaledMetric(relativeTo: .caption) private var barHeight: CGFloat = 16
 
@@ -612,7 +629,9 @@ struct BestPerStoreChart: View {
         // One reserve for the whole chart, not per row: the bars only compare if every one of
         // them is measured against the same track. Wider when any row carries the extra badge.
         let anyOffScale = rows.contains { ($0.perBase ?? 0) > cap }
-        let reserve: CGFloat = anyOffScale ? priceSlotWide : priceSlot
+        // Room for "≈ same" and the price source ("Instacart"), when any row carries them.
+        let anyTagged = rows.indices.contains { tags($0).close || tags($0).source != nil }
+        let reserve: CGFloat = (anyOffScale ? priceSlotWide : priceSlot) + (anyTagged ? tagSlot : 0)
         VStack(alignment: .leading, spacing: typeSize.isAccessibilitySize ? 14 : 8) {
             ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
                 let value = r.perBase ?? 0
@@ -626,7 +645,7 @@ struct BestPerStoreChart: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(RetailerCatalog.byId[r.product.storeId]?.name ?? r.product.storeId)
-                .accessibilityValue("\(Money.unit(value, unit)) per \(unit.label)\(i == 0 ? ", cheapest" : "")\(offScale ? ", off the end of the chart scale" : "")")
+                .accessibilityValue("\(Money.unit(value, unit)) per \(unit.label)\(tags(i).source.map { ", \($0) price" } ?? "")\(i == 0 ? ", cheapest" : tags(i).close ? ", about the same as the cheapest" : "")\(offScale ? ", off the end of the chart scale" : "")")
             }
         }
         .accessibilityElement(children: .contain)
@@ -634,6 +653,22 @@ struct BestPerStoreChart: View {
     }
 
     // MARK: - row pieces
+
+    /// What a row says besides its number: "≈ same" when it is within the price-basis margin of the
+    /// winner (the lowest bar used to be "Best" and every other one drawn as beaten, even an
+    /// Instacart price a few cents over a shelf price), and where a non-shelf price came from.
+    private func tags(_ i: Int) -> (close: Bool, source: String?) {
+        let r = rows[i]
+        let source = PriceProvenance.badge(r.product.priceBasis)
+        guard i > 0, let w = rows.first, let a = w.perBase, let b = r.perBase else { return (false, source) }
+        return (Compare.isClose(winner: a, w.product.priceBasis, w.est, to: b, r.product.priceBasis, r.est), source)
+    }
+
+    @ViewBuilder private func tagBadges(_ i: Int) -> some View {
+        let t = tags(i)
+        if t.close { Badge(text: "≈ same", kind: .neutral) }
+        if let s = t.source { Badge(text: s, kind: .outline) }
+    }
 
     /// The store's dot plus its name. The dot is decorative — the name is what identifies the
     /// store — so the name wraps between words rather than being cut to an initial or broken
@@ -677,6 +712,7 @@ struct BestPerStoreChart: View {
                     bar(width: w, best: i == 0, offScale: offScale)
                     priceLabel(value)
                     if i == 0 { Badge(text: "Best", kind: .good) }
+                    tagBadges(i)
                     if offScale { Badge(text: "off scale", kind: .warn) }
                 }
             }
@@ -695,6 +731,7 @@ struct BestPerStoreChart: View {
             FlowRow(spacing: 6) {
                 priceLabel(value)
                 if i == 0 { Badge(text: "Best", kind: .good) }
+                tagBadges(i)
                 if offScale { Badge(text: "off scale", kind: .warn) }
             }
             GeometryReader { geo in
@@ -886,6 +923,7 @@ struct WatchTrendChart: View {
 struct FactTicker: View {
     @State private var line = NationalStats.shared.randomLine()
     let timer = Timer.publish(every: 6, on: .main, in: .common).autoconnect()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
@@ -895,7 +933,8 @@ struct FactTicker: View {
         }
         .padding(12)
         .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
-        .onReceive(timer) { _ in line = NationalStats.shared.randomLine() }
+        // Text that changes by itself every 6 s is motion too, and VoiceOver loses its place in it.
+        .onReceive(timer) { _ in if !reduceMotion { line = NationalStats.shared.randomLine() } }
     }
 }
 

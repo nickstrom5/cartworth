@@ -126,6 +126,10 @@ struct ListsView: View {
                     .foregroundStyle(e.done ? Color.accentColor : .secondary)
             }
             .buttonStyle(.plain)
+            // An image-only button: VoiceOver read "button" with no name and no state.
+            .accessibilityLabel("Got \(e.text)")
+            .accessibilityValue(e.done ? "done" : "not done")
+            .accessibilityAddTraits(e.done ? .isSelected : [])
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(e.text)
@@ -334,8 +338,14 @@ struct TripPlanSummary: View {
                                         Text(amount).font(.caption.weight(.medium)).foregroundStyle(.secondary)
                                     }
                                     if let c = it.perStore[storeId] {
-                                        Text([c.product?.name ?? c.pinnedProduct?.name, c.product?.size, c.product.map { Money.full($0.price) + ($0.soldBy == .lb ? "/lb" : "") }].compactMap { $0 }.joined(separator: " · "))
-                                            .font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                                        // Name and price on separate lines: the name may be shortened, the price never.
+                                        if let name = c.product?.name ?? c.pinnedProduct?.name {
+                                            Text(name).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                                        }
+                                        if let p = c.product {
+                                            Text([p.size.isEmpty ? nil : p.size, Money.full(p.price) + (p.soldBy == .lb ? "/lb" : "")].compactMap { $0 }.joined(separator: " · "))
+                                                .font(.caption).foregroundStyle(.secondary).unbreakablePrice()
+                                        }
                                     }
                                 }
                                 Spacer()

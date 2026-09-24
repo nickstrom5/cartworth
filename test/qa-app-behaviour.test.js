@@ -521,3 +521,13 @@ test('DEFECT (Apple-device review): the watch card headline says when its best p
   const head = await page.eval(`(() => { const h = [...document.querySelectorAll('.hero-label')].find((e) => /best right now/i.test(e.textContent)); return h.parentElement.innerText.replace(/\\s+/g, ' '); })()`);
   assert.match(head, /Instacart/, head);
 });
+
+test('DEFECT (Apple-device review): each chart row names a non-shelf price source, and a near-tie is "≈ same", not beaten', { skip: SKIP }, async () => {
+  await search('brown sugar');
+  const rows = await page.eval(`[...document.querySelectorAll('.bar-row')].map((b) => ({ aria: b.getAttribute('aria-label'), text: b.innerText.replace(/\\s+/g, ' '), best: b.classList.contains('best') }))`);
+  const online = rows.filter((r) => /\((Instacart|national) price\)/.test(r.aria));
+  assert.ok(online.length > 0, `no chart row names its source: ${JSON.stringify(rows)}`);
+  for (const r of online) assert.match(r.text, /Instacart|national/, `the row itself does not say it: ${r.text}`);
+  for (const r of rows.filter((x) => /≈ same/.test(x.text))) assert.equal(r.best, false, 'the winner is never "≈ same"');
+  assert.equal(rows.filter((r) => /Best/.test(r.text)).length, 1);
+});

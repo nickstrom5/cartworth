@@ -45,3 +45,14 @@ test('control: a plain percentage deal keeps its "% off" badge', () => {
   assert.match(text(DealCard({ d: deal({ enriched: true, pctOff: 30, deal: parseDeal('30% off', 5) }) })), /30% off/);
   assert.equal(offerBadge(parseDeal('Buy 1 Get 1 50% Off', 4)), 'Buy 1 get 1 deal');
 });
+
+// Apple-device review: promo badges were cut at a fixed length, so "Mix & match 5 for $12.50" could
+// read "…for $1…", a different and smaller price.
+const { shortPromo } = await importPublic('js/format.js');
+test('DEFECT: a promo badge is never shortened through a price', () => {
+  for (const t of ['Mix & match 5 for $12.50 with card', 'Buy 2 save $1.00 on select varieties', 'Buy 4 for 20% off select varieties']) assert.equal(shortPromo(t), t);
+});
+test('control: a long promo with no price is shortened at a word boundary', () => {
+  assert.equal(shortPromo('Select varieties while supplies last'), 'Select varieties while…');
+  assert.equal(shortPromo('Sale'), 'Sale');
+});

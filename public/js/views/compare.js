@@ -5,8 +5,8 @@ import { Icon } from '../icons.js';
 import { BestBars } from '../charts.js';
 import { useStore, pref, setPref, openModal, getState } from '../store.js';
 import { runSearch, addWatch, addToList, go } from '../actions.js';
-import { money, money2, unitPrice, unitLabel, ago, shortDate, endsLabel, plural, BASIS_LABEL, BASIS_TITLE, BASIS_BADGE, linkDestination } from '../format.js';
-import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim, tieBreak } from '/shared/compare.js';
+import { money, money2, unitPrice, unitLabel, ago, shortDate, endsLabel, plural, shortPromo, BASIS_LABEL, BASIS_TITLE, BASIS_BADGE, linkDestination } from '../format.js';
+import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim, tieBreak, standings } from '/shared/compare.js';
 import { refineChips, RELEVANT } from '/shared/match.js';
 import { displayUnitsFor, DISPLAY_UNITS } from '/shared/units.js';
 import { ProductDetail } from './product.js';
@@ -268,6 +268,9 @@ function Results({ search, settings }) {
 
   const { rows, dim, dims, displayUnit, bestRows } = model;
   const winner = bestRows[0];
+  // The chart's "Best" and the headline's savings line follow one rule: a store within the
+  // price-basis margin of the winner is 'close', not beaten (shared/compare.js standings).
+  const verdicts = Object.fromEntries(standings(Object.fromEntries(bestRows.map((p) => [p.storeId, p]))).map((r) => [r.storeId, r.verdict]));
   const anyResults = Object.values(results).some((r) => r.items?.length);
   const errors = Object.values(results).filter((r) => r.status === 'error');
   // Every store errored: the page already says "Can't reach the Cartworth server", and telling the
@@ -434,7 +437,7 @@ function Results({ search, settings }) {
         html`<div class="card card-pad">
           <h2>Cheapest match at each store <span class="muted small" style=${{ fontWeight: 400 }}>per ${unitLabel(displayUnit)}</span></h2>
           <${BestBars}
-            rows=${bestRows.map((p, i) => ({ id: p.storeId, storeId: p.storeId, label: storeInfo(p.storeId).short, value: p.shown, text: unitPrice(p.cmp, displayUnit).text, sub: `${p.name}${p.size ? ` · ${p.size}` : ''} — ${money2(effPrice(p, prefs))}${p.soldBy === 'lb' ? '/lb' : ''}`, best: i === 0 }))}
+            rows=${bestRows.map((p, i) => ({ id: p.storeId, storeId: p.storeId, label: storeInfo(p.storeId).short, value: p.shown, text: unitPrice(p.cmp, displayUnit).text, sub: `${p.name}${p.size ? ` · ${p.size}` : ''} — ${money2(effPrice(p, prefs))}${p.soldBy === 'lb' ? '/lb' : ''}`, best: i === 0, close: verdicts[p.storeId] === 'close', basis: p.priceBasis !== 'shelf' ? BASIS_BADGE[p.priceBasis] || BASIS_BADGE.online : null }))}
             onPick=${(r) => openProduct(bestRows.find((p) => p.storeId === r.storeId), displayUnit)}
             note=${bestRows.some((p) => p.priceBasis === 'national')
               ? 'Some stores show online (Instacart) prices, which can run higher than the shelf. \u201CNational\u201D means Instacart\u2019s chain-wide listing rather than a store near you.'
@@ -520,7 +523,7 @@ export function ProductRow({ p, displayUnit, best, prefs, q, compact }) {
         ${weak && html`<span class="badge badge-outline" title="Only loosely matches your search, so it is never counted as the best price">weak match</span>`}
         ${best && html`<span class="badge badge-good"><${Icon} name="check" size=${11} stroke=${3} /> Best</span>`}
         ${p.onSale && p.pctOff ? html`<span class="badge badge-sale">${p.pctOff}% off</span>` : p.onSale ? html`<span class="badge badge-sale">Sale</span>` : null}
-        ${p.promo && html`<span class="badge badge-sale" title=${p.promo}>${p.promo.length > 28 ? p.promo.slice(0, 26) + '…' : p.promo}</span>`}
+        ${p.promo && html`<span class="badge badge-sale badge-promo" title=${p.promo}>${shortPromo(p.promo)}</span>`}
         ${p.memberPrice != null && html`<span class="badge badge-info" title=${usesMember(p, prefs) ? 'Counted in the unit price (Settings)' : 'Not counted — turn on in Settings'}>${p.memberLabel} ${money2(p.memberPrice)}</span>`}
         ${lowest &&
         html`<span
