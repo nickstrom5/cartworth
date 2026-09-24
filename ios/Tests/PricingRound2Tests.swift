@@ -403,4 +403,24 @@ final class PricingRound2Tests: XCTestCase {
         XCTAssertEqual(r.stores.keys.sorted(), ["marianos"])
         XCTAssertNotNil(item("x", "Handi-foil Foilware", "1 each", 1.69).unitPrice(.count))
     }
+
+    // DEFECT P22 (round-3 price check): Piggly Wiggly's "10 lb" of ground chuck at $7.99 whose own
+    // unit line reads "$0.50/oz". Mirrors test/qa-pricing-round2.test.js.
+    private func listed(_ name: String, _ size: String, _ price: Double, _ line: String) -> Product {
+        ProductFactory.make(ProductInput(storeId: "piggly", id: name, name: name, sizeText: size, price: price,
+                                         listedUnit: ProductFactory.listedUnit(line)))!
+    }
+
+    func testP22UnitLineContradictingTheSizeIsAConflict() {
+        let beef = listed("Certified Angus Beef 80% Ground Chuck Beef", "10 lb", 7.99, "$0.50/oz")
+        XCTAssertNotNil(beef.sizeConflict)
+        XCTAssertNil(beef.unitPrice(.weight))
+        XCTAssertNotNil(listed("Cady Creek Farms Sharp Cheddar Cheese", "5 lb", 8.99, "$0.56/oz").sizeConflict)
+    }
+
+    func testP22AgreeingOrRoundedUnitLineChangesNothing() {
+        XCTAssertNil(listed("Certified Angus Beef 80% Lean Ground Beef Chuck", "3 lb", 5.99, "$0.12/oz").sizeConflict)
+        XCTAssertNil(listed("Store Brand Salt", "26 oz", 0.89, "$0.03/oz").sizeConflict)
+        XCTAssertNil(listed("Don Simon Orange Juice, 33.81 fl oz, 4-count", "33.81 fl oz", 3.69, "$0.92 each").sizeConflict)
+    }
 }

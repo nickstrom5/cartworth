@@ -2,7 +2,9 @@ import Foundation
 
 /// Runs one product search against one store (cached 20 min, stale copies served if the store is down).
 enum PriceSearch {
-    static let cacheVersion = 3
+    // 4: "M oz, N ct" read as the package; a listing whose own unit line contradicts its size is a
+    // size conflict; Instacart pack lines are now passed through. Each changes a price.
+    static let cacheVersion = 4
 
     struct Payload: Codable {
         var items: [Product]

@@ -322,6 +322,33 @@ export function listingPack(size, packText, { name = '', url = '' } = {}) {
   return { conflict: { text: formatSize(size), name: `${n} × ${formatSize(size)}` } };
 }
 
+/**
+ * The retailer's own unit price, when it disagrees with the package size, is a third witness that
+ * the listing contradicts itself.
+ *
+ * Round-3 price check, Piggly Wiggly (order.shopthepig.com) at 53142: "Certified Angus Beef 80%
+ * Ground Chuck Beef", size "10 lb", $7.99 — Instacart's own line under it reads "$0.50/oz", which is
+ * $7.99 for ONE pound. Divided by the stated 10 lb it was 80c/lb and took Kenosha's and Milwaukee's
+ * ground-beef headline "81% less than the next-best store". "Cady Creek Farms Sharp Cheddar Cheese",
+ * "5 lb", $8.99, "$0.56/oz": the same shape, $1.80/lb against a listing that says $8.99/lb. Which
+ * number is stale cannot be known from outside, so like every other size contradiction the row keeps
+ * its package price and loses its unit price (sizeConflict). A factor of 1.5 or more, as for the
+ * name-versus-size conflict above: the listed line is rounded to the cent, which on a cheap item
+ * ("$0.03/oz") is itself worth up to 17%.
+ *
+ * `f.listedUnit` is { price, unit } from the adapter (the line as printed: "$0.50/oz", "$3.49/gal").
+ */
+const LISTED_UNITS = { oz: ['weight', 1], lb: ['weight', 16], lbs: ['weight', 16], 'fl oz': ['volume', 1], floz: ['volume', 1], gal: ['volume', 128], qt: ['volume', 32], l: ['volume', 33.8140227], ct: ['count', 1], each: ['count', 1], ea: ['count', 1] };
+export function unitLineConflict(size, f) {
+  const lu = f.listedUnit;
+  const u = lu && LISTED_UNITS[String(lu.unit || '').toLowerCase().replace(/\.$/, '').trim()];
+  if (!u || !(lu.price > 0) || !(f.price > 0) || !size || size.perWeight || !(size.base > 0) || u[0] !== size.dim) return null;
+  const impliedBase = (f.price / lu.price) * u[1];
+  const ratio = Math.max(impliedBase, size.base) / Math.min(impliedBase, size.base);
+  if (ratio < 1.5) return null;
+  return { text: formatSize(size), name: `${Math.round(impliedBase * 100) / 100} ${u[0] === 'weight' ? 'oz' : u[0] === 'volume' ? 'fl oz' : 'ct'} (the listing's own ${'$'}${lu.price}/${lu.unit})` };
+}
+
 const ROLL_GOODS_RE = /\b(?:alumin(?:i)?um foil|foil|plastic wrap|cling wrap|wax(?:ed)? paper|parchment(?: paper)?|freezer paper|butcher paper)\b/i;
 const NOT_A_ROLL_RE = /\b(?:pans?|trays?|roasters?|containers?|lids?|liners?|bags?|sheets?|cups?|plates?|tins?|dish(?:es)?|board|foilware|racks?|burners?|tape|ducts?)\b/i;
 const LENGTH_OR_AREA_RE = /\d+(?:\.\d+)?\s*(?:sq\.?\s*ft\.?|sqft|square\s+f(?:ee|oo)t|ft\.?|feet|foot|yds?\.?|yards?)(?![a-z])|\d+(?:\.\d+)?\s*['\u2019]\s*L\b/i;
@@ -366,7 +393,7 @@ export function makeProduct(f) {
       : soldByLb ? null
       : listed?.conflict ? listed.conflict
       : size?.packFromListing ? null
-      : countOnlyConflict(size, chosen, textSize, nameSize);
+      : unitLineConflict(size, f) || countOnlyConflict(size, chosen, textSize, nameSize);
   // Where the size we priced from came from, so the plausibility guard can tell a number the
   // retailer stated from one we inferred (see flagImplausible in shared/compare.js):
   //   perLb    the retailer's own price per pound; no size is involved at all

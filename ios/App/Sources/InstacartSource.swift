@@ -406,7 +406,13 @@ actor InstacartSource {
             sponsored: sponsored,
             rank: rank,
             total: total,
-            priceBasis: basis
+            priceBasis: basis,
+            // Instacart's own unit line, which ProductFactory.listingPack reads ("4 x 14.5 oz"). It was
+            // never passed before, so the phone ignored packs the web honoured.
+            packText: card["pricingUnitString"].string,
+            // Instacart's own unit price ("$0.50/oz"), a check on the stated size
+            // (ProductFactory.unitLineConflict). Not for items sold by the pound.
+            listedUnit: soldBy == .lb ? nil : (ProductFactory.listedUnit(card["pricePerUnitString"].string) ?? ProductFactory.listedUnit(pv["itemDetails"]["pricePerUnitString"].string) ?? ProductFactory.listedUnit(card["pricingUnitString"].string))
         ))
     }
 }

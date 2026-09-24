@@ -22,7 +22,10 @@ const STORE_TIMEOUT = 35000;
 // v7: a canonical (chain-wide) storefront's location is withheld (instacart.js publicLocation), so
 // a v6 entry still carries Walmart's Antioch, CA address and its 1,801-mile distance — which the
 // radius check below would then read as "too far" and throw Walmart's real chain-wide prices away.
-const CACHE_VERSION = 7;
+// v8: "M oz, N ct" is the package unless the name counts containers (shared/units.js), and a row
+// whose own Instacart unit line contradicts its size is a sizeConflict (normalize.js
+// unitLineConflict). Both change a headline price, so v7 entries must not be served.
+const CACHE_VERSION = 8;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

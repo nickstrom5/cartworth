@@ -718,3 +718,38 @@ test('control: a count after the size stays a pack when the name counts containe
   assert.equal(item('walmart', 'Great Value Chunk Chicken Breast with Rib Meat in Water, 12.5 oz, 4 count', '50 oz', 9.97).base, 50);
   assert.equal(item('costco', 'Kirkland Signature, Organic Coconut Water, 11.1 fl oz, 12-count', '11.1 fl oz', 13.42).base, 133.2);
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT P22 (round-3 price check, 53142 and 53211): Piggly Wiggly's "Certified Angus Beef 80%
+// Ground Chuck Beef", size "10 lb", $7.99, whose own unit line reads "$0.50/oz" — one pound. Priced
+// as 10 lb it was 80c/lb and the ground-beef headline "81% less than the next-best store". See
+// unitLineConflict in src/normalize.js. These are the records as Instacart sent them.
+// ---------------------------------------------------------------------------
+const PIGGLY = { type: 'instacart', base: 'https://order.shopthepig.com', slug: 'shopthepig', storeId: 'piggly' };
+const pigRecord = ({ id, name, size, price, perUnit, slug }) => ({
+  id: `items_1-${id}`, productId: String(id), name, size, evergreenUrl: `${id}-${slug}`,
+  price: { viewSection: { itemCard: { priceString: `$${price.toFixed(2)}`, pricePerUnitString: null, pricingUnitString: null }, itemDetails: { pricePerUnitString: perUnit } } },
+  availability: { available: true }, viewSection: { trackingProperties: {} },
+});
+const pig = (r) => parseItem(pigRecord(r), PIGGLY, { serviceType: 'instore', priceNote: null }, 0, 1, false);
+
+test("DEFECT P22: a listing whose own unit price contradicts its size gets no unit price and no headline", () => {
+  const beef = pig({ id: 20024453, name: 'Certified Angus Beef 80% Ground Chuck Beef', size: '10 lb', price: 7.99, perUnit: '$0.50/oz', slug: 'certified-angus-beef-80-ground-chuck-beef-10-lb' });
+  assert.ok(beef.sizeConflict, 'not flagged');
+  assert.equal(beef.unit.weight, undefined, 'a per-pound figure was still printed');
+  const cheddar = pig({ id: 19717860, name: 'Cady Creek Farms Sharp Cheddar Cheese', size: '5 lb', price: 8.99, perUnit: '$0.56/oz', slug: 'cady-creek-farms-sharp-cheddar-cheese-5-lb' });
+  assert.ok(cheddar.sizeConflict);
+  const honest = pig({ id: 19720118, name: 'Certified Angus Beef 80% Lean Ground Beef Chuck', size: '3 lb', price: 5.99, perUnit: '$0.12/oz', slug: 'certified-angus-beef-80-lean-ground-beef-chuck' });
+  const r = bestPerStore('ground beef', { piggly: [beef, honest] });
+  assert.equal(r.stores.piggly.item.name, honest.name);
+});
+
+test('control: a unit line that agrees (to the cent), or is per each on a volume, changes nothing', () => {
+  const ok = pig({ id: 1, name: 'Certified Angus Beef 80% Lean Ground Beef Chuck', size: '3 lb', price: 5.99, perUnit: '$0.12/oz', slug: 'x' });
+  assert.equal(ok.sizeConflict, null);
+  assert.ok(close(perLb(ok), 2.0));
+  const cheap = pig({ id: 2, name: 'Store Brand Salt', size: '26 oz', price: 0.89, perUnit: '$0.03/oz', slug: 'y' });
+  assert.equal(cheap.sizeConflict, null, 'rounding to the cent on a cheap item is not a contradiction');
+  const oj = pig({ id: 3, name: 'Don Simon Orange Juice, 33.81 fl oz, 4-count', size: '33.81 fl oz', price: 3.69, perUnit: '$0.92 each', slug: 'z' });
+  assert.equal(oj.sizeConflict, null);
+});

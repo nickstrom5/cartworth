@@ -332,6 +332,12 @@ function sectionsText(f) {
   return f.sections.map((s) => s.content || s.text || '').join('').trim() || null;
 }
 
+/** "$0.50/oz", "$3.49/gal", "$0.92 each" -> { price, unit }; null for anything else. */
+function listedUnit(s) {
+  const m = /^\s*\$\s*(\d+(?:\.\d+)?)\s*(?:\/\s*|\s+)(fl\.?\s*oz|oz|lbs?|gal|qt|l|ct|each|ea)\.?\s*$/i.exec(String(s || ''));
+  return m ? { price: +m[1], unit: m[2].toLowerCase().replace(/\s+/g, ' ').replace('fl. oz', 'fl oz') } : null;
+}
+
 function parsePerUnit(s) {
   // "$0.49 / lb", "$8.99/lb", "About $3.98 each"
   if (!s) return null;
@@ -450,6 +456,8 @@ export function parseItem(x, cfg, shop, rank, total, sponsored) {
     sizeText: x.size,
     // Instacart's own unit line: "4 x 14.5 oz" when the price buys four (see listingPack).
     packText: card.pricingUnitString || null,
+    // Instacart's own unit price ("$0.50/oz"), a check on the stated size (unitLineConflict).
+    listedUnit: soldBy === 'lb' ? null : listedUnit(card.pricePerUnitString) || listedUnit(pv.itemDetails?.pricePerUnitString) || listedUnit(card.pricingUnitString),
     price,
     regularPrice: regular,
     memberPrice,
