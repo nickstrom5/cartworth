@@ -1,0 +1,15 @@
+// Cloudflare Workers Builds deploys the public marketing site (cartworth.app) with `npx wrangler
+// deploy` from the repo root. Only site/ is published, as static assets; nothing else in this repo
+// (server, iOS app, scripts, data) is uploaded. See site/README.md "Deploying".
+{
+  "name": "cartworth",
+  "compatibility_date": "2026-09-21",
+  "assets": {
+    "directory": "./site",
+    // /privacy serves privacy.html and /privacy.html redirects to /privacy: the iOS app links to
+    // the extensionless /privacy, /terms and /support.
+    "html_handling": "auto-trailing-slash",
+    // A missing page is a real 404, not the landing page with a 200.
+    "not_found_handling": "none"
+  }
+}
