@@ -1735,6 +1735,16 @@ final class NationwideAuditTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "milk", name: "Lactaid Milk with Vitamin D 400 IU"), Match.relevant)
     }
 
+    /// Nashville et al.: ketchup and canned tomatoes are not tomatoes; a squash is not spaghetti.
+    func testDefectTomatoProductsAreNotTomatoes() {
+        XCTAssertLessThan(Match.relevance(query: "tomatoes", name: "Burman's Tomato Ketchup"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "tomatoes", name: "Take Root Organics Diced Canned Tomatoes"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "spaghetti", name: "Fresh Spaghetti Squash"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "tomatoes", name: "Cherry Tomatoes 10 oz"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "canned tomatoes", name: "Hunt's Diced Canned Tomatoes"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "zucchini", name: "Zucchini Squash"), Match.relevant)
+    }
+
     /// Charlotte: a lookup that failed is recorded as unresolved, not "no store". A directory cached
     /// before that field existed must still decode, or every phone would lose its store list.
     func testDirectoryCachedBeforeUnresolvedStillDecodes() throws {

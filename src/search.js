@@ -38,7 +38,8 @@ const STORE_TIMEOUT = 35000;
 // are not juice.
 // v14: supplements named after a food (apple pectin tablets) are not the food.
 // v15: a dose on a grocery ("Milk with Vitamin D 400 IU") is not a supplement; "a la carte" is not a dish.
-const CACHE_VERSION = 15;
+// v16: ketchup, paste and canned tomatoes are not "tomatoes"; spaghetti squash is not "spaghetti".
+const CACHE_VERSION = 16;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

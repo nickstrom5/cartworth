@@ -31,6 +31,9 @@ const TRAPS = new Set([
   // Compound-modifier nouns: "peanut butter", "cream cheese", "macaroni and cheese", "beef base",
   // "butter lettuce". Without these the head noun matched and the product scored as a real hit.
   'peanut', 'cream', 'macaroni', 'mac', 'chili', 'base', 'lettuce', 'dinner', 'casserole', 'bisque',
+  // "Tomato Ketchup" and "Tomato Paste" were the best "tomatoes", "Spaghetti Squash" the best
+  // "spaghetti" (the nationwide audit, Nashville/Burlington/New Orleans).
+  'ketchup', 'catsup', 'paste', 'squash',
   'stew', 'hummus', 'pesto', 'salsa', 'guacamole', 'dressing', 'concentrate', 'concentrated', 'substitute', 'flavoring',
   // Head nouns that make the searched word a modifier: "butter popcorn", "butter shrimp",
   // "all butter danish". Found in live Sam's Club and Costco results, where each one produced an
@@ -125,7 +128,7 @@ const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?r
 // From the Christmas run: "Sprinkles Mix" is sprinkles; "Ocean Spray" is a brand, not a household
 // spray (its Jellied Cranberry Sauce scored 0.37 and was refused in every cranberry search); and a
 // "Juice Cocktail" is juice, not alcohol.
-const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['sprinkle']), spray: new Set(['ocean']), cocktail: new Set(['juice']), concentrate: new Set(['from']) };
+const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['sprinkle']), spray: new Set(['ocean']), cocktail: new Set(['juice']), concentrate: new Set(['from']), squash: new Set(['zucchini', 'yellow', 'summer', 'butternut', 'acorn']) };
 /** The mirror image: a trap noun forgiven when the word right AFTER it names what it is. "King
  * Oyster Mushrooms" are mushrooms, so 'oyster' must not bury them in a mushroom search. */
 const BENIGN_BEFORE = { oyster: new Set(['mushroom']) };
@@ -148,7 +151,7 @@ const FLAVOR = new Set(['chocolate', 'strawberry', 'vanilla', 'banana', 'caramel
 // brownies are chocolate. Without this, "Brach's Peppermint Candy Canes" scored 0.46 against
 // "candy canes" and every real cane was refused, leaving a light-up lawn stake as the best price
 // (the Christmas run). Keyed by a word of the query.
-const INHERENT_FLAVOR = { cane: new Set(['peppermint']), bark: new Set(['peppermint', 'chocolate']), fudge: new Set(['chocolate']), brownie: new Set(['chocolate']), truffle: new Set(['chocolate']), cocoa: new Set(['chocolate']) };
+const INHERENT_FLAVOR = { cane: new Set(['peppermint']), bark: new Set(['peppermint', 'chocolate']), fudge: new Set(['chocolate']), brownie: new Set(['chocolate']), truffle: new Set(['chocolate']), cocoa: new Set(['chocolate']), tomato: new Set(['cherry']), tomatoes: new Set(['cherry']) };
 
 // Qualifiers that are just variants (never penalized).
 const SOFT = new Set(['organic', 'lactose', 'free', 'ultra', 'filtered', 'reduced', 'fat', 'low', 'whole', 'skim', 'natural', 'grass', 'fed', 'pasture', 'raised', 'cage', 'large', 'medium', 'small', 'extra', 'jumbo', 'grade', 'fresh', 'boneless', 'skinless', 'lean', 'ground']);
@@ -233,13 +236,14 @@ const WANTS_BABY_RE = /\bbaby (?:food|formula|cereal|wipes?)\b|\bformula\b|\bger
 
 // Fresh fruit bought loose, for the processed-category rule in relevance(). Not vegetables: frozen
 // green beans are a fair answer to "green beans" (the Thanksgiving run), frozen banana slices are not.
-const FRESH_FRUIT_RE = /\b(?:bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberries|blueberries|raspberries|blackberries|cherries|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\b/;
+const FRESH_FRUIT_RE = /\b(?:bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberr(?:y|ies)|blueberr(?:y|ies)|raspberr(?:y|ies)|blackberr(?:y|ies)|cherr(?:y|ies)|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\b/;
 // Supplements named after a food: Natural Grocers' "NaturesPlus Apple Pectin 500 mg Tablets",
 // 180 count, was Dallas's best "apples" at an estimated $0.30/lb (the nationwide audit).
 // A dose alone is not enough: "Lactaid Milk with Vitamin D 400 IU" and "Eggland's Best, 125 mg
 // Omega-3" are groceries. The pill's own form word is.
 const SUPPLEMENT_RE = /\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewables?)\b/i;
 const WANTS_SUPPLEMENT_RE = /\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\b/i;
+const PROCESSED_FORM_RE = /\b(?:canned|diced|crushed|stewed|sun[- ]?dried|freeze[- ]?dried|dried|dehydrated|pureed?|frozen)\b/;
 const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
 const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
 
@@ -377,6 +381,13 @@ export function relevance(query, product, opts = {}) {
   // best coffee in the audit) a sweetened mix: "<the thing> a la <style>" names a prepared dish.
   // Not "a la carte" (sold separately) or "a la mode".
   { const q = normalize(query); if (!/\ba la\b/.test(q) && new RegExp(`(?:^|\\s)${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} a la (?!carte\\b|mode\\b)`).test(nameNorm)) mult *= 0.3; }
+  // A processed form of fresh fruit is not the fruit: "Diced Canned Tomatoes" at $0.83/lb was Salt
+  // Lake City's best "tomatoes" (the nationwide audit). Asking for the form finds it.
+  if (FRESH_FRUIT_RE.test(qt[qt.length - 1] || '')) {
+    const q = normalize(query).replace(/-/g, ' ');
+    const forms = nameNorm.match(new RegExp(PROCESSED_FORM_RE.source, 'g')) || [];
+    if (forms.length && !forms.some((f) => q.includes(f.replace(/-/g, ' ')))) mult *= 0.3;
+  }
   if (/\bjuice\b/.test(normalize(query)) && JUICE_IMPOSTOR_RE.test(nameNorm) && !WANTS_JUICE_DRINK_RE.test(normalize(query))) mult *= 0.3;
   if (BABY_PRODUCT_RE.test(nameNorm) && !WANTS_BABY_RE.test(normalize(query))) mult *= 0.2;
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the

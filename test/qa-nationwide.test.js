@@ -226,3 +226,27 @@ test('control: apples, and a shopper who asks for the supplement, are unchanged'
   assert.ok(relevance('milk', { name: 'Lactaid Milk with Vitamin D 400 IU' }) >= RELEVANT);
   assert.ok(relevance('eggs', { name: "Eggland's Best Large Eggs, 125 mg Omega-3" }) >= RELEVANT);
 });
+
+// DEFECT (Nashville/Burlington/New Orleans/Salt Lake City audit): "Burman's Tomato Ketchup" was the
+// best "tomatoes" in three cities, "Diced Canned Tomatoes" in a fourth, and "Fresh Spaghetti Squash"
+// the best "spaghetti"; real cherry tomatoes scored 0.46 and were hidden.
+test('DEFECT (Nashville): ketchup, paste and canned tomatoes are not tomatoes; a squash is not spaghetti', () => {
+  assert.ok(relevance('tomatoes', { name: "Burman's Tomato Ketchup" }) < RELEVANT);
+  assert.ok(relevance('tomatoes', { name: "Hunt's Tomato Paste" }) < RELEVANT);
+  assert.ok(relevance('tomatoes', { name: 'Take Root Organics Diced Canned Tomatoes' }) < RELEVANT);
+  assert.ok(relevance('strawberries', { name: 'Frozen Strawberries' }) < RELEVANT);
+  assert.ok(relevance('spaghetti', { name: 'Fresh Spaghetti Squash' }) < RELEVANT);
+  assert.ok(relevance('tomatoes', { name: 'Cherry Tomatoes 10 oz' }) >= RELEVANT);
+});
+
+test('control: asking for the form or the squash finds it; zucchini squash is zucchini', () => {
+  assert.ok(relevance('canned tomatoes', { name: "Hunt's Diced Canned Tomatoes" }) >= RELEVANT);
+  assert.ok(relevance('diced tomatoes', { name: "Hunt's Diced Tomatoes" }) >= RELEVANT);
+  assert.ok(relevance('tomato paste', { name: "Hunt's Tomato Paste" }) >= RELEVANT);
+  assert.ok(relevance('ketchup', { name: 'Heinz Tomato Ketchup' }) >= RELEVANT);
+  assert.ok(relevance('frozen strawberries', { name: 'Great Value Frozen Strawberries' }) >= RELEVANT);
+  assert.ok(relevance('spaghetti squash', { name: 'Fresh Spaghetti Squash' }) >= RELEVANT);
+  assert.ok(relevance('spaghetti', { name: 'Reggano Spaghetti' }) >= RELEVANT);
+  assert.ok(relevance('zucchini', { name: 'Zucchini Squash' }) >= RELEVANT);
+  assert.ok(relevance('tomatoes', { name: 'Roma Tomatoes' }) >= RELEVANT);
+});

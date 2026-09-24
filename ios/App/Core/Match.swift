@@ -29,6 +29,8 @@ enum Match {
         // scored as a real hit. Every one is guarded by "not in the query" at the call site, so
         // searching for peanut butter still works.
         "peanut", "cream", "macaroni", "mac", "chili", "base", "lettuce", "dinner", "casserole", "bisque",
+        // "Tomato Ketchup" was the best "tomatoes", "Spaghetti Squash" the best "spaghetti".
+        "ketchup", "catsup", "paste", "squash",
         "stew", "hummus", "pesto", "salsa", "guacamole", "dressing", "concentrate", "concentrated", "substitute", "flavoring",
         // Head nouns that make the searched word a modifier: "butter popcorn", "butter shrimp",
         // "all butter danish". Found in live Sam's Club and Costco results, where each produced an
@@ -94,6 +96,8 @@ enum Match {
     /// Supplements named after a food ("NaturesPlus Apple Pectin 500 mg Tablets" was Dallas's best
     /// "apples"). Port of SUPPLEMENT_RE in shared/match.js.
     /// A dose alone is not enough ("Milk with Vitamin D 400 IU" is milk); the pill's form word is.
+    /// A processed form of fresh fruit ("Diced Canned Tomatoes"). Port of PROCESSED_FORM_RE.
+    private static let processedFormRx = Rx("\\b(?:canned|diced|crushed|stewed|sun[- ]?dried|freeze[- ]?dried|dried|dehydrated|pureed?|frozen)\\b")
     private static let aLaRx = Rx("\\ba la\\b")
     private static let supplementRx = Rx("\\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewables?)\\b")
     private static let wantsSupplementRx = Rx("\\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\\b")
@@ -107,7 +111,7 @@ enum Match {
     private static let babyProductRx = Rx("\\bbaby (?:foods?|formula|wipes?|puree|cereal|shampoo|lotion|wash|oil|powder|snacks?|puffs|teethers?|yogurt melts)\\b|\\bgerber\\b|\\bbeech-?nut\\b|\\bstage [1-4]\\b|\\bfor babies\\b")
     private static let wantsBabyRx = Rx("\\bbaby (?:food|formula|cereal|wipes?)\\b|\\bformula\\b|\\bgerber\\b|\\bbeech-?nut\\b|\\binfant\\b|\\btoddler\\b")
     /// Fresh fruit bought loose (not vegetables: frozen green beans answer "green beans"). Port of FRESH_FRUIT_RE.
-    private static let freshFruitRx = Rx("\\b(?:bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberries|blueberries|raspberries|blackberries|cherries|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\\b")
+    private static let freshFruitRx = Rx("\\b(?:bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberr(?:y|ies)|blueberr(?:y|ies)|raspberr(?:y|ies)|blackberr(?:y|ies)|cherr(?:y|ies)|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\\b")
     private static let waterDrinkRx = Rx("\\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\\b|\\bseltzer\\b|\\bla croix\\b")
     private static let wantsWaterRx = Rx("\\bwater\\b|\\bseltzer\\b|\\bla croix\\b")
     /// Juice-flavoured drinks: Costco's "Sunny D Citrus Punch", filed under Orange Juice, was
@@ -126,7 +130,7 @@ enum Match {
     /// every ALDI store brand use it — but 'cream' is a trap so that "cream cheese" does not score
     /// as cheese. Plain butter scored 0.40 and lost to spreadable blends at 0.97.
     /// From the Christmas run: "Sprinkles Mix" is sprinkles, "Ocean Spray" is a brand, a "Juice Cocktail" is juice.
-    private static let benignAfter: [String: Set<String>] = ["cream": ["sweet", "whipping"], "mix": ["sprinkle"], "spray": ["ocean"], "cocktail": ["juice"], "concentrate": ["from"]]
+    private static let benignAfter: [String: Set<String>] = ["cream": ["sweet", "whipping"], "mix": ["sprinkle"], "spray": ["ocean"], "cocktail": ["juice"], "concentrate": ["from"], "squash": ["zucchini", "yellow", "summer", "butternut", "acorn"]]
     /// A trap noun forgiven when the next word names what it is: "King Oyster Mushrooms" are
     /// mushrooms. Mirrors BENIGN_BEFORE in shared/match.js.
     private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"]]
@@ -143,7 +147,7 @@ enum Match {
     private static let flavor: Set<String> = ["chocolate", "strawberry", "vanilla", "banana", "caramel", "mocha", "cinnamon", "honey", "maple", "pumpkin", "peppermint", "cookie", "cherry", "blueberry", "raspberry", "peach", "mango", "coconut", "hazelnut", "flavored", "flavor"]
     /// Flavours that ARE the product when the shopper names it: candy canes are peppermint. Keyed by
     /// a word of the query. Mirrors INHERENT_FLAVOR in shared/match.js.
-    private static let inherentFlavor: [String: Set<String>] = ["cane": ["peppermint"], "bark": ["peppermint", "chocolate"], "fudge": ["chocolate"], "brownie": ["chocolate"], "truffle": ["chocolate"], "cocoa": ["chocolate"]]
+    private static let inherentFlavor: [String: Set<String>] = ["cane": ["peppermint"], "bark": ["peppermint", "chocolate"], "fudge": ["chocolate"], "brownie": ["chocolate"], "truffle": ["chocolate"], "cocoa": ["chocolate"], "tomato": ["cherry"], "tomatoes": ["cherry"]]
     /// Qualifiers that are just variants (never penalized).
     private static let soft: Set<String> = ["organic", "lactose", "free", "ultra", "filtered", "reduced", "fat", "low", "whole", "skim", "natural", "grass", "fed", "pasture", "raised", "cage", "large", "medium", "small", "extra", "jumbo", "grade", "fresh", "boneless", "skinless", "lean", "ground"]
     /// Product words that imply another ("ground chuck" is ground beef).
@@ -341,6 +345,13 @@ enum Match {
         // a la <style>" names a prepared dish. Port of the same rule in shared/match.js.
         // Not "a la carte" (sold separately) or "a la mode".
         if !aLaRx.test(qNormForImitation) && Rx("(?:^|\\s)\(NSRegularExpression.escapedPattern(for: qNormForImitation)) a la (?!carte\\b|mode\\b)").test(nameNorm) { mult *= 0.3 }
+        // A processed form of fresh fruit is not the fruit ("Diced Canned Tomatoes" was Salt Lake City's
+        // best "tomatoes"), unless the query names one of the forms. Port of the rule in shared/match.js.
+        if freshFruitRx.test(qt.last ?? "") {
+            let q = qNormForImitation.replacingOccurrences(of: "-", with: " ")
+            let forms = processedFormRx.matches(nameNorm).compactMap { $0.first ?? nil }
+            if !forms.isEmpty && !forms.contains(where: { q.contains($0.replacingOccurrences(of: "-", with: " ")) }) { mult *= 0.3 }
+        }
         if juiceWordRx.test(qNormForImitation) && juiceImpostorRx.test(nameNorm) && !wantsJuiceDrinkRx.test(qNormForImitation) { mult *= 0.3 }
         if babyProductRx.test(nameNorm) && !wantsBabyRx.test(qNormForImitation) { mult *= 0.2 }
         // Books, cookware and apparel that happen to name a food. Applied to the whole name because
