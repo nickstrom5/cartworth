@@ -1,7 +1,9 @@
 # cartworth.app: the public marketing site
 
-Four hand-written HTML pages plus one stylesheet. No build step, no framework, no bundler, no
-package.json, no external JavaScript libraries, no web fonts, no analytics and no trackers. What is
+Four hand-written HTML pages plus one stylesheet, in the Sprout design (design/sprout/). No build step,
+no framework, no bundler, no package.json, no external JavaScript libraries, no analytics and no
+trackers. The two Sprout fonts (DM Sans, Baloo 2; SIL OFL, licences in fonts/) are self-hosted in
+fonts/, because the CSP allows nothing off-site. What is
 in this folder is exactly what ships.
 
 To look at it locally, serve the folder rather than opening the files directly, because the

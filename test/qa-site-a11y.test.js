@@ -49,11 +49,13 @@ test('GUARD: the palette tokens the rest of this file relies on are unchanged', 
   // so that the accent-on-tint PAIR itself clears 4.5:1 (it was 4.40:1), rather than relying on
   // one rule happening to use the darker accent. --line-strong was darkened from #b6d2c1, which
   // measured 1.53:1 against the page and could not act as a control boundary at all.
-  assert.equal(token('--accent'), '#15803d');
-  assert.equal(token('--accent-soft'), '#eef9f1');
-  assert.equal(token('--surface-2'), '#eef7f0');
-  assert.equal(token('--line-strong'), '#5f8a72');
-  assert.equal(token('--accent', { dark: true }), '#4ade80');
+  // Sprout (design/sprout/tokens.css), Sept 2026: the owner moved the site to the lighter Sprout
+  // look. Each value is the Sprout token of the same role; CONTRAST.md measures them.
+  assert.equal(token('--accent'), '#1c7c4b'); // --sp-accent
+  assert.equal(token('--accent-soft'), '#e6f4ea'); // --sp-mint
+  assert.equal(token('--surface-2'), '#f3f6f4'); // --sp-surface-soft
+  assert.equal(token('--line-strong'), '#7a8981'); // --sp-control-edge, 3.67:1 on white
+  assert.equal(token('--accent', { dark: true }), '#5cc592');
 });
 
 // ---------------------------------------------------------------------------
@@ -171,7 +173,9 @@ test('DEFECT 6: every referenced image file exists on disk', () => {
 // ---------------------------------------------------------------------------
 test('DEFECT 7: the hero gradient is anchored to something other than body height', () => {
   const body = css.slice(css.indexOf('body {'), css.indexOf('body {') + 700);
-  assert.match(body, /radial-gradient/, 'the hero wash is still a body background-image');
+  // Sprout's page is pure white, so the wash is gone; the defect cannot recur without one. If a
+  // wash comes back as a body background, it must be anchored as below.
+  if (!/radial-gradient/.test(body)) return;
   const usesPercentY = /radial-gradient\([^)]*at\s+[\d.]+%\s+-?[\d.]+%/.test(body);
   const hasSize = /background-size:/.test(body);
   assert.ok(
