@@ -20,6 +20,7 @@ Nothing here is hand-edited. If you change a file in this folder without changin
 | `iphone-max-search.png` | 1290 x 2322 | `tools/make-phone-svg.py` | Search results for milk. |
 | `iphone-max-deal.png` | 1290 x 2322 | `tools/make-phone-svg.py` | A weekly-ad deal with its conditions. |
 | `iphone-max-trip.png` | 1290 x 2322 | `tools/make-phone-svg.py` | Trip-plan totals. |
+| `devices-ipad-duo.png` | 1600 x 1000 | `tools/make-device-shots.py` | REAL screenshots (iPad search home; iPhone Duo search home and shopping list) in drawn device outlines. Only frames with no prices, retailer names or flyer art; see that script's header. |
 
 Every file is 8-bit RGB with **no alpha channel** and an sRGB chunk, and every one is under 300 KB.
 The alpha matters: several social scrapers composite an alpha channel onto black, and
