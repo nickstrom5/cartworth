@@ -19,6 +19,7 @@ process.on('warning', (w) => {
 
 import http from 'node:http';
 import fs from 'node:fs';
+import zlib from 'node:zlib';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -88,6 +89,33 @@ async function readBody(req) {
     throw Object.assign(new Error('Invalid JSON'), { status: 400 });
   }
 }
+// Text assets compressed once per version (ETag) and kept in memory. Lighthouse's mobile run in the
+// launch review: 317 KB of the 569 KB first visit was uncompressed text, and Largest Contentful
+// Paint was 4.4 s. Done here rather than left to a CDN, so the app is fast on any host.
+const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg', '.txt', '.webmanifest']);
+const compressedCache = new Map(); // `${file}|${etag}|${enc}` -> Buffer
+let compressedBytes = 0;
+function compressed(file, etag, enc) {
+  const key = `${file}|${etag}|${enc}`;
+  let buf = compressedCache.get(key);
+  if (buf) return buf;
+  const raw = fs.readFileSync(file);
+  buf = enc === 'br'
+    ? zlib.brotliCompressSync(raw, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9, [zlib.constants.BROTLI_PARAM_SIZE_HINT]: raw.length } })
+    : zlib.gzipSync(raw, { level: 9 });
+  // Bounded: the app's text is ~600 KB, so 32 MB only matters if files keep changing under a live server.
+  if (compressedBytes + buf.length > 32 * 1024 * 1024) { compressedCache.clear(); compressedBytes = 0; }
+  compressedCache.set(key, buf);
+  compressedBytes += buf.length;
+  return buf;
+}
+function pickEncoding(req) {
+  const ae = String(req.headers['accept-encoding'] || '');
+  if (/\bbr\b/.test(ae)) return 'br';
+  if (/\bgzip\b/.test(ae)) return 'gzip';
+  return null;
+}
+
 function serveStatic(req, res, pathname) {
   let base = STATIC['/'];
   let rel = pathname;
@@ -117,10 +145,22 @@ function serveStatic(req, res, pathname) {
     // 'no-cache' means "check with me first", which only saves anything with a validator: without
     // one every visit re-downloaded every script, font and stylesheet in full (launch review).
     const etag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
-    const headers = { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-cache', etag, 'last-modified': st.mtime.toUTCString(), ...SECURITY_HEADERS };
+    const canCompress = COMPRESSIBLE.has(path.extname(file)) && st.size > 1024;
+    const headers = { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-cache', etag, 'last-modified': st.mtime.toUTCString(), ...(canCompress ? { vary: 'accept-encoding' } : {}), ...SECURITY_HEADERS };
     if (String(req.headers['if-none-match'] || '').split(/\s*,\s*/).includes(etag)) {
       res.writeHead(304, headers);
       return res.end();
+    }
+    const enc = canCompress ? pickEncoding(req) : null;
+    if (enc) {
+      let body;
+      try {
+        body = compressed(file, etag, enc);
+      } catch {
+        return send(res, 500, 'Could not read file');
+      }
+      res.writeHead(200, { ...headers, 'content-encoding': enc, 'content-length': body.length });
+      return res.end(req.method === 'HEAD' ? undefined : body);
     }
     res.writeHead(200, { ...headers, 'content-length': st.size });
     if (req.method === 'HEAD') return res.end();

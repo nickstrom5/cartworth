@@ -66,10 +66,15 @@ async function checks(base) {
   const etag = home.headers.get('etag');
   ok(!!etag, 'pages carry an ETag');
   if (etag) ok((await fetch(`${base}/`, { headers: { 'if-none-match': etag } })).status === 304, 'an unchanged page revalidates as 304');
-  for (const src of [...html.matchAll(/(?:src|href)="(\/[^"#?]+\.(?:js|css|mjs))/g)].map((m) => m[1]).slice(0, 8)) {
+  for (const src of [...html.matchAll(/(?:src|href)="(\/[^"#?]+\.(?:js|css|mjs))/g)].map((m) => m[1])) {
     const r = await fetch(`${base}${src}`);
     ok(r.status === 200, `asset ${src}`, `${r.status}`);
   }
+  const css = await fetch(`${base}/app.css`, { headers: { 'accept-encoding': 'br, gzip' } });
+  ok(/^(br|gzip)$/.test(css.headers.get('content-encoding') || ''), 'text assets are compressed', css.headers.get('content-encoding') || 'none');
+  ok(/accept-encoding/i.test(css.headers.get('vary') || ''), 'compressed assets say Vary: Accept-Encoding');
+  const plain = await fetch(`${base}/app.css`, { headers: { 'accept-encoding': 'identity' } });
+  ok(!plain.headers.get('content-encoding') && (await plain.text()).length > 1000, 'a client that cannot decompress gets plain text');
   const head = await fetch(`${base}/`, { method: 'HEAD' });
   ok(head.status === 200 && (await head.text()) === '', 'HEAD / answers with no body');
   ok((await fetch(`${base}/compare/deep-link`)).status === 200, 'a deep link serves the app');

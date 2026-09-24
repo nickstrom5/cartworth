@@ -12,3 +12,26 @@ test('scripts/smoke.js passes against a fresh production-mode server', () => {
   const r = spawnSync(process.execPath, [new URL('../scripts/smoke.js', import.meta.url).pathname], { encoding: 'utf8', timeout: 120_000 });
   assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
 });
+
+// The modulepreload list in public/index.html must be exactly the app's import graph: a missing
+// module brings back the one-level-at-a-time chain, and a stale one is a wasted download.
+import fs from 'node:fs';
+import path from 'node:path';
+test('index.html preloads exactly the modules the app imports', () => {
+  const ROOT = new URL('..', import.meta.url).pathname;
+  const file = (u) => path.join(ROOT, u.startsWith('/shared/') ? `shared/${u.slice(8)}` : `public${u}`);
+  const seen = new Set();
+  const walk = (u) => {
+    if (seen.has(u)) return;
+    seen.add(u);
+    const src = fs.readFileSync(file(u), 'utf8');
+    for (const m of src.matchAll(/^\s*import\s(?:[^;]*?from\s+)?["']([^"']+)["']/gm)) {
+      walk(m[1].startsWith('/') ? m[1] : path.posix.normalize(path.posix.join(path.posix.dirname(u), m[1])));
+    }
+  };
+  walk('/js/main.js');
+  seen.delete('/js/main.js');
+  const html = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
+  const preloaded = new Set([...html.matchAll(/<link rel="modulepreload" href="([^"]+)"/g)].map((m) => m[1]));
+  assert.deepEqual([...preloaded].sort(), [...seen].sort());
+});
