@@ -3,11 +3,12 @@
 import { useState, useEffect } from '/vendor/preact-hooks.mjs';
 import { html, Spinner, Notice, StoreDot, storeInfo } from '../ui.js';
 import { Icon } from '../icons.js';
-import { useStore, setState } from '../store.js';
+import { useStore, setState, getState } from '../store.js';
 import { saveSettings, loadDirectory, go } from '../actions.js';
 import { basisInfo, isPriceable } from '../format.js';
 
 export function Onboarding() {
+  const [widening, setWidening] = useState(false);
   const stores = useStore((s) => s.stores);
   const settings = useStore((s) => s.settings);
   const directory = useStore((s) => s.directory);
@@ -66,6 +67,21 @@ export function Onboarding() {
   // often the only price source, and the sentence counted Walmart as a store found within 25 miles.
   const national = priced.filter((s) => s.basis === 'national');
   const local = priced.filter((s) => s.basis !== 'national');
+  // The nationwide sweep: in remote rural ZIPs nothing priceable is within 25 miles, but often is
+  // within 40. Offer the wider radius in one tap instead of only "try another ZIP".
+  const WIDEST = 40;
+  const canWiden = !!directory && local.length === 0 && directory.maxMiles < WIDEST;
+  const widen = async () => {
+    setWidening(true);
+    try {
+      await saveSettings({ maxMiles: WIDEST }, { quiet: true });
+      // Widening never switches stores on by itself (actions.js); here the visitor asked for it.
+      const dir = getState().directory;
+      if (dir?.suggested?.length) await saveSettings({ stores: dir.suggested }, { quiet: true });
+    } finally {
+      setWidening(false);
+    }
+  };
   const enabled = (stores || []).filter((s) => s.enabled);
 
   return html`<div class="card onboard">
@@ -80,9 +96,17 @@ export function Onboarding() {
           The ${enabled.length} below are switched on — change them any time in Settings.
         </div>`}
 
-    ${!loading && !priced.length &&
+    ${!loading && !priced.length && !canWiden &&
       html`<${Notice} kind="warn" icon="alert">
         No store near this ZIP publishes prices we can read. You can still browse the weekly ads, or try a nearby ZIP with a larger town.
+      </${Notice}>`}
+
+    ${!loading && canWiden &&
+      html`<${Notice} kind="warn" icon="alert">
+        No store within ${directory.maxMiles} miles publishes prices we can read${national.length ? ' (the prices above are chain-wide)' : ''}. In rural areas the nearest one is often a little further.
+        <div style=${{ marginTop: 8 }}>
+          <button class="btn btn-sm" onClick=${widen} disabled=${widening}>${widening ? 'Looking…' : `Look within ${WIDEST} miles`}</button>
+        </div>
       </${Notice}>`}
 
     ${!loading && html`<div>

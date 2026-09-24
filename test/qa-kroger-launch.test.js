@@ -124,3 +124,23 @@ test('DEFECT: a visitor’s keys are used only after Kroger accepts them', async
     globalThis.fetch = real;
   }
 });
+
+// Nationwide review: six Kroger banners were not wired to the Kroger API at all, so the owner's keys
+// would not have priced Metro Market (named in the Kroger email), Food 4 Less, Gerbes or JayC; and
+// City Market and Baker's, which are not on Instacart, could never be priced.
+import { priceable } from '../src/directory.js';
+import { CHAIN_BY_ID } from '../shared/catalog.js';
+
+test('DEFECT: every Kroger banner in the catalog prices through the Kroger API when the keys are set', () => withEnv({ KROGER_CLIENT_ID: 'owner-id', KROGER_CLIENT_SECRET: 'owner-secret' }, () => {
+  _setBudgetForTests({ products: 9000, locations: 1400 });
+  for (const [id, chain] of [['metromarket', 'METRO_MARKET'], ['food4less', 'FOOD_4_LESS'], ['gerbes', 'GERBES'], ['jayc', 'JAYC'], ['citymarket', 'CITY_MARKET'], ['bakersplus', 'BAKERS']]) {
+    assert.deepEqual(sourceFor(id, ctx('80202')), { type: 'kroger', chain }, id);
+  }
+  assert.equal(priceable(CHAIN_BY_ID.citymarket), true, 'City Market is located through Kroger');
+}));
+
+test('control: without keys, City Market and Baker’s stay weekly-ad only and the rest keep Instacart', () => withEnv({ KROGER_CLIENT_ID: null, KROGER_CLIENT_SECRET: null }, () => {
+  assert.equal(priceable(CHAIN_BY_ID.citymarket), false);
+  assert.equal(sourceFor('citymarket', ctx('80202')), null);
+  assert.equal(sourceFor('metromarket', ctx('53211')).type, 'instacart');
+}));

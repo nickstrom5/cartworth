@@ -86,6 +86,24 @@ const CANDIDATES = {
   strackvantil: [['46322', '46307'], 'strack-van-til', 'strack-and-van-til'],
   timessupermarket: [['96817', '96813'], 'times-supermarket', 'times-supermarkets'],
   decicco: [['10583', '10591'], 'deciccos', 'decicco-and-sons', 'deciccos-market'],
+  // Nationwide gaps by state (Sept 2026 catalog review): big regional grocers with no price source.
+  shaws: [['04101', '03060'], 'shaws', 'shaws-supermarket'],
+  citymarket: [['81501', '81611'], 'city-market', 'city-market-co'],
+  bakersplus: [['68144', '68132'], 'bakers', 'bakers-supermarkets', 'bakers-plus'],
+  rouses: [['70115', '70808'], 'rouses-markets', 'rouses'],
+  harps: [['72701', '72205'], 'harps-food', 'harps', 'harps-food-stores'],
+  foodland: [['96814', '96720'], 'foodland', 'foodland-hawaii', 'foodland-super-market'],
+  reasors: [['74105', '74133'], 'reasors', 'reasors-foods'],
+  homeland: [['73112', '73118'], 'homeland', 'homeland-stores'],
+  lundsbyerlys: [['55410', '55416'], 'lunds-byerlys', 'lunds-and-byerlys'],
+  kowalskis: [['55105', '55410'], 'kowalskis', 'kowalskis-markets'],
+  coborns: [['56301', '56303'], 'coborns', 'cash-wise', 'cashwise-foods'],
+  hornbachers: [['58103', '58104'], 'hornbachers'],
+  sunshinefoods: [['57106', '57105'], 'sunshine-foods'],
+  ridleys: [['83401', '83402'], 'ridleys', 'ridleys-family-markets'],
+  maceys: [['84043', '84604'], 'maceys', 'maceys-food'],
+  lidl: [['22101', '19103'], 'lidl', 'lidl-us'],
+  pigglysouth: [['29407', '29406'], 'piggly-wiggly'],
 };
 
 // After the adapter import, which sets its own (faster, concurrent) limits for these hosts.

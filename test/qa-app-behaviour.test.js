@@ -582,3 +582,29 @@ test('a store the server did not ask (busy) says so and offers a retry, not "no 
     srv = await startAppServer({ api: api() });
   }
 });
+
+test('DEFECT (nationwide sweep): a rural ZIP with nothing in 25 miles is offered 40 miles in one tap', { skip: SKIP }, async () => {
+  const asked = [];
+  const near = { ...fx.directory, zip: '71635', city: 'Crossett', state: 'AR', otherMerchants: [], maxMiles: 25,
+    chains: [{ id: 'walmart', name: 'Walmart', short: 'Walmart', status: 'national', hasAds: true, distance: null, address: null }], suggested: ['walmart'] };
+  const wide = { ...near, maxMiles: 40,
+    chains: [{ id: 'aldi', name: 'ALDI', short: 'ALDI', status: 'shelf', hasAds: true, distance: 32.4, address: '1 Main St, Monroe, LA' }, ...near.chains], suggested: ['aldi', 'walmart'] };
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/directory': (req, url) => { asked.push(url.searchParams.get('miles')); return url.searchParams.get('miles') === '40' ? wide : near; } }) });
+  try {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: {}, hash: '#/' });
+    await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'the ZIP step' });
+    await page.eval(`(() => { const i = document.querySelector('input[aria-label="Your ZIP code"]'); i.value = '71635'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+    await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
+    await page.waitFor(`[...document.querySelectorAll("button")].some((b) => /Look within 40 miles/.test(b.textContent))`, { what: "the widen button" });
+    await page.eval(`[...document.querySelectorAll('button')].find((b) => /Look within 40 miles/.test(b.textContent)).click()`);
+    await page.waitFor(`/found 1 store it can price/.test(document.querySelector('.onboard').innerText)`, { what: 'the wider result' });
+    const stores = await page.eval(`JSON.parse(localStorage.getItem('cartworth:v1:settings')).stores`);
+    assert.ok(stores.includes('aldi'), `the store found by widening is switched on: ${stores}`);
+    assert.ok(asked.includes('40'));
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});

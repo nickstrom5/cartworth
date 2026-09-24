@@ -93,12 +93,12 @@ export const CHAINS = [
   { id: 'harristeeter', name: 'Harris Teeter', short: 'Harris Teeter', aliases: ['harris teeter'], price: ic('harristeeter'), alt: { type: 'kroger', chain: 'HARRIS_TEETER' }, ads: ['Harris Teeter'], states: ['NC', 'SC', 'VA', 'GA', 'DE', 'MD', 'DC', 'FL'] },
   { id: 'marianos', name: 'Mariano’s', short: 'Mariano’s', aliases: ['mariano'], price: ic('marianos'), alt: { type: 'kroger', chain: 'MARIANOS' }, ads: ["Mariano's"], states: ['IL'], note: 'Add free Kroger API keys in Settings for exact shelf + card prices.' },
   { id: 'picknsave', name: 'Pick ’n Save', short: 'Pick ’n Save', aliases: ["pick 'n save", 'pick n save'], price: ic('pick-n-save'), alt: { type: 'kroger', chain: 'PICK_N_SAVE' }, ads: ['Pick N Save'], states: ['WI'] },
-  { id: 'metromarket', name: 'Metro Market', short: 'Metro Market', aliases: ['metro market'], price: ic('metro-market'), ads: ['Metro Market'], states: ['WI'] },
-  { id: 'food4less', name: 'Food 4 Less', short: 'Food 4 Less', aliases: ['food 4 less', 'food4less'], price: ic('food4less'), ads: ['Food 4 Less'], states: ['CA', 'IL', 'IN', 'NV'] },
-  { id: 'citymarket', name: 'City Market', short: 'City Market', aliases: ['city market'], price: null, ads: ['City Market'], states: ['CO', 'UT', 'NM', 'WY'], note: 'Weekly ad only.' },
-  { id: 'gerbes', name: 'Gerbes', short: 'Gerbes', aliases: ['gerbes'], price: ic('gerbes'), ads: ['Gerbes'], states: ['MO'] },
-  { id: 'bakersplus', name: 'Baker’s', short: 'Baker’s', aliases: ["baker's supermarket", 'bakers supermarket'], price: null, ads: ["Baker's"], states: ['NE', 'IA'], note: 'Weekly ad only.' },
-  { id: 'jayc', name: 'JayC Food Stores', short: 'JayC', aliases: ['jay c food', 'jayc'], price: ic('jayc'), ads: ['JayC Food Stores'], states: ['IN'] },
+  { id: 'metromarket', name: 'Metro Market', short: 'Metro Market', aliases: ['metro market'], price: ic('metro-market'), alt: { type: 'kroger', chain: 'METRO_MARKET' }, ads: ['Metro Market'], states: ['WI'] },
+  { id: 'food4less', name: 'Food 4 Less', short: 'Food 4 Less', aliases: ['food 4 less', 'food4less'], price: ic('food4less'), alt: { type: 'kroger', chain: 'FOOD_4_LESS' }, ads: ['Food 4 Less'], states: ['CA', 'IL', 'IN', 'NV'] },
+  { id: 'citymarket', name: 'City Market', short: 'City Market', aliases: ['city market'], price: null, alt: { type: 'kroger', chain: 'CITY_MARKET' }, ads: ['City Market'], states: ['CO', 'UT', 'NM', 'WY'], note: 'Weekly ad only until Kroger API prices are on (not on Instacart).' },
+  { id: 'gerbes', name: 'Gerbes', short: 'Gerbes', aliases: ['gerbes'], price: ic('gerbes'), alt: { type: 'kroger', chain: 'GERBES' }, ads: ['Gerbes'], states: ['MO'] },
+  { id: 'bakersplus', name: 'Baker’s', short: 'Baker’s', aliases: ["baker's supermarket", 'bakers supermarket'], price: null, alt: { type: 'kroger', chain: 'BAKERS' }, ads: ["Baker's"], states: ['NE', 'IA'], note: 'Weekly ad only until Kroger API prices are on (not on Instacart).' },
+  { id: 'jayc', name: 'JayC Food Stores', short: 'JayC', aliases: ['jay c food', 'jayc'], price: ic('jayc'), alt: { type: 'kroger', chain: 'JAYC' }, ads: ['JayC Food Stores'], states: ['IN'] },
 
   // ---------------------------------------------------------------- Albertsons family
   { id: 'albertsons', name: 'Albertsons', short: 'Albertsons', aliases: ['albertsons'], price: ic('albertsons'), ads: ['Albertsons'], states: ['AK', 'AZ', 'AR', 'CA', 'CO', 'ID', 'LA', 'MT', 'NE', 'NV', 'NM', 'ND', 'OK', 'OR', 'SD', 'TX', 'UT', 'WA', 'WY'] },
@@ -184,6 +184,18 @@ export const CHAINS = [
   { id: 'kings', name: 'Kings Food Markets', short: 'Kings', aliases: ['kings food markets', 'kings food market'], price: ic('kings-food-markets'), ads: ['Kings Food Markets'], states: ['NJ', 'NY', 'CT'] },
   { id: 'bravo', name: 'Bravo Supermarkets', short: 'Bravo', aliases: ['bravo supermarket', 'bravo supermarkets'], price: ic('bravo-supermarkets'), ads: ['Bravo Supermarket', 'Bravo Supermarkets'], states: ['NY', 'NJ', 'CT', 'PA', 'MA', 'RI', 'FL'] },
   { id: 'decicco', name: 'DeCicco & Sons', short: 'DeCicco’s', aliases: ['decicco & sons', "decicco's", 'deciccos', 'decicco and sons'], price: ic('deciccos'), ads: ['DeCicco & Sons'], states: ['NY', 'CT'] },
+  // Nationwide gaps by state (24 Sep 2026): slugs verified by scripts/find-slugs.js against a local
+  // store. Not on Instacart under any slug tried, so still weekly-ad only: Shaw's, Harps, Coborn's /
+  // Cash Wise, Sunshine Foods, Lidl (and H-E-B, which blocks automated access).
+  { id: 'rouses', name: 'Rouses Markets', short: 'Rouses', aliases: ['rouses', 'rouses markets', "rouse's"], price: ic('rouses'), ads: ['Rouses Markets', 'Rouses'], states: ['LA', 'MS', 'AL'] },
+  { id: 'foodland', name: 'Foodland', short: 'Foodland', aliases: ['foodland'], price: ic('foodland'), ads: ['Foodland'], states: ['HI'] },
+  { id: 'reasors', name: 'Reasor’s', short: 'Reasor’s', aliases: ["reasor's", 'reasors'], price: ic('reasors'), ads: ["Reasor's"], states: ['OK'] },
+  { id: 'homeland', name: 'Homeland', short: 'Homeland', aliases: ['homeland'], price: ic('homeland'), ads: ['Homeland'], states: ['OK'] },
+  { id: 'lundsbyerlys', name: 'Lunds & Byerlys', short: 'Lunds & Byerlys', aliases: ['lunds & byerlys', 'lunds and byerlys', 'lunds byerlys'], price: ic('lunds-and-byerlys'), ads: ['Lunds & Byerlys', 'Lunds and Byerlys'], states: ['MN'] },
+  { id: 'kowalskis', name: 'Kowalski’s Markets', short: 'Kowalski’s', aliases: ["kowalski's", 'kowalskis'], price: ic('kowalskis'), ads: ["Kowalski's Markets", "Kowalski's"], states: ['MN'] },
+  { id: 'hornbachers', name: 'Hornbacher’s', short: 'Hornbacher’s', aliases: ["hornbacher's", 'hornbachers'], price: ic('hornbachers'), ads: ["Hornbacher's"], states: ['ND', 'MN'] },
+  { id: 'ridleys', name: 'Ridley’s Family Markets', short: 'Ridley’s', aliases: ["ridley's", 'ridleys'], price: ic('ridleys'), ads: ["Ridley's Family Markets", "Ridley's"], states: ['ID', 'UT', 'WY', 'NV', 'MT'] },
+  { id: 'maceys', name: 'Macey’s', short: 'Macey’s', aliases: ["macey's", 'maceys'], price: ic('maceys'), ads: ["Macey's"], states: ['UT'] },
   // Priced since 23 Sep 2026 from Piggly Wiggly MIDWEST's own store site. The marketplace's
   // 'piggly-wiggly' storefront is the Southern chain: it answers Milwaukee and Kenosha only with its
   // canonical store 844-878 mi away, which must never be read as a local price (see chainWide above),

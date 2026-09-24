@@ -19,6 +19,7 @@ import * as instacart from './adapters/instacart.js';
 import * as wholefoods from './adapters/wholefoods.js';
 import * as traderjoes from './adapters/traderjoes.js';
 import * as flipp from './adapters/flipp.js';
+import * as kroger from './adapters/kroger.js';
 import { cached, peek, DAY, MIN } from './cache.js';
 import { cacheGetStale } from './db.js';
 import { withStallTimeout } from './http.js';
@@ -83,6 +84,23 @@ export function sourceHosts(src) {
   }
 }
 
+/**
+ * The server's own Kroger keys (ops/kroger-launch.md), when set. City Market and Baker's are Kroger
+ * banners with no Instacart listing: with these keys they are located and priced through the Kroger
+ * API; without them they stay weekly-ad only.
+ */
+function serverKroger() {
+  const clientId = String(process.env.KROGER_CLIENT_ID || '').trim();
+  const clientSecret = String(process.env.KROGER_CLIENT_SECRET || '').trim();
+  return clientId && clientSecret ? { kroger: { clientId, clientSecret, server: true } } : null;
+}
+function krogerOnly(chain) {
+  if (chain?.price || chain?.alt?.type !== 'kroger') return false;
+  const k = serverKroger();
+  return !!k && kroger.available(k);
+}
+export const priceable = (c) => !!c?.price || krogerOnly(c);
+
 const withTimeout = (p, ms, src) => withStallTimeout(p, ms, sourceHosts(src), { label: 'The store locator' });
 
 /** Ask one chain's own price source whether it serves this ZIP. */
@@ -97,9 +115,17 @@ async function probe(chain, zip, geo, maxMiles) {
     note: chain.note || null,
     priceNote: null,
   };
-  if (!chain.price) return out;
+  const viaKroger = krogerOnly(chain);
+  if (!chain.price && !viaKroger) return out;
   try {
-    if (chain.price.type === 'instacart') {
+    if (viaKroger) {
+      const s = await withTimeout(kroger.resolveStore(serverKroger(), zip, chain.alt.chain), PROBE_TIMEOUT, { type: 'kroger' });
+      if (!s || s.none) return out;
+      out.status = STATUS.shelf;
+      out.distance = s.distance ?? null;
+      out.address = s.address ?? null;
+      out.priceNote = 'Exact store prices (Kroger API)';
+    } else if (chain.price.type === 'instacart') {
       const shop = await withTimeout(instacart.resolveShop(chain.price, zip), PROBE_TIMEOUT, chain.price);
       if (!shop || shop.none) return out;
       if (shop.canonical) {
@@ -241,9 +267,9 @@ async function build(zip, { maxMiles, remembered = [] }) {
   // priceable, and the nearest grocer a Milwaukee shopper has — was never asked at all, purely
   // because it HAS an ads name and Flipp happened to publish no Metro Market flyer that week.
   // Discovery of a store we can price must not hinge on a circular existing.
-  for (const c of CHAINS) if (inState.has(c.id) && c.price) candidates.add(c.id);
+  for (const c of CHAINS) if (inState.has(c.id) && priceable(c)) candidates.add(c.id);
   // And every chain an earlier build located inside this radius (see previouslyNearby).
-  for (const id of remembered) if (CHAIN_BY_ID[id]?.price) candidates.add(id);
+  for (const id of remembered) if (priceable(CHAIN_BY_ID[id])) candidates.add(id);
 
   // Ask everyone in that set who has a price source. The state list stays what the header says it
   // is — a cost filter on who to ASK, which is what keeps `candidates` small — but it must not
@@ -252,7 +278,7 @@ async function build(zip, { maxMiles, remembered = [] }) {
   // Wisconsin chain) while refusing to price a Jewel-Osco 7.1 mi away in Zion IL (Jewel is not).
   // Distance is the honest filter, and probe() already applies it: anything past maxMiles comes
   // back status none and falls through to ads-only below, exactly as before.
-  const toProbe = [...candidates].filter((id) => CHAIN_BY_ID[id]?.price);
+  const toProbe = [...candidates].filter((id) => priceable(CHAIN_BY_ID[id]));
 
   const probed = await pool(toProbe, (id) => probe(CHAIN_BY_ID[id], zip, geo, maxMiles), PROBE_CONCURRENCY);
   const byId = Object.fromEntries(probed.map((p) => [p.id, p]));

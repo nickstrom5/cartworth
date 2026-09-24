@@ -180,6 +180,8 @@ const SITES = {
   KING_SOOPERS: 'https://www.kingsoopers.com', FRYS: 'https://www.frysfood.com', SMITHS: 'https://www.smithsfoodanddrug.com',
   QFC: 'https://www.qfc.com', DILLONS: 'https://www.dillons.com', HARRIS_TEETER: 'https://www.harristeeter.com',
   MARIANOS: 'https://www.marianos.com', PICK_N_SAVE: 'https://www.picknsave.com', METRO_MARKET: 'https://www.metromarket.net',
+  FOOD_4_LESS: 'https://www.food4less.com', GERBES: 'https://www.gerbes.com', JAYC: 'https://www.jaycfoods.com',
+  CITY_MARKET: 'https://www.citymarket.com', BAKERS: 'https://www.bakersplus.com',
 };
 export const siteFor = (chain) => SITES[chain] || 'https://www.kroger.com';
 
