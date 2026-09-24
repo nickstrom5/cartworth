@@ -244,7 +244,7 @@ The Display Name and Description limits below (30 and 45 characters) are what Ap
 | Duration | 1 year |
 | Price | $19.99 USD |
 | Display Name (30 char limit) | `Cartworth Pro Yearly` (20) |
-| Description (45 char limit) | `A year of Pro. Best value, about $1.67/mo` (41) |
+| Description (45 char limit) | `A year of Pro. Our best-value plan.` (35). No price in the text: it would be wrong after any price change and in any other currency; StoreKit shows the real price. |
 | Family Sharing | On |
 | Level | 1 (above monthly) |
 

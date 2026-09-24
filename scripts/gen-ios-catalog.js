@@ -37,7 +37,10 @@ function row(c) {
     `id: ${str(c.id)}`, `name: ${str(c.name)}`, `short: ${str(c.short)}`, `aliases: ${list(c.aliases)}`,
     `source: ${source(c)}`, `flipp: ${list(c.ads)}`,
   ];
-  if (c.note) parts.push(`note: ${str(c.note)}`);
+  // iosNote, when present, replaces the note on the phone: the web's notes can point at features the
+  // iPhone app does not have (Kroger API keys in Settings), and an App Reviewer reads them.
+  const note = 'iosNote' in c ? c.iosNote : c.note;
+  if (note) parts.push(`note: ${str(note)}`);
   if (c.price?.chainWide) parts.push('chainWide: true');
   return `        Chain(${parts.join(', ')}),`;
 }
