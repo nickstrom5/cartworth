@@ -27,7 +27,9 @@ are `marketing/APP_STORE_LISTING.md`.
 - [ ] Cmd+U on an iPhone 16 Pro simulator, then an iPad Pro 13" simulator. The UI-hosted suites
       (`HostedScreenTests`, `PriceLayoutTests`, `SearchScreenGuardTests`, `ReadablePageTests`,
       `TripPlanSavingsTests`, `ChartTests`, `InstacartProvenanceTests`) and `AppUITests` only run
-      here. Every one must pass.
+      here. Every one must pass. Pick iOS 27 simulators by id (`xcrun simctl list devices`): the
+      iOS 26.5 iPad Pro 13" on the build Mac never rotates under XCUITest, status bar and keyboard
+      included, so both `IPadLandscapeTests` fail there; on the iOS 27.0 iPad Pro 13" both pass.
 - [ ] Product > Archive with the Release configuration succeeds with no warnings about missing
       usage strings or privacy manifest entries.
 
