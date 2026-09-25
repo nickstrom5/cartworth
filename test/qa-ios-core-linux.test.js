@@ -9,7 +9,10 @@ import { spawnSync } from 'node:child_process';
 
 const swiftDir = process.env.SWIFT || '';
 const found = spawnSync(swiftDir ? `${swiftDir}/swift` : 'swift', ['--version'], { encoding: 'utf8' });
-const SKIP = found.status === 0 && /Swift version 6\.([1-9]|\d\d)/.test(found.stdout) ? false : 'no Swift 6.1+ toolchain (set SWIFT=<toolchain>/usr/bin) — iOS core tests not run';
+// Linux only. A Mac has Xcode's Swift on PATH, but the script's GNU sed (`sed -i`, `sed '1i'`) does
+// not run there, and Xcode runs these same suites with the rest (ops/appstore-testing.md, step 1).
+const SKIP = process.platform !== 'linux' ? 'Linux only — on a Mac these XCTests run in Xcode'
+  : found.status === 0 && /Swift version 6\.([1-9]|\d\d)/.test(found.stdout) ? false : 'no Swift 6.1+ toolchain (set SWIFT=<toolchain>/usr/bin) — iOS core tests not run';
 
 test('iOS core XCTests pass on Linux', { skip: SKIP, timeout: 30 * 60_000 }, () => {
   const r = spawnSync(new URL('../ios/linux/run-core-tests.sh', import.meta.url).pathname, [], { encoding: 'utf8', env: process.env, timeout: 30 * 60_000 });

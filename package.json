@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning server.js",
     "dev": "node --disable-warning=ExperimentalWarning --watch-path=server.js --watch-path=src --watch-path=shared server.js",
-    "test": "node --disable-warning=ExperimentalWarning --test test/",
+    "test": "node --disable-warning=ExperimentalWarning --test 'test/*.test.js'",
     "smoke": "node --disable-warning=ExperimentalWarning scripts/smoke.js"
   }
 }
