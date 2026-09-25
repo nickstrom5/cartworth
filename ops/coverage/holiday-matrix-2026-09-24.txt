@@ -1,0 +1,374 @@
+AK newyear
+  ! sparkling wine       NO ANSWER
+    shrimp cocktail      $11.99/lb    carrs [online] "Waterfront Bistro Shrimp Cocktail with Sauce" 32 oz $23.99
+    cheese               $2.86/lb     costco [online] "Darigold Cottage Cheese 2% Low Fat, 3 lbs" 3 lb $8.57
+    crackers             $1.88/lb     walmart [national] "Great Value Original Saltine Crackers" 16 oz $1.88
+    black-eyed peas      $1.28/lb     walmart [national] "Great Value Black Eyed Peas" 15.5 oz $1.24
+    cabbage              $0.88/lb     walmart [national] "Green Cabbage Wrapped" per lb $0.88
+AL superbowl
+  ? chicken wings        $1.21/lb     walmart [national] "Great Value Chicken Drumsticks, Natural" 4 lb $4.83 (median of others 3.1x)
+    tortilla chips       $2.52/lb     walmart [national] "Great Value Crunchy Rounds Tortilla Chips" 18 oz $2.83
+    salsa                $1.73/lb     aldi [shelf] "Casa Mamita Chunky Salsa, Mild" 24 oz $2.59
+    avocados             $0.53/ct     aldi [shelf] "Mini Avocados" 6 ct $3.15
+    sour cream           $1.75/lb     aldi [shelf] "Friendly Farms Sour Cream" 16 oz $1.75
+  ? soda                 $2.08/gal    walmart [national] "Sam's Choice Cola Soda, Bottle" 67.6 fl oz $1.1 (median of others 3.2x)
+    frozen pizza         $2.34/lb     walmart [national] "Totino's Party Pizza Multipack Pepperoni 17g Protein Frozen Thin Crust" 40.8 oz $5.97
+AR valentines
+    strawberries         $2.35/lb     walmart [national] "Marzetti Glaze for Strawberries" 13.5 oz $1.98
+  ? chocolate            $4.42/lb     samsclub [online] "Toll House Semi Sweet Chocolate Morsels" 72 oz $19.9 (median of others 3.5x)
+    steak                $5.62/lb     walmart [national] "Stouffer's Family Size Salisbury Steak" 1.75 lb $9.84
+    asparagus            $3.02/lb     walmart [national] "Great Value Cut Asparagus Spears" 14.5 oz $2.74
+  ? wine                 $13.62/gal   kroger [online] "Franzia Sunset Blush, Pink Wine, 5L" 5 L $17.99 (median of others 3.7x)
+AZ stpatricks
+    corned beef          $4.12/lb     aldi [shelf] "Brookdale Corned Beef" 12 oz $3.09
+    cabbage              $0.69/lb     elsuper [shelf] "Red Cabbage" per lb $0.69
+    potatoes             $0.30/lb     elsuper [shelf] "Russet Potato Bag" 10 lb $2.99
+  ? carrots              $0.09/lb     smartfinal [online] "Table Carrots" 25 lb $2.19 (median of others 11.4x)
+    irish soda bread     $4.70/lb     sprouts [shelf] "Sprouts Irish Soda Bread" 17 oz $4.99
+CA easter
+    spiral ham           $4.24/lb     walmart [shelf] "Sam's Choice Boneless Spiral-Cut Honey Ham" per lb $4.24
+    eggs                 $0.89/dozen  elsuper [shelf] "C-A-L Ranch Large Eggs" 20 ct $1.49
+    asparagus            $3.02/lb     walmart [shelf] "Great Value Cut Asparagus Spears" 14.5 oz $2.74
+  ? dinner rolls         $0.12/ct     superiorgrocers [online] "Dinner Rolls" 36 ct $4.39 (median of others 3.2x)
+    potatoes             $0.32/lb     aldi [shelf] "Russet Potatoes" 10 lb $3.18
+  ? jelly beans          $3.66/lb     smartfinal [online] "First Street Jelly Beans" 48 oz $10.99 (median of others 3.1x)
+CO cinco
+    avocados             $0.67/ct     sprouts [shelf] "Hass Avocados Bag" 6 ct $3.99 {Hass Avocado}
+  ? limes                $0.89/lb     safeway [online] "Key Limon" 1 lb $0.89 {Key Limes}
+    tortillas            $0.07/ct     kingsoopers [online] "Mission Super Soft Estilo Casero White Corn Tortillas" 70 ct $4.99 {Corn Tortillas}
+    ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef}
+    salsa                $1.84/lb     kingsoopers [online] "Kroger® Medium Traditional Salsa" 26 oz $2.99 {Salsas}
+  ? cilantro             $9.57/lb     kingsoopers [online] "Fresh Cut In Store Chopped Cilantro & White Onions" 5 oz $2.99 {Mixed Vegetables} (median of others 3.9x)
+    tortilla chips       $2.07/lb     costco [online] "Kirkland Signature Tortilla Strips, 48 oz" 48 oz $6.21 {Tortilla Chips}
+CT mothers
+    eggs                 $0.88/dozen  keyfood [online] "Kreider Farms Small Eggs" 30 ct $2.19 {Whole Eggs}
+    bacon                $3.35/lb     pricerite [online] "Hormel Black Label Hormel® Black Label® Bacon Thick Cut Bacon" 16 oz $3.35 {Sliced Bacon}
+    strawberries         $2.53/lb     samsclub [online] "Member’s Mark Sliced Strawberries" 64 oz $10.13 {Frozen Strawberries}
+    orange juice         $5.60/gal    pricerite [online] "Cool River China Orange" 64 fl oz $2.8 {Orange Juice}
+    croissants           $0.35/ct     stopandshop [online] "Store Brand Bakery Mini Croissants - 20 ct" 20 ct $6.99 {Croissants}
+  ? flowers              $0.43/ct     keyfood [online] "Jamaica Flower to our Health / Nuestra Salud Flor Jamaica" 20 ct $8.59 {Herbal Tea} (median of others 23.2x)
+DC memorial
+    ground beef          $3.99/lb     foodlion [shelf] "Food Lion 73% Lean Ground Beef, Value Pack" 16 oz $3.99 {Ground Beef}
+  ? hot dogs             $1.32/lb     aldi [shelf] "Parkview Classic Hot Dogs" 12 oz $0.99 {Hot Dogs} (median of others 3.6x)
+    hamburger buns       $0.88/lb     walmart [shelf] "Pepperidge Farm Onion with Poppy Seeds Hamburger Buns" 8 ct $3.52 {Hamburger Buns}
+    hot dog buns         $1.88/lb     aldi [shelf] "L'oven Fresh Hot Dog Buns, 11 oz." 11 oz $1.29 {Hot Dog Buns}
+    corn                 $0.59/lb     walmart [shelf] "Equate Medicated Corn Removers, 9 count" 9 ct $3.18 {Corn & Callus Care Supplies}
+DE fathers
+  ? ribeye steak         $4.99/lb     foodlion [shelf] "Boneless Ribeye Chop" 1 lb $4.99 {Ribeye Steak} (median of others 3.4x)
+    baby back ribs       $3.29/lb     aldi [shelf] "USDA Premium Baby Back Pork Ribs, per lb" per lb $3.29 {Baby Back Ribs}
+    bbq sauce            $9.50/gal    walmart [shelf] "Kraft Original Slow-Simmered Barbecue Sauce Value Size" 40 fl oz $2.97 {Barbecue Sauces}
+  ? corn                 $0.19/lb     wholefoods [shelf] "Corn Starch Forks" 24 ct $2.79 (median of others 5.0x)
+    potatoes             $0.45/lb     aldi [shelf] "Russet Potatoes" 10 lb $4.49 {Russet Potatoes}
+FL july4
+    ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef}
+  ? hot dogs             $1.32/lb     aldi [shelf] "Parkview Classic Hot Dogs" 12 oz $0.99 {Hot Dogs} (median of others 4.0x)
+  ? buns                 $0.68/lb     walmart [national] "Bettergood's Hamburger Buns" 8 × 14 oz $4.78 {Hamburger Buns} (median of others 3.4x)
+    watermelon           $1.39/lb     wholefoods [shelf] "Watermelon Quarter" per lb $1.39
+    corn                 $0.52/lb     keyfood [shelf] "Shoppers Value Corn, Whole Kernel" 15.25 oz $0.5 {Canned Corn}
+    potato chips         $2.86/lb     aldi [shelf] "Clancy's Wavy Potato Chips" 10 oz $1.79 {Potato Chips}
+  ? blueberries          $1.78/lb     walmart [national] "Great Value Blueberries" 28 oz $3.12 {Frozen Blueberries} (median of others 3.1x)
+    strawberries         $2.44/lb     samsclub [online] "Member’s Mark Sliced Strawberries" 64 oz $9.74 {Frozen Strawberries}
+GA backtoschool
+    bread                $1.03/lb     aldi [shelf] "L'oven Fresh White Bread, 20 oz ver 3" 20 oz $1.29 {White Bread}
+    peanut butter        $1.38/lb     aldi [shelf] "Peanut Delight Creamy Peanut Butter 40oz" 40 oz $3.45 {Peanut Butter}
+    turkey lunch meat    $7.92/lb     kroger [online] "Buddig Turkey Lunch Meat 2oz" 2 oz $0.99 {Deli Turkey}
+    string cheese        $0.25/ct     samsclub [online] "Frigo Cheese Heads Original String Cheese" 48 ct $11.79 {String and Stick Cheese}
+    granola bars         $3.48/lb     aldi [shelf] "Millville Smores Chewy Granola Bars, 18 count" 15.12 oz $3.29 {Granola Bars}
+    apples               $0.66/lb     aldi [shelf] "Gala Apples" 3 lb $1.99 {Gala Apples}
+    juice boxes          $7.09/gal    aldi [shelf] "Nature's Nectar 100% Apple Juice Boxes - 8 Pack, 6.75 fl oz Juice Boxes" 8 × 6.75 fl oz $2.99 {Apple Juice and Cider}
+HI labor
+  ? ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef} (median of others 3.6x)
+    brats                $5.10/lb     walmart [national] "Johnsonville Smoked Brats" 14 oz $4.46 {Bratwurst}
+  ? buns                 $1.22/lb     costco [online] "Golden Coin Food Chinatown Style Manapua, 42 oz, 6-count" 6 × 42 oz $19.27 {Frozen Asian Buns} (median of others 4.2x)
+    corn                 $0.37/lb     samsclub [online] "Sinaloa Tortillas, Yellow Corn" 30 ct $6.71 {Corn Tortillas}
+    potato salad         $1.99/lb     walmart [national] "Freshness Guaranteed Original Potato Salad" 48 oz $5.97 {Potato Salad}
+    chips                $3.08/lb     walmart [national] "Great Value Party Size! Wavy Original Potato Chips" 13 oz $2.5 {Potato Chips}
+IA halloween
+    halloween candy      $6.91/lb     walmart [national] "STARBURST Original Fun Size Fruit Chews Candy, Gluten Free, Halloween Bag" 9.17 oz $3.96 {Chewy Candy}
+  ? pumpkin              $1.29/ct     freshthyme [online] "Tiger Striped Pumpkin" 1 ea $1.29 {Pumpkin} (median of others 5.5x)
+    apple cider          $5.98/gal    hyvee [shelf] "Hy-Vee Hy-Vee 100% Apple Cider" 64 fl oz $2.99 {Apple Juice and Cider}
+    caramel apples       $2.16/lb     freshthyme [online] "Affy Tapple Plain Caramel Apples" 3 ct $2.59 {Chocolate Covered Fresh Fruit}
+ID thanksgiving
+  ? whole turkey         $1.99/lb     albertsons [online] "Honeysuckle White® 20-24 Pound Frozen Turkey" per lb $1.99 {Whole Turkey} (median of others 5.5x)
+    stuffing             $2.67/lb     walmart [national] "Great Value Cornbread Stuffing Mix" 6 oz $1 {Boxed Stuffing}
+    cranberry sauce      $1.97/lb     walmart [national] "Great Value Jellied Cranberry Sauce" 14 oz $1.72 {Canned Cranberries}
+    sweet potatoes       $0.87/lb     costco [online] "Sweet Potatoes" 10 lb $8.7 {Sweet Potatoes}
+    russet potatoes      $0.38/lb     ridleys [online] "Russet Potato Bag" 5 lb $1.89 {Russet Potatoes}
+    green beans          $0.81/lb     walmart [national] "Great Value Cut Green Beans" 28 oz $1.42 {Canned Green Beans}
+    dinner rolls         $0.14/ct     walmart [national] "Rhodes Bake-N-Serv Dinner Rolls" 36 ct $5.12 {Frozen Rolls}
+    butter               $2.95/lb     costco [online] "Kirkland Signature Salted Sweet Cream Butter, 16 oz , 4-count" 4 × 16 oz $11.81 {Salted Butter}
+    heavy cream          $18.96/gal   walmart [national] "Great Value Whipping Cream, Heavy" 32 fl oz $4.74 {Heavy Whipping Cream}
+    pumpkin pie filling  $1.89/lb     walmart [national] "Libby's Easy Pumpkin Pie Mix Pumpkin Pie Mix" 30 oz $3.54 {Pie Fillings}
+    pie crust            $3.95/lb     walmart [national] "Great Value Graham Pie Shell" 6 oz $1.48 {Pie Crusts}
+    celery               $1.89/lb     naturalgrocers [online] "Celery" per lb $1.89 {Celery}
+    onions               $0.40/lb     ridleys [online] "Onion" 25 lb $9.89 {Other Onions}
+    chicken broth        $3.96/gal    groceryoutlet [shelf] "Swanson's Unsalted Chicken Broth" 32 fl oz $0.99 {Chicken Broth}
+IL christmas
+    spiral ham           $3.69/lb     caputos [online] "Best Choice BEST CHCE HALF HAM SPIRAL" per lb $3.69 {Ham Roast}
+    flour                $0.39/lb     aldi [shelf] "Baker's Corner All Purpose Flour" 5 lb $1.95 {All Purpose Flour}
+    sugar                $0.68/lb     samsclub [online] "Member’s Mark Premium Cane Sugar" 50 lb $34.14 {Granulated Sugars}
+    butter               $2.50/lb     tonys [shelf] "Dutch Farms Unsalted Butter Quarter" 16 oz $2.5 {Unsalted Butter}
+    chocolate chips      $3.32/lb     costco [online] "Kirkland Signature Semi-Sweet Chocolate Chips, 4.5 lbs" 4.5 lb $14.92 {Chocolate Chips}
+    eggs                 $0.99/dozen  strackvantil [shelf] "Dutch Farms Grade A Medium Eggs" 12 ct $0.99 {Whole Eggs}
+    eggnog               $11.98/gal   woodmans [shelf] "Southern Comfort Traditional Eggnog" 64 fl oz $5.99 {Eggnog}
+    cream cheese         $1.98/lb     woodmans [shelf] "Weyauwega Cheese Cream Cheese" 8 oz $0.99 {Cream Cheese}
+IN hanukkah
+    russet potatoes      $0.45/lb     aldi [shelf] "Russet Potatoes" 10 lb $4.49 {Russet Potatoes}
+    onions               $0.80/lb     aldi [shelf] "Fresh Yellow Onions" 3 lb $2.39 {Yellow Onions}
+    vegetable oil        $9.48/gal    walmart [national] "Great Value Vegetable Oil, 100% Pure" 1 gal $9.48 {Vegetable Oil}
+  ? applesauce           $0.15/lb     walmart [national] "Motts Applesauce Ms Apple Applesauce" 288 oz $2.76 {Applesauce} (median of others 14.9x)
+    sour cream           $1.75/lb     aldi [shelf] "Friendly Farms Sour Cream" 16 oz $1.75 {Sour Cream}
+    brisket              $3.35/lb     costco [online] "Kirkland Signature Commodity Spare Ribs Brisket Bone-On Medium" per lb $3.35 {Back and Spare Ribs}
+KS diwali
+    ghee                 $8.68/lb     walmart [national] "Servio Traditional Ghee" 10.58 oz $5.74 {Ghee}
+    basmati rice         $1.02/lb     walmart [national] "Great Value Basmati Rice, 20 lb" 20 lb $20.36 {Basmati Rice}
+  ? lentils              $1.03/lb     walmart [national] "Great Value Organic Lentils" 15 oz $0.97 {Canned Lentils} (median of others 3.1x)
+    milk                 $2.85/gal    aldi [shelf] "Friendly Farms Whole Milk" 1 gal $2.85 {Plain Milk}
+    sugar                $0.68/lb     samsclub [online] "Member’s Mark Premium Cane Sugar" 50 lb $34.14 {Granulated Sugars}
+    cashews              $5.59/lb     aldi [shelf] "Southern Grove Cashew Halves & Pieces with Sea Salt" 14 oz $4.89 {Cashews}
+KY lunarnewyear
+  ! dumpling wrappers    NO ANSWER
+    ground pork          $2.99/lb     meijer [online] "Hatfield Ground Pork" 1 lb $2.99 {Ground Pork}
+    noodles              $1.40/lb     costco [online] "Barilla Spaghetti Thin Noodles, 1 lb, 8-count" 8 × 1 lb $11.18 {Spaghetti Pasta}
+    mandarins            $1.33/lb     aldi [shelf] "Mandarin Oranges" 3 lb $3.99 {Mandarines}
+    bok choy             $2.75/lb     publix [online] "Bok Choy" per lb $2.75 {Bok Choy}
+LA eid
+    dates                $4.12/lb     costco [online] "Hadley Organic Dates, 2.5 lbs" 2.5 lb $10.31 {Dried Dates}
+    lamb                 $6.99/lb     aldi [shelf] "Never Any! Ground Lamb" 1 lb $6.99 {Ground Lamb}
+    basmati rice         $1.02/lb     walmart [national] "Great Value Basmati Rice, 20 lb" 20 lb $20.36 {Basmati Rice}
+    yogurt               $1.40/lb     aldi [shelf] "Friendly Farms Nonfat Plain Greek Yogurt" 32 oz $2.79 {Greek & Icelandic Yogurt}
+    pistachios           $3.55/lb     rouses [online] "Pillsbury Whipped Pistachio Frosting, 12 Oz Tub" 12 oz $2.66 {Cake Frosting}
+MA newyear
+  ? sparkling wine       $25.72/gal   bjs [online] "Riunite Lambrusco, Emilia" 1.5 L $10.19 {Sparkling Wine}
+    shrimp cocktail      $12.00/lb    freshmarket [online] "The Fresh Market Shrimp Cocktail" 8 oz $6 {Prepared Shrimp}
+  ? cheese               $0.60/lb     stopandshop [online] "Store Brand Deli Style Pepper Jack Cheese Slices" 10 ea $2.39 {Pepperjack Cheese} (median of others 5.6x)
+  ? crackers             $0.53/lb     aldi [shelf] "Savoritz Protein Crackers, Ranch" 120 oz $3.99 {Crackers} (median of others 6.6x)
+    black-eyed peas      $1.02/lb     wholefoods [shelf] "No Salt Added Black Eyed Peas" 15.5 oz $0.99
+    cabbage              $0.79/lb     aldi [shelf] "Cabbage, per lb" per lb $0.79 {Green Cabbage}
+MD superbowl
+    chicken wings        $1.69/lb     aldi [shelf] "Farmer Focus NAE FP Whole Chicken Wings" per lb $1.69 {Chicken Wings}
+    tortilla chips       $2.45/lb     aldi [shelf] "Clancy's Restaurant Style Tortilla Chips" 13 oz $1.99 {Tortilla Chips}
+    salsa                $0.99/lb     groceryoutlet [shelf] "Pace Chunky Mild Salsa" 16 oz $0.99 {Salsas}
+  ? avocados             $0.09/ct     shoprite [online] "Avocado" 24 ct $2.26 {Hass Avocado} (median of others 10.5x)
+    sour cream           $1.75/lb     aldi [shelf] "Friendly Farms Sour Cream" 16 oz $1.75 {Sour Cream}
+  ? soda                 $1.12/gal    martins [online] "Store Brand Shirley Temple Inspired Cherry & Cranberry Soda" 67.6 fl oz $0.59 {Fruit Flavored Soda} (median of others 6.7x)
+    frozen pizza         $3.12/lb     groceryoutlet [shelf] "Totino's Party Pizza Pepperoni 17g Protein Thin Crust Frozen Pizza" 10.2 oz $1.99 {Frozen Pizzas}
+ME valentines
+    strawberries         $2.38/lb     samsclub [online] "Member’s Mark Sliced Strawberries" 64 oz $9.54 {Frozen Strawberries}
+  ? chocolate            $4.24/lb     samsclub [online] "Toll House Semi Sweet Chocolate Morsels" 72 oz $19.1 {Chocolate Chips} (median of others 4.2x)
+    steak                $5.69/lb     hannaford [online] "Beef Boneless Shoulder Steak" per lb $5.69 {Chuck Steak}
+    asparagus            $3.59/lb     aldi [shelf] "Freshire Farms Asparagus" 1 lb $3.59 {Green Asparagus}
+    wine                 $50.42/gal   wholefoods [shelf] "Red Wine Blend" 750 ml $9.99
+MI stpatricks
+    corned beef          $6.59/lb     aldi [shelf] "Cattlemen's Ranch Flat Cut Corned Beef Brisket, per lb" per lb $6.59 {Brisket Flats}
+    cabbage              $0.78/lb     walmart [shelf] "Green Cabbage Wrapped" per lb $0.78 {Green Cabbage}
+    potatoes             $0.45/lb     aldi [shelf] "Russet Potatoes" 10 lb $4.49 {Russet Potatoes}
+  ? carrots              $0.95/lb     walmart [shelf] "Bolthouse Farms Cello" 5 lb $4.77 {Orange Carrots}
+  ! irish soda bread     NO ANSWER
+MN easter
+    spiral ham           $3.99/lb     cub [online] "Smithfield Spiral Sliced Half Ham" per lb $3.99 {Ham Roast}
+    eggs                 $1.39/dozen  hyvee [shelf] "Hy-Vee Hy-Vee Grade A Medium Eggs" 1 dozen $1.39 {Whole Eggs}
+    asparagus            $3.59/lb     aldi [shelf] "Freshire Farms Asparagus" 1 lb $3.59 {Green Asparagus}
+    dinner rolls         $0.14/ct     cub [online] "Rhodes Bake-N-Serv Dinner Rolls" 72 ct $9.99 {Frozen Rolls}
+    potatoes             $0.45/lb     aldi [shelf] "Russet Potatoes" 10 lb $4.49 {Russet Potatoes}
+  ? jelly beans          $3.42/lb     cub [online] "GoodSense Speckle Speckle Jelly Eggs" 14 oz $2.99 {Jelly Beans} (median of others 4.1x)
+MO cinco
+  ? avocados             $0.03/ct     saveolot [online] "Avocado" 40 ct $1.09 {Other Avocados} (median of others 31.9x)
+  ? limes                $0.33/lb     saveolot [online] "Lime" 2 lb $0.65 {Green Limes} (median of others 7.5x)
+    tortillas            $0.07/ct     schnucks [shelf] "Mission Super Soft White Corn Tortillas, 80 Count" 80 ct $5.29 {Corn Tortillas}
+    ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef}
+    salsa                $1.73/lb     aldi [shelf] "Casa Mamita Chunky Salsa, Mild" 24 oz $2.59 {Salsas}
+    cilantro             $16.98/lb    wholefoods [shelf] "Cilantro Chutney" 8 oz $8.49
+    tortilla chips       $2.07/lb     costco [online] "Kirkland Signature Tortilla Strips, 48 oz" 48 oz $6.21 {Tortilla Chips}
+MS mothers
+    eggs                 $1.62/dozen  walmart [national] "Great Value Grade A Cage Free Large White Eggs" 60 ct $8.12 {Whole Eggs}
+    bacon                $3.95/lb     aldi [shelf] "Appleton Farms Premium Sliced Bacon" 16 oz $3.95 {Sliced Bacon}
+    strawberries         $2.44/lb     samsclub [online] "Member’s Mark Sliced Strawberries" 64 oz $9.74 {Frozen Strawberries}
+    orange juice         $7.49/gal    aldi [shelf] "Nature's Nectar Orange Juice From Concentrate, 1 gal" 128 fl oz $7.49 {Orange Juice}
+    croissants           $0.47/ct     aldi [shelf] "Bake Shop Large Croissants" 6 ct $2.79 {Croissants}
+  ? flowers              $0.35/ct     walmart [national] "Hello Hobby Satin Flowers - Hot Pink" 10 ct $3.47 {Other Party Decorations} (median of others 43.2x)
+MT memorial
+    ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef}
+    hot dogs             $3.06/lb     walmart [national] "Ball Park Classic Hot Dogs Family Pack" 30 oz $5.74 {Hot Dogs}
+  ? hamburger buns       $0.68/lb     walmart [national] "Bettergood's Hamburger Buns" 8 × 14 oz $4.78 {Hamburger Buns} (median of others 5.2x)
+    hot dog buns         $0.18/ct     walmart [national] "Great Value Hot Dog Buns" 8 ct $1.48 {Hot Dog Buns}
+    corn                 $0.67/lb     walmart [national] "Great Value Golden Sweet Whole Kernel Corn" 29 oz $1.22 {Canned Corn}
+  ? watermelon           $0.16/ct     albertsons [online] "Mini Seedless Watermelon" 45 ct $6.99 {Watermelons} (median of others 28.8x)
+  ? charcoal             $0.11/ct     naturalgrocers [online] "Nature's Way Activated Charcoal" 100 ct $11.49 {Charcoal Supplements} (median of others 5.1x)
+NC fathers
+  ? ribeye steak         $4.99/lb     foodlion [shelf] "Boneless Ribeye Chop" 1 lb $4.99 {Ribeye Steak} (median of others 3.4x)
+    baby back ribs       $3.29/lb     aldi [shelf] "USDA Premium Baby Back Pork Ribs, per lb" per lb $3.29 {Baby Back Ribs}
+    bbq sauce            $12.02/gal   aldi [shelf] "Burman's Original BBQ Sauce" 18 fl oz $1.69 {Barbecue Sauces}
+    corn                 $0.55/lb     foodlion [shelf] "Yellow Sweet Corn" 1 ea $0.33 {Yellow Corn}
+    potatoes             $0.40/lb     foodlion [shelf] "Potatoes, Gold" 5 lb $2 {Gold and Yellow Potatoes}
+ND july4
+    ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef}
+    hot dogs             $1.32/lb     aldi [shelf] "Parkview Classic Hot Dogs" 12 oz $0.99 {Hot Dogs}
+    buns                 $0.18/ct     walmart [national] "Great Value Hamburger Buns" 8 ct $1.48 {Hamburger Buns}
+  ? watermelon           $0.11/ct     hornbachers [shelf] "Luden's Soothing Throat Drops Watermelon" 25 ct $2.79 {Cough Suppressants} (median of others 41.7x)
+    corn                 $0.67/lb     walmart [national] "Great Value Golden Sweet Whole Kernel Corn" 29 oz $1.22 {Canned Corn}
+    potato chips         $2.86/lb     aldi [shelf] "Clancy's Wavy Potato Chips" 10 oz $1.79 {Potato Chips}
+    blueberries          $1.78/lb     walmart [national] "Great Value Blueberries" 28 oz $3.12 {Frozen Blueberries}
+    strawberries         $2.48/lb     samsclub [online] "Member’s Mark Sliced Strawberries" 64 oz $9.94 {Frozen Strawberries}
+NE backtoschool
+    bread                $1.16/lb     aldi [shelf] "L'oven Fresh White Bread, 20 oz ver 3" 20 oz $1.45 {White Bread}
+    peanut butter        $1.38/lb     aldi [shelf] "Peanut Delight Creamy Peanut Butter 40oz" 40 oz $3.45 {Peanut Butter}
+  ! turkey lunch meat    NO ANSWER
+    string cheese        $0.24/ct     samsclub [online] "Frigo Cheese Heads Original String Cheese" 48 ct $11.32 {String and Stick Cheese}
+    granola bars         $3.48/lb     aldi [shelf] "Millville Smores Chewy Granola Bars, 18 count" 15.12 oz $3.29 {Granola Bars}
+  ? apples               $0.12/lb     familyfare [online] "Chef Craft 6" Apple Sticks" 30 ct $1.39 {Toothpicks} (median of others 14.5x)
+    juice boxes          $7.09/gal    aldi [shelf] "Nature's Nectar 100% Apple Juice Boxes - 8 Pack, 6.75 fl oz Juice Boxes" 8 × 6.75 fl oz $2.99 {Apple Juice and Cider}
+NH labor
+    ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef}
+    brats                $3.19/lb     aldi [shelf] "Parkview USDA Cheddar Brats" 14 oz $2.79 {Bratwurst}
+  ? buns                 $0.68/lb     walmart [national] "Bettergood's Hamburger Buns" 8 × 14 oz $4.78 {Hamburger Buns} (median of others 5.5x)
+    corn                 $0.67/lb     walmart [national] "Great Value Golden Sweet Whole Kernel Corn" 29 oz $1.22 {Canned Corn}
+    potato salad         $1.82/lb     samsclub [online] "Stonemill Kitchen Amish Potato Salad" 5 lb $9.08 {Potato Salad}
+    chips                $2.65/lb     aldi [shelf] "Clancy's Restaurant Style Tortilla Chips" 13 oz $2.15 {Tortilla Chips}
+NJ halloween
+    halloween candy      $4.91/lb     walmart [shelf] "Child's Play Individually Wrapped Assorted Halloween Candy" 16.2 oz $4.97 {Variety Pack Candies}
+  ? pumpkin              $0.33/ct     acme [online] "Pie Pumpkins" 12 ct $3.99 {Pumpkin} (median of others 13.8x)
+    apple cider          $5.38/gal    weis [online] "Weis Apple Cider" 64 fl oz $2.69 {Apple Juice and Cider}
+    caramel apples       $2.49/lb     aldi [shelf] "Caramel Apples" 3 ct $2.99 {Candied Apple Desserts}
+NM thanksgiving
+  ? whole turkey         $2.99/lb     marketstreet [online] "Butterball Frozen Whole Turkey" per lb $2.99 {Frozen Whole Turkey} (median of others 3.7x)
+    stuffing             $2.67/lb     walmart [national] "Great Value Cornbread Stuffing Mix" 6 oz $1 {Boxed Stuffing}
+    cranberry sauce      $1.97/lb     walmart [national] "Great Value Jellied Cranberry Sauce" 14 oz $1.72 {Canned Cranberries}
+  ? sweet potatoes       $0.60/lb     marketstreet [online] "Garden Sweet Russet Potato" 10 lb $5.99 {Russet Potatoes} (median of others 3.3x)
+  ? russet potatoes      $0.19/lb     elsuper [shelf] "Russet Potato Bag" 10 lb $1.89 {Russet Potatoes} (median of others 3.7x)
+    green beans          $0.81/lb     walmart [national] "Great Value Cut Green Beans" 28 oz $1.42 {Canned Green Beans}
+    dinner rolls         $0.14/ct     walmart [national] "Rhodes Bake-N-Serv Dinner Rolls" 36 ct $5.12 {Frozen Rolls}
+    butter               $2.95/lb     costco [online] "Kirkland Signature Salted Sweet Cream Butter, 16 oz , 4-count" 4 × 16 oz $11.81 {Salted Butter}
+    heavy cream          $15.16/gal   elsuper [shelf] "First Street Whipping Cream, Heavy, 36% Butterfat" 32 fl oz $3.79 {Heavy Whipping Cream}
+    pumpkin pie filling  $1.89/lb     walmart [national] "Libby's Easy Pumpkin Pie Mix Pumpkin Pie Mix" 30 oz $3.54 {Pie Fillings}
+    pie crust            $3.59/lb     smiths [online] "Kroger Deep Dish Pie Crust" 16 oz $3.59 {Frozen Pie Crusts}
+  ? celery               $0.75/lb     marketstreet [online] "Cold Pressed Celery" 64 oz $2.99 {Pressed Juices} (median of others 3.2x)
+    onions               $0.50/lb     elsuper [shelf] "Yellow Onion" per lb $0.5 {Yellow Onions}
+    chicken broth        $5.76/gal    walmart [national] "Great Value Value Size Chicken Broth" 48 fl oz $2.16 {Chicken Broth}
+NV christmas
+    spiral ham           $4.24/lb     walmart [national] "Sam's Choice Boneless Spiral-Cut Honey Ham" per lb $4.24 {Ham Roast}
+    flour                $0.35/lb     smartfinal [online] "First Street Flour, All Purpose" 50 lb $17.49 {All Purpose Flour}
+    sugar                $0.66/lb     smartfinal [online] "Zulka Pure Cane Granulated Sugar" 50 lb $32.99 {Granulated Sugars}
+    butter               $2.89/lb     aldi [shelf] "Countryside Creamery Sweet Cream Butter - 4 Sticks" 16 oz $2.89 {Salted Butter}
+    chocolate chips      $3.32/lb     costco [online] "Kirkland Signature Semi-Sweet Chocolate Chips, 4.5 lbs" 4.5 lb $14.92 {Chocolate Chips}
+    eggs                 $1.20/dozen  groceryoutlet [shelf] "SimplyGO Medium Cage Free Eggs" 60 ct $5.99 {Whole Eggs}
+    eggnog               $15.18/gal   albertsons [online] "Lucerne Eggnog" 64 fl oz $7.59 {Eggnog}
+    cream cheese         $1.89/lb     groceryoutlet [shelf] "Pillsbury Creamy Supreme Cream Cheese Frosting, 16 Oz Tub" 16 oz $1.89 {Cake Frosting}
+NY hanukkah
+    russet potatoes      $0.34/lb     bravo [online] "Potato Bag" 5 lb $1.69 {Russet Potatoes}
+  ? onions               $0.24/lb     shoprite [online] "Green Onions (Scallions)" 12 ct $1.46 {Scallions} (median of others 5.5x)
+    vegetable oil        $8.78/gal    walmart [shelf] "Great Value Vegetable Oil, 100% Pure" 1 gal $8.78 {Vegetable Oil}
+    applesauce           $0.14/lb     walmart [shelf] "Motts Applesauce Ms Apple Applesauce" 288 oz $2.5 {Applesauce}
+    sour cream           $1.64/lb     walmart [shelf] "Great Value Sour Cream" 48 oz $4.92 {Sour Cream}
+  ? brisket              $2.59/lb     bjs [online] "CP6 Pork Brisket Sparerib Strip" per lb $2.59 {Pork Short Ribs} (median of others 5.0x)
+OH diwali
+    ghee                 $8.68/lb     walmart [national] "Servio Traditional Ghee" 10.58 oz $5.74 {Ghee}
+    basmati rice         $1.02/lb     walmart [national] "Great Value Basmati Rice, 20 lb" 20 lb $20.36 {Basmati Rice}
+    lentils              $1.03/lb     walmart [national] "Great Value Organic Lentils" 15 oz $0.97 {Canned Lentils}
+    milk                 $2.57/gal    aldi [shelf] "Friendly Farms Whole Milk" 1 gal $2.57 {Plain Milk}
+    sugar                $0.68/lb     kroger [online] "Smart Way™ Granulated Sugar" 25 lb $16.99 {Granulated Sugars}
+    cashews              $5.59/lb     aldi [shelf] "Southern Grove Cashews Halves & Pieces with Sea Salt" 14 oz $4.89 {Cashews}
+OK lunarnewyear
+  ! dumpling wrappers    NO ANSWER
+    ground pork          $3.29/lb     aldi [shelf] "Never Any! USDA Antibiotic-Free 80% Lean 20% Fat Ground Pork" 16 oz $3.29 {Ground Pork}
+    noodles              $1.55/lb     costco [online] "Barilla Spaghetti Thin Noodles, 1 lb, 8-count" 8 × 1 lb $12.43 {Spaghetti Pasta}
+    mandarins            $1.06/lb     aldi [shelf] "Mandarin Oranges" 3 lb $3.19 {Mandarines}
+    bok choy             $2.09/lb     homeland [online] "Bok Choy" per lb $2.09 {Bok Choy}
+OR eid
+    dates                $4.14/lb     costco [online] "Sunny Fruit Organic Dates, 48 oz" 48 oz $12.43 {Dried Dates}
+    lamb                 $5.09/lb     rosauers [online] "Lamb Weston Hot Krunchy Jo-Jo" per lb $5.09 {Other Snacks}
+    basmati rice         $1.02/lb     walmart [national] "Great Value Basmati Rice, 20 lb" 20 lb $20.36 {Basmati Rice}
+    yogurt               $1.57/lb     walmart [national] "Karoun Whole Milk Plain Yogurt, Gluten-Free with Live Probiotics" 64 oz $6.27 {Traditional Yogurt}
+    pistachios           $7.05/lb     costco [online] "Kirkland Signature In-Shell Pistachios, Salted, 3 lbs" 3 lb $21.14 {Pistachios}
+PA newyear
+    sparkling wine       $63.04/gal   wholefoods [shelf] "Sparkling Wine" 750 ml $12.49
+    shrimp cocktail      $11.99/lb    shoprite [online] "Italy Brand American Cocktail Shrimp 6.5 Oz" 6.5 oz $4.87 {Canned Shrimp}
+  ? cheese               $0.75/lb     giant [online] "Store Brand Deli Style Pepper Jack Cheese Slices" 10 ea $2.99 {Pepperjack Cheese} (median of others 5.3x)
+    crackers             $1.85/lb     aldi [shelf] "Savoritz Saltine Crackers" 16 oz $1.85 {Crackers}
+    black-eyed peas      $0.78/lb     foodlion [shelf] "Goya Blackeye Peas, Prime Premium" 15.5 oz $0.76 {Canned Black Eyed Peas}
+    cabbage              $0.69/lb     foodlion [shelf] "Green Cabbage" 1 lb $0.69 {Green Cabbage}
+RI superbowl
+    chicken wings        $1.69/lb     aldi [shelf] "Farmer Focus NAE FP Whole Chicken Wings" per lb $1.69 {Chicken Wings}
+    tortilla chips       $2.52/lb     walmart [national] "Great Value Crunchy Rounds Tortilla Chips" 18 oz $2.83 {Tortilla Chips}
+    salsa                $1.73/lb     aldi [shelf] "Casa Mamita Chunky Salsa, Mild" 24 oz $2.59 {Salsas}
+  ? avocados             $0.14/ct     pricerite [online] "Avocado" 24 ct $3.35 {Florida Avocado} (median of others 12.5x)
+    sour cream           $1.75/lb     aldi [shelf] "Friendly Farms Sour Cream" 16 oz $1.75 {Sour Cream}
+  ? soda                 $2.08/gal    walmart [national] "Sam's Choice Cola Soda, Bottle" 67.6 fl oz $1.1 {Cola} (median of others 3.2x)
+    frozen pizza         $2.34/lb     walmart [national] "Totino's Party Pizza Multipack Pepperoni 17g Protein Frozen Thin Crust" 40.8 oz $5.97 {Frozen Pizzas}
+SC valentines
+    strawberries         $1.60/lb     aldi [shelf] "Millville Strawberry Toaster Tarts, 12 ct" 20.3 oz $2.03 {Packaged Toaster Pastries}
+  ? chocolate            $6.02/lb     aldi [shelf] "Choceur Dark Chocolate" 5.29 oz $1.99 {Chocolate Candies} (median of others 4.0x)
+  ? steak                $2.99/lb     aldi [shelf] "USDA Premium Bone-In Butt Pork Shoulder Steak, per lb" per lb $2.99 {Pork Shoulder Blade Steaks} (median of others 3.1x)
+    asparagus            $3.59/lb     aldi [shelf] "Freshire Farms Asparagus" 1 lb $3.59 {Green Asparagus}
+    wine                 $31.53/gal   wholefoods [shelf] "French Rose Wine" 3 L $24.99
+SD stpatricks
+    corned beef          $6.28/lb     walmart [national] "Colorado Premium Flat Corned Beef Brisket" per lb $6.28 {Brisket Flats}
+    cabbage              $0.79/lb     aldi [shelf] "Cabbage, per lb" per lb $0.79 {Green Cabbage}
+    potatoes             $0.45/lb     aldi [shelf] "Russet Potatoes" 10 lb $4.49 {Russet Potatoes}
+  ? carrots              $0.95/lb     walmart [national] "Bolthouse Farms Cello" 5 lb $4.77 {Orange Carrots}
+  ! irish soda bread     NO ANSWER
+TN easter
+    spiral ham           $3.99/lb     foodlion [shelf] "Smithfield Spiral Sliced Hickory Smoked Ham" per lb $3.99 {Ham Roast}
+    eggs                 $1.09/dozen  saveolot [online] "Good Natured Selects 12ct Grade A Large Eggs" 1 dozen $1.09 {Whole Eggs}
+    asparagus            $3.59/lb     aldi [shelf] "Freshire Farms Asparagus" 1 lb $3.59 {Green Asparagus}
+    dinner rolls         $0.14/ct     walmart [national] "Rhodes Bake-N-Serv Dinner Rolls" 36 ct $5.12 {Frozen Rolls}
+    potatoes             $0.45/lb     aldi [shelf] "Russet Potatoes" 10 lb $4.49 {Russet Potatoes}
+    jelly beans          $7.83/lb     bjs [online] "Jelly Belly Signature 30 Collection Jelly Beans" 3 lb $23.49 {Jelly Beans}
+TX cinco
+    avocados             $0.49/ct     aldi [shelf] "Large Avocados, each" 1 ea $0.49 {Hass Avocado}
+  ? limes                $0.29/lb     marketstreet [online] "Organic Lime" 16 lb $4.69 {Green Limes} (median of others 6.6x)
+    tortillas            $0.04/ct     fiesta [shelf] "Fiesta Corn Tortillas" 100 ct $3.69 {Corn Tortillas}
+    ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef}
+    salsa                $1.73/lb     aldi [shelf] "Casa Mamita Chunky Salsa, Mild" 24 oz $2.59 {Salsas}
+  ? cilantro             $2.86/lb     wholefoods [shelf] "Organic Petite Diced Tomatoes with Jalapeno And Cilantro" 10 oz $1.79 (median of others 8.4x)
+    tortilla chips       $2.07/lb     costco [online] "Kirkland Signature Tortilla Strips, 3 lbs" 3 lb $6.21 {Tortilla Chips}
+UT mothers
+    eggs                 $0.89/dozen  ridleys [online] "FIRST LIGHT Grade Aa Large Eggs" 1 dozen $0.89 {Whole Eggs}
+    bacon                $4.94/lb     walmart [national] "Great Value Hickory Smoked Thick Sliced Bacon" 16 oz $4.94 {Sliced Bacon}
+    strawberries         $2.33/lb     samsclub [online] "Member’s Mark Sliced Strawberries" 64 oz $9.34 {Frozen Strawberries}
+    orange juice         $7.99/gal    smiths [online] "Kroger Original Orange Juice From Concentrate" 128 fl oz $7.99 {Orange Juice}
+  ? croissants           $0.42/ct     smiths [online] "Bakery Fresh Goodness All Butter Mini Croissants" 12 ct $4.99 {Croissants} (median of others 3.6x)
+  ? flowers              $0.12/ct     naturalgrocers [online] "Solaray Passion Flower Aerial" 100 ct $12.49 {Other Herbal Supplements} (median of others 18.4x)
+VA memorial
+    ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef}
+    hot dogs             $1.32/lb     aldi [shelf] "Parkview Classic Hot Dogs" 12 oz $0.99 {Hot Dogs}
+    hamburger buns       $0.68/lb     walmart [national] "Bettergood's Hamburger Buns" 8 × 14 oz $4.78 {Hamburger Buns}
+    hot dog buns         $0.18/ct     walmart [national] "Great Value Hot Dog Buns" 8 ct $1.48 {Hot Dog Buns}
+  ? corn                 $0.19/lb     wholefoods [shelf] "Corn Starch Forks" 24 ct $2.79 (median of others 4.7x)
+  ? watermelon           $0.99/lb     foodlion [shelf] "Watermelon Slices" 1 lb $0.99 {Watermelons} (median of others 3.1x)
+    charcoal             $0.49/lb     walmart [national] "Expert Grill Charcoal Briquets" 16 lb $7.88 {Charcoal}
+VT fathers
+    ribeye steak         $10.52/lb    hannaford [online] "Heritage Store Ribeye Steak Shaved" 12 oz $7.89 {Ribeye Steak}
+    baby back ribs       $3.29/lb     aldi [shelf] "USDA Premium Baby Back Pork Ribs, per lb" per lb $3.29 {Baby Back Ribs}
+    bbq sauce            $12.02/gal   aldi [shelf] "Burman's Original BBQ Sauce" 18 fl oz $1.69 {Barbecue Sauces}
+    corn                 $0.67/lb     walmart [national] "Great Value Golden Sweet Whole Kernel Corn" 29 oz $1.22 {Canned Corn}
+    potatoes             $0.50/lb     aldi [shelf] "Organic Yellow Potatoes" 10 lb $4.99 {White Potatoes}
+WA july4
+  ? ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef} (median of others 3.1x)
+  ? hot dogs             $0.65/lb     groceryoutlet [shelf] "John Morrell Franks" 12 oz $0.49 {Hot Dogs} (median of others 11.4x)
+    buns                 $0.18/ct     walmart [national] "Great Value Hamburger Buns" 8 ct $1.48 {Hamburger Buns}
+    watermelon           $0.99/lb     albertsons [online] "Seedless Watermelon" per lb $0.99 {Popsicles}
+  ? corn                 $0.14/lb     groceryoutlet [shelf] "Don Pancho Tortillas, White Corn, Table Style" 30 ea $2.59 {Corn Tortillas} (median of others 7.3x)
+    potato chips         $3.08/lb     walmart [national] "Great Value Party Size! Wavy Original Potato Chips" 13 oz $2.5 {Potato Chips}
+    blueberries          $1.78/lb     walmart [national] "Great Value Blueberries" 28 oz $3.12 {Frozen Blueberries}
+  ? strawberries         $0.55/lb     safeway [online] "Strawberries" 9 lb $4.99 {Strawberries} (median of others 7.2x)
+WI backtoschool
+    bread                $1.16/lb     aldi [shelf] "L'oven Fresh White Bread, 20 oz ver 3" 20 oz $1.45 {White Bread}
+    peanut butter        $1.38/lb     aldi [shelf] "Peanut Delight Creamy Peanut Butter 40oz" 40 oz $3.45 {Peanut Butter}
+    turkey lunch meat    $6.99/lb     metromarket [online] "Kroger Deli Thin Sliced Oven Roasted Turkey Breast Lunch Meat" 1 lb $6.99 {Deli Turkey}
+    string cheese        $0.24/ct     samsclub [online] "Frigo Cheese Heads Original String Cheese" 48 ct $11.55 {String and Stick Cheese}
+    granola bars         $0.22/ct     woodmans [shelf] "Nature Valley Variety Pack Crunchy Granola Bars" 60 ct $13.29 {Granola Bars}
+  ? apples               $0.50/lb     piggly [shelf] "Hess Brothers Fruit Company Gingergold" 48 oz $1.5 {Ginger Gold Apples}
+    juice boxes          $7.09/gal    aldi [shelf] "Nature's Nectar 100% Apple Juice Boxes - 8 Pack, 6.75 fl oz Juice Boxes" 8 × 6.75 fl oz $2.99 {Apple Juice and Cider}
+WV labor
+    ground beef          $2.50/lb     walmart [national] "Crescent Foods Halal Lean Ground Beef 85/15" 1 lb $2.5 {Frozen Ground Beef}
+    brats                $3.19/lb     aldi [shelf] "Parkview USDA Cheddar Brats" 14 oz $2.79 {Bratwurst}
+    buns                 $0.18/ct     walmart [national] "Great Value Hamburger Buns" 8 ct $1.48 {Hamburger Buns}
+    corn                 $0.65/lb     kroger [online] "Fresh Sweet Corn on the Cob-Each" 1 ea $0.39 {Tri-Color Corn}
+    potato salad         $1.83/lb     samsclub [online] "Member’s Mark Southern Style Potato Salad" 80 oz $9.13 {Potato Salad}
+    chips                $2.65/lb     aldi [shelf] "Clancy's Restaurant Style Tortilla Chips" 13 oz $2.15 {Tortilla Chips}
+WY halloween
+    halloween candy      $8.07/lb     albertsons [online] "Butterfinger Halloween Candy Bulk Individually Wrapped, Fun Size, 19.8 oz" 19.8 oz $9.99 {Chocolate Candies}
+  ? pumpkin              $0.39/ct     safeway [online] "Pie Pumpkins" 12 ct $4.69 {Pumpkin} (median of others 4.6x)
+    apple cider          $7.78/gal    walmart [national] "Musselman's 100% Apple Cider, Fresh Pressed, Pasteurized" 128 fl oz $7.78 {Apple Juice and Cider}
+    caramel apples       $1.99/lb     kingsoopers [online] "Daffy Farms Red Caramel Apple" 16 oz $1.99 {Chocolate Covered Fresh Fruit}

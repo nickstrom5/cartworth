@@ -100,3 +100,22 @@ Third round: Nashville 37206 (13), Salt Lake City 84105 (11), Burlington VT 0540
   "a la carte", the retry-blind timeout, and "Check again" re-enabling stores on web and iOS); fixed.
 - Suspect, not changed: Whole Foods' Kimbala "Neat Coffee", 10.2 oz at $3.99, won Dallas coffee by
   3%. Its sibling "Coffee a la Jaggery" is a sweetened mix; this one's name gives nothing to go on.
+
+## State x holiday audit (24-25 Sept)
+
+`holiday-matrix.mjs`: every state's and DC's metro ZIP priced one holiday's full list, the 19 holidays
+rotating so each is priced in two or three states (51 ZIPs, ~330 items, no 429). Every winner is in
+`holiday-matrix-2026-09-24.txt` (`holiday-matrix-report.mjs --suspects` marks the ones to look at).
+
+Fixed from it (all with tests, on web and iPhone): case sizes on single pieces (a 40-count "Avocado"
+at $1.09, applesauce stated 288 oz, 9 lb of strawberries at $4.99) are flagged; pepper jack cheese
+and jalapenos no longer take a bell pepper's weight; supplement, cough-drop, toothpick and decoration
+aisles do not answer food searches; produce mixes and juice aisles do not answer produce searches;
+steak and brisket are beef; "Bone-In" no longer hides a trap word; "turkey lunch meat" finds deli
+turkey; earlier in the run, drumsticks for wings, a glaze for strawberries, Salisbury steak, cottage
+cheese, canned corned beef and a per-lb carrot price divided over a 25 lb case.
+
+Items with no answer: Irish soda bread (Michigan, South Dakota) and dumpling wrappers (Kentucky,
+Oklahoma): no store near those metros listed them. Still open: ALDI's "Savoritz Protein Crackers"
+stated 120 oz at $3.99 (Massachusetts) is caught only if other results make it an outlier; the
+retailer's own listing is wrong.
