@@ -107,10 +107,11 @@ enum TripPlanner {
                     let text = e.text, qty = e.qty, id = e.id, pinned = e.pinned
                     group.addTask {
                         let q = Compare.searchText(text)
-                        var byStore: [String: [Product]] = [:]
-                        await withTaskGroup(of: StoreResult.self) { g2 in
+                        let byStore = await withTaskGroup(of: StoreResult.self) { g2 in
                             for c in chains { g2.addTask { await PriceSearch.search(chain: c, query: q, place: place, limit: 36, fresh: fresh) } }
-                            for await r in g2 { byStore[r.retailerId] = r.items }
+                            var found: [String: [Product]] = [:]
+                            for await r in g2 { found[r.retailerId] = r.items }
+                            return found
                         }
                         return await MainActor.run { priceOne(id: id, text: text, qty: qty, pinned: pinned, byStore: byStore, storeIds: storeIds, prefs: app.prefs) }
                     }

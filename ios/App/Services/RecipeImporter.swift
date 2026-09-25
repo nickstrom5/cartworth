@@ -54,6 +54,13 @@ enum RecipeImportError: LocalizedError {
 enum RecipeImporter {
     // MARK: sources
 
+    /// Vision's handler and request are not Sendable; this pair is built here and used only on the one
+    /// background queue that performs it.
+    private struct VisionJob: @unchecked Sendable {
+        let handler: VNImageRequestHandler
+        let request: VNRecognizeTextRequest
+    }
+
     /// On-device text recognition.
     static func text(from image: UIImage) async throws -> String {
         guard let cg = image.cgImage else { throw RecipeImportError.noText }
@@ -69,9 +76,9 @@ enum RecipeImporter {
             }
             request.recognitionLevel = .accurate
             request.usesLanguageCorrection = true
-            let handler = VNImageRequestHandler(cgImage: cg, orientation: CGImagePropertyOrientation(image.imageOrientation))
+            let job = VisionJob(handler: VNImageRequestHandler(cgImage: cg, orientation: CGImagePropertyOrientation(image.imageOrientation)), request: request)
             DispatchQueue.global(qos: .userInitiated).async {
-                do { try handler.perform([request]) } catch { cont.resume(throwing: error) }
+                do { try job.handler.perform([job.request]) } catch { cont.resume(throwing: error) }
             }
         }
     }
