@@ -26,6 +26,12 @@ targets:
     platform: iOS
     sources:
       - path: App
+        excludes:
+          - Resources/Products.storekit
+      # The local StoreKit configuration: in the project, for the scheme and for editing, but not
+      # copied into the app. As a resource it shipped inside the Release build.
+      - path: App/Resources/Products.storekit
+        buildPhase: none
     settings:
       base:
         PRODUCT_NAME: Cartworth

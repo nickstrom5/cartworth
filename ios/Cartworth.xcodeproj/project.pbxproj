@@ -33,7 +33,6 @@
 		577C14343E2B412FC09DD3CB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 902E0A66C8A49B5B16C27919 /* Assets.xcassets */; };
 		5D4F580960C28F04A0756B0E /* FlippSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA2B6C560FD0E5D7583E8EE /* FlippSource.swift */; };
 		6073350A2570EDB6AE6D801E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE35CDD849F63DE61ADDBAF4 /* OnboardingView.swift */; };
-		64C21254E2AE8ED221CF5B01 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 51247E2E4077938DD0C17B4D /* Products.storekit */; };
 		6FA761C3F958A22F14486BAF /* Compare.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA509BAF7C4654930516E6A1 /* Compare.swift */; };
 		723A5C91FBB7442BF6414846 /* PriceLabelGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C4D24FE4B50F53C133F7BC9 /* PriceLabelGeometry.swift */; };
 		77C0717F7BC9CE918E273328 /* stats.json in Resources */ = {isa = PBXBuildFile; fileRef = F90548CC0A51927AD4BB539A /* stats.json */; };
@@ -503,7 +502,6 @@
 			files = (
 				577C14343E2B412FC09DD3CB /* Assets.xcassets in Resources */,
 				F82E927EAEFEC90A1D49A84D /* PrivacyInfo.xcprivacy in Resources */,
-				64C21254E2AE8ED221CF5B01 /* Products.storekit in Resources */,
 				77C0717F7BC9CE918E273328 /* stats.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
