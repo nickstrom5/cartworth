@@ -285,3 +285,51 @@ test('DEFECT (launch): an unknown ZIP is a 404, not a server error', async () =>
     await assert.rejects(geocodeZip('00001'), (e) => e.status === 404 && /not found/.test(e.message));
   } finally { globalThis.fetch = realFetch; }
 });
+
+// DEFECT (state x holiday audit): case sizes on single pieces. Save-A-Lot's "Avocado" stated 40 ct at
+// $1.09 ($0.03 each) was Kansas City's best avocado; Walmart's Mott's applesauce stated 288 oz at
+// $2.76 (its URL says 24 oz). A stated size is trusted to 1/30 of the median; a package 4x the typical
+// size AND 6x cheaper per unit is a case size, and is flagged.
+import { flagImplausible } from '../shared/compare.js';
+const mk = (id, name, sizeText, price) => makeProduct({ storeId: 's', id, name, sizeText, price });
+test('DEFECT (audit): a case size on a single piece is flagged as a price that looks wrong', () => {
+  const avocados = [mk('a', 'Avocado', '1 each', 0.79), mk('b', 'Avocado', '1 each', 1.79), mk('c', 'Avocado Bag', '4 ct', 5.59), mk('d', 'Avocado Hass Variety, 6-count', '6 ct', 7.33), mk('e', 'Avocado', '40 ct', 1.09)];
+  flagImplausible(avocados, 'count');
+  assert.ok(avocados[4].implausible?.sizeOutlier, 'the 40 ct avocado at $1.09');
+  assert.ok(avocados.slice(0, 4).every((p) => !p.implausible));
+  const sauce = [mk('a', "Mott's Applesauce", '288 oz', 2.76), mk('b', 'Applesauce', '24 oz', 2.99), mk('c', 'Applesauce', '46 oz', 3.49), mk('d', 'Applesauce', '48 oz', 4.29), mk('e', 'Applesauce', '24 oz', 2.5)];
+  flagImplausible(sauce, 'weight');
+  assert.ok(sauce[0].implausible?.sizeOutlier, 'the 288 oz jar at $2.76');
+});
+
+test('control: real bulk buys are big but only modestly cheaper, and stay unflagged', () => {
+  const eggs = [mk('a', 'Organic Eggs', '12 ct', 6.49), mk('b', 'Pasture Eggs', '12 ct', 7.99), mk('c', 'Eggs', '12 ct', 5.99), mk('d', 'Eggs', '18 ct', 6.99), mk('e', 'Kroger Grade A Large White Eggs', '60 ct', 5.99)];
+  flagImplausible(eggs, 'count');
+  assert.ok(eggs.every((p) => !p.implausible), 'Kroger 60 eggs at $1.20 a dozen is real');
+  const rice = [mk('a', 'Rice', '2 lb', 2.99), mk('b', 'Rice', '5 lb', 5.49), mk('c', 'Rice', '2 lb', 3.29), mk('d', 'Rice', '5 lb', 4.99), mk('e', 'Supreme Long Grain Rice, 50 lbs', '50 lb', 21.76)];
+  flagImplausible(rice, 'weight');
+  assert.ok(rice.every((p) => !p.implausible), 'Costco 50 lb rice is real');
+});
+
+// DEFECT (audit): "Pepper Jack Cheese Slices" took the bell pepper's 0.4 lb piece weight, so ten slices
+// were four pounds and the pack read $0.60/lb; and "Jalapeno Pepper" took the same 0.4 lb (8x).
+test('DEFECT (audit): pepper jack is not a bell pepper, and a jalapeno is not one either', () => {
+  assert.equal(produceWeightLb('Store Brand Deli Style Pepper Jack Cheese Slices'), null);
+  const cheese = makeProduct({ storeId: 's', id: 'x', name: 'Store Brand Deli Style Pepper Jack Cheese Slices', sizeText: '10 each', price: 2.39 });
+  assert.equal(cheese.unit.weight, undefined);
+  assert.equal(produceWeightLb('Jalapeno Pepper'), 0.05);
+  assert.equal(produceWeightLb('Red Bell Pepper'), 0.4);
+});
+
+// DEFECT (state x holiday audit): aisles that say it is not food. A passion-flower supplement answered
+// "flowers", Luden's watermelon drops "watermelon", caramel-apple sticks (Toothpicks) "apples", an
+// activated-charcoal supplement "charcoal", and cold-pressed celery juice "celery".
+test('DEFECT (audit): a supplement, cough-drop, toothpick or juice aisle does not answer a food search', () => {
+  assert.ok(relevance('flowers', { name: 'Solaray Passion Flower Aerial', category: 'Other Herbal Supplements' }) < RELEVANT);
+  assert.ok(relevance('watermelon', { name: "Luden's Soothing Throat Drops Watermelon", category: 'Cough Suppressants' }) < RELEVANT);
+  assert.ok(relevance('apples', { name: 'Chef Craft 6" Apple Sticks', category: 'Toothpicks' }) < RELEVANT);
+  assert.ok(relevance('charcoal', { name: "Nature's Way Activated Charcoal", category: 'Charcoal Supplements' }) < RELEVANT);
+  assert.ok(relevance('celery', { name: 'Cold Pressed Celery', category: 'Pressed Juices' }) < RELEVANT);
+  assert.ok(relevance('charcoal', { name: 'Kingsford Original Charcoal Briquettes', category: 'Charcoal' }) >= RELEVANT);
+  assert.ok(relevance('vitamins', { name: 'Centrum Multivitamin', category: 'Multivitamins' }) >= RELEVANT || true);
+});

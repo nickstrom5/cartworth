@@ -131,14 +131,41 @@ const sameName = (a, b) => String(a.name || '').toLowerCase().replace(/[^a-z0-9]
  * Products carrying no sizeSource (built before it existed — a cached result) are treated as
  * unconfirmed, so the search cache must be versioned with this change (see the round-2 handoff).
  */
+// A case size on a single piece: Save-A-Lot's "Avocado", stated "40 ct" at $1.09 ($0.03 each), Walmart's
+// Mott's applesauce stated "288 oz" at $2.76 when its own URL says 24 oz, "Strawberries" stated 9 lb at
+// $4.99, ALDI crackers stated "120 oz" at $3.99 (the state x holiday audit). The stated size is
+// trusted down to 1/30 of the median, because real doorbusters get that cheap; but a real bulk buy is
+// big AND only modestly cheaper (Costco's 50 lb rice, Sam's 72 oz chocolate chips: 2-3.5x; Kroger's 60-count eggs, 5x
+// against an organic-heavy median). A package
+// at least SIZE_OUTLIER times the typical size that is ALSO at least SIZE_OUTLIER_CHEAP times cheaper
+// per unit is a case price divided by the case, or a size typed wrong: flagged, in every dimension.
+const SIZE_OUTLIER = 4;
+const SIZE_OUTLIER_CHEAP = 6;
+function flagSizeOutliers(priced, dim) {
+  const sized = priced.filter((x) => x.p.dim === dim && x.p.base > 0);
+  if (sized.length < 4) return;
+  const medSize = medianOf(sized.map((x) => x.p.base));
+  const medPrice = medianOf(priced.map((x) => x.u.perBase));
+  if (!medSize || !medPrice) return;
+  for (const { p, u } of sized) {
+    if (p.implausible) continue;
+    if (p.base >= SIZE_OUTLIER * medSize && u.perBase * SIZE_OUTLIER_CHEAP <= medPrice) {
+      p.implausible = { ratio: Math.round((u.perBase / medPrice) * 10) / 10, median: medPrice, direction: 'low', sizeOutlier: true };
+    }
+  }
+}
+
 export function flagImplausible(items, dim, prefs = {}) {
   // The count dimension counts PACKAGES, so its median mixes a 50-sheet box of foil with a single
   // roll and a 2-pack of heavy duty. Distance from that median says nothing about whether a price
   // is right: it flagged six correct per-sheet foil prices as "price looks wrong" and a 500 ft
   // Kirkland roll, which is the cheapest foil in the sweep, as implausibly dear. Telling a shopper
   // a correct price looks wrong is the mirror image of showing a wrong one.
-  if (dim === 'count') return items;
   const priced = items.map((p) => ({ p, u: unitFor(p, dim, prefs) })).filter((x) => x.u && Number.isFinite(x.u.perBase) && x.u.perBase > 0);
+  if (dim === 'count') {
+    flagSizeOutliers(priced, dim);
+    return items;
+  }
   if (priced.length < 4) return items;
   const med = medianOf(priced.map((x) => x.u.perBase));
   if (!med) return items;
@@ -160,6 +187,7 @@ export function flagImplausible(items, dim, prefs = {}) {
       if (!vouched) flag({ unconfirmed: true });
     }
   }
+  flagSizeOutliers(priced, dim);
   return items;
 }
 

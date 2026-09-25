@@ -530,10 +530,10 @@ enum Units {
         (Rx("\\b(honeycrisp|gala|fuji|granny smith|pink lady|braeburn|red delicious|golden delicious|envy|jazz|cosmic crisp|ambrosia)\\b|\\bapples?\\b"), 0.4),
         (Rx("\\bnavel oranges?\\b|\\boranges?\\b"), 0.45), (Rx("\\bgrapefruits?\\b"), 1.0), (Rx("\\bmangos?\\b|\\bmangoes\\b"), 0.75),
         (Rx("\\bpears?\\b"), 0.45), (Rx("\\bpeach(es)?\\b"), 0.35), (Rx("\\bnectarines?\\b"), 0.33), (Rx("\\bplums?\\b"), 0.2),
-        (Rx("\\bkiwis?\\b"), 0.2), (Rx("\\bpomegranates?\\b"), 0.6), (Rx("\\b(bell )?peppers?\\b"), 0.4), (Rx("\\bcucumbers?\\b"), 0.6),
+        (Rx("\\bkiwis?\\b"), 0.2), (Rx("\\bpomegranates?\\b"), 0.6), (Rx("\\bjalapenos?\\b"), 0.05), (Rx("\\b(bell )?peppers?\\b"), 0.4), (Rx("\\bcucumbers?\\b"), 0.6),
         (Rx("\\bzucchini\\b"), 0.5), (Rx("\\byellow squash\\b"), 0.5), (Rx("\\beggplants?\\b"), 1.0), (Rx("\\broma tomato(es)?\\b"), 0.15),
         (Rx("\\btomato(es)?\\b"), 0.33), (Rx("\\bsweet potato(es)?\\b|\\byams?\\b"), 0.6), (Rx("\\bpotato(es)?\\b"), 0.55),
-        (Rx("\\bonions?\\b"), 0.5), (Rx("\\bgarlic\\b"), 0.12), (Rx("\\bjalapenos?\\b"), 0.05), (Rx("\\bartichokes?\\b"), 0.5), (Rx("\\bcorn\\b"), 0.6),
+        (Rx("\\bonions?\\b"), 0.5), (Rx("\\bgarlic\\b"), 0.12), (Rx("\\bartichokes?\\b"), 0.5), (Rx("\\bcorn\\b"), 0.6),
     ]
     /// Words that mean the produce word in the name is not one loose piece of produce.
     ///
@@ -543,7 +543,7 @@ enum Units {
     /// Ube Purple Yam" — 7.5 oz of ice cream in total — quoted at $1.66/lb when the honest figure
     /// is $12.78/lb. A container word is just as disqualifying: a "Yellow Onion Bag" is not one
     /// 0.5 lb onion, and pricing it as one published $25.98/lb against a real median of $1.75.
-    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg)\\b")
+    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\\b")
 
     static func produceWeightLb(_ name: String) -> Double? {
         let n = name.lowercased()

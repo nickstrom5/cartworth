@@ -18,7 +18,9 @@ enum PriceSearch {
     // 13: the holiday matrix (Match.queryAllows, compounds, canned vegetables and meats).
     // 14: cuts, "for <food>" accessories, cottage cheese / Salisbury steak, champagne = sparkling wine.
     // 15: per-lb slug over a fixed weight is a conflict; a canned aisle is not the fresh item.
-    static let cacheVersion = 15
+    // 16: the state x holiday audit (case-size outliers, pepper jack/jalapeno weights, non-food aisles,
+    // produce mixes, beef-only steak/brisket, bone-in token).
+    static let cacheVersion = 16
 
     struct Payload: Codable {
         var items: [Product]

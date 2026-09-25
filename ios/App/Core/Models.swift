@@ -26,6 +26,9 @@ struct ImplausiblePrice: Codable, Hashable {
     /// `Compare.flagImplausible`), rather than past the hard 1/30 floor. Optional so products
     /// persisted before it existed still decode.
     var unconfirmed: Bool? = nil
+    /// True when a package far larger than typical is also far cheaper per unit: a case size on a
+    /// single piece (see `Compare.flagSizeOutliers`). Optional so older saved products decode.
+    var sizeOutlier: Bool? = nil
 }
 
 enum PriceBasis: String, Codable, Hashable {

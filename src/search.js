@@ -45,7 +45,10 @@ const STORE_TIMEOUT = 35000;
 // accessory; cottage cheese and Salisbury steak are look-alikes; champagne is sparkling wine.
 // v19: a per-lb slug over a stated fixed weight is a size conflict ($0.09/lb carrots); a canned aisle
 // is not the fresh vegetable or cut.
-const CACHE_VERSION = 19;
+// v20 (the state x holiday audit): case sizes on single pieces are flagged; pepper jack and jalapenos
+// have their own weights; non-food aisles, produce mixes and juice aisles do not answer produce
+// searches; beef-only steak and brisket; "bone-in" no longer hides a trap.
+const CACHE_VERSION = 20;
 const health = {}; // storeId -> { ok, at, ms, error } — PROCESS-WIDE and served publicly
 
 /**

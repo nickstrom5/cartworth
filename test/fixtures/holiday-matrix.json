@@ -172,7 +172,8 @@
   "reject": [
    "A.1. Original Steak Sauce",
    "McCormick Montreal Steak Seasoning",
-   "Stouffer's Family Size Salisbury Steak"
+   "Stouffer's Family Size Salisbury Steak",
+   "USDA Premium Bone-In Butt Pork Shoulder Steak, per lb"
   ]
  },
  {
@@ -319,7 +320,9 @@
   ],
   "reject": [
    "Cilantro Lime Rice Mix",
-   "Cilantro Dressing"
+   "Cilantro Dressing",
+   "Fresh Cut In Store Chopped Cilantro & White Onions",
+   "Organic Petite Diced Tomatoes with Jalapeno And Cilantro"
   ]
  },
  {
@@ -360,7 +363,9 @@
    "Fresh Cut Flowers Bouquet",
    "Mixed Flower Bouquet"
   ],
-  "reject": []
+  "reject": [
+   "Hello Hobby Satin Flowers - Hot Pink"
+  ]
  },
  {
   "query": "hot dogs",
@@ -403,7 +408,9 @@
    "Corn Flakes Kellogg's",
    "Corn Tortillas",
    "Corn Chips Fritos",
-   "Candy Corn"
+   "Candy Corn",
+   "Corn Starch Forks",
+   "Don Pancho Tortillas, White Corn, Table Style"
   ]
  },
  {
@@ -511,9 +518,12 @@
   "query": "turkey lunch meat",
   "match": [
    "Oscar Mayer Deli Fresh Oven Roasted Turkey Breast Lunch Meat",
-   "Hillshire Farm Ultra Thin Honey Roasted Turkey Lunch Meat"
+   "Hillshire Farm Ultra Thin Honey Roasted Turkey Lunch Meat",
+   "Oscar Mayer Deli Fresh Oven Roasted Turkey Breast"
   ],
-  "reject": []
+  "reject": [
+   "Jennie-O Ground Turkey"
+  ]
  },
  {
   "query": "string cheese",
@@ -651,7 +661,8 @@
    "Organic Sweet Potatoes 3 lb"
   ],
   "reject": [
-   "Alexia Sweet Potato Fries"
+   "Alexia Sweet Potato Fries",
+   "Garden Sweet Russet Potato"
   ]
  },
  {
@@ -813,7 +824,8 @@
    "Whole Packer Beef Brisket"
   ],
   "reject": [
-   "Corned Beef Brisket Point Cut"
+   "Corned Beef Brisket Point Cut",
+   "CP6 Pork Brisket Sparerib Strip"
   ]
  },
  {

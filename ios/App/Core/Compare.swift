@@ -107,6 +107,23 @@ enum Compare {
     /// Flags rather than hides: the item still appears, carrying the flag, so the UI can say the
     /// price looks wrong. Needs at least four comparable results, because with three you cannot
     /// tell an outlier from a genuinely cheap store.
+    /// A case size on a single piece ("Avocado", 40 ct, $1.09; applesauce stated 288 oz at $2.76): at
+    /// least `sizeOutlier` times the typical size AND at least `sizeOutlierCheap` times cheaper per
+    /// unit. A real bulk buy is big but only 2-5x cheaper. Runs in every dimension. Port of
+    /// flagSizeOutliers in shared/compare.js.
+    static let sizeOutlier = 4.0
+    static let sizeOutlierCheap = 6.0
+    static func flagSizeOutliers(_ items: inout [Product], priced: [(Int, Double)], dim: Dim) {
+        let sized = priced.filter { items[$0.0].dim == dim && (items[$0.0].base ?? 0) > 0 }
+        guard sized.count >= 4, let medSize = medianOf(sized.map { items[$0.0].base! }), medSize > 0,
+              let medPrice = medianOf(priced.map(\.1)), medPrice > 0 else { return }
+        for (idx, perBase) in sized where items[idx].implausible == nil {
+            if items[idx].base! >= sizeOutlier * medSize && perBase * sizeOutlierCheap <= medPrice {
+                items[idx].implausible = ImplausiblePrice(ratio: (perBase / medPrice * 10).rounded() / 10, median: medPrice, direction: "low", sizeOutlier: true)
+            }
+        }
+    }
+
     @discardableResult
     static func flagImplausible(_ items: inout [Product], dim: Dim, prefs: PricePrefs = PricePrefs()) -> [Product] {
         // The count dimension counts PACKAGES, so its median mixes a 50-sheet box of foil with a
@@ -114,10 +131,13 @@ enum Compare {
         // whether a price is right: it flagged six correct per-sheet foil prices as "price looks
         // wrong". Telling a shopper a correct price looks wrong is the mirror image of showing a
         // wrong one.
-        if dim == .count { return items }
         let priced = items.enumerated().compactMap { idx, p -> (Int, Double)? in
             guard let u = unitFor(p, dim: dim, prefs: prefs), u.perBase.isFinite, u.perBase > 0 else { return nil }
             return (idx, u.perBase)
+        }
+        if dim == .count {
+            flagSizeOutliers(&items, priced: priced, dim: dim)
+            return items
         }
         guard priced.count >= 4, let med = medianOf(priced.map(\.1)), med > 0 else { return items }
         let snapshot = items
@@ -141,6 +161,7 @@ enum Compare {
                 if !vouched { flag(unconfirmed: true) }
             }
         }
+        flagSizeOutliers(&items, priced: priced, dim: dim)
         return items
     }
 

@@ -522,9 +522,10 @@ const PRODUCE_LB = [
   [/\b(honeycrisp|gala|fuji|granny smith|pink lady|braeburn|red delicious|golden delicious|envy|jazz|cosmic crisp|ambrosia)\b|\bapples?\b/, 0.4],
   [/\bnavel oranges?\b|\boranges?\b/, 0.45], [/\bgrapefruits?\b/, 1.0], [/\bmangos?\b|\bmangoes\b/, 0.75], [/\bpears?\b/, 0.45], [/\bpeach(es)?\b/, 0.35],
   [/\bnectarines?\b/, 0.33], [/\bplums?\b/, 0.2], [/\bkiwis?\b/, 0.2], [/\bpomegranates?\b/, 0.6],
-  [/\b(bell )?peppers?\b/, 0.4], [/\bcucumbers?\b/, 0.6], [/\bzucchini\b/, 0.5], [/\byellow squash\b/, 0.5], [/\beggplants?\b/, 1.0],
+  // Jalapenos before peppers: "Jalapeno Pepper" took the bell pepper's 0.4 lb, 8x a jalapeno.
+  [/\bjalapenos?\b/, 0.05], [/\b(bell )?peppers?\b/, 0.4], [/\bcucumbers?\b/, 0.6], [/\bzucchini\b/, 0.5], [/\byellow squash\b/, 0.5], [/\beggplants?\b/, 1.0],
   [/\broma tomato(es)?\b/, 0.15], [/\btomato(es)?\b/, 0.33], [/\bsweet potato(es)?\b|\byams?\b/, 0.6], [/\bpotato(es)?\b/, 0.55],
-  [/\bonions?\b/, 0.5], [/\bgarlic\b/, 0.12], [/\bjalapenos?\b/, 0.05], [/\bartichokes?\b/, 0.5], [/\bcorn\b/, 0.6],
+  [/\bonions?\b/, 0.5], [/\bgarlic\b/, 0.12], [/\bartichokes?\b/, 0.5], [/\bcorn\b/, 0.6],
 ];
 
 /**
@@ -537,7 +538,9 @@ const PRODUCE_LB = [
  * A container word is just as disqualifying: a "Yellow Onion Bag" is not one 0.5 lb onion, and
  * pricing it as one published $25.98/lb against a real onion median of $1.75.
  */
-const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg)\b/;
+// 'jack'/'cheese': "Pepper Jack Cheese Slices" matched the bell-pepper weight, so ten slices were
+// four pounds of peppers and the pack read $0.60/lb (the state x holiday audit).
+const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\b/;
 
 export function produceWeightLb(name) {
   const n = String(name || '').toLowerCase();

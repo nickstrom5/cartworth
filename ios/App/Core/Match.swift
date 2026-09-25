@@ -13,6 +13,8 @@ enum Match {
         "pb": ["peanut", "butter"], "pj": ["pajama"], "bsb": ["boneless", "skinless", "breast"], "bscb": ["boneless", "skinless", "chicken", "breast"],
         "hh": ["half", "half"], "half-and-half": ["half", "half"],
         // One spelling each ("bbq sauce" finds Barbecue Sauce, "black-eyed peas" Blackeye Peas).
+        // One token each: split, the "in" of "Bone-In" hid the next words from the trap check. Port of shared/match.js.
+        "bone-in": ["bonein"], "skin-on": ["skinon"],
         "barbecue": ["bbq"], "bar-b-q": ["bbq"], "blackeye": ["black", "eyed"], "blackeyed": ["black", "eyed"],
     ]
 
@@ -33,6 +35,7 @@ enum Match {
         "peanut", "cream", "macaroni", "mac", "chili", "base", "lettuce", "dinner", "casserole", "bisque",
         // "Tomato Ketchup" was the best "tomatoes", "Spaghetti Squash" the best "spaghetti".
         "ketchup", "catsup", "paste", "squash",
+        "tortillas", "manapua", "bao", "siopao", "fork", "spoon", "cutlery", "drop", "lozenge",
         "stew", "hummus", "pesto", "salsa", "guacamole", "dressing", "concentrate", "concentrated", "substitute", "flavoring",
         // Head nouns that make the searched word a modifier: "butter popcorn", "butter shrimp",
         // "all butter danish". Found in live Sam's Club and Costco results, where each produced an
@@ -103,7 +106,7 @@ enum Match {
     private static let aLaRx = Rx("\\ba la\\b")
     private static let supplementRx = Rx("\\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewables?)\\b")
     private static let wantsSupplementRx = Rx("\\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\\b")
-    private static let nonGroceryRx = Rx("\\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\\b")
+    private static let nonGroceryRx = Rx("\\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\\b")
 
     /// Imitation markers: a product that says it merely tastes like the thing is not the thing.
     /// Flavoured waters named after the drink they taste of ("Spiced Cider Sparkling Water" is not
@@ -153,11 +156,12 @@ enum Match {
     /// Qualifiers that are just variants (never penalized).
     /// Words that describe, rather than change, what a particular query asks for ("Beef Ribeye
     /// Steak" answers "steak", a Cabernet answers "wine"). Port of QUERY_ALLOWS in shared/match.js.
+    private static let beefCut = ["beef", "bone", "frozen", "smoked"]
     private static let animals = ["beef", "pork", "chicken", "turkey", "lamb", "bone", "frozen", "smoked"]
     private static let alcoholWords = ["wine", "red", "white", "rose", "sparkling", "chardonnay", "merlot", "cabernet", "pinot", "sauvignon", "riesling", "moscato", "zinfandel", "malbec", "prosecco", "cellars", "winery", "vineyard", "brut", "champagne", "cava"]
     private static let queryAllows: [String: Set<String>] = [
         "wine": Set(alcoholWords), "prosecco": Set(alcoholWords), "champagne": Set(alcoholWords),
-        "steak": Set(animals), "ribeye": Set(animals), "brisket": Set(animals), "rib": Set(animals), "chop": Set(animals), "roast": Set(animals), "tenderloin": Set(animals),
+        "steak": Set(beefCut), "ribeye": Set(beefCut), "brisket": Set(beefCut), "rib": Set(animals), "chop": Set(animals), "roast": Set(animals), "tenderloin": Set(animals),
         "sirloin": Set(animals), "wing": Set(animals), "dog": Set(animals + ["frank"]), "frank": Set(animals), "brat": Set(animals + ["beer"]), "sausage": Set(animals),
         "turkey": ["frozen"], "ham": ["honey", "spiral", "smoked", "pork"],
         "bun": ["hot", "dog", "hamburger", "seed", "sesame"], "croissant": ["butter", "mini"], "flower": ["bouquet", "cut", "mixed"],
@@ -186,10 +190,18 @@ enum Match {
     private static let cuts: Set<String> = ["wing", "drumstick", "thigh", "breast", "leg", "tenderloin", "tender", "gizzard", "liver", "neck", "quarter", "drumette"]
     private static let champagneGrapesRx = Rx("\\bchampagne grapes?\\b")
     private static let grapeRx = Rx("\\bgrape")
+    /// Ports of NON_FOOD_CATEGORY_RE, LUNCH_*_RE, PRODUCE_HEAD_RE, PRODUCE_WORD_RE (the state x holiday audit).
+    private static let nonFoodCategoryRx = Rx("\\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|crafts?|disposable|cutlery|utensils?|tableware|herbal tea|pet (?:food|treats|supplies)|dog|cat)\\b")
+    private static let lunchNameRx = Rx("\\b(?:deli|sliced|lunchmeat|lunch meat|cold cuts?)\\b")
+    private static let lunchCatRx = Rx("\\b(?:deli|lunch ?meats?|lunchmeat|cold cuts?)\\b")
+    private static let produceHeadRx = Rx("^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|parsley|basil|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|garlic|ginger|scallion|avocado)$")
+    private static let produceWordRx = Rx("^(?:onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$")
+    private static let sweetPotatoRx = Rx("\\bsweet potato")
+    private static let otherPotatoRx = Rx("\\b(?:russet|yukon|red potato|gold potato|white potato)")
     private static let freshVegMeatRx = Rx("^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$")
     private static let shelfFormRx = Rx("\\b(?:canned|dehydrated|freeze[- ]?dried)\\b")
 
-    private static let soft: Set<String> = ["organic", "lactose", "free", "ultra", "filtered", "reduced", "fat", "low", "whole", "skim", "natural", "grass", "fed", "pasture", "raised", "cage", "large", "medium", "small", "extra", "jumbo", "grade", "fresh", "boneless", "skinless", "lean", "ground"]
+    private static let soft: Set<String> = ["organic", "lactose", "free", "ultra", "filtered", "reduced", "fat", "low", "whole", "skim", "natural", "grass", "fed", "pasture", "raised", "cage", "large", "medium", "small", "extra", "jumbo", "grade", "fresh", "boneless", "skinless", "lean", "ground", "bonein", "skinon"]
     /// Product words that imply another ("ground chuck" is ground beef).
     private static let implies: [String: [String]] = ["champagne": ["sparkling", "wine"], "prosecco": ["sparkling", "wine"], "cava": ["sparkling", "wine"], "frank": ["dog"], "chuck": ["beef"], "sirloin": ["beef"], "brisket": ["beef"], "ribeye": ["beef"], "kcup": ["coffee"], "k-cup": ["coffee"], "espresso": ["coffee"], "cage": ["egg"], "clementine": ["mandarin"], "cutie": ["mandarin"], "tp": ["toilet"]]
     private static let chipNoise: Set<String> = ["carton", "bottle", "jug", "container", "package", "bag", "box", "can", "jar", "each", "value", "family", "size", "select", "original", "classic", "premium", "organic", "brand", "pack", "count", "ounce", "gallon", "gal", "quart", "half", "pint", "fl", "lb", "lbs", "oz", "ct", "with", "made", "great", "best", "store", "kroger", "signature", "good", "gather", "market", "pantry", "farm", "farms", "simple", "truth", "nature", "kirkland", "365", "everyday", "item", "items"]
@@ -272,7 +284,9 @@ enum Match {
         if qt.isEmpty { return 0.5 }
         let full = "\(brand ?? "") \(name)"
         let nameNorm = normalize(full)
-        let nameTok = Set(productTokens(full))
+        var nameTok = Set(productTokens(full))
+        // Shoppers say "lunch meat"; labels say "Deli Fresh", "Sliced", and aisles "Deli Meat".
+        if lunchNameRx.test(normalize(name)) || lunchCatRx.test(normalize(category ?? "")) { nameTok.insert("lunch"); nameTok.insert("meat") }
         let selfTok = Set(productTokens(name))
         let brandTok = Set(productTokens(brand ?? ""))
         let catTok = Set(tokens(category))
@@ -403,6 +417,13 @@ enum Match {
         // "Glaze for Strawberries" is to use WITH strawberries. Port of the "for" rule in shared/match.js.
         if !qset.contains("for"), Rx("\\bfor (?:[a-z]+ ){0,2}\(NSRegularExpression.escapedPattern(for: head))").test(words.joined(separator: " ")) { mult *= 0.2 }
         if champagneGrapesRx.test(nameNorm) && !grapeRx.test(qNormForImitation) { mult *= 0.2 }
+        // Fresh produce: another produce item named is a mix; a juice aisle is juice.
+        if freshFruitRx.test(head) || produceHeadRx.test(head) {
+            let others = words.filter { w in !qset.contains(w) && produceWordRx.test(w) && !qt.contains(where: { $0.hasPrefix(w) || w.hasPrefix($0) }) }
+            if !others.isEmpty { mult *= 0.3 }
+            if (catTok.contains("juice") || catTok.contains("juices") || catTok.contains("pressed")) && !qset.contains("juice") { mult *= 0.3 }
+        }
+        if sweetPotatoRx.test(normalize(query)) && otherPotatoRx.test(nameNorm) { mult *= 0.2 }
         if freshVegMeatRx.test(head) {
             if let m = shelfFormRx.match(nameNorm)?.first ?? nil {
                 if !qNormForImitation.contains(m) { mult *= 0.3 }
@@ -414,6 +435,8 @@ enum Match {
         // the position rules deliberately look past "in"/"with" phrases, which is where the
         // giveaway sits.
         if nonGroceryRx.test(nameNorm) { mult *= 0.15 }
+        // The retailer's aisle says it is not food (supplements, cough drops, toothpicks, decorations).
+        if nonFoodCategoryRx.test(normalize(category ?? "")) && !nonFoodCategoryRx.test(normalize(query)) { mult *= 0.15 }
         if supplementRx.test(nameNorm) && !wantsSupplementRx.test(normalize(query)) { mult *= 0.15 }
 
         score *= mult
