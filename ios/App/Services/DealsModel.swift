@@ -115,7 +115,7 @@ final class DealsModel {
         return s.items.map { p in
             let sale = p.priceText.contains("$") ? ProductFactory.money(p.priceText) : nil
             let reg = p.regularText.contains("$") && !p.regularText.lowercased().contains("to") ? ProductFactory.money(p.regularText) : nil
-            let pct = Rx("(\\d+)\\s*%").match(p.priceText)?[1].flatMap { Int($0 ?? "") }
+            let pct = Rx("(\\d+)\\s*%").match(p.priceText)?[1].flatMap { Int($0) }
             let pctOff = pct ?? ((sale != nil && reg != nil && reg! > sale!) ? Int(((1 - sale! / reg!) * 100).rounded()) : nil)
             return Deal(
                 id: p.id, source: "wholefoods", flippId: nil, flyerId: nil, retailerId: "wholefoods", merchant: "Whole Foods Market",

@@ -53,16 +53,23 @@ final class TripPlanSavingsTests: XCTestCase {
     /// DEFECT: at an accessibility size the option cards sat side by side in a scroller, one card
     /// wide on a phone, so the next card's total was cut by the edge of the screen — a clipped
     /// price. Every card, total included, is now inside the window.
+    ///
+    /// Both size classes, on every device. A hosted window takes the device's size class, so this
+    /// passed on an iPhone and failed on an iPad simulator: the iPad's regular class gives a card
+    /// a 170pt minimum, scaled to about 400pt here, in a 370pt column.
     func testDEFECTNoOptionCardIsCutByTheScreenEdgeAtAccessibilitySizes() {
-        let view = TripPlanSummary(plan: planned(bBasis: .shelf), onRefresh: {}, planning: false)
-            .padding(16)
-            .environment(\.dynamicTypeSize, .accessibility5)
-        let s = HostedScreen(view, size: CGSize(width: 402, height: 3000))
-        defer { s.tearDown() }
-        let cards = s.elements.filter { $0.0.hasPrefix("One store") || $0.0.hasPrefix("Cherry-pick") }
-        XCTAssertEqual(cards.count, 2, "\(s.labels)")
-        for (label, frame) in cards {
-            XCTAssertLessThanOrEqual(frame.maxX, 402.5, "“\(label)” runs to x=\(Int(frame.maxX)) on a 402pt screen")
+        for sizeClass in [UserInterfaceSizeClass.compact, .regular] {
+            let view = TripPlanSummary(plan: planned(bBasis: .shelf), onRefresh: {}, planning: false)
+                .padding(16)
+                .environment(\.dynamicTypeSize, .accessibility5)
+                .environment(\.horizontalSizeClass, sizeClass)
+            let s = HostedScreen(view, size: CGSize(width: 402, height: 3000))
+            defer { s.tearDown() }
+            let cards = s.elements.filter { $0.0.hasPrefix("One store") || $0.0.hasPrefix("Cherry-pick") }
+            XCTAssertEqual(cards.count, 2, "\(sizeClass): \(s.labels)")
+            for (label, frame) in cards {
+                XCTAssertLessThanOrEqual(frame.maxX, 402.5, "\(sizeClass): “\(label)” runs to x=\(Int(frame.maxX)) on a 402pt screen")
+            }
         }
     }
 

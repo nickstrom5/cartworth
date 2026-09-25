@@ -14,11 +14,15 @@ final class FlowTests: XCTestCase {
 
     /// The tab control is a bottom tab bar on iPhone but a top tab bar on iPad, which is a
     /// different element type. Look for whichever exists rather than assuming the phone shape.
+    ///
+    /// Every candidate is `.firstMatch`: on iPad more than one button answers to each tab's label,
+    /// and tapping a query that resolves to several throws "Multiple matching elements found".
+    /// See `SubmissionSet.tabButton`.
     func tabButton(_ name: String) -> XCUIElement {
         let candidates = [
-            app.tabBars.buttons[name],
-            app.segmentedControls.buttons[name],
-            app.buttons[name],
+            app.tabBars.buttons.matching(NSPredicate(format: "label ==[c] %@", name)).firstMatch,
+            app.segmentedControls.buttons.matching(NSPredicate(format: "label ==[c] %@", name)).firstMatch,
+            app.buttons.matching(NSPredicate(format: "label ==[c] %@", name)).firstMatch,
         ]
         return candidates.first { $0.exists } ?? candidates[0]
     }

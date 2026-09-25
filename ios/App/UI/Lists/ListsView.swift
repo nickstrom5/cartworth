@@ -247,7 +247,11 @@ struct TripPlanSummary: View {
     }
 
     /// One option: its label, its total, the stores it visits and what it saves.
-    private func optionCard(_ i: Int, _ o: (String, TripPlanner.Plan)) -> some View {
+    ///
+    /// `stacked` is the accessibility-size column. There a card is exactly as wide as the column:
+    /// `optionWidth` is a minimum for the side-by-side row, and at the largest sizes the iPad's
+    /// scaled 170pt is about 400pt, wider than a narrow column, so the card ran off the screen.
+    private func optionCard(_ i: Int, _ o: (String, TripPlanner.Plan), stacked: Bool) -> some View {
         Button { choice = i } label: {
             VStack(alignment: .leading, spacing: 4) {
                 Text(o.0).font(.caption).foregroundStyle(.secondary)
@@ -281,12 +285,12 @@ struct TripPlanSummary: View {
                     Text(claim.text.replacingOccurrences(of: "{amount}", with: claim.amount.map(Money.full) ?? ""))
                         .font(.caption2)
                         .foregroundStyle(claim.kind == .exact ? Color.green : Color.secondary)
-                        .frame(width: max(optionWidth - 20, 90), alignment: .leading)
+                        .frame(width: stacked ? nil : max(optionWidth - 20, 90), alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .padding(10)
-            .frame(minWidth: optionWidth, alignment: .leading)
+            .frame(minWidth: stacked ? nil : optionWidth, maxWidth: stacked ? CGFloat.infinity : nil, alignment: .leading)
             // Highlight the card whose breakdown is actually shown, which is the
             // clamped index — not the raw `choice`, which can sit past the end.
             .background(selectedIndex == i ? Color.accentColor.opacity(0.14) : Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
@@ -300,15 +304,16 @@ struct TripPlanSummary: View {
             // Side by side in a scroller normally. At an accessibility size each card is wider
             // than half the screen, so the row shows one card and cuts the next one's total at the
             // edge of the screen — a clipped price, the same defect `IPadLandscapeTests` found in
-            // the search screen's ads carousel. There the cards stack instead.
+            // the search screen's ads carousel. There the cards stack instead, each one the width
+            // of the column.
             if typeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 10) {
-                    ForEach(Array(options.enumerated()), id: \.offset) { i, o in optionCard(i, o) }
+                    ForEach(Array(options.enumerated()), id: \.offset) { i, o in optionCard(i, o, stacked: true) }
                 }
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
-                        ForEach(Array(options.enumerated()), id: \.offset) { i, o in optionCard(i, o) }
+                        ForEach(Array(options.enumerated()), id: \.offset) { i, o in optionCard(i, o, stacked: false) }
                     }
                 }
                 .scrollClipDisabled()
