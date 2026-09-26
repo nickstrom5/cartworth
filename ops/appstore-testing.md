@@ -23,24 +23,47 @@ are `marketing/APP_STORE_LISTING.md`.
 ## On the Mac, in this order
 
 ### 1. Build and the full test suite (30 min)
-- [ ] Pull `fix-round-3`. `project.yml` is unchanged this round; if you change it, run `xcodegen`.
+- [ ] Pull `fix-round-3`. `project.yml` gained a `postGenCommand` this round, which gives the
+      scheme's Test action the StoreKit configuration; the committed project already has it. If
+      you change `project.yml`, run `xcodegen`.
 - [ ] Cmd+U on an iPhone 16 Pro simulator, then an iPad Pro 13" simulator. The UI-hosted suites
       (`HostedScreenTests`, `PriceLayoutTests`, `SearchScreenGuardTests`, `ReadablePageTests`,
-      `TripPlanSavingsTests`, `ChartTests`, `InstacartProvenanceTests`) and `AppUITests` only run
-      here. Every one must pass. Pick iOS 27 simulators by id (`xcrun simctl list devices`): the
-      iOS 26.5 iPad Pro 13" on the build Mac never rotates under XCUITest, status bar and keyboard
-      included, so both `IPadLandscapeTests` fail there; on the iOS 27.0 iPad Pro 13" both pass.
+      `TripPlanSavingsTests`, `ChartTests`, `InstacartProvenanceTests`, `PurchaseTests`) and
+      `AppUITests` only run here. Every one must pass. Pick iOS 27 simulators by id
+      (`xcrun simctl list devices`): the iOS 26.5 iPad Pro 13" on the build Mac never rotates
+      under XCUITest, status bar and keyboard included, so both `IPadLandscapeTests` fail there;
+      on the iOS 27.0 iPad Pro 13" both pass.
 - [ ] Product > Archive with the Release configuration succeeds with no warnings about missing
       usage strings or privacy manifest entries.
 
-### 2. StoreKit with the local configuration (30 min)
-Scheme > Run > Options > StoreKit Configuration: `Products.storekit`.
-- [ ] Buy monthly, yearly and lifetime; each unlocks Pro immediately.
-- [ ] Cancel at the payment sheet: nothing unlocks, no error.
-- [ ] Restore purchases (paywall and Settings) after deleting and reinstalling.
-- [ ] Debug > StoreKit > Manage Transactions: refund a purchase (Pro goes away), expire a
-      subscription, turn on Ask to Buy (the app shows "pending", then unlocks on approval).
-- [ ] The paywall shows StoreKit's own prices; change a price in the configuration and it follows.
+### 2. StoreKit with the local configuration (10 min by hand)
+`PurchaseTests` runs this step in the Cmd+U above: an `SKTestSession` on `Products.storekit`,
+StoreKit 2's own calls and signed transactions, the paywall and Settings hosted and pressed
+through their accessibility elements. The payment sheet is switched off (`disableDialogs`). It
+passes on the iOS 27.0 iPhone 18 Pro and iPad Pro 13" simulators. The scheme's Test action must
+name `Products.storekit` (see `postGenCommand` in `project.yml`): without it every case fails
+with "no products".
+- [x] Buy monthly, yearly and lifetime; each unlocks Pro immediately.
+- [x] Cancel at the payment sheet: nothing unlocks, no error. StoreKit's cancel answer is handed
+      to the app in place of the sheet, both ways StoreKit gives it (a `.userCancelled` result
+      and a thrown `StoreKitError.userCancelled`).
+- [x] Restore purchases (paywall and Settings) after clearing the app's state, which is all a
+      reinstall clears: the app keeps no purchase state of its own. Pro also comes back at launch.
+- [x] Refund a purchase, lifetime or subscription: Pro goes away with the app running.
+- [x] A subscription with auto-renew off expires: Pro goes away with the app running.
+- [x] Ask to Buy: the paywall says the purchase is waiting for approval; approval unlocks Pro.
+- [x] The paywall shows StoreKit's own prices; change a price in the configuration and it follows.
+
+Still by hand, with Scheme > Run > Options > StoreKit Configuration: `Products.storekit`:
+- [ ] The payment sheet itself: it shows the plan and price, Cancel on it unlocks nothing and
+      shows no error, confirming unlocks. An `SKTestSession` cannot cancel a purchase: its
+      simulated `userCancelled` reaches the app as `StoreKitError.unknown`.
+- [ ] Debug > StoreKit > Manage Transactions > Expire Subscription with the app open. On the
+      iOS 27 simulator `SKTestSession.expireSubscription` never reaches the app (its entitlements
+      keep the old expiry date and no update arrives), so the tests let a subscription lapse
+      instead. If Xcode's button behaves the same way and Pro stays, that is the simulator, not
+      the app; step 4's sandbox subscription is the real check.
+- [ ] A real delete and reinstall, then Restore purchases from Settings.
 
 ### 3. On a real iPhone (1-2 h)
 - [ ] First launch: Allow location (while using), then again with Don't Allow and with Precise
