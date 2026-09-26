@@ -87,3 +87,11 @@ test('export compliance: HTTPS only, so ITSAppUsesNonExemptEncryption is false',
   assert.match(plist, /<key>ITSAppUsesNonExemptEncryption<\/key>\s*<false\/>/);
   assert.doesNotMatch(all, /CommonCrypto|CCCrypt|SecKeyCreateEncryptedData|AES\.GCM|ChaChaPoly/, 'custom encryption would change the export answer');
 });
+
+test('the local StoreKit configuration is not copied into the app (d8367eb: the Release archive shipped it)', () => {
+  const pbx = read('Cartworth.xcodeproj/project.pbxproj');
+  assert.doesNotMatch(pbx, /\.storekit in (?:Resources|Copy)/, 'a .storekit file in a build phase ships inside the app');
+  assert.match(pbx, /Products\.storekit \*\/ = \{isa = PBXFileReference/, 'the scheme still needs the file in the project');
+  const yml = read('project.yml');
+  assert.match(yml, /Resources\/Products\.storekit[\s\S]{0,300}buildPhase: none/, 'xcodegen would put it back in Resources');
+});
