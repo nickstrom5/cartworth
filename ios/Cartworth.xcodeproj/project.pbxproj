@@ -31,6 +31,7 @@
 		52A6A30FB2BB5F98293D50D4 /* Units.swift in Sources */ = {isa = PBXBuildFile; fileRef = E37E45720C9A0E11EECBCBF4 /* Units.swift */; };
 		549DDFBDF70AA68E800E79D3 /* DealsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DFB58EAC8281FB5654EA609 /* DealsModel.swift */; };
 		577C14343E2B412FC09DD3CB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 902E0A66C8A49B5B16C27919 /* Assets.xcassets */; };
+		59D0120BFEA63B704DC1D571 /* PurchaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7D611483E9628B94A14195 /* PurchaseTests.swift */; };
 		5D4F580960C28F04A0756B0E /* FlippSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA2B6C560FD0E5D7583E8EE /* FlippSource.swift */; };
 		6073350A2570EDB6AE6D801E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE35CDD849F63DE61ADDBAF4 /* OnboardingView.swift */; };
 		6FA761C3F958A22F14486BAF /* Compare.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA509BAF7C4654930516E6A1 /* Compare.swift */; };
@@ -112,6 +113,7 @@
 		51247E2E4077938DD0C17B4D /* Products.storekit */ = {isa = PBXFileReference; path = Products.storekit; sourceTree = "<group>"; };
 		515148481AED2BBC8369C274 /* Cache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cache.swift; sourceTree = "<group>"; };
 		59E847B074FC26BFCB1EE8FC /* TripPlanSavingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanSavingsTests.swift; sourceTree = "<group>"; };
+		5B7D611483E9628B94A14195 /* PurchaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseTests.swift; sourceTree = "<group>"; };
 		5FA0F5C7181D12DC1E8AA1A2 /* Geo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Geo.swift; sourceTree = "<group>"; };
 		6883D8BF753B7ED1035F473F /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		6DA025CF36DC252769EDDC1C /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
@@ -280,6 +282,7 @@
 				F08C307F7A8B4DC644620BE5 /* InstacartProvenanceTests.swift */,
 				9489E578E9277A5CADA00AA9 /* PriceLayoutTests.swift */,
 				501646E1374B371B4BF9ABEE /* PricingRound2Tests.swift */,
+				5B7D611483E9628B94A14195 /* PurchaseTests.swift */,
 				A75420AA3047A90440A81285 /* ReadablePageTests.swift */,
 				280CDDA5FE3338C0D809B6E7 /* SearchScreenGuardTests.swift */,
 				95719760FE0D4FECE37DAA55 /* ThanksgivingPricingTests.swift */,
@@ -520,6 +523,7 @@
 				3006AEE799E1A172A2393B41 /* PriceLabelGeometry.swift in Sources */,
 				101A454D225D6B82536CF77F /* PriceLayoutTests.swift in Sources */,
 				18E2665B667E3643E2B79045 /* PricingRound2Tests.swift in Sources */,
+				59D0120BFEA63B704DC1D571 /* PurchaseTests.swift in Sources */,
 				CD7EFDA9090E06F0A9BD84D5 /* ReadablePageTests.swift in Sources */,
 				C6D085C3CDECD130E5AC5979 /* SearchScreenGuardTests.swift in Sources */,
 				DBDCC56DC1DFCEBC77870665 /* ThanksgivingPricingTests.swift in Sources */,

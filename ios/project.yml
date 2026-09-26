@@ -5,6 +5,13 @@ options:
     iOS: "17.0"
   createIntermediateGroups: true
   generateEmptyDirectories: true
+  # The scheme's Test action gets the local StoreKit configuration too. XcodeGen writes one for the
+  # Run action only (`storeKitConfiguration`, on the App target), and without one on the Test
+  # action the test host starts outside Xcode's StoreKit test environment: an SKTestSession then
+  # loads no products and every PurchaseTests case fails. This adds it after each generation.
+  postGenCommand: >-
+    perl -0pi -e 's|(\n\s*</TestAction>)|\n      <StoreKitConfigurationFileReference\n         identifier = "../../App/Resources/Products.storekit">\n      </StoreKitConfigurationFileReference>$1|'
+    Cartworth.xcodeproj/xcshareddata/xcschemes/App.xcscheme
 
 settings:
   base:

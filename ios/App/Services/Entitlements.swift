@@ -22,7 +22,13 @@ final class Entitlements {
     var loadError: String?
     var purchasing = false
 
+    /// How `purchase` asks for a payment: StoreKit's sheet. Tests put the sheet's answers here
+    /// when a shopper backs out of it, which an SKTestSession cannot produce: its simulated
+    /// `userCancelled` arrives as `StoreKitError.unknown`.
+    @ObservationIgnored var paymentSheet: (StoreKit.Product) async throws -> StoreKit.Product.PurchaseResult = { try await $0.purchase() }
+
     private var updates: Task<Void, Never>?
+    private var expiryCheck: Task<Void, Never>?
 
     private init() {
         #if DEBUG
@@ -38,13 +44,16 @@ final class Entitlements {
 
     func product(_ plan: Plan) -> StoreKit.Product? { products.first { $0.id == plan.productId } }
 
+    /// The paywall calls this every time it opens, so its prices are the App Store's current ones
+    /// rather than whatever launch loaded. A failed reload keeps the products already on screen:
+    /// they are StoreKit's own last answer, and a purchase re-checks the price anyway.
     func load() async {
         do {
             let p = try await StoreKit.Product.products(for: Self.allProductIds)
             products = p.sorted { a, b in (Plan.allCases.firstIndex { $0.productId == a.id } ?? 0) < (Plan.allCases.firstIndex { $0.productId == b.id } ?? 0) }
             loadError = p.isEmpty ? "Subscriptions aren’t available right now." : nil
         } catch {
-            loadError = "Couldn’t reach the App Store. Check your connection and try again."
+            if products.isEmpty { loadError = "Couldn’t reach the App Store. Check your connection and try again." }
         }
         await refresh()
     }
@@ -52,12 +61,14 @@ final class Entitlements {
     func refresh() async {
         var pro = false
         var plan: Plan?
+        var expires: Date?
         for await result in Transaction.currentEntitlements {
             guard case .verified(let t) = result, t.revocationDate == nil else { continue }
             if let p = Plan.allCases.first(where: { $0.productId == t.productID }) {
                 if let exp = t.expirationDate, exp < Date() { continue }
                 pro = true
                 if plan != .lifetime { plan = p }
+                if let exp = t.expirationDate { expires = max(expires ?? exp, exp) }
             }
         }
         #if DEBUG
@@ -65,16 +76,33 @@ final class Entitlements {
         #endif
         isPro = pro
         activePlan = plan
+        checkAgain(at: plan == .lifetime ? nil : expires)
     }
 
-    enum PurchaseOutcome { case success, pending, cancelled, failed(String) }
+    /// A subscription that runs out — auto-renew turned off, or billing that never recovered —
+    /// makes no transaction, so nothing arrives on `Transaction.updates` to say so. Without a
+    /// check at the expiry date the app kept Pro for as long as it stayed running, which for an
+    /// iPhone app left suspended can be days. A renewal does arrive there, and its refresh moves
+    /// this check to the new date. The continuous clock keeps counting while the device sleeps.
+    private func checkAgain(at date: Date?) {
+        expiryCheck?.cancel()
+        expiryCheck = date.map { date in
+            Task { [weak self] in
+                try? await Task.sleep(until: .now + .seconds(date.timeIntervalSinceNow + 1), clock: .continuous)
+                guard !Task.isCancelled else { return }
+                await self?.refresh()
+            }
+        }
+    }
+
+    enum PurchaseOutcome: Equatable { case success, pending, cancelled, failed(String) }
 
     func purchase(_ plan: Plan) async -> PurchaseOutcome {
         guard let product = product(plan) else { return .failed(loadError ?? "That plan isn’t available right now.") }
         purchasing = true
         defer { purchasing = false }
         do {
-            switch try await product.purchase() {
+            switch try await paymentSheet(product) {
             case .success(let verification):
                 guard case .verified(let t) = verification else { return .failed("The App Store couldn’t verify that purchase.") }
                 await t.finish()
@@ -87,6 +115,11 @@ final class Entitlements {
             @unknown default:
                 return .cancelled
             }
+        } catch StoreKitError.userCancelled {
+            // StoreKit can report a cancel as this error (backing out of the Apple ID sign-in, for
+            // one) rather than as `.userCancelled`. It is still the shopper's choice, and the
+            // paywall used to print it as a failure.
+            return .cancelled
         } catch {
             return .failed(error.localizedDescription)
         }
