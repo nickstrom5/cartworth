@@ -71,12 +71,14 @@ Tax forms and bank validation are the slow part. Bank validation in particular d
 
 ## 4. 🔴 The cartworth.app domain and three live pages
 
-- [ ] Register and control **cartworth.app**
-- [ ] Serve it over **HTTPS with a valid certificate**
-- [ ] `https://cartworth.app/privacy` returns a real page, publicly, with no login and no JavaScript gate
-- [ ] `https://cartworth.app/terms` returns a real page
-- [ ] `https://cartworth.app/support` returns a real page
+- [x] Register and control **cartworth.app**
+- [x] Serve it over **HTTPS with a valid certificate**
+- [x] `https://cartworth.app/privacy` returns a real page, publicly, with no login and no JavaScript gate
+- [x] `https://cartworth.app/terms` returns a real page
+- [x] `https://cartworth.app/support` returns a real page
 - [ ] Each page renders correctly in Safari on an iPhone
+- [ ] Merge `fix-round-3` into `main` (pull request 1) before submitting: the site deploys from
+      `main`, and the live `/privacy` does not yet have the corrected disclosures from c0c1a6f
 
 **Why the HTTPS line is not boilerplate.** `.app` is one of the TLDs on the HSTS preload list. Browsers refuse plain HTTP for `.app` domains entirely. There is no "we will add TLS later" option; without a certificate the pages simply do not load.
 
@@ -87,7 +89,7 @@ Tax forms and bank validation are the slow part. Bank validation in particular d
 
 A link to a 404 next to a purchase button is a guideline 3.1.2 rejection, and a Privacy Policy URL is a required field on the App Store Connect version page that Apple actually checks. **This is the item most likely to be treated as a formality and then to cause the rejection.**
 
-**Note the website's current state.** The site in `/Users/nicksoderstrom/Developer/claudecode/basket/public` is still branded "Basket" (`<title>Basket — grocery price checker</title>`) and `server.js` serves no `/privacy`, `/terms` or `/support` route. All three pages do not exist yet. The rebrand to Cartworth also has to happen before the marketing URL in the listing points anywhere sensible.
+**The website's current state (checked 27 Sep 2026).** cartworth.app is live on Cloudflare (the `cartworth` Worker, built from `main`), branded Cartworth, over HTTPS with HSTS. `/privacy`, `/terms` and `/support` each return 200 without `.html`.
 
 ### What `/privacy` must actually say
 
@@ -182,14 +184,14 @@ Field-by-field values are in `APP_STORE_LISTING.md` section 9. Use them verbatim
 
 ## 8. 🔴 A real app icon
 
-- [ ] Design an actual icon
-- [ ] Export the light 1024x1024 PNG
-- [ ] Export the dark variant
-- [ ] Export the tinted variant as **grayscale**
-- [ ] Replace the three files in `ios/App/Resources/Assets.xcassets/AppIcon.appiconset/`
+- [x] Design an actual icon
+- [x] Export the light 1024x1024 PNG
+- [x] Export the dark variant
+- [x] Export the tinted variant as **grayscale**
+- [x] Replace the three files in `ios/App/Resources/Assets.xcassets/AppIcon.appiconset/`
 - [ ] Confirm on a real device in light mode, dark mode and tinted mode
 
-**Verified current state: the icons are placeholders.** All three files exist at the right size and format (1024x1024, 8-bit RGB PNG, no alpha channel), and `Contents.json` is correctly structured for the light/dark/tinted set. But the artwork is nothing: `AppIcon-1024.png` is a **flat solid green square** with no mark on it, matching the accent color, and the dark and tinted files are the same idea. There is no logo, no cart, no letterform, nothing.
+**Current state (checked 27 Sep 2026): a real icon.** A white basket holding three bars, the last one yellow, on green; the dark variant is the same mark in green and yellow on near-black; the tinted variant is in grays. All three are 1024x1024 RGB PNGs with no alpha channel, and `Contents.json` names them for the light, dark and tinted appearances. What is left is looking at it on a device.
 
 **What breaks if skipped.** A solid color square will pass technical validation, so nothing will stop you shipping it. What it will do is cost you every install where the icon is the only thing a browsing user sees, and it invites a rejection for a generic or incomplete app under guideline 4.0 or 2.3.8. It is also the single strongest signal to a reviewer that the app is unfinished.
 
@@ -371,15 +373,15 @@ I am not going to tell you this is fine, because I do not know that it is. What 
 
 ## The short version
 
-If you only read one thing: **item 2 blocks everything that matters and is the slowest to clear, item 8 is embarrassing and currently a flat green square, item 4 is a 404 waiting to become a rejection, and item 13 is the one that could take the app down after it ships.**
+If you only read one thing: **item 2 blocks everything that matters and is the slowest to clear, and item 13 is the one that could take the app down after it ships.** Items 4 and 8 are done apart from checks on a real iPhone, and merging `fix-round-3` so the live privacy page is current (27 Sep 2026).
 
 Hard blockers in order of how long they take to clear, not how important they are:
 
 1. Paid Applications agreement, banking and tax (item 2): days to weeks, external dependencies
 2. Organization enrollment, if you want an entity name as the seller (item 1): weeks
 3. Trademark clearance (item 3): days to weeks if you use an attorney
-4. The domain and three live pages (item 4): days, and the site still says "Basket"
-5. A real app icon (item 8): days
+4. The domain and three live pages (item 4): done; merge `fix-round-3` and check the pages in Safari on an iPhone
+5. A real app icon (item 8): done; check it on a real device
 6. Sandbox purchase testing (item 9): hours, but gated behind item 2
 7. Screenshots (item 10): hours, mostly automated already
 8. Everything else: hours

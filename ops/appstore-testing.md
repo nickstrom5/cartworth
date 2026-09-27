@@ -23,18 +23,23 @@ are `marketing/APP_STORE_LISTING.md`.
 ## On the Mac, in this order
 
 ### 1. Build and the full test suite (30 min)
-- [ ] Pull `fix-round-3`. `project.yml` gained a `postGenCommand` this round, which gives the
+- [x] Pull `fix-round-3`. `project.yml` gained a `postGenCommand` this round, which gives the
       scheme's Test action the StoreKit configuration; the committed project already has it. If
       you change `project.yml`, run `xcodegen`.
-- [ ] Cmd+U on an iPhone 16 Pro simulator, then an iPad Pro 13" simulator. The UI-hosted suites
+- [x] Cmd+U on an iPhone 16 Pro simulator, then an iPad Pro 13" simulator. The UI-hosted suites
       (`HostedScreenTests`, `PriceLayoutTests`, `SearchScreenGuardTests`, `ReadablePageTests`,
       `TripPlanSavingsTests`, `ChartTests`, `InstacartProvenanceTests`, `PurchaseTests`) and
       `AppUITests` only run here. Every one must pass. Pick iOS 27 simulators by id
       (`xcrun simctl list devices`): the iOS 26.5 iPad Pro 13" on the build Mac never rotates
       under XCUITest, status bar and keyboard included, so both `IPadLandscapeTests` fail there;
       on the iOS 27.0 iPad Pro 13" both pass.
-- [ ] Product > Archive with the Release configuration succeeds with no warnings about missing
-      usage strings or privacy manifest entries.
+      Done 27 Sep 2026 with `xcodebuild test` on the iOS 27.0 iPhone 18 Pro and iPad Pro 13":
+      `AppTests` 396 of 396 on each; `DuoTests`, `FlowTests` and `IPadLandscapeTests` pass on each
+      (the landscape pair skip on the phone by design). `SubmissionSet` and `StoreShots` are the
+      screenshot captures for the listing, run when the screenshots are taken, not as checks.
+- [x] Product > Archive with the Release configuration succeeds with no warnings about missing
+      usage strings or privacy manifest entries. Done 27 Sep 2026: no warnings; the app holds
+      `PrivacyInfo.xcprivacy` and no `.storekit` file; version 1.0.0 (1).
 
 ### 2. StoreKit with the local configuration (10 min by hand)
 `PurchaseTests` runs this step in the Cmd+U above: an `SKTestSession` on `Products.storekit`,
