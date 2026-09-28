@@ -339,7 +339,8 @@ struct DealCard: View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topLeading) {
                 Rectangle().fill(Color.white).aspectRatio(4 / 3, contentMode: .fit)
-                if let url = deal.imageURL {
+                // Screenshot capture shows the tag placeholder instead of the ad clipping (`QAShot`).
+                if !QAShot.hideRemoteImages, let url = deal.imageURL {
                     AsyncImage(url: url) { img in
                         img.resizable().scaledToFit().padding(6)
                     } placeholder: {
@@ -479,7 +480,7 @@ struct DealMiniCard: View {
 
     @ViewBuilder
     private var thumb: some View {
-        if let url = deal.imageURL {
+        if !QAShot.hideRemoteImages, let url = deal.imageURL {
             AsyncImage(url: url) { img in img.resizable().scaledToFit() } placeholder: { Color.clear }
                 .frame(width: 52, height: 52)
                 .background(Color.white)
