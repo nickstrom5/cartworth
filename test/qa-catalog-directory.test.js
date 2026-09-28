@@ -186,7 +186,7 @@ function seedZip(zip, { skip = [], shops = SHOPS[zip] || {}, flyers = FLYERS[zip
     if (value !== undefined) cacheSet(key, value, ttl);
   };
   put(`geo:zip:${zip}`, GEO[zip], 365 * DAY);
-  put(`flipp:flyers:${zip}`, flyers.map(([merchant, categories], i) => ({
+  put(`flipp:v2:flyers:${zip}`, flyers.map(([merchant, categories], i) => ({
     id: 9000 + i, merchant, storeId: null, name: 'Weekly Ad', validFrom: '2026-09-17T00:00:00-04:00', validTo: '2026-09-29T23:59:59-04:00', categories,
   })), 3 * HOUR);
   let i = 0;
@@ -468,7 +468,7 @@ async function search(storeId, qs, { fresh = true } = {}) {
   }
 }
 
-test('DEFECT C1: /api/search at a 10-mile radius does not price Costco’s warehouse 13.2 miles away', { todo: 'handoff H1 (v2) — src/search.js must apply outsideRadius; remove this todo when it lands' }, async () => {
+test('DEFECT C1: /api/search at a 10-mile radius does not price Costco’s warehouse 13.2 miles away', async () => {
   seedZip('53211');
   const r = await search('costco', 'zip=53211&miles=10');
   assert.equal(r.items.length, 0, `${r.items.length} Costco prices at 13.2 mi for a 10-mile radius`);
@@ -483,7 +483,7 @@ test('control: the same search at 25 miles prices Costco', async () => {
   assert.equal(r.location.distance, 13.2);
 });
 
-test('DEFECT C2c: a Walmart search result carries no Antioch CA address and no 1,801-mile distance', { todo: 'handoff H2 (v2) — src/adapters/instacart.js publicLocation must drop the canonical storefront; remove this todo when it lands' }, async () => {
+test('DEFECT C2c: a Walmart search result carries no Antioch CA address and no 1,801-mile distance', async () => {
   seedZip('53211');
   const r = await search('walmart', 'zip=53211&miles=25');
   assert.equal(r.status, 'ok', r.error || r.message);
@@ -494,7 +494,7 @@ test('DEFECT C2c: a Walmart search result carries no Antioch CA address and no 1
   assert.ok(!/Antioch|2697/.test(JSON.stringify(r.location)), JSON.stringify(r.location));
 });
 
-test('DEFECT C2d: a chain that is not chain-wide is never priced from its canonical storefront (Hy-Vee, Lincoln NE, for Milwaukee)', { todo: 'handoff H2 (v2) — src/adapters/instacart.js search() must refuse a canonical shop unless cfg.chainWide; remove this todo when it lands' }, async () => {
+test('DEFECT C2d: a chain that is not chain-wide is never priced from its canonical storefront (Hy-Vee, Lincoln NE, for Milwaukee)', async () => {
   seedZip('53211');
   const r = await search('hyvee', 'zip=53211&miles=25');
   assert.equal(r.items.length, 0, `${r.items.length} Hy-Vee prices from a store 478.8 mi away, labelled "national"`);
@@ -520,7 +520,7 @@ const WALMART_CACHED_V6 = {
   location: { name: 'Walmart - 2697', address: '4893 Lone Tree Way, Antioch, CA 94531', distance: 1801.1, serviceType: 'delivery', priceNote: 'No markups', id: '90203' },
 };
 
-test('DEFECT C2e: a Walmart answer cached before the fix is neither served with Antioch attached nor dropped as "1801.1 mi away"', { todo: 'handoffs H1 (v2) + H2 (v2) — needs the src/search.js CACHE_VERSION bump that ships with H2; remove this todo when they land' }, async () => {
+test('DEFECT C2e: a Walmart answer cached before the fix is neither served with Antioch attached nor dropped as "1801.1 mi away"', async () => {
   seedZip('53211');
   const key = 'search:v6:walmart:instacart:53211:butter';
   invalidate(key);
@@ -530,4 +530,16 @@ test('DEFECT C2e: a Walmart answer cached before the fix is neither served with 
   assert.equal(r.status, 'ok', r.error || r.message);
   assert.ok(r.items.length > 0 && r.items.every((p) => p.priceBasis === 'national'), 'Walmart’s chain-wide prices are still priced, as national');
   assert.ok(!/Antioch|Lone Tree|1801/.test(JSON.stringify(r.location)), `served with the canonical storefront attached: ${JSON.stringify(r.location)}`);
+});
+
+// DEFECT: a geocode made by the Nominatim fallback before the fix carries the state's NAME and is
+// cached for a year. Read as-is it matched no chain's state list, so Metro Market — 0.6 mi away,
+// fully priced, no circular this week — was never asked.
+test('DEFECT: a cached geocode that names its state ("Wisconsin") still finds the in-state chains', async () => {
+  seedZip('53211');
+  invalidate('geo:zip:53211');
+  cacheSet('geo:zip:53211', { ...GEO[53211], state: 'Wisconsin' }, 365 * DAY);
+  invalidate('dir:');
+  const c = byId(await directory('53211', { maxMiles: 25, fresh: true }));
+  assert.ok([STATUS.shelf, STATUS.online].includes(c.metromarket?.status), `Metro Market: ${c.metromarket?.status}`);
 });

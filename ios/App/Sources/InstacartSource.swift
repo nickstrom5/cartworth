@@ -14,6 +14,7 @@ actor InstacartSource {
         var base: String
         var slug: String
         var guest: GuestMode
+        var chainWide: Bool = false
         var prefer: [String] = ["instore", "pickup", "delivery"]
     }
 
@@ -257,6 +258,9 @@ actor InstacartSource {
     func search(_ cfg: Config, retailerId: String, query: String, place: UserPlace, limit: Int = 36) async throws -> (items: [Product], location: StoreLocation?, message: String?) {
         let shop = try await resolveShop(cfg, place: place)
         if shop.none { return ([], nil, "No store nearby") }
+        // A canonical storefront is one store somewhere else in the country. Only a chain that
+        // prices the same everywhere may be priced from it. Same rule as src/adapters/instacart.js.
+        if shop.canonical && !cfg.chainWide { return ([], nil, "No store nearby") }
         let s = try await session(cfg, zip: place.zip)
         let zone = s.zone ?? "974"
         let vars: [String: Any] = [
@@ -303,9 +307,15 @@ actor InstacartSource {
                 items.append(p)
             }
         }
+        // A canonical storefront's address and distance belong to that storefront (Walmart #2697,
+        // Antioch CA, 1,801 mi from Milwaukee), not to any store the shopper could visit, so they
+        // are withheld; the 'national' basis says what the price is. Same as publicLocation in
+        // src/adapters/instacart.js.
+        let local = !shop.canonical
         let location = StoreLocation(
-            retailerId: retailerId, name: shop.label ?? shop.name, address: shop.address, latitude: shop.latitude, longitude: shop.longitude,
-            distanceMiles: shop.distance, shopId: shop.shopId, serviceType: shop.serviceType,
+            retailerId: retailerId, name: local ? (shop.label ?? shop.name) : shop.name, address: local ? shop.address : nil,
+            latitude: local ? shop.latitude : nil, longitude: local ? shop.longitude : nil,
+            distanceMiles: local ? shop.distance : nil, shopId: shop.shopId, serviceType: shop.serviceType,
             priceNote: shop.serviceType == "instore" ? "In-store shelf prices" : shop.priceNote, storeCode: nil, retailerNumericId: shop.retailerId, locationId: shop.locationId
         )
         return (items, location, nil)
@@ -396,7 +406,13 @@ actor InstacartSource {
             sponsored: sponsored,
             rank: rank,
             total: total,
-            priceBasis: basis
+            priceBasis: basis,
+            // Instacart's own unit line, which ProductFactory.listingPack reads ("4 x 14.5 oz"). It was
+            // never passed before, so the phone ignored packs the web honoured.
+            packText: card["pricingUnitString"].string,
+            // Instacart's own unit price ("$0.50/oz"), a check on the stated size
+            // (ProductFactory.unitLineConflict). Not for items sold by the pound.
+            listedUnit: soldBy == .lb ? nil : (ProductFactory.listedUnit(card["pricePerUnitString"].string) ?? ProductFactory.listedUnit(pv["itemDetails"]["pricePerUnitString"].string) ?? ProductFactory.listedUnit(card["pricingUnitString"].string))
         ))
     }
 }

@@ -26,6 +26,9 @@ struct ImplausiblePrice: Codable, Hashable {
     /// `Compare.flagImplausible`), rather than past the hard 1/30 floor. Optional so products
     /// persisted before it existed still decode.
     var unconfirmed: Bool? = nil
+    /// True when a package far larger than typical is also far cheaper per unit: a case size on a
+    /// single piece (see `Compare.flagSizeOutliers`). Optional so older saved products decode.
+    var sizeOutlier: Bool? = nil
 }
 
 enum PriceBasis: String, Codable, Hashable {
@@ -208,6 +211,11 @@ struct Deal: Identifiable, Codable, Hashable {
         if price == nil && story == nil && priceText.isEmpty { s -= 30 }
         return s
     }
+
+    /// A weekly-ad price whose terms Flipp has not sent yet: the flyer list gives "2/$7" as $7.00
+    /// and "$3.99/lb" as $3.99. Labelled, sorted last and never notified until enriched. Mirrors
+    /// termsPending in public/js/views/sales.js.
+    var termsPending: Bool { source == "flipp" && !enriched && price != nil }
 }
 
 struct Flyer: Identifiable, Codable, Hashable {

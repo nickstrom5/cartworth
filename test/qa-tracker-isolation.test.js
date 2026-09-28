@@ -65,6 +65,8 @@ function capture(world, { env = {}, args = [] } = {}) {
   );
 }
 
+const HAS_LSOF = fs.existsSync('/usr/sbin/lsof');
+
 function assertSentinelUntouched(world) {
   assert.equal(md5(world.sentinel), world.before, 'the sentinel data/basket.db changed');
   for (const side of ['-wal', '-shm', '-journal']) assert.equal(fs.existsSync(world.sentinel + side), false, `data/basket.db${side} appeared: something opened the sentinel`);
@@ -80,12 +82,16 @@ test('a capture with no BASKET_DATA_DIR, and an inherited BASKET_DB aimed at the
     // 2) has already done the damage.
     assertSentinelUntouched(w);
     assert.equal(r.status, 0, `capture exited ${r.status}\n${r.stdout}\n${r.stderr}`);
-    const open = fs.readFileSync(w.lsofOut, 'utf8');
-    assert.ok(!open.startsWith('LSOF FAILED'), open);
-    assert.ok(!open.includes(w.sentinel), `the capture process had ${w.sentinel} open:\n${open.split('\n').filter((l) => l.includes('.db')).join('\n')}`);
     const dataDir = path.join(w.home, 'Library', 'Application Support', 'Cartworth', 'tracker');
-    assert.ok(open.includes(path.join(dataDir, 'product-cache.db')), 'the product cache was opened in the tracker data dir');
-    assert.ok(open.includes(path.join(dataDir, 'tracker.db')), 'tracker.db was opened in the tracker data dir');
+    // The open-file listing needs macOS's /usr/sbin/lsof (the tracker only runs on the Mac). Where
+    // it is missing (Linux CI, cloud sessions) the sentinel and run-record checks still hold.
+    if (HAS_LSOF) {
+      const open = fs.readFileSync(w.lsofOut, 'utf8');
+      assert.ok(!open.startsWith('LSOF FAILED'), open);
+      assert.ok(!open.includes(w.sentinel), `the capture process had ${w.sentinel} open:\n${open.split('\n').filter((l) => l.includes('.db')).join('\n')}`);
+      assert.ok(open.includes(path.join(dataDir, 'product-cache.db')), 'the product cache was opened in the tracker data dir');
+      assert.ok(open.includes(path.join(dataDir, 'tracker.db')), 'tracker.db was opened in the tracker data dir');
+    }
     const t = new DatabaseSync(path.join(dataDir, 'tracker.db'), { readOnly: true });
     const runs = t.prepare('SELECT status FROM runs').all();
     t.close();

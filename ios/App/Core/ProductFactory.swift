@@ -30,6 +30,13 @@ struct ProductInput {
     /// Instacart's own unit line ("pricingUnitString"): "4 x 14.5 oz" when the price buys four of
     /// the stated size. See `ProductFactory.listingPack`. InstacartSource must pass it through.
     var packText: String? = nil
+    /// Instacart's own unit price ("$0.50/oz") as (price, unit). See `ProductFactory.unitLineConflict`.
+    var listedUnit: ListedUnit? = nil
+}
+
+struct ListedUnit: Hashable {
+    var price: Double
+    var unit: String
 }
 
 enum ProductFactory {
@@ -154,15 +161,33 @@ enum ProductFactory {
         "l": "l|liters?|litres?", "ml": "ml",
     ]
 
+    private static let slugPerLbRx = Rx("-per-(?:lb|lbs|pound)(?=$|[-/?#])")
+    static func slugPerLbConflict(_ size: ParsedSize?, url: URL?, soldByLb: Bool) -> SizeConflict? {
+        guard !soldByLb, let size, size.dim == .weight, !size.perWeight, let b = size.base, b > 0 else { return nil }
+        guard slugPerLbRx.test(slugOf(url)), abs(b - 16) > 0.32 else { return nil }
+        return SizeConflict(text: Units.format(size), name: "priced per lb")
+    }
+
     /// True when the retailer's URL slug spells out this size (".../18848374-sweet-potatoes-10-lbs-10-lb"
     /// states 10 lb and never 5 lb). Port of `slugStates` in src/normalize.js.
-    static func slugStates(_ url: URL?, _ size: ParsedSize?) -> Bool {
+    static func slugStates(_ url: URL?, _ size: ParsedSize?, beforeEnd: Bool = false) -> Bool {
         guard let size, let units = slugUnits[size.unit], let amount = size.amount, amount > 0, url != nil else { return false }
         // A whole amount may carry a zero decimal: Plugra's slug is "...-extra-creamy-8-0-oz".
         let whole = ((amount * 100).rounded() / 100).truncatingRemainder(dividingBy: 1) == 0
         let a = Units.trimNum(amount).replacingOccurrences(of: ".", with: "[-.]?") + (whole ? "(?:[-.]0{1,2})?" : "")
-        return Rx("(?<!\\d)(?<!\\d[-.])\(a)-?(?:\(units))(?=$|[-/])").test(slugOf(url))
+        var slug = slugOf(url)
+        while slug.hasSuffix("/") { slug.removeLast() }
+        let rx = Rx("(?<!\\d)(?<!\\d[-.])\(a)-?(?:\(units))(?=$|[-/])")
+        if !beforeEnd { return rx.test(slug) }
+        let ns = slug as NSString
+        return rx.re.matches(in: slug, range: NSRange(location: 0, length: ns.length)).contains { $0.range.location + $0.range.length < ns.length }
     }
+
+    /// Does the slug confirm this size independently of the stated size? Instacart appends the stated
+    /// size to every slug, so a size found only at the very END is the stated size repeating itself:
+    /// King Soopers' "2% Reduced Fat Milk Half Gallon", stated "2 gal", slug "...-reduced-fat-milk-2-gal",
+    /// made Denver's best milk $1.50 a gallon. Port of `slugConfirms` in src/normalize.js.
+    static func slugConfirms(_ url: URL?, _ size: ParsedSize?) -> Bool { slugStates(url, size, beforeEnd: true) }
 
     /// Butter sold by the stick, with the stick count as its only stated size. Jewel's cheapest
     /// butter in the owner's own store check, "Lucerne Salted Butter" at $4.99 stated "4 each", had
@@ -205,6 +230,28 @@ enum ProductFactory {
     /// cases and a whole-package size in none — but we still do not multiply, because a wrong
     /// multiplication is a price too cheap, and it wins. The disagreement is recorded, which
     /// withholds the unit price. Port of `countOnlyConflict` in src/normalize.js.
+    /// A package price that is really a price PER POUND: a weight of 1.5 lb or more whose own
+    /// Instacart line says the price buys one pound (+/-3%). Piggly Wiggly's "10 lb" of ground chuck at
+    /// $7.99, line "$0.50/oz". Nothing wider: the line is often the regular price on a sale, one unit
+    /// of a warehouse pack, or wrong the other way. Port of `unitLineConflict` in src/normalize.js,
+    /// which records the two fresh measurements (5,834 and 3,782 listings) behind the shape.
+    private static let listedWeight: [String: Double] = ["oz": 1, "lb": 16, "lbs": 16]
+    private static let listedUnitRx = Rx("^\\s*\\$\\s*(\\d+(?:\\.\\d+)?)\\s*(?:/\\s*|\\s+)(fl\\.?\\s*oz|oz|lbs?|gal|qt|l|ct|each|ea)\\.?\\s*$")
+
+    static func listedUnit(_ s: String?) -> ListedUnit? {
+        guard let s, let m = listedUnitRx.match(s), let v = Double(m[1] ?? ""), let u = m[2] else { return nil }
+        let unit = u.lowercased().replacingOccurrences(of: "fl. oz", with: "fl oz").replacingOccurrences(of: "  ", with: " ")
+        return ListedUnit(price: v, unit: unit)
+    }
+
+    static func unitLineConflict(_ size: ParsedSize?, price: Double?, listed: ListedUnit?) -> SizeConflict? {
+        guard let listed, let per = listedWeight[listed.unit], listed.price > 0, let price, price > 0,
+              let size, !size.perWeight, size.dim == .weight, let b = size.base, b >= 24 else { return nil }
+        let implied = (price / listed.price) * per
+        guard abs(implied - 16) <= 16 * 0.03 else { return nil }
+        return SizeConflict(text: Units.format(size), name: "1 lb (the listing's own $\(listed.price)/\(listed.unit))")
+    }
+
     static func countOnlyConflict(_ size: ParsedSize?, chosen: ParsedSize?, textSize: ParsedSize?, nameSize: ParsedSize?) -> SizeConflict? {
         guard let size, let t = textSize, let chosen, chosen == t, let n = nameSize, n.dim == .count else { return nil }
         guard t.count <= 1, !t.perWeight, t.dim == .weight || t.dim == .volume, let pieces = n.base, pieces >= 2, let tb = t.base, tb > 0 else { return nil }
@@ -309,14 +356,17 @@ enum ProductFactory {
         var sizeConflict: SizeConflict?
         if let t = textSize, let n = nameSize, chosen == t,
            !n.perWeight, !n.range, !t.perWeight, t.dim == n.dim, !packedFromUrl,
-           !(slugStates(f.url, t) && !slugStates(f.url, n)),
+           !(slugConfirms(f.url, t) && !slugStates(f.url, n)),
            let tb = t.base, let nb = n.base, tb > 0, nb > 0,
            max(tb, nb) / min(tb, nb) >= 1.5 {
             sizeConflict = SizeConflict(text: Units.format(t), name: Units.format(n))
         } else if !soldByLb {
             if let c = listed?.conflict { sizeConflict = c }
-            else if size?.packFromListing != true { sizeConflict = countOnlyConflict(size, chosen: chosen, textSize: textSize, nameSize: nameSize) }
+            else if size?.packFromListing != true { sizeConflict = unitLineConflict(size, price: f.price, listed: f.listedUnit) ?? countOnlyConflict(size, chosen: chosen, textSize: textSize, nameSize: nameSize) }
         }
+        // The URL says "per-lb" but the stated size is a fixed weight: Smart & Final's "Table Carrots",
+        // stated 25 lb at $2.19, slug "...-bulk-carrots-per-lb", was $0.09/lb. Port of slugPerLbConflict.
+        if let c = slugPerLbConflict(size, url: f.url, soldByLb: soldByLb) { sizeConflict = c }
         // Where the size behind the unit price came from; see `Product.sizeSource`.
         let sizeSource: String? = {
             if soldByLb { return "perLb" }

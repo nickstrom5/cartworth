@@ -111,14 +111,14 @@ struct SearchView: View {
 
     private var idleContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            if let occasion = Seasonal.upcoming(within: 21).first {
+            ForEach(Seasonal.featured()) { occasion in
                 NavigationLink {
                     OccasionView(occasion: occasion)
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: occasion.symbol).font(.title2).foregroundStyle(Color.accentColor)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("\(occasion.name) \(occasion.daysAway == 0 ? "is today" : "in \(occasion.daysAway) days")")
+                            Text("\(occasion.name) \(occasion.whenText)")
                                 .font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
                             Text(occasion.blurb).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                         }
@@ -431,6 +431,7 @@ struct SearchView: View {
         ctx.insert(w)
         try? ctx.save()
         Task { await WatchService.refresh(w, fresh: false) }
+        Task { _ = await BackgroundRefresh.requestPermission() }  // see TrackingView.addWatch
     }
 }
 
@@ -438,6 +439,7 @@ struct SearchView: View {
 
 struct SkeletonRow: View {
     @State private var shimmer = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         HStack(spacing: 10) {
             RoundedRectangle(cornerRadius: 8).frame(width: 54, height: 54)
@@ -450,7 +452,7 @@ struct SkeletonRow: View {
         }
         .foregroundStyle(Color.secondary.opacity(shimmer ? 0.10 : 0.20))
         .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: shimmer)
-        .onAppear { shimmer = true }
+        .onAppear { if !reduceMotion { shimmer = true } }  // a pulsing placeholder is motion; Reduce Motion keeps it still
         .padding(.vertical, 6)
     }
 }
@@ -488,7 +490,10 @@ struct StoreStatusStrip: View {
                     StoreDot(storeId: r.retailerId)
                     Text(name).fontWeight(.semibold)
                     Text("\(r.items.count)").foregroundStyle(.secondary)
-                    if r.stale != nil { Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange) }
+                    if r.stale != nil {
+                        Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange)
+                            .accessibilityLabel("saved prices; the store did not answer just now")
+                    }
                 }
             }
         case .empty:
@@ -508,6 +513,7 @@ struct StoreStatusStrip: View {
             }
             .buttonStyle(.plain)
             .help(msg)
+            .accessibilityHint("\(msg). Double-tap to try again.")
         }
     }
 
@@ -586,8 +592,12 @@ struct HeroBestCard: View {
                     if row.est { Badge(text: "est.", kind: .neutral) }
                     if row.product.priceBasis != .shelf { Badge(text: PriceProvenance.label(row.product.priceBasis), kind: .outline) }
                 }
-                Text("\(row.product.name)\(row.product.size.isEmpty ? "" : " · \(row.product.size)") · \(Money.full(Compare.effectivePrice(row.product, prefs)))\(row.product.soldBy == .lb ? "/lb" : "")")
+                // The name may be shortened; the package price may not. On one line with a lineLimit, a
+                // long name at a large text size cut the price itself ("… · $1…").
+                Text(row.product.name)
                     .font(.footnote).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.leading)
+                Text("\(row.product.size.isEmpty ? "" : "\(row.product.size) · ")\(Money.full(Compare.effectivePrice(row.product, prefs)))\(row.product.soldBy == .lb ? "/lb" : "")")
+                    .font(.footnote).foregroundStyle(.secondary).unbreakablePrice()
                 if let line = savingsLine {
                     Text(line).font(.caption).foregroundStyle(.tertiary)
                 }

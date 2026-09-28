@@ -6,6 +6,7 @@ import { useStore, setState, toast } from '../store.js';
 import { addToList, updateListItem, removeListItem, clearDoneItems, optimizeList, runSearch } from '../actions.js';
 import { money2, plural, ago, unitLabel, BASIS_LABEL, BASIS_TITLE, linkDestination } from '../format.js';
 import { formatSize } from '/shared/units.js';
+import { planSavingsClaim } from '/shared/compare.js';
 
 export function ListView() {
   const items = useStore((s) => s.list);
@@ -159,7 +160,7 @@ function PlanView({ plan, onRefresh, planning }) {
           <div class="row wrap small ink2" style=${{ gap: 6 }}>${(o.key === 'every' ? o.plan.stores : o.plan.stores).map((s) => html`<${StoreTag} key=${s} id=${s} />`)}</div>
           ${o.plan.missing > 0 && html`<div class="small" style=${{ color: 'var(--warn-ink)' }}>${plural(o.plan.missing, 'item')} not found</div>`}
           ${basisCaveat(o.plan.stores, storeBasis) && html`<div class="small ink2" title=${BASIS_TITLE[basisCaveat(o.plan.stores, storeBasis)]}>incl. ${BASIS_LABEL[basisCaveat(o.plan.stores, storeBasis)]}s</div>`}
-          ${o.key !== 'single' && single && o.plan.missing <= single.missing && single.total - o.plan.total > 0.005 && html`<div class="small" style=${{ color: 'var(--good-ink)', fontWeight: 600 }}>Saves ${money2(single.total - o.plan.total)} vs one store</div>`}
+          ${o.key !== 'single' && single && o.plan.missing <= single.missing && planVsSingle(o.plan, single)}
         </button>`,
       )}
     </div>
@@ -180,7 +181,7 @@ function PlanView({ plan, onRefresh, planning }) {
                   <${ProductImage} src=${c.product.image} size=${34} />
                   <div class="grow">
                     <div style=${{ fontWeight: 600 }}>${i.qty > 1 ? `${i.qty} × ` : ''}${i.text}</div>
-                    <div class="muted small">${c.product.url ? html`<a href=${c.product.url} target="_blank" rel="noopener noreferrer" title=${linkDestination(c.product.url, storeInfo(storeId))?.text}>${c.product.name}</a>` : c.product.name}${c.product.size ? ` · ${c.product.size}` : ''} · ${money2(c.product.price)}${c.product.soldBy === 'lb' ? '/lb' : ''}${c.product.onSale ? ' · on sale' : ''}${c.product.priceBasis && c.product.priceBasis !== 'shelf' ? html` · <span title=${BASIS_TITLE[c.product.priceBasis]}>${BASIS_LABEL[c.product.priceBasis]}</span>` : ''}</div>
+                    <div class="muted small">${c.product.url ? html`<a href=${c.product.url} target="_blank" rel="noopener noreferrer" title=${linkDestination(c.product.url, storeInfo(storeId))?.text}>${c.product.name}</a>` : c.product.name}${c.product.size ? ` · ${c.product.size}` : ''} · ${money2(c.product.price)}${c.product.soldBy === 'lb' ? '/lb' : ''}${c.product.onSale ? ' · on sale' : ''}${c.product.priceBasis ? html` · <span title=${BASIS_TITLE[c.product.priceBasis]}>${BASIS_LABEL[c.product.priceBasis] || BASIS_LABEL.online}</span>` : ''}</div>
                   </div>
                   <div class="num" style=${{ fontWeight: 650, textAlign: 'right' }}>
                     ${money2(c.cost)}${c.est ? html`<span class="muted small"> est.</span>` : ''}
@@ -288,4 +289,18 @@ function refText(i) {
   if (i.dim === 'weight') return i.ref.base >= 16 && Number.isInteger(i.ref.base / 4) ? `${i.ref.base / 16} lb` : `${+i.ref.base.toFixed(1)} oz`;
   if (i.dim === 'count') return i.ref.base === 12 ? '1 dozen' : `${+i.ref.base.toFixed(0)} ct`;
   return formatSize(s);
+}
+
+/**
+ * The line under a multi-store plan, against the cheapest single store. The words come from
+ * shared/compare.js planSavingsClaim, the same rule the phone uses (TripPlanner.savingsClaim): a
+ * dollar figure only when every line of both plans is a shelf price, otherwise whether it is
+ * cheaper even at the far edge of each total's range. A total built from Instacart listings is
+ * not a promise of what the till will say, so it does not get to promise a saving to the cent.
+ */
+export function planVsSingle(p, single) {
+  const c = planSavingsClaim(p, single);
+  if (!c) return null;
+  if (c.kind === 'exact') return html`<div class="small" style=${{ color: 'var(--good-ink)', fontWeight: 600 }}>Saves ${money2(c.amount)} vs one store</div>`;
+  return html`<div class="small ink2">${c.text[0].toUpperCase() + c.text.slice(1)} (vs one store)</div>`;
 }

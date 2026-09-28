@@ -38,7 +38,7 @@ export function Notice({ kind = 'info', icon = 'info', children }) {
 export function Empty({ icon = 'search', title, children }) {
   return html`<div class="empty">
     <div style=${{ color: 'var(--muted)' }}><${Icon} name=${icon} size=${28} /></div>
-    ${title && html`<h3>${title}</h3>`}
+    ${title && html`<h2 class="empty-title">${title}</h2>`}
     <p>${children}</p>
   </div>`;
 }

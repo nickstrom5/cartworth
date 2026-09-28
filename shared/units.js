@@ -143,6 +143,27 @@ const MULTI_RE_2 = new RegExp(`(?<![\\d.])(\\d+)\\s*(?:pk\\.?|pack|ct\\.?|count)
  * spelled-out "N Pack"/"N Count" titles state the whole box (see splitNameSize in
  * src/adapters/wholefoods.js).
  */
+/**
+ * A COUNT AFTER a weight, written "9ct" or "48 Count" with no hyphen, is as ambiguous as a count
+ * before it. Measured over every captured name of the form "M oz, N count" (153, round 3):
+ *   - "N-count" / "N-pack" with a hyphen is Costco's and Sam's multipack spelling, and every one is
+ *     N units of M ("Kerrygold Pure Irish Butter, Salted, 8 oz, 4-count").
+ *   - "N pack" / "N pk" count packages, as COUNT_WORD_FIRST_RE's note found.
+ *   - "N ct" / "N count" on a WEIGHT splits: "Tillamook Farmstyle Medium Cheddar Cheese Slices,
+ *     8oz, 9ct" is nine slices in an 8 oz pack (stated 8 oz, $5.49) and "Ferrero Rocher ..., 21.2 oz,
+ *     48 Count" is 48 chocolates in 21.2 oz; read as packs they were 9x and 48x too cheap, and the
+ *     Tillamook slices took Chicago's cheddar headline at $1.22/lb in the round-3 price check.
+ *     "Tillamook ... Snack Portions, 0.75oz, 10ct", "Chobani Greek Yogurt Cups, 5.3 oz, 12 Count" and
+ *     "Stonyfield ... Yogurt Pouches, 3.5 oz., 4 Ct" really are N of M, and each says so with a plural
+ *     container word in the name (CONTAINER_IN_NAME_RE, applied by sizeFromName).
+ * So such a weight is read as the package, the reading that cannot be too cheap, and carries
+ * `countAfter` so that a container word in the name can turn it back into the pack. A retailer that
+ * states the pack's total ("12.5 oz, 4 count" stated 50 oz) is priced from that already: pickSize
+ * prefers a measured stated size to the name's. Volumes keep the pack reading: drinks are labelled
+ * per container.
+ */
+const CONTAINER_IN_NAME_RE = /\b(?:cups|pouches|portions|packets|cans|bottles|jars|tubs|cartons|containers|boxes|bars|pods|sticks|packs|bags|cartridges|k-cups)\b/i;
+
 const COUNT_WORD_FIRST_RE = /^\s*\d+\s*-?\s*(?:pack|packs|ct\.?|count|cnt)\b/i;
 const CONTAINERS_AFTER_RE = /^\s*\.?\s*(?:[a-z]+\s+)?(?:cups|cans|bottles|pouches|packets|jars|tubs|cartons|containers|boxes)\b/i;
 // The count can also come AFTER the size: "12 fl oz, 12 Pack Cans", "5.3 oz, 12 Count".
@@ -150,7 +171,7 @@ const MULTI_RE_TRAILING = new RegExp(
   // The hyphen in "12-pack" is not optional in the wild: Costco lists nearly every case that way
   // ("16.9 fl oz, 12-pack"). Without it the size resolved to a bare count of 12 and the volume was
   // thrown away, which prices a case of shakes per bottle.
-  `${NUM}\\s*(${UNIT_PATTERN})\\b[\\s,.]*-?[\\s,.]*(?<![\\d.])(\\d+)\\s*-?\\s*(?:pk\\.?|pack|ct\\.?|count)\\b`,
+  `${NUM}\\s*(${UNIT_PATTERN})\\b[\\s,.]*-?[\\s,.]*(?<![\\d.])(\\d+)(\\s*-?\\s*)(pk\\.?|pack|ct\\.?|count)\\b`,
   'i'
 );
 
@@ -177,9 +198,18 @@ function lookupUnit(raw) {
  *   base: size in base units (oz / floz / ct)
  *   perWeight: true when the item is sold by weight ("per lb") and has no fixed size
  */
+/**
+ * Bound what the size regexes see. Several backtrack on long runs of digits: 400 digits took about
+ * 1.5 s and 2,000 about 30 s (the security review), and product names come from retailers with no
+ * length limit. No real size needs more than a couple of hundred characters or a 9-digit number.
+ */
+function boundSizeText(v) {
+  return String(v).slice(0, 200).replace(/\d{10,}/g, (d) => d.slice(0, 9));
+}
+
 export function parseSize(input) {
   if (input == null) return null;
-  let s = String(input).replace(/[\u00ae\u2122]/g, ' ').replace(/\u00a0/g, ' ').trim();
+  let s = boundSizeText(input).replace(/[\u00ae\u2122]/g, ' ').replace(/\u00a0/g, ' ').trim();
   if (!s) return null;
   const lower = s.toLowerCase();
 
@@ -227,6 +257,12 @@ export function parseSize(input) {
       u = lookupUnit(t[2]);
       n = parseInt(t[3], 10);
       m = t;
+      // "8oz, 9ct": see CONTAINER_IN_NAME_RE. A weight followed by an unhyphenated piece count is
+      // the package, with the count kept for sizeFromName and pickSize to settle.
+      const pieceWord = /^(?:ct|count)/i.test(t[5]) && !t[4].includes('-');
+      if (pieceWord && u && u.dim === 'weight' && n > 1 && n <= 200 && each > 0 && !isDoseNotPackage(u, each)) {
+        return { dim: u.dim, base: round(each * u.factor), amount: each, unit: u.key, count: 1, perWeight: false, range: false, text: s, countAfter: { n, unitBase: round(each * u.factor) } };
+      }
     }
   }
   if (m && u) {
@@ -273,7 +309,7 @@ export function sizeFromName(name) {
   if (!name) return null;
   // Nutrition claims ("12g Whole Grains", "10g Protein") are not sizes; see NUTRIENT_AFTER_RE.
   // Nor is what a product HOLDS: see CAPACITY_RE.
-  name = String(name).replace(NUTRITION_CLAIM_RE, ' ').replace(CAPACITY_RE, ' ');
+  name = boundSizeText(name).replace(NUTRITION_CLAIM_RE, ' ').replace(CAPACITY_RE, ' ');
   const parts = String(name).split(/,\s*/);
   // Try progressively longer tails before single segments: a pack size is often split across two
   // of them ("Coca-Cola, 12 fl oz, 12 Pack Cans"), and parsing only the last segment would keep
@@ -284,14 +320,27 @@ export function sizeFromName(name) {
     // A count-first weight ("12 ct, 15 oz") parses with count 1 but must still be returned from
     // here WITH its stated count: dropping to the last segment alone would lose the "2-count" that
     // pickSize needs to recognise Costco's two 20 oz loaves.
-    if (p && !p.perWeight && (p.count > 1 || p.countFirst) && p.dim !== 'count') return p;
+    if (p && !p.perWeight && (p.count > 1 || p.countFirst || p.countAfter) && p.dim !== 'count') return p.countAfter ? packIfContainers(p, name) : p;
   }
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parseSize(parts[i]);
-    if (p && !p.perWeight) return p;
+    if (p && !p.perWeight) return p.countAfter ? packIfContainers(p, name) : p;
   }
   const m = String(name).match(new RegExp(`(\\d+\\s*(?:x|pk|pack|ct)?\\s*(?:\\/|x|-)?\\s*)?${NUM}\\s*(${UNIT_PATTERN})\\b`, 'i'));
-  return m ? parseSize(m[0]) : null;
+  if (m) return parseSize(m[0]);
+  // A container word with no number: "Alta Dena Whole Milk, Paper Quart" is one quart. Walmart listed
+  // it as "1 gal" at $1.98 and, with the name read as having no size, it became Los Angeles's best
+  // milk at $1.98 a GALLON (the nationwide audit). Only for liquids: a "Quart Freezer Bag" is not.
+  const bare = /\b(gallon|quart|pint)\b/i.exec(String(name));
+  if (bare && looksLiquid(name)) return parseSize(`1 ${bare[1]}`);
+  return null;
+}
+
+/** "Yogurt Cups, 5.3 oz, 12 Count": the name counts containers, so the count-after reading is N of M. */
+function packIfContainers(p, name) {
+  if (!CONTAINER_IN_NAME_RE.test(String(name))) return p;
+  const { n, unitBase } = p.countAfter;
+  return { ...p, base: round(n * unitBase), count: n, countAfter: undefined };
 }
 
 /** True when a parsed weight is a dosage rather than the size of the package. */
@@ -397,7 +446,7 @@ export function unitLabel(unit) {
 // 40% Heavy Whipping Cream, 32 oz" at $4.84 — the cheapest quart in Chicago — were weights in a
 // heavy-cream search that compares by volume, and dropped out of it (14 captured listings). Not
 // "whipped" cream or "table cream": Reddi-wip and Nestlé Media Crema are sold by NET WT.
-const LIQUID_RE = /\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half)\b/i;
+const LIQUID_RE = /\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half|egg ?nog|buttermilk)\b/i;
 // Containers that only imply a liquid alongside a real liquid word.
 const CONTAINER_RE = /\b(cans?|bottles?|jugs?|cartons?)\b/i;
 // "Cut Sweet Potatoes in Syrup", "Peaches in Light Syrup", "Tuna in Water": what follows "in" is
@@ -443,7 +492,7 @@ export function looksLiquid(name) {
 // 'butter' does not fire on "Butter Chicken": that is a curry, not a dairy fat. Kettle & Fire's
 // "Organic Butter Chicken Bone Broth" and "Organic Classic Chicken Bone Broth", both 16.9 OZ at the
 // same $7.99, landed in different dimensions because of it and so could never be compared.
-const SOLID_RE = /\b(bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\b/i;
+const SOLID_RE = /\b(gelatin|jell-?o|bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\b/i;
 
 export function coerceLiquid(size, name) {
   if (!size || size.dim !== 'weight' || size.perWeight) return size;
@@ -473,9 +522,10 @@ const PRODUCE_LB = [
   [/\b(honeycrisp|gala|fuji|granny smith|pink lady|braeburn|red delicious|golden delicious|envy|jazz|cosmic crisp|ambrosia)\b|\bapples?\b/, 0.4],
   [/\bnavel oranges?\b|\boranges?\b/, 0.45], [/\bgrapefruits?\b/, 1.0], [/\bmangos?\b|\bmangoes\b/, 0.75], [/\bpears?\b/, 0.45], [/\bpeach(es)?\b/, 0.35],
   [/\bnectarines?\b/, 0.33], [/\bplums?\b/, 0.2], [/\bkiwis?\b/, 0.2], [/\bpomegranates?\b/, 0.6],
-  [/\b(bell )?peppers?\b/, 0.4], [/\bcucumbers?\b/, 0.6], [/\bzucchini\b/, 0.5], [/\byellow squash\b/, 0.5], [/\beggplants?\b/, 1.0],
+  // Jalapenos before peppers: "Jalapeno Pepper" took the bell pepper's 0.4 lb, 8x a jalapeno.
+  [/\bjalapenos?\b/, 0.05], [/\b(bell )?peppers?\b/, 0.4], [/\bcucumbers?\b/, 0.6], [/\bzucchini\b/, 0.5], [/\byellow squash\b/, 0.5], [/\beggplants?\b/, 1.0],
   [/\broma tomato(es)?\b/, 0.15], [/\btomato(es)?\b/, 0.33], [/\bsweet potato(es)?\b|\byams?\b/, 0.6], [/\bpotato(es)?\b/, 0.55],
-  [/\bonions?\b/, 0.5], [/\bgarlic\b/, 0.12], [/\bjalapenos?\b/, 0.05], [/\bartichokes?\b/, 0.5], [/\bcorn\b/, 0.6],
+  [/\bonions?\b/, 0.5], [/\bgarlic\b/, 0.12], [/\bartichokes?\b/, 0.5], [/\bcorn\b/, 0.6],
 ];
 
 /**
@@ -488,7 +538,9 @@ const PRODUCE_LB = [
  * A container word is just as disqualifying: a "Yellow Onion Bag" is not one 0.5 lb onion, and
  * pricing it as one published $25.98/lb against a real onion median of $1.75.
  */
-const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling)\b/;
+// 'jack'/'cheese': "Pepper Jack Cheese Slices" matched the bell-pepper weight, so ten slices were
+// four pounds of peppers and the pack read $0.60/lb (the state x holiday audit).
+const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\b/;
 
 export function produceWeightLb(name) {
   const n = String(name || '').toLowerCase();

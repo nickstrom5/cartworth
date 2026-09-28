@@ -54,12 +54,22 @@ final class HostedScreen<V: View> {
     var labels: [String] { elements.map(\.0) }
 
     /// Every accessibility element on screen with the frame SwiftUI placed it at (screen space).
-    var elements: [(String, CGRect)] {
-        var out: [(String, CGRect)] = []
+    var elements: [(String, CGRect)] { nodes.map { ($0.accessibilityLabel ?? "", $0.accessibilityFrame) } }
+
+    /// Activate the first element whose label passes `match`, as a VoiceOver double-tap does: a
+    /// SwiftUI button runs its action. False when there is no such element.
+    @discardableResult
+    func activate(_ match: (String) -> Bool) -> Bool {
+        nodes.first { match($0.accessibilityLabel ?? "") }?.accessibilityActivate() ?? false
+    }
+
+    /// Every labelled accessibility element on screen, in tree order.
+    private var nodes: [NSObject] {
+        var out: [NSObject] = []
         var seen = Set<ObjectIdentifier>()
         func walk(_ obj: NSObject, depth: Int) {
             guard depth < 60, seen.insert(ObjectIdentifier(obj)).inserted else { return }
-            if obj.isAccessibilityElement, let l = obj.accessibilityLabel, !l.isEmpty { out.append((l, obj.accessibilityFrame)) }
+            if obj.isAccessibilityElement, let l = obj.accessibilityLabel, !l.isEmpty { out.append(obj) }
             if let els = obj.accessibilityElements as? [NSObject] {
                 for e in els { walk(e, depth: depth + 1) }
             }

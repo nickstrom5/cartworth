@@ -47,6 +47,8 @@ actor WholeFoodsSource {
     }
 
     private func store(from r: HTTPResponse, place: UserPlace) async throws -> Store {
+        // "No store near this ZIP" is a 404, not a failure (the nationwide sweep: every rural ZIP).
+        if r.status == 404 { return Store(none: true) }
         guard r.ok else { throw HTTPError(status: r.status, message: "Whole Foods store lookup failed (\(r.status))") }
         let d = try r.json()
         guard let id = d["pickupStoreCode"].string ?? d["storeCode"].string else { return Store(none: true) }
@@ -75,7 +77,6 @@ actor WholeFoodsSource {
         let d = try await http.getJSON(url, timeout: 15)
         let results = d["results"].array
         let now = Date()
-        let iso = ISO8601DateFormatter()
         var items: [Product] = []
         for (i, r) in results.enumerated() {
             let rawName = r["name"].string ?? ""
@@ -85,9 +86,10 @@ actor WholeFoodsSource {
                 name = m[1] ?? rawName
                 sizeText = m[2] ?? ""
             }
-            let saleStart = r["saleStartDate"].string.flatMap { iso.date(from: $0) }
-            let saleEnd = r["saleEndDate"].string.flatMap { iso.date(from: $0) }
-            let saleActive = r["salePrice"].double != nil && (saleEnd == nil || saleEnd! >= now) && (saleStart == nil || saleStart! <= now.addingTimeInterval(12 * 3600))
+            // Calendar days written as UTC: "2026-12-24T23:59:59Z" is all of Christmas Eve (SaleDates.wallClock).
+            let saleStart = SaleDates.wallClock(r["saleStartDate"].string)
+            let saleEnd = SaleDates.wallClock(r["saleEndDate"].string)
+            let saleActive = r["salePrice"].double != nil && (saleEnd == nil || saleEnd! >= now) && (saleStart == nil || saleStart! <= now)
             let regular = r["regularPrice"].double
             let sale = saleActive ? r["salePrice"].double : nil
             let prime = saleActive ? r["incrementalSalePrice"].double : nil
@@ -134,13 +136,12 @@ actor WholeFoodsSource {
     func sales(place: UserPlace) async throws -> (storeId: String, storeName: String, items: [SaleItem])? {
         let store = try await resolveStore(place: place)
         if store.none { return nil }
-        let items = try await Cache.shared.value("wfm:sales:\(store.id)", ttl: 6 * TTL.hour) {
+        let items = try await Cache.shared.value("wfm:sales:v2:\(store.id)", ttl: 6 * TTL.hour) {
             let html = try await HTTP.shared.request(URL(string: "https://www.wholefoodsmarket.com/sales-flyer?store-id=\(store.id)")!, headers: ["Accept": "text/html"], timeout: 20).text
             guard let m = Rx("<script id=\"__NEXT_DATA__\"[^>]*>([\\s\\S]*?)</script>", caseInsensitive: false).match(html), let raw = m[1] else {
                 throw HTTPError(status: 0, message: "Whole Foods sales page changed")
             }
             let j = try J.parse(Data(raw.utf8))
-            let iso = ISO8601DateFormatter()
             return j["props"]["pageProps"]["promotions"].array.map { p in
                 SaleItem(
                     id: "wfm-\(p["promotionId"].string ?? UUID().uuidString)",
@@ -151,8 +152,8 @@ actor WholeFoodsSource {
                     regularText: p["regularPrice"].string ?? "",
                     memberText: p["primePrice"].string ?? "",
                     image: p["productImage"].string,
-                    validFrom: p["startDate"].string.flatMap { iso.date(from: $0) },
-                    validTo: p["endDate"].string.flatMap { iso.date(from: $0) },
+                    validFrom: SaleDates.saleDay(p["startDate"].string, end: false),
+                    validTo: SaleDates.saleDay(p["endDate"].string, end: true),
                     disclaimer: p["description"].string
                 )
             }

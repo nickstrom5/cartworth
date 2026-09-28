@@ -265,6 +265,7 @@ section {
   position: sticky;
   top: 0;
   z-index: 30;
+  background: var(--page);
   background: color-mix(in srgb, var(--page) 88%, transparent);
   backdrop-filter: saturate(160%) blur(12px);
   -webkit-backdrop-filter: saturate(160%) blur(12px);
@@ -463,7 +464,12 @@ section {
   transition: border-color 0.16s, box-shadow 0.16s, transform 0.16s;
 }
 /* Only cards that are themselves links lift on hover; a static card that moves is just noise. */
-a.card:hover,
+/* Two rules, not one list: Safari before 15.4 drops a whole selector list with :has() in it. */
+a.card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-pop);
+  transform: translateY(-2px);
+}
 .card:has(> a:hover) {
   border-color: var(--accent);
   box-shadow: var(--shadow-pop);
@@ -1209,5 +1215,16 @@ table.compare caption {
   .keyvals div {
     grid-template-columns: minmax(0, 1fr);
     gap: 3px;
+  }
+}
+
+/* Touch screens: header, footer and brand links reach Apple's 44pt minimum (they were 23-36px). */
+@media (pointer: coarse) {
+  .brand,
+  .site-nav a,
+  .footer-links a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
 }

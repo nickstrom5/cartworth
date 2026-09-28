@@ -688,3 +688,87 @@ test('control: two online listings compare exactly, and the sentence says they a
   assert.equal(claim.kind, 'exact');
   assert.equal(claim.text, '{amount}/{unit} (9%) less than the next-best store, {store} (both online prices)');
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT P21 (round-3 price check, 60618): "Tillamook Farmstyle Medium Cheddar Cheese Slices, 8oz,
+// 9ct" at Sunset, stated "8 oz", $5.49, read as nine 8 oz packs: $1.22/lb, Chicago's cheddar
+// headline. Nine slices in one 8 oz pack is $10.98/lb. See CONTAINER_IN_NAME_RE in shared/units.js.
+// ---------------------------------------------------------------------------
+test('DEFECT P21: nine cheese slices in an 8 oz pack are 8 oz, not nine packs', () => {
+  const p = item('sunset', 'Tillamook Farmstyle Medium Cheddar Cheese Slices, 8oz, 9ct', '8 oz', 5.49, { priceBasis: 'online' });
+  assert.equal(p.base, 8);
+  assert.ok(close(perLb(p), 10.98), `$${perLb(p)}/lb`);
+  const choc = item('costco', 'Ferrero Rocher, Milk Chocolate Hazelnut Candy, 21.2 oz, 48 Count', 'each', 22.38);
+  assert.equal(choc.base, 21.2, '48 chocolates in 21.2 oz');
+});
+
+test('DEFECT P21: the slices no longer take the cheddar headline', () => {
+  const r = bestPerStore('cheddar cheese', {
+    sunset: [item('sunset', 'Tillamook Farmstyle Medium Cheddar Cheese Slices, 8oz, 9ct', '8 oz', 5.49, { priceBasis: 'online' })],
+    aldi: [item('aldi', 'Happy Farms Deli Sliced Sharp Cheddar Cheese', '8 oz', 1.49)],
+    woodmans: [item('woodmans', 'Westfield Farms Cheese, Sharp Cheddar', '8 oz', 1.79)],
+  });
+  assert.equal(ranked(r)[0][0], 'aldi');
+});
+
+test('control: a count after the size stays a pack when the name counts containers, the count is hyphenated, or the stated size is N x M', () => {
+  assert.equal(item('x', 'Chobani Greek Yogurt Cups, 5.3 oz, 12 Count', '', 9.99).base, 63.6);
+  assert.equal(item('target', 'Tillamook Medium Cheddar Cheese Snack Portions, 0.75oz, 10ct', '10 ct', 4.99).base, 7.5);
+  assert.equal(item('costco', 'Kerrygold Pure Irish Butter, Salted, 8 oz, 4-count', 'each', 18.65).base, 32);
+  assert.equal(item('walmart', 'Great Value Chunk Chicken Breast with Rib Meat in Water, 12.5 oz, 4 count', '50 oz', 9.97).base, 50);
+  assert.equal(item('costco', 'Kirkland Signature, Organic Coconut Water, 11.1 fl oz, 12-count', '11.1 fl oz', 13.42).base, 133.2);
+});
+
+// ---------------------------------------------------------------------------
+// DEFECT P22 (round-3 price check, 53142 and 53211): Piggly Wiggly's "Certified Angus Beef 80%
+// Ground Chuck Beef", size "10 lb", $7.99, whose own unit line reads "$0.50/oz" — one pound. Priced
+// as 10 lb it was 80c/lb and the ground-beef headline "81% less than the next-best store". See
+// unitLineConflict in src/normalize.js. These are the records as Instacart sent them.
+// ---------------------------------------------------------------------------
+const PIGGLY = { type: 'instacart', base: 'https://order.shopthepig.com', slug: 'shopthepig', storeId: 'piggly' };
+const pigRecord = ({ id, name, size, price, perUnit, slug }) => ({
+  id: `items_1-${id}`, productId: String(id), name, size, evergreenUrl: `${id}-${slug}`,
+  price: { viewSection: { itemCard: { priceString: `$${price.toFixed(2)}`, pricePerUnitString: null, pricingUnitString: null }, itemDetails: { pricePerUnitString: perUnit } } },
+  availability: { available: true }, viewSection: { trackingProperties: {} },
+});
+const pig = (r) => parseItem(pigRecord(r), PIGGLY, { serviceType: 'instore', priceNote: null }, 0, 1, false);
+
+test("DEFECT P22: a listing whose own unit price contradicts its size gets no unit price and no headline", () => {
+  const beef = pig({ id: 20024453, name: 'Certified Angus Beef 80% Ground Chuck Beef', size: '10 lb', price: 7.99, perUnit: '$0.50/oz', slug: 'certified-angus-beef-80-ground-chuck-beef-10-lb' });
+  assert.ok(beef.sizeConflict, 'not flagged');
+  assert.equal(beef.unit.weight, undefined, 'a per-pound figure was still printed');
+  const cheddar = pig({ id: 19717860, name: 'Cady Creek Farms Sharp Cheddar Cheese', size: '5 lb', price: 8.99, perUnit: '$0.56/oz', slug: 'cady-creek-farms-sharp-cheddar-cheese-5-lb' });
+  assert.ok(cheddar.sizeConflict);
+  const honest = pig({ id: 19720118, name: 'Certified Angus Beef 80% Lean Ground Beef Chuck', size: '3 lb', price: 5.99, perUnit: '$0.12/oz', slug: 'certified-angus-beef-80-lean-ground-beef-chuck' });
+  const r = bestPerStore('ground beef', { piggly: [beef, honest] });
+  assert.equal(r.stores.piggly.item.name, honest.name);
+});
+
+test('control: a unit line that agrees (to the cent), or is per each on a volume, changes nothing', () => {
+  const ok = pig({ id: 1, name: 'Certified Angus Beef 80% Lean Ground Beef Chuck', size: '3 lb', price: 5.99, perUnit: '$0.12/oz', slug: 'x' });
+  assert.equal(ok.sizeConflict, null);
+  assert.ok(close(perLb(ok), 2.0));
+  const cheap = pig({ id: 2, name: 'Store Brand Salt', size: '26 oz', price: 0.89, perUnit: '$0.03/oz', slug: 'y' });
+  assert.equal(cheap.sizeConflict, null, 'rounding to the cent on a cheap item is not a contradiction');
+  const oj = pig({ id: 3, name: 'Don Simon Orange Juice, 33.81 fl oz, 4-count', size: '33.81 fl oz', price: 3.69, perUnit: '$0.92 each', slug: 'z' });
+  assert.equal(oj.sizeConflict, null);
+});
+
+// The measurement behind the narrowed rule (5,834 fresh listings at 53142): the unit line is often
+// the REGULAR price, one unit of a warehouse pack, or just wrong the other way. None may withhold a
+// price. See unitLineConflict.
+test('control: a sale with no regular price, a line that errs the dear way, and a Costco per-unit line are not conflicts', () => {
+  const m = (name, sizeText, price, listedUnit, regularPrice = null) => makeProduct({ storeId: 's', id: name, name, sizeText, price, regularPrice, listedUnit });
+  // As Mariano's sent it: no regular price, and a line that is the $7.99 regular price over 16 oz.
+  const lol = m('Land O Lakes Butter, Salted', '1 lb', 3.99, { price: 0.5, unit: 'oz' });
+  assert.equal(lol.sizeConflict, null, "Mariano's $3.99 pound of butter, whose line is the $7.99 regular price");
+  assert.equal(m('Butternut Large White Bread', '20 oz', 2.99, { price: 0.25, unit: 'oz' }).sizeConflict, null);
+  assert.ok(close(perLb(lol), 3.99));
+  assert.equal(m('Sargento Natural 4 State Cheddar Shredded Cheese, Traditional Cut', '7.5 oz', 4.49, { price: 0.07, unit: 'oz' }).sizeConflict, null);
+  assert.equal(m("Uncle Matt's Organic Orange Juice, 52 oz, 2-count", '52 fl oz', 15.91, { price: 0.31, unit: 'fl oz' }).sizeConflict, null);
+});
+
+test("DEFECT P22: Piggly Wiggly's 3 lb meats priced over one pound are conflicts too", () => {
+  const beef = pig({ id: 4, name: '80% Ground Beef', size: '3 lb', price: 4.99, perUnit: '$0.31/oz', slug: '80-ground-beef' });
+  assert.ok(beef.sizeConflict);
+});

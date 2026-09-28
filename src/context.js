@@ -32,6 +32,42 @@ export const LIMITS = {
   krogerKey: { max: 256 },
 };
 
+/**
+ * The search radii Cartworth offers, in miles. Same ladder as the iPhone picker
+ * (ios/App/UI/Settings/SettingsView.swift) and the web control (public/js/store.js RADIUS_MILES);
+ * test/qa-search-radius.test.js pins all three together.
+ */
+export const RADIUS_MILES = [5, 10, 15, 25, 40];
+
+/**
+ * Second sanitisation pass on a visitor's radius, on top of the clamp every other input already
+ * gets in src/context.js (LIMITS.maxMiles, which rejects a non-number as a 400 and bounds the rest
+ * to 3–50). This narrows that to the five radii the products actually offer, and it is about
+ * politeness to the retailers as much as about correctness:
+ *
+ *   src/directory.js caches a build under `dir:v1:<zip>:<maxMiles>`, and the radius only filters
+ *   the RESULT — the same candidate chains are probed whatever it is. So a caller walking
+ *   miles=3,4,5…50 does not get a wider search fifty times, it gets fifty full re-probes of the
+ *   same chains for one ZIP, comfortably inside the 90-requests-per-minute budget in src/guard.js.
+ *   Pinning the radius to five rungs caps that at five builds per ZIP: it is the difference between
+ *   one visitor being able to multiply our outbound traffic ~50x and ~5x.
+ *
+ * Nothing is rejected with an error — an odd number is not malformed, just not one of ours — and a
+ * value between two rungs snaps DOWN, so we never return a store further away than was asked for.
+ * /api/directory echoes the radius it actually used, so the client always shows the real one.
+ */
+export function snapRadius(v) {
+  const n = Number(v);
+  const min = RADIUS_MILES[0];
+  const max = RADIUS_MILES[RADIUS_MILES.length - 1];
+  if (!Number.isFinite(n)) return DEFAULTS.maxMiles;
+  if (n <= min) return min;
+  if (n >= max) return max;
+  let out = min;
+  for (const m of RADIUS_MILES) if (m <= n) out = m;
+  return out;
+}
+
 function bad(message) {
   return Object.assign(new Error(message), { status: 400 });
 }
@@ -81,7 +117,7 @@ function parseStores(v) {
   if (ids.length > LIMITS.stores.max) throw bad(`Too many stores (max ${LIMITS.stores.max})`);
   const out = [];
   for (const id of ids) {
-    if (!STORE_BY_ID[id]) throw bad(`Unknown store “${String(id).slice(0, 40)}”`);
+    if (!Object.hasOwn(STORE_BY_ID, id)) throw bad(`Unknown store “${String(id).slice(0, 40)}”`);
     if (!out.includes(id)) out.push(id);
   }
   return out;
@@ -97,7 +133,7 @@ function parseOverrides(v) {
   if (v === undefined || v === null || v === '') return {};
   const out = {};
   const add = (id, zip) => {
-    if (!STORE_BY_ID[id]) throw bad(`Unknown store “${String(id).slice(0, 40)}” in overrides`);
+    if (!Object.hasOwn(STORE_BY_ID, id)) throw bad(`Unknown store “${String(id).slice(0, 40)}” in overrides`);
     const z = parseZip(zip, `ZIP code for ${STORE_BY_ID[id].name}`);
     if (z) out[id] = { zip: z };
   };
@@ -135,8 +171,14 @@ function parseKroger(headers = {}) {
   if (clientId.length > LIMITS.krogerKey.max || clientSecret.length > LIMITS.krogerKey.max) throw bad('Kroger key looks too long');
   // Both or neither. A half-configured pair is simply "not configured" rather than an error, so a
   // stray header can never break an otherwise valid search.
-  if (!clientId || !clientSecret) return { clientId: '', clientSecret: '' };
-  return { clientId, clientSecret };
+  if (clientId && clientSecret) return { clientId, clientSecret, server: false };
+  // The owner's own keys, for every visitor, once Kroger has approved the use (see
+  // marketing/outreach/permission-requests.md). Read per request so a key rotated in the environment
+  // takes effect on restart without code changes; never sent back in any response.
+  const envId = String(process.env.KROGER_CLIENT_ID || '').trim();
+  const envSecret = String(process.env.KROGER_CLIENT_SECRET || '').trim();
+  if (envId && envSecret) return { clientId: envId, clientSecret: envSecret, server: true };
+  return { clientId: '', clientSecret: '', server: false };
 }
 
 /**

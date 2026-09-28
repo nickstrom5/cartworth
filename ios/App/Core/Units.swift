@@ -29,6 +29,8 @@ struct ParsedSize: Codable, Hashable {
     /// "N ct, M oz": the name stated a count before the size, and whether M is each unit or all of
     /// them is not decidable from the words alone. See `Units.countWordFirstRx`.
     var countFirst: CountFirst? = nil
+    /// "M oz, N ct": a piece count after a weight. See `Units.containerInNameRx`.
+    var countAfter: CountFirst? = nil
     /// Set when the weight was recovered from a butter stick count (see
     /// `ProductFactory.butterSticks`): the number of quarter-pound sticks the retailer stated.
     var sticks: Int? = nil
@@ -220,7 +222,11 @@ enum Units {
     /// The hyphen in "12-pack" is not optional in the wild: Costco lists nearly every case that way
     /// ("16.9 fl oz, 12-pack"). Without it the size resolved to a bare count of 12 and the volume was
     /// thrown away, which prices a case of shakes per bottle.
-    private static let multiRxTrailing = Rx("\(num)\\s*(\(unitPattern))\\b[\\s,.]*-?[\\s,.]*(?<![\\d.])(\\d+)\\s*-?\\s*(?:pk\\.?|pack|ct\\.?|count)\\b")
+    private static let multiRxTrailing = Rx("\(num)\\s*(\(unitPattern))\\b[\\s,.]*-?[\\s,.]*(?<![\\d.])(\\d+)(\\s*-?\\s*)(pk\\.?|pack|ct\\.?|count)\\b")
+    /// "Yogurt Cups, 5.3 oz, 12 Count": a plural container word means the count after a weight is
+    /// N containers of M. Without one ("Cheese Slices, 8oz, 9ct") the weight is the package. Port of
+    /// CONTAINER_IN_NAME_RE in shared/units.js, which records the measurement behind it.
+    private static let containerInNameRx = Rx("\\b(?:cups|pouches|portions|packets|cans|bottles|jars|tubs|cartons|containers|boxes|bars|pods|sticks|packs|bags|cartridges|k-cups)\\b", caseInsensitive: true)
     private static let nameSizeRx = Rx("(\\d+\\s*(?:x|pk|pack|ct)?\\s*(?:/|x|-)?\\s*)?\(num)\\s*(\(unitPattern))\\b")
     private static let adjectiveRx = Rx("(\\d)\\s+(?:double|triple|mega|huge|giant|super|jumbo|family(?:\\s+size)?|big|regular|large|xl)\\s+(?=[a-z])")
     private static let perWeightRx = Rx("^(?:priced\\s+)?per\\s+(lb|pound|kg)\\b")
@@ -281,9 +287,15 @@ enum Units {
         return false
     }
 
+    /// Bound what the size regexes see: long digit runs backtrack badly (mirrors boundSizeText in
+    /// shared/units.js).
+    static func boundSizeText(_ v: String) -> String {
+        Rx("\\d{10,}").replace(String(v.prefix(200)), with: "999999999")
+    }
+
     static func parseSize(_ input: String?) -> ParsedSize? {
         guard let input else { return nil }
-        var s = input.replacingOccurrences(of: "\u{00AE}", with: " ")
+        var s = boundSizeText(input).replacingOccurrences(of: "\u{00AE}", with: " ")
             .replacingOccurrences(of: "\u{2122}", with: " ")
             .replacingOccurrences(of: "\u{00A0}", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -331,6 +343,14 @@ enum Units {
             u = lookup(t[2])
             n = Int(t[3] ?? "")
             m = t
+            // "8oz, 9ct": a weight followed by an unhyphenated piece count is the package; the count
+            // is kept for sizeFromName (see containerInNameRx).
+            let word = (t[5] ?? "").lowercased()
+            let pieceWord = (word.hasPrefix("ct") || word.hasPrefix("count")) && !(t[4] ?? "").contains("-")
+            if pieceWord, let uu = u, uu.dim == .weight, let nn = n, nn > 1, nn <= 200, let ee = each, ee > 0, !isDoseNotPackage(uu, ee) {
+                let one = round4(ee * uu.factor)
+                return ParsedSize(dim: uu.dim, base: one, amount: ee, unit: uu.key, count: 1, perWeight: false, range: false, text: s, countAfter: CountFirst(n: nn, unitBase: one))
+            }
         }
         if let m, let u {
             // "10-15 oz" is a range, not ten 15-oz packs. Any dash-joined pair of plain numbers
@@ -361,11 +381,21 @@ enum Units {
         return nil
     }
 
+    /// "Yogurt Cups, 5.3 oz, 12 Count": the name counts containers, so the count-after reading is N of M.
+    private static func packIfContainers(_ p: ParsedSize, _ name: String) -> ParsedSize {
+        guard let ca = p.countAfter, containerInNameRx.test(name) else { return p }
+        var pack = p
+        pack.base = round4(Double(ca.n) * ca.unitBase)
+        pack.count = ca.n
+        pack.countAfter = nil
+        return pack
+    }
+
     /// Size embedded in a name: "Organic Whole Milk, 64 FZ", "Eggs Large 12ct".
     static func sizeFromName(_ rawName: String) -> ParsedSize? {
         guard !rawName.isEmpty else { return nil }
         // Nutrition claims ("12g Whole Grains") and capacities ("Holds Up to 24 Pounds") are not sizes.
-        let name = capacityRx.replace(nutritionClaimRx.replace(rawName, with: " "), with: " ")
+        let name = capacityRx.replace(nutritionClaimRx.replace(boundSizeText(rawName), with: " "), with: " ")
         // JS splits on /,\s*/: the comma and the whitespace AFTER it go, whitespace before it stays.
         let parts: [String] = name.components(separatedBy: ",").enumerated().map { i, raw in
             i == 0 ? raw : String(raw.drop(while: { $0.isWhitespace }))
@@ -379,13 +409,16 @@ enum Units {
                 // A count-first weight ("12 ct, 15 oz") parses with count 1 but must still be
                 // returned from here WITH its stated count, so pickSize can recognise Costco's two
                 // 20 oz loaves.
-                if let p = parseSize(tail), !p.perWeight, p.count > 1 || p.countFirst != nil, p.dim != .count { return p }
+                if let p = parseSize(tail), !p.perWeight, p.count > 1 || p.countFirst != nil || p.countAfter != nil, p.dim != .count { return packIfContainers(p, name) }
             }
         }
         for p in parts.reversed() {
-            if let s = parseSize(p), !s.perWeight { return s }
+            if let s = parseSize(p), !s.perWeight { return packIfContainers(s, name) }
         }
         if let m = nameSizeRx.match(name), let whole = m[0] { return parseSize(whole) }
+        // A container word with no number ("Alta Dena Whole Milk, Paper Quart") is one of it, for
+        // liquids only. Mirrors sizeFromName in shared/units.js.
+        if looksLiquid(name), let m = Rx("\\b(gallon|quart|pint)\\b").match(name), let w = m[1] { return parseSize("1 \(w)") }
         return nil
     }
 
@@ -402,7 +435,7 @@ enum Units {
     /// as a weight it dropped out of a heavy-cream search compared by volume (Costco's Maola quart,
     /// the cheapest in Chicago, among 14 captured listings). Not whipped cream or table cream,
     /// which are sold by NET WT. Mirrors LIQUID_RE in shared/units.js.
-    private static let liquidRx = Rx("\\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half)\\b")
+    private static let liquidRx = Rx("\\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half|egg ?nog|buttermilk)\\b")
     // "Cut Sweet Potatoes in Syrup", "Tuna in Water": what follows "in" is the packing medium, not
     // the product, and the can is still sold by NET WEIGHT. Without this, two 40 oz cans of the
     // same cut sweet potato at the same $4.99 on one Mariano's shelf landed in different
@@ -430,7 +463,7 @@ enum Units {
     // search whose real broths sat near $10/gal. 'butter' does not fire on "Butter Chicken", a
     // curry: Kettle & Fire's Butter Chicken and Classic Chicken bone broths, both 16.9 OZ at the
     // same price, landed in different dimensions because of it. Mirrors SOLID_RE in shared/units.js.
-    private static let solidRx = Rx("\\b(bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\\b")
+    private static let solidRx = Rx("\\b(gelatin|jell-?o|bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\\b")
 
     static func looksLiquid(_ name: String) -> Bool {
         let n = packingMediumRx.replace(name, with: " ")
@@ -497,10 +530,10 @@ enum Units {
         (Rx("\\b(honeycrisp|gala|fuji|granny smith|pink lady|braeburn|red delicious|golden delicious|envy|jazz|cosmic crisp|ambrosia)\\b|\\bapples?\\b"), 0.4),
         (Rx("\\bnavel oranges?\\b|\\boranges?\\b"), 0.45), (Rx("\\bgrapefruits?\\b"), 1.0), (Rx("\\bmangos?\\b|\\bmangoes\\b"), 0.75),
         (Rx("\\bpears?\\b"), 0.45), (Rx("\\bpeach(es)?\\b"), 0.35), (Rx("\\bnectarines?\\b"), 0.33), (Rx("\\bplums?\\b"), 0.2),
-        (Rx("\\bkiwis?\\b"), 0.2), (Rx("\\bpomegranates?\\b"), 0.6), (Rx("\\b(bell )?peppers?\\b"), 0.4), (Rx("\\bcucumbers?\\b"), 0.6),
+        (Rx("\\bkiwis?\\b"), 0.2), (Rx("\\bpomegranates?\\b"), 0.6), (Rx("\\bjalapenos?\\b"), 0.05), (Rx("\\b(bell )?peppers?\\b"), 0.4), (Rx("\\bcucumbers?\\b"), 0.6),
         (Rx("\\bzucchini\\b"), 0.5), (Rx("\\byellow squash\\b"), 0.5), (Rx("\\beggplants?\\b"), 1.0), (Rx("\\broma tomato(es)?\\b"), 0.15),
         (Rx("\\btomato(es)?\\b"), 0.33), (Rx("\\bsweet potato(es)?\\b|\\byams?\\b"), 0.6), (Rx("\\bpotato(es)?\\b"), 0.55),
-        (Rx("\\bonions?\\b"), 0.5), (Rx("\\bgarlic\\b"), 0.12), (Rx("\\bjalapenos?\\b"), 0.05), (Rx("\\bartichokes?\\b"), 0.5), (Rx("\\bcorn\\b"), 0.6),
+        (Rx("\\bonions?\\b"), 0.5), (Rx("\\bgarlic\\b"), 0.12), (Rx("\\bartichokes?\\b"), 0.5), (Rx("\\bcorn\\b"), 0.6),
     ]
     /// Words that mean the produce word in the name is not one loose piece of produce.
     ///
@@ -510,7 +543,7 @@ enum Units {
     /// Ube Purple Yam" — 7.5 oz of ice cream in total — quoted at $1.66/lb when the honest figure
     /// is $12.78/lb. A container word is just as disqualifying: a "Yellow Onion Bag" is not one
     /// 0.5 lb onion, and pricing it as one published $25.98/lb against a real median of $1.75.
-    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling)\\b")
+    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\\b")
 
     static func produceWeightLb(_ name: String) -> Double? {
         let n = name.lowercased()

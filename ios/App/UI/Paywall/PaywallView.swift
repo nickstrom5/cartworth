@@ -58,7 +58,9 @@ struct PaywallView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Not now") { dismiss() } } }
-            .task { if pro.products.isEmpty { await pro.load() } }
+            // Every time it opens, not only when nothing has loaded: products loaded at launch
+            // kept a changed price off the paywall until the app was next relaunched.
+            .task { await pro.load() }
             .onChange(of: pro.isPro) { _, isPro in if isPro { dismiss() } }
         }
         // The default iPad form sheet is a 580x650 box: seven features, three plans and the legal

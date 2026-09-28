@@ -209,7 +209,10 @@ enum Comparer {
         for r in rows where r.perBase != nil && Compare.headlineEligible(r.product, score: r.score, answerFloor: answerFloor) {
             if best[r.product.storeId] == nil || r.perBase! < best[r.product.storeId]!.perBase! { best[r.product.storeId] = r }
         }
-        out.bestPerStore = best.values.sorted { $0.perBase! < $1.perBase! }
+        out.bestPerStore = best.values.sorted {
+            $0.perBase! != $1.perBase! ? $0.perBase! < $1.perBase!
+                : Compare.tieBreak($0.product.priceBasis, $0.est, $1.product.priceBasis, $1.est) ?? ($0.product.storeId < $1.product.storeId)
+        }
         switch o.sort {
         case .unit: rows.sort { ($0.perBase ?? .infinity, -$0.score) < ($1.perBase ?? .infinity, -$1.score) }
         case .price: rows.sort { Compare.effectivePrice($0.product, prefs) < Compare.effectivePrice($1.product, prefs) }

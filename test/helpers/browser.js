@@ -79,7 +79,14 @@ export async function startAppServer({ api = {}, headers = {} } = {}) {
       if (h && h.sse) {
         res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store' });
         for (const [event, data] of h.sse) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+        // { sse, hold }: keep the stream open until `hold` settles (stores still answering).
+        if (h.hold) await h.hold;
         return res.end();
+      }
+      // { status, body }: an error answer (the stub server's only way to say "this failed").
+      if (h && typeof h.status === 'number' && 'body' in h) {
+        res.writeHead(h.status, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify(h.body));
       }
       res.writeHead(200, { 'content-type': 'application/json' });
       return res.end(JSON.stringify(h));
@@ -113,6 +120,8 @@ export async function launchBrowser() {
     [
       '--headless=new',
       '--remote-debugging-port=0',
+      // Chrome refuses to start as root with its sandbox on (containers, CI). Only then.
+      ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
       `--user-data-dir=${profile}`,
       '--no-first-run',
       '--no-default-browser-check',
@@ -219,6 +228,14 @@ export async function launchBrowser() {
       } catch {
         return false;
       }
+    },
+    /** Run `source` in every document before its own scripts (e.g. to set the page's clock). Returns
+     * an id for removeInitScript. */
+    async initScript(source) {
+      return (await cmd('Page.addScriptToEvaluateOnNewDocument', { source })).identifier;
+    },
+    async removeInitScript(identifier) {
+      await cmd('Page.removeScriptToEvaluateOnNewDocument', { identifier });
     },
     /** Evaluate an expression (or async function body via `(async () => {...})()`) in the page. */
     async eval(expression) {

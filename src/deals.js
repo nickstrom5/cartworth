@@ -21,7 +21,7 @@ export async function listFlyers(settings, { fresh = false, onStale } = {}) {
   } catch (err) {
     const e = new Error(/504|timed out|timeout/i.test(err.message)
       ? 'Weekly ads are temporarily unavailable — the circular service (Flipp) is not responding. Try again in a few minutes.'
-      : `Could not load weekly ads: ${err.message}`);
+      : err.busy ? 'Cartworth is busy; weekly ads will load in a minute.' : 'Could not load weekly ads right now. Try again in a few minutes.');
     e.status = 503;
     throw e;
   }

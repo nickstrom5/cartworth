@@ -8,6 +8,12 @@ const STOP = new Set(['the', 'a', 'an', 'of', 'and', 'or', 'for', 'with', 'in', 
 
 const SYNONYMS = {
   oj: ['orange', 'juice'],
+  // One spelling each, so "bbq sauce" finds Sweet Baby Ray's Barbecue Sauce and "black-eyed peas"
+  // finds Bush's Blackeye Peas (the holiday matrix).
+  // One token: split, its "in" made the "tuna in oil" rule skip the next words, so "Bone-In Butt Pork
+  // Shoulder Steak" hid its 'pork' and answered Valentine's "steak" (the state x holiday audit).
+  'bone-in': ['bonein'], 'skin-on': ['skinon'],
+  barbecue: ['bbq'], 'bar-b-q': ['bbq'], blackeye: ['black', 'eyed'], blackeyed: ['black', 'eyed'],
   tp: ['toilet', 'paper'],
   evoo: ['extra', 'virgin', 'olive', 'oil'],
   pb: ['peanut', 'butter'],
@@ -25,18 +31,28 @@ const TRAPS = new Set([
   'sauce', 'dressing', 'soup', 'broth', 'stock', 'bouillon', 'seasoning', 'marinade', 'rub', 'gravy', 'mix', 'powder',
   'drink', 'juice', 'smoothie', 'shake', 'yogurt', 'creamer', 'cheese', 'noodle', 'pasta', 'ramen', 'ricotta',
   'soap', 'shampoo', 'conditioner', 'lotion', 'candle', 'freshener', 'spray', 'wipe', 'detergent', 'cleaner', 'filter', 'mug',
-  'treat', 'dog', 'cat', 'pet', 'kibble', 'bone', 'baby', 'infant', 'toddler', 'gummy', 'gummies', 'vitamin', 'supplement',
-  'extract', 'syrup', 'spread', 'dip', 'jam', 'jelly', 'preserve', 'pudding', 'popsicle', 'bar', 'bite', 'chip', 'crisp',
+  'treat', 'dog', 'cat', 'pet', 'kibble', 'bone', 'infant', 'toddler', 'gummy', 'gummies', 'vitamin', 'supplement',
+  'extract', 'syrup', 'spread', 'dip', 'jam', 'jelly', 'preserve', 'pudding', 'gelatin', 'hash', 'fry', 'surprise', 'popsicle', 'bar', 'bite', 'chip', 'crisp',
   'nugget', 'tender', 'patty', 'burger', 'sausage', 'jerky', 'salad', 'sandwich', 'wrap', 'pizza', 'meal', 'entree', 'kit',
   // Compound-modifier nouns: "peanut butter", "cream cheese", "macaroni and cheese", "beef base",
   // "butter lettuce". Without these the head noun matched and the product scored as a real hit.
   'peanut', 'cream', 'macaroni', 'mac', 'chili', 'base', 'lettuce', 'dinner', 'casserole', 'bisque',
+  // "Tomato Ketchup" and "Tomato Paste" were the best "tomatoes", "Spaghetti Squash" the best
+  // "spaghetti" (the nationwide audit, Nashville/Burlington/New Orleans).
+  'ketchup', 'catsup', 'paste', 'squash',
+  // singular() keeps an -as ending, so the plural needs its own entry ("Tortillas, White Corn" won
+  // "corn"); and filled buns that are not bread buns ("Manapua" won Hawaii's "buns").
+  'tortillas', 'manapua', 'bao', 'siopao', 'fork', 'spoon', 'cutlery', 'drop', 'lozenge',
   'stew', 'hummus', 'pesto', 'salsa', 'guacamole', 'dressing', 'concentrate', 'concentrated', 'substitute', 'flavoring',
   // Head nouns that make the searched word a modifier: "butter popcorn", "butter shrimp",
   // "all butter danish". Found in live Sam's Club and Costco results, where each one produced an
   // absurd per-pound price that then set the scale of the per-store chart.
   'popcorn', 'pretzel', 'granola', 'danish', 'twist', 'pastry', 'scone', 'croissant', 'roll',
   'shrimp', 'salmon', 'tuna', 'crab', 'lobster', 'scallop', 'fish', 'chicken', 'beef', 'pork',
+  // The rest of the shellfish, for the same reason: "Garlic Butter Mussels", "Clams in Butter
+  // Sauce" and "Butter Garlic Squid" are seafood, not butter. Handoff from the round-2 directory
+  // fixer. "Oyster mushrooms" are mushrooms: see BENIGN_BEFORE.
+  'clam', 'mussel', 'oyster', 'squid', 'octopus',
   'turkey', 'ham', 'bacon', 'steak', 'ravioli', 'lasagna', 'pierogi', 'dumpling', 'taco', 'burrito',
   'cupcake', 'brownie', 'toffee', 'fudge', 'caramel', 'praline', 'nut', 'almond', 'cashew', 'pecan',
   // Single-serve and concentrated forms that cannot be compared on unit price with the thing
@@ -76,6 +92,12 @@ const TRAPS = new Set([
   // searching for wine or seltzer still finds it.
   'hard', 'alcoholic', 'beer', 'ale', 'lager', 'ipa', 'wine', 'vodka', 'whiskey', 'whisky', 'rum',
   'tequila', 'bourbon', 'liqueur', 'brandy', 'cocktail', 'hopped', 'cerveza', 'seltzer',
+  // 'wine' alone missed the wine itself: flyers print the grape, not the word. JaM Cellars'
+  // "Butter" Chardonnay ($16.99) scored 0.92 against butter in the weekly-ad search, the same as a
+  // pound of Land O Lakes (handoff from the round-2 directory fixer). Grapes and producer words
+  // only; not 'champagne' or 'rose', which also name grapes, vinegars and rose water.
+  'chardonnay', 'merlot', 'cabernet', 'pinot', 'sauvignon', 'riesling', 'moscato', 'zinfandel', 'malbec',
+  'prosecco', 'stout', 'perry', 'cellars', 'winery', 'vineyard', 'brewery', 'brewing',
   // Health and beauty that borrows a food word. "Redken All Soft Heavy Cream Treatment" at
   // $632/gal was a relevant match for "heavy cream", and a "Rosemary Apple Cider Scalp Detox
   // Tonic" for apple cider.
@@ -94,8 +116,13 @@ const TRAPS = new Set([
  * lands in "Turkey in Disguise (Hardcover)". Sam's Club returned that children's book at 0.87 for
  * a turkey search, and Meijer returned an "Owala ... Stainless Steel Bottle" at $28.66/lb for
  * marshmallows. Matching the whole name sidesteps the position rules entirely.
+ *
+ * Holiday decor joined the list in the Christmas run: Walmart's "LED Light-Up Christmas Candy Cane
+ * Lawn Stakes" (10 ct, $12.88) was Chicago's best price for candy canes. Not 'christmas tree' (Little
+ * Debbie's Christmas Tree Cakes are food), 'decorations' (cake decorations are baking aisle) or
+ * 'stocking' (a candy-filled stocking is candy).
  */
-const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt)\b/i;
+const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\b/i;
 
 /**
  * Qualifiers that turn a trap noun back into an ordinary description of the searched product.
@@ -107,7 +134,13 @@ const NON_GROCERY_RE = /\b(?:hardcover|paperback|board book|audiobook|dvd|blu-?r
  * Only the occurrence immediately after the qualifier is forgiven, so "Sweet Cream ICE Cream" is
  * still trapped on its second 'cream'.
  */
-const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']) };
+// From the Christmas run: "Sprinkles Mix" is sprinkles; "Ocean Spray" is a brand, not a household
+// spray (its Jellied Cranberry Sauce scored 0.37 and was refused in every cranberry search); and a
+// "Juice Cocktail" is juice, not alcohol.
+const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['sprinkle']), spray: new Set(['ocean']), cocktail: new Set(['juice']), concentrate: new Set(['from']), squash: new Set(['zucchini', 'yellow', 'summer', 'butternut', 'acorn']) };
+/** The mirror image: a trap noun forgiven when the word right AFTER it names what it is. "King
+ * Oyster Mushrooms" are mushrooms, so 'oyster' must not bury them in a mushroom search. */
+const BENIGN_BEFORE = { oyster: new Set(['mushroom']) };
 
 // Plant bases in front of the noun make a different product: "almond milk", "coconut milk", "oat creamer".
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
@@ -123,9 +156,73 @@ const STORAGE_STATE = new Set(['frozen', 'chilled', 'refrigerated']);
 
 // Flavors make it a different product for price comparison ("chocolate milk" vs "milk").
 const FLAVOR = new Set(['chocolate', 'strawberry', 'vanilla', 'banana', 'caramel', 'mocha', 'cinnamon', 'honey', 'maple', 'pumpkin', 'peppermint', 'cookie', 'cherry', 'blueberry', 'raspberry', 'peach', 'mango', 'coconut', 'hazelnut', 'flavored', 'flavor']);
+// Flavours that ARE the product when the shopper names it: candy canes are peppermint, fudge and
+// brownies are chocolate. Without this, "Brach's Peppermint Candy Canes" scored 0.46 against
+// "candy canes" and every real cane was refused, leaving a light-up lawn stake as the best price
+// (the Christmas run). Keyed by a word of the query.
+const INHERENT_FLAVOR = { cane: new Set(['peppermint']), bark: new Set(['peppermint', 'chocolate']), fudge: new Set(['chocolate']), brownie: new Set(['chocolate']), truffle: new Set(['chocolate']), cocoa: new Set(['chocolate']), tomato: new Set(['cherry']), tomatoes: new Set(['cherry']) };
+
+// Words that describe, rather than change, what a particular query asks for. The trap and flavour
+// rules are general ("beef" before a noun usually makes it a different food), but for some queries
+// the word is simply the product's own description: a steak search is answered by "Beef Ribeye
+// Steak", a wine search by a Cabernet, "buns" by "Hot Dog Buns". Found by the holiday matrix
+// (test/qa-holiday-matrix.test.js), where each of these hid the real product from a holiday list.
+const BEEF_CUT = ['beef', 'bone', 'frozen', 'smoked'];
+const ANIMALS = ['beef', 'pork', 'chicken', 'turkey', 'lamb', 'bone', 'frozen', 'smoked'];
+const ALCOHOL_WORDS = ['wine', 'red', 'white', 'rose', 'sparkling', 'chardonnay', 'merlot', 'cabernet', 'pinot', 'sauvignon', 'riesling', 'moscato', 'zinfandel', 'malbec', 'prosecco', 'cellars', 'winery', 'vineyard', 'brut', 'champagne', 'cava'];
+const QUERY_ALLOWS = Object.fromEntries(Object.entries({
+  wine: ALCOHOL_WORDS, prosecco: ALCOHOL_WORDS, champagne: ALCOHOL_WORDS,
+  // Beef only for steak and brisket: "Pork Brisket Sparerib Strip" won Hanukkah brisket and "Pork Shoulder
+  // Steak" Valentine's steak (the state x holiday audit), a different animal at a different price.
+  steak: BEEF_CUT, ribeye: BEEF_CUT, brisket: BEEF_CUT, rib: ANIMALS, chop: ANIMALS, roast: ANIMALS, tenderloin: ANIMALS,
+  sirloin: ANIMALS, wing: ANIMALS, dog: [...ANIMALS, 'frank'], frank: ANIMALS, brat: [...ANIMALS, 'beer'], sausage: ANIMALS,
+  turkey: ['frozen'], ham: ['honey', 'spiral', 'smoked', 'pork'],
+  bun: ['hot', 'dog', 'hamburger', 'seed', 'sesame'], croissant: ['butter', 'mini'], flower: ['bouquet', 'cut', 'mixed'],
+  pumpkin: ['pie', 'carving'], stuffing: ['mix', 'turkey', 'chicken', 'cornbread', 'herb', 'seasoned'],
+  candy: ['snack', 'halloween', 'chocolate', 'assortment'], wrapper: ['wrap', 'round'], chip: ['potato', 'tortilla', 'kettle'],
+  tortilla: ['taco', 'soft'], tortillas: ['taco', 'soft'], chocolate: ['bar', 'dark'], pea: ['dry', 'dried'], peas: ['dry', 'dried'], filling: ['mix'],
+  watermelon: ['mini', 'seedless', 'personal'], bar: ['oat', 'honey'], bacon: ['smoked', 'hardwood', 'pork'],
+}).map(([k, v]) => [k, new Set(v)]));
+// Products that normally come in flavours, where a flavour word is the variety, not a different food.
+const FLAVOR_OK_HEADS = new Set(['bar', 'chip', 'cereal', 'candy', 'soda', 'bread', 'ham', 'meat', 'cracker', 'cookie', 'sauce', 'bean', 'granola']);
+
+// Compound names that are a different product from the query word inside them. HEAD: the query
+// word is the modifier ("peanut butter cups" are candy, "celery salt" a seasoning); fires when the
+// query has a word of the phrase but not its last. MODIFIER: the query word is the head but the
+// modifier changes it ("baking soda" is not soda); fires when the query has the last word but not
+// the first. Both from the holiday matrix.
+const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn tortilla', 'flour tortilla', 'celery salt', 'celery seed',
+  'onion salt', 'garlic salt', 'yogurt raisin', 'yogurt covered', 'yogurt pretzel', 'wine glass', 'glass set', 'champagne flute',
+  'sugar free', 'charcoal toothpaste', 'chocolate milk'];
+const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
+  'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak'];
+// Tokenised with the matcher's own tokens() ("tortillas" stays "tortillas"), on first use: tokens()
+// depends on constants declared further down this file.
+let compounds = null;
+const compoundTokens = () => (compounds ||= { head: HEAD_COMPOUNDS.map((p) => tokens(p)), modifier: MODIFIER_COMPOUNDS.map((p) => tokens(p)) });
+function hasPhrase(words, phrase) {
+  // Plural-blind: singular() keeps "tortillas" and "peas" (their -as ending), so compare stems.
+  const stem = (w) => w.replace(/s$/, '');
+  for (let i = 0; i + phrase.length <= words.length; i++) if (phrase.every((w, j) => stem(words[i + j]) === stem(w))) return true;
+  return false;
+}
+
+// Canned and dried forms of vegetables and meats are different products from the fresh ones:
+// "Del Monte Asparagus Spears Canned", "Libby's Corned Beef Canned". Frozen is not in this list:
+// frozen green beans answer "green beans" (the Thanksgiving run), frozen wings answer "wings".
+// Cuts of a bird or animal. A search naming one cut is not answered by another, whatever the aisle:
+// Walmart files "Great Value Chicken Drumsticks" under Chicken Wings, and that category made it
+// Birmingham's best chicken wings (the state x holiday audit).
+const CUTS = new Set(['wing', 'drumstick', 'thigh', 'breast', 'leg', 'tenderloin', 'tender', 'gizzard', 'liver', 'neck', 'quarter', 'drumette']);
+// Heads of fresh-produce searches (fruit is FRESH_FRUIT_RE), and the produce words that make a mix. Not
+// words that also name a variety of something else: cherry/grape/pear tomatoes, orange/banana peppers.
+const PRODUCE_HEAD_RE = /^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|parsley|basil|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|garlic|ginger|scallion|avocado)$/;
+const PRODUCE_WORD_RE = /^(?:onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$/;
+const FRESH_VEG_MEAT_RE = /^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$/;
+const SHELF_FORM_RE = /\b(?:canned|dehydrated|freeze[- ]?dried)\b/;
 
 // Qualifiers that are just variants (never penalized).
-const SOFT = new Set(['organic', 'lactose', 'free', 'ultra', 'filtered', 'reduced', 'fat', 'low', 'whole', 'skim', 'natural', 'grass', 'fed', 'pasture', 'raised', 'cage', 'large', 'medium', 'small', 'extra', 'jumbo', 'grade', 'fresh', 'boneless', 'skinless', 'lean', 'ground']);
+const SOFT = new Set(['organic', 'lactose', 'free', 'ultra', 'filtered', 'reduced', 'fat', 'low', 'whole', 'skim', 'natural', 'grass', 'fed', 'pasture', 'raised', 'cage', 'large', 'medium', 'small', 'extra', 'jumbo', 'grade', 'fresh', 'boneless', 'skinless', 'lean', 'ground', 'bonein', 'skinon']);
 
 export function normalize(s) {
   return String(s || '')
@@ -177,11 +274,11 @@ export function tokens(s) {
 }
 
 // Product words that imply another word ("ground chuck" is ground beef).
-const IMPLIES = { chuck: 'beef', sirloin: 'beef', brisket: 'beef', ribeye: 'beef', kcup: 'coffee', 'k-cup': 'coffee', espresso: 'coffee', cage: 'egg', clementine: 'mandarin', cutie: 'mandarin', tp: 'toilet' };
+const IMPLIES = { champagne: ['sparkling', 'wine'], prosecco: ['sparkling', 'wine'], cava: ['sparkling', 'wine'], frank: 'dog', chuck: 'beef', sirloin: 'beef', brisket: 'beef', ribeye: 'beef', kcup: 'coffee', 'k-cup': 'coffee', espresso: 'coffee', cage: 'egg', clementine: 'mandarin', cutie: 'mandarin', tp: 'toilet' };
 
 function productTokens(s) {
   const t = tokens(s);
-  for (const w of [...t]) if (IMPLIES[w]) t.push(IMPLIES[w]);
+  for (const w of [...t]) if (IMPLIES[w]) t.push(...[].concat(IMPLIES[w]));
   return t;
 }
 
@@ -196,6 +293,38 @@ export function queryTokens(q) {
  * opts: { include:[], exclude:[] }
  */
 // Imitation markers: a product that says it merely tastes like the thing is not the thing.
+// Flavoured waters named after the drink they taste of. Whole Foods' "Spiced Cider Sparkling Water"
+// was Chicago's best price for sparkling cider in the Christmas run, "63% less" than real cider.
+// Whole-name, because 'water' alone is not a trap: Carr's Table Water Crackers are crackers.
+// Baby FOOD, found by what it is rather than by the word 'baby'. 'baby' was a trap, so Baby Spinach,
+// Baby Carrots, Baby Gold Potatoes and Baby Swiss all scored 0.37 against their own names and were
+// hidden (the St. Patrick's run: a bag of baby carrots never answered "carrots").
+const BABY_PRODUCT_RE = /\bbaby (?:foods?|formula|wipes?|puree|cereal|shampoo|lotion|wash|oil|powder|snacks?|puffs|teethers?|yogurt melts)\b|\bgerber\b|\bbeech-?nut\b|\bstage [1-4]\b|\bfor babies\b/i;
+const WANTS_BABY_RE = /\bbaby (?:food|formula|cereal|wipes?)\b|\bformula\b|\bgerber\b|\bbeech-?nut\b|\binfant\b|\btoddler\b/i;
+
+// Fresh fruit bought loose, for the processed-category rule in relevance(). Not vegetables: frozen
+// green beans are a fair answer to "green beans" (the Thanksgiving run), frozen banana slices are not.
+const FRESH_FRUIT_RE = /\b(?:mandarins?|clementines?|tangerines?|bananas?|plantains?|apples?|oranges?|lemons?|limes?|grapefruits?|avocados?|mangos?|mangoes|pears?|peach(?:es)?|nectarines?|plums?|kiwis?|grapes?|strawberr(?:y|ies)|blueberr(?:y|ies)|raspberr(?:y|ies)|blackberr(?:y|ies)|cherr(?:y|ies)|pineapples?|melons?|watermelons?|cantaloupes?|tomato(?:es)?)\b/;
+// Supplements named after a food: Natural Grocers' "NaturesPlus Apple Pectin 500 mg Tablets",
+// 180 count, was Dallas's best "apples" at an estimated $0.30/lb (the nationwide audit).
+// A dose alone is not enough: "Lactaid Milk with Vitamin D 400 IU" and "Eggland's Best, 125 mg
+// Omega-3" are groceries. The pill's own form word is.
+const SUPPLEMENT_RE = /\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewables?)\b/i;
+const WANTS_SUPPLEMENT_RE = /\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\b/i;
+const PROCESSED_FORM_RE = /\bin (?:light |heavy )?(?:syrup|juice)\b|\b(?:canned|diced|crushed|stewed|sun[- ]?dried|freeze[- ]?dried|dried|dehydrated|pureed?|frozen)\b/;
+const LUNCH_NAME_RE = /\b(?:deli|sliced|lunchmeat|lunch meat|cold cuts?)\b/;
+const LUNCH_CAT_RE = /\b(?:deli|lunch ?meats?|lunchmeat|cold cuts?)\b/;
+const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|crafts?|disposable|cutlery|utensils?|tableware|herbal tea|pet (?:food|treats|supplies)|dog|cat)\b/;
+const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
+const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
+
+// Juice-flavoured drinks. Costco's "Sunny D Citrus Punch" is filed under Orange Juice, and that
+// category alone scored it 0.87: it was Minneapolis's best orange juice (the nationwide audit), and
+// ALDI names the same bottle "Sunnyd Tangy Original Orange Juice". A punch or a "juice drink" is
+// not juice. "From concentrate" IS juice (BENIGN_AFTER); a can of frozen concentrate is not.
+const JUICE_IMPOSTOR_RE = /\bpunch\b|\b(?:orange|lemon|lime|cherry|grape|power|gator)ade\b|\bjuice (?:drink|beverage|cocktail blend)s?\b|\bsunny ?d\b|\bhi[- ]?c\b|\bkool[- ]?aid\b|\bcapri ?sun\b|\btampico\b|\bdrink mix\b/i;
+const WANTS_JUICE_DRINK_RE = /\bpunch\b|\bdrinks?\b|\bbeverage\b|\bsunny ?d\b|\bhi[- ]?c\b|\bkool[- ]?aid\b|\bcapri ?sun\b|\btampico\b/i;
+
 const IMITATION_RE = /\btastes?\s+like\b|\bimitation\b|\b(?:butter|cheese|milk|meat|crab)[- ]style\b|\balternative to\b|\bsubstitute\b/i;
 // ...unless the shopper is looking for the imitation category itself, in which case a name like
 // "Tastes Like Butter Margarine" is exactly what they asked for.
@@ -206,6 +335,9 @@ export function relevance(query, product, opts = {}) {
   if (!qt.length) return 0.5;
   const nameNorm = normalize(`${product.brand || ''} ${product.name || ''}`);
   const nameTok = new Set(productTokens(`${product.brand || ''} ${product.name || ''}`));
+  // Shoppers say "lunch meat"; labels say "Deli Fresh", "Sliced", "Lunchmeat", and aisles "Deli Meat". Omaha's
+  // "turkey lunch meat" found nothing in the state x holiday audit.
+  if (LUNCH_NAME_RE.test(normalize(product.name || '')) || LUNCH_CAT_RE.test(normalize(product.category || ''))) { nameTok.add('lunch'); nameTok.add('meat'); }
   const selfTok = new Set(productTokens(product.name || ''));
   const brandTok = new Set(productTokens(product.brand || ''));
   const catTok = new Set(tokens(product.category || ''));
@@ -239,8 +371,14 @@ export function relevance(query, product, opts = {}) {
   // A category that ALSO names a different food does not count, or the aisle sign starts matching
   // instead of the product: Trader Joe's files apricot preserves under "Nut Butters & Fruit
   // Spreads", which contains "butter", and chicken thighs under "Chicken & Turkey".
+  // A category that names a processed FORM covers only a shopper who asked for that form: "Dried
+  // Bananas" filed Key Food's freeze-dried banana snack, and "Frozen Bananas" Kroger's frozen
+  // slices, as each store's price for "bananas" (the capture sweep). Only when the query's head is a
+  // fresh fruit (not "apple juice" or "tomato sauce"):
+  // frozen raw chicken breasts are chicken breasts, frozen green beans are green beans.
+  const processedCat = FRESH_FRUIT_RE.test(qt[qt.length - 1] || '') && [...catTok].some((w) => ['dried', 'dehydrated', 'freeze', 'canned', 'frozen'].includes(w) && !qt.includes(w));
   const catCoversQuery =
-    catTok.size > 0 && qt.every((t) => catTok.has(t)) && ![...catTok].some((w) => TRAPS.has(w) && !new Set(qt).has(w));
+    catTok.size > 0 && qt.every((t) => catTok.has(t)) && !processedCat && ![...catTok].some((w) => TRAPS.has(w) && !new Set(qt).has(w));
 
   // The same words are invisible to the prefix fallback below, or "Whole Foods Market" would hand
   // the query word back through `n.startsWith(t)` at 0.7 instead of 1.
@@ -258,7 +396,7 @@ export function relevance(query, product, opts = {}) {
   const qNorm = normalize(query);
   if (qNorm && nameNorm.includes(qNorm)) score += 0.12;
 
-  if (catTok.size && catTok.has(qt[qt.length - 1])) score += 0.08;
+  if (catTok.size && catTok.has(qt[qt.length - 1]) && !processedCat) score += 0.08;
 
   // Position-aware penalties around the head noun (the last query word).
   const head = qt[qt.length - 1];
@@ -271,6 +409,7 @@ export function relevance(query, product, opts = {}) {
     const before = words.slice(Math.max(0, headIdx - 3), headIdx);
     if (before.some((w) => w === 'with' || w === 'made' || w === 'from' || w === 'in') && words.slice(0, headIdx).some((w) => TRAPS.has(w) && !qset.has(w))) mult *= 0.3;
   }
+  const allowed = new Set(qt.flatMap((q) => [...(QUERY_ALLOWS[q] || [])]));
   if (headIdx >= 0) {
     let strong = 0;
     // Look on BOTH sides of the head noun. A trap word before it is just as disqualifying as one
@@ -279,9 +418,10 @@ export function relevance(query, product, opts = {}) {
     for (let i = 0; i < words.length; i++) {
       if (i === headIdx) continue;
       const w = words[i];
-      if (qset.has(w) || SOFT.has(w)) continue;
+      if (qset.has(w) || SOFT.has(w) || allowed.has(w)) continue;
       if (words[i - 1] === 'in' || words[i - 1] === 'with' || words[i - 2] === 'in') continue; // "tuna in oil", "with sauce"
       if (BENIGN_AFTER[w]?.has(words[i - 1])) continue; // "sweet cream butter" is plain butter
+      if (BENIGN_BEFORE[w]?.has(words[i + 1])) continue; // "oyster mushrooms" are mushrooms
       if (TRAPS.has(w)) strong += 1;
     }
     let alt = 0;
@@ -289,12 +429,12 @@ export function relevance(query, product, opts = {}) {
     let flavor = 0;
     for (let i = 0; i < words.length; i++) {
       const w = words[i];
-      if (qset.has(w)) continue;
+      if (qset.has(w) || allowed.has(w)) continue;
       // Position-independent: "Frozen Orange Juice" and "Orange Juice Frozen" are the same
       // product and must score the same. Anchoring these to the head noun meant word order alone
       // changed the score by a factor of two.
       if (ALT_BASE.has(w)) alt += 1;
-      else if (FLAVOR.has(w)) flavor += 1;
+      else if (FLAVOR.has(w) && !qt.some((q) => INHERENT_FLAVOR[q]?.has(w)) && !FLAVOR_OK_HEADS.has(head)) flavor += 1;
       // When the retailer filed the product under exactly what was searched, a storage word in the
       // name describes a variant OF that category rather than a different product. "Jennie-O Whole
       // Frozen Turkey" in category "Frozen Whole Turkey" scored 0.510 against a 0.55 cut purely
@@ -305,15 +445,66 @@ export function relevance(query, product, opts = {}) {
     mult *= Math.pow(0.4, Math.min(strong, 3)) * Math.pow(0.55, Math.min(alt, 2)) * Math.pow(0.58, Math.min(mild, 3)) * (flavor ? 0.5 : 1);
   } else {
     let traps = 0;
-    for (const w of new Set(words)) if (TRAPS.has(w) && !qset.has(w)) traps += 1;
+    for (const w of new Set(words)) if (TRAPS.has(w) && !qset.has(w) && !allowed.has(w)) traps += 1;
     mult *= Math.pow(0.6, Math.min(traps, 3));
   }
   // "Tastes Like Butter" is margarine. Only penalize when the shopper did not ask for it.
   const wantsImitation = IMITATION_RE.test(normalize(query)) || IMITATION_CATEGORY_RE.test(normalize(query));
   if (IMITATION_RE.test(nameNorm) && !wantsImitation) mult *= 0.3;
+  if (WATER_DRINK_RE.test(nameNorm) && !WANTS_WATER_RE.test(normalize(query))) mult *= 0.3;
+  // "Chicken a la King" is a frozen dinner and "Coffee a la Jaggery" (Kimbala, 10.2 oz, Dallas's
+  // best coffee in the audit) a sweetened mix: "<the thing> a la <style>" names a prepared dish.
+  // Not "a la carte" (sold separately) or "a la mode".
+  { const q = normalize(query); if (!/\ba la\b/.test(q) && new RegExp(`(?:^|\\s)${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} a la (?!carte\\b|mode\\b)`).test(nameNorm)) mult *= 0.3; }
+  // A processed form of fresh fruit is not the fruit: "Diced Canned Tomatoes" at $0.83/lb was Salt
+  // Lake City's best "tomatoes" (the nationwide audit). Asking for the form finds it.
+  if (FRESH_FRUIT_RE.test(qt[qt.length - 1] || '')) {
+    const q = normalize(query).replace(/-/g, ' ');
+    const forms = nameNorm.match(new RegExp(PROCESSED_FORM_RE.source, 'g')) || [];
+    if (forms.length && !forms.some((f) => q.includes(f.replace(/-/g, ' ')))) mult *= 0.3;
+  }
+  {
+    const qstems = new Set(qt.map((w) => w.replace(/s$/, '')));
+    const inQ = (w) => qstems.has(w.replace(/s$/, ''));
+    for (const p of compoundTokens().head) if (hasPhrase(words, p) && p.slice(0, -1).some(inQ) && !inQ(p[p.length - 1])) { mult *= 0.2; break; }
+    for (const p of compoundTokens().modifier) if (hasPhrase(words, p) && inQ(p[p.length - 1]) && !inQ(p[0])) { mult *= 0.2; break; }
+  }
+  {
+    const qCut = qt.find((w) => CUTS.has(w));
+    if (qCut && words.some((w) => CUTS.has(w) && w !== qCut && !qset.has(w)) && !words.includes(qCut)) mult *= 0.2;
+  }
+  // "Marzetti Glaze for Strawberries" is something to use WITH strawberries; it was Little Rock's best
+  // "strawberries" (the state x holiday audit). Same for a dip for apples, a rub for ribs.
+  if (head && !qset.has('for') && new RegExp(`\\bfor (?:[a-z]+ ){0,2}${head.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(words.join(' '))) mult *= 0.2;
+  // Champagne grapes are grapes, not the champagne IMPLIES reads into the name.
+  if (/\bchampagne grapes?\b/.test(nameNorm) && !/\bgrape/.test(normalize(query))) mult *= 0.2;
+  // Fresh produce searches: a product naming a DIFFERENT produce item is a mix ("Chopped Cilantro & White
+  // Onions", "Diced Tomatoes with Jalapeno And Cilantro" won "cilantro"), and a juice aisle is juice
+  // ("Cold Pressed Celery", Pressed Juices, won "celery"). The state x holiday audit.
+  if (FRESH_FRUIT_RE.test(head || '') || PRODUCE_HEAD_RE.test(head || '')) {
+    const others = words.filter((w) => !qset.has(w) && PRODUCE_WORD_RE.test(w) && !qt.some((q) => q.startsWith(w) || w.startsWith(q)));
+    if (others.length) mult *= 0.3;
+    if (catTok.has('juice') || catTok.has('juices') || catTok.has('pressed')) { if (!qset.has('juice')) mult *= 0.3; }
+  }
+  // "Garden Sweet Russet Potato" answered "sweet potatoes": another potato entirely.
+  if (/\bsweet potato/.test(normalize(query)) && /\b(?:russet|yukon|red potato|gold potato|white potato)/.test(nameNorm)) mult *= 0.2;
+  if (FRESH_VEG_MEAT_RE.test(head || '')) {
+    const m = SHELF_FORM_RE.exec(nameNorm);
+    if (m && !normalize(query).includes(m[0])) mult *= 0.3;
+    // The aisle says it when the name does not: ALDI's "Brookdale Corned Beef", 12 oz, is canned
+    // corned beef, and it was Phoenix's best "corned beef" for St. Patrick's Day.
+    else if (!m && catTok.has('canned') && !qset.has('canned')) mult *= 0.3;
+  }
+  if (/\bjuice\b/.test(normalize(query)) && JUICE_IMPOSTOR_RE.test(nameNorm) && !WANTS_JUICE_DRINK_RE.test(normalize(query))) mult *= 0.3;
+  if (BABY_PRODUCT_RE.test(nameNorm) && !WANTS_BABY_RE.test(normalize(query))) mult *= 0.2;
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the
   // position rules deliberately look past "in"/"with" phrases, which is where the giveaway sits.
   if (NON_GROCERY_RE.test(nameNorm)) mult *= 0.15;
+  // The retailer's own aisle says it is not food: "Solaray Passion Flower" (Herbal Supplements) and "Hello Hobby
+  // Satin Flowers" (Party Decorations) answered "flowers", Luden's watermelon drops (Cough Suppressants)
+  // "watermelon", "Apple Sticks" (Toothpicks) "apples" (the state x holiday audit).
+  if (NON_FOOD_CATEGORY_RE.test(normalize(product.category || '')) && !NON_FOOD_CATEGORY_RE.test(normalize(query))) mult *= 0.15;
+  if (SUPPLEMENT_RE.test(nameNorm) && !WANTS_SUPPLEMENT_RE.test(normalize(query))) mult *= 0.15;
 
   score *= mult;
 

@@ -33,6 +33,9 @@ const walk = (dir, out = []) => {
 const files = walk(ROOT);
 const pages = files.filter((f) => f.endsWith('.html'));
 const rel = (f) => path.relative(ROOT, f);
+const ROBOTS_DISALLOW = fs.existsSync(path.join(ROOT, 'robots.txt'))
+  ? [...fs.readFileSync(path.join(ROOT, 'robots.txt'), 'utf8').matchAll(/^\s*Disallow:\s*(\S*)/gim)].map((m) => m[1])
+  : [];
 
 // ---------- tiny HTML helpers (regex is fine for a static site we control) ----------
 const tag = (html, re) => (html.match(re) || [])[1]?.trim();
@@ -101,7 +104,11 @@ for (const file of pages) {
 
   // --- indexability ---
   const robotsMeta = meta(html, 'robots') || '';
-  if (/noindex/i.test(robotsMeta)) add('BLOCK', f, 'page is marked noindex', robotsMeta);
+  // A page robots.txt already keeps out (site/app/, the "not open yet" page) is meant to be noindex.
+  const urlPath = '/' + f.replace(/index\.html$/, '').replace(/\.html$/, '');
+  const disallowed = ROBOTS_DISALLOW.some((d) => d && !d.includes('*') && urlPath.startsWith(d));
+  if (f === '404.html') continue; // the not-found page: noindex, no canonical and short by design
+  if (/noindex/i.test(robotsMeta)) add(disallowed ? 'NOTE' : 'BLOCK', f, disallowed ? 'noindex, and disallowed in robots.txt (intended)' : 'page is marked noindex', robotsMeta);
 
   if (!/^<!doctype html>/i.test(html.trim())) add('BLOCK', f, 'missing <!doctype html>');
   const lang = attr(tag(html, /(<html[^>]*>)/i) || '', 'lang');
@@ -208,7 +215,9 @@ for (const file of pages) {
   for (const m of all(html, /<a\b[^>]*href\s*=\s*["']([^"']+)["'][^>]*>/gi)) {
     const href = m[1];
     if (/^(https?:|mailto:|tel:|#)/i.test(href)) continue;
-    const target = path.join(path.dirname(file), href.split('#')[0].split('?')[0]);
+    const clean = href.split('#')[0].split('?')[0];
+    // "/privacy" is relative to the site root, not to the page: from app/index.html it is not app/privacy.
+    const target = clean.startsWith('/') ? path.join(ROOT, clean) : path.join(path.dirname(file), clean);
     const ok =
       fs.existsSync(target) ||
       fs.existsSync(target + '.html') ||
@@ -271,7 +280,11 @@ if (has('sitemap.xml')) {
   for (const u of urls) {
     if (!/^https:\/\//i.test(u)) add('BLOCK', 'sitemap.xml', 'sitemap URL is not absolute https', u);
   }
-  const listed = new Set(urls.map((u) => u.replace(/^https?:\/\/[^/]+\//, '').replace(/\/$/, '') || 'index.html'));
+  // "https://cartworth.app/guides/" is guides/index.html; "https://cartworth.app/privacy" is privacy.html.
+  const listed = new Set(urls.map((u) => {
+    const p = u.replace(/^https?:\/\/[^/]+\//, '');
+    return !p ? 'index.html' : p.endsWith('/') ? `${p}index.html` : p.replace(/\/$/, '');
+  }));
   for (const p of pages) {
     const name = rel(p);
     if (!listed.has(name) && !listed.has(name.replace(/\.html$/, ''))) add('NOTE', 'sitemap.xml', `page not in sitemap: ${name}`);

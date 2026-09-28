@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Cartworth — compare grocery prices near you</title>
   <meta name="description" content="Compare grocery prices at the stores near any US ZIP code. Live prices converted to the same unit so package sizes compare fairly, each one labelled with where it came from, plus the weekly ads." />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111'/%3E%3Cpath d='M14 26h36l-4 22a4 4 0 0 1-4 3H22a4 4 0 0 1-4-3z' fill='%23fff'/%3E%3Cpath d='M22 26l8-12M42 26l-8-12' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231c7c4b'/%3E%3Cpath d='M14 26h36l-4 22a4 4 0 0 1-4 3H22a4 4 0 0 1-4-3z' fill='%23fff'/%3E%3Cpath d='M22 26l8-12M42 26l-8-12' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
   <!--
     No inline scripts, on purpose. The static host (site/_headers, netlify.toml, vercel.json) ships
     Content-Security-Policy script-src 'self' with no 'unsafe-inline', and says its pages carry no
@@ -18,6 +18,36 @@
   -->
   <script src="/js/theme-boot.js"></script>
   <link rel="stylesheet" href="/app.css" />
+  <!--
+    Every module the app imports, fetched in parallel instead of one import level at a time (the
+    launch review's Lighthouse run: a six-deep request chain behind a 4.4 s mobile LCP).
+    test/qa-launch-smoke.test.js fails when this list and the real import graph disagree.
+  -->
+  <link rel="modulepreload" href="/vendor/preact.mjs" />
+  <link rel="modulepreload" href="/vendor/preact-hooks.mjs" />
+  <link rel="modulepreload" href="/vendor/htm.mjs" />
+  <link rel="modulepreload" href="/js/icons.js" />
+  <link rel="modulepreload" href="/shared/units.js" />
+  <link rel="modulepreload" href="/js/store.js" />
+  <link rel="modulepreload" href="/shared/catalog.js" />
+  <link rel="modulepreload" href="/shared/stores.js" />
+  <link rel="modulepreload" href="/js/ui.js" />
+  <link rel="modulepreload" href="/js/api.js" />
+  <link rel="modulepreload" href="/js/actions.js" />
+  <link rel="modulepreload" href="/shared/deals.js" />
+  <link rel="modulepreload" href="/js/format.js" />
+  <link rel="modulepreload" href="/js/charts.js" />
+  <link rel="modulepreload" href="/shared/match.js" />
+  <link rel="modulepreload" href="/shared/compare.js" />
+  <link rel="modulepreload" href="/js/views/product.js" />
+  <link rel="modulepreload" href="/shared/seasonal.js" />
+  <link rel="modulepreload" href="/js/views/occasions.js" />
+  <link rel="modulepreload" href="/js/views/sales.js" />
+  <link rel="modulepreload" href="/js/views/compare.js" />
+  <link rel="modulepreload" href="/js/views/watch.js" />
+  <link rel="modulepreload" href="/js/views/list.js" />
+  <link rel="modulepreload" href="/js/views/settings.js" />
+  <link rel="modulepreload" href="/js/views/onboarding.js" />
 </head>
 <body>
   <div id="app"><div class="boot">Loading Cartworth…</div></div>

@@ -5,12 +5,13 @@ import { Icon } from '../icons.js';
 import { BestBars } from '../charts.js';
 import { useStore, pref, setPref, openModal, getState } from '../store.js';
 import { runSearch, addWatch, addToList, go } from '../actions.js';
-import { money, money2, unitPrice, unitLabel, ago, shortDate, endsLabel, plural, BASIS_LABEL, BASIS_TITLE, BASIS_BADGE, linkDestination } from '../format.js';
-import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible } from '/shared/compare.js';
+import { money, money2, unitPrice, unitLabel, ago, shortDate, endsLabel, plural, shortPromo, BASIS_LABEL, BASIS_TITLE, BASIS_BADGE, linkDestination } from '../format.js';
+import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim, tieBreak, standings } from '/shared/compare.js';
 import { refineChips, RELEVANT } from '/shared/match.js';
 import { displayUnitsFor, DISPLAY_UNITS } from '/shared/units.js';
 import { ProductDetail } from './product.js';
 import { DealCardMini } from './sales.js';
+import { OccasionCards } from './occasions.js';
 
 const STAPLES = ['milk', 'eggs', 'bananas', 'chicken breast', 'ground beef', 'butter', 'bread', 'coffee', 'avocados', 'strawberries', 'cheddar cheese', 'orange juice', 'bacon', 'greek yogurt', 'paper towels'];
 const STRICT = { strict: 0.75, normal: RELEVANT, all: 0 };
@@ -23,12 +24,14 @@ export function CompareView() {
   useTick(30000);
 
   return html`<div>
+    <h1 class="sr-only">${search?.q ? `Prices for ${search.q}` : 'Compare grocery prices'}</h1>
     <${SearchBar} initial=${search?.q || ''} recent=${recent} />
     ${!search &&
     html`<div class="quick">
       ${recent?.length > 0 &&
       html`<div class="section-title" style=${{ marginTop: 18 }}>Recent searches</div>
         <div class="chips">${recent.slice(0, 12).map((r) => html`<${Chip} key=${r.q} onClick=${() => runSearch(r.q)}>${r.q}</${Chip}>`)}</div>`}
+      <${OccasionCards} />
       <div class="section-title" style=${{ marginTop: 18 }}>Staples <span class="sub">tap one to compare every store</span></div>
       <div class="chips">${STAPLES.map((q) => html`<${Chip} key=${q} onClick=${() => runSearch(q)}>${q}</${Chip}>`)}</div>
       <div class="card card-pad" style=${{ marginTop: 22 }}>
@@ -166,6 +169,11 @@ function StatusStrip({ search }) {
           <${Icon} name="alert" size=${13} /><b>${s.short}</b> failed · retry
         </button>`;
       if (r.status === 'unsupported') return html`<span class="sstat off" key=${id} title=${r.message}>${s.short} · ads only</span>`;
+      if (r.status === 'tooFar') return html`<span class="sstat off" key=${id} title=${r.message}>${s.short} · outside radius</span>`;
+      if (r.status === 'blocked') return html`<span class="sstat off" key=${id} title=${r.message}>${s.short} · prices in the iPhone app</span>`;
+      // Not asked: the store's queue was long or this visitor ran many new searches (src/guard.js).
+      if (r.status === 'busy')
+        return html`<button class="sstat off" key=${id} title=${`${r.message} Click to try again.`} onClick=${() => runSearch(search.q, { only: [id] })}>${s.short} · busy, try again</button>`;
       return html`<span class="sstat" key=${id} title=${title + (r.stale ? ` · ⚠ ${r.stale}` : '')}>
         <${StoreDot} id=${id} /><b>${s.short}</b> ${r.items?.length ? r.items.length : 'no results'}
         ${r.stale && html`<span class="badge badge-warn" title=${r.stale}>stale</span>`}
@@ -200,7 +208,8 @@ function Results({ search, settings }) {
 
   const prefs = { prime: settings?.prime, cardPrices: settings?.cardPrices };
   const results = search.results;
-  const loading = Object.values(results).some((r) => r.status === 'loading');
+  const pendingStores = Object.values(results).filter((r) => r.status === 'loading').length;
+  const loading = pendingStores > 0;
 
   const model = useMemo(() => {
     const all = [];
@@ -244,9 +253,9 @@ function Results({ search, settings }) {
       // A price we cannot believe must never become a store's headline number. It stays in the
       // list below, marked, so nothing is hidden: it just does not get to be the answer.
       if (p.implausible) continue;
-      if (!best[p.storeId] || p.cmp < best[p.storeId].cmp) best[p.storeId] = p;
+      if (!best[p.storeId] || p.cmp < best[p.storeId].cmp || (p.cmp === best[p.storeId].cmp && tieBreak(p, best[p.storeId]) < 0)) best[p.storeId] = p;
     }
-    const bestRows = Object.values(best).sort((a, b) => a.cmp - b.cmp);
+    const bestRows = Object.values(best).sort((a, b) => a.cmp - b.cmp || tieBreak(a, b));
     const cmpSort = {
       unit: (a, b) => (a.cmp ?? Infinity) - (b.cmp ?? Infinity) || b.score - a.score,
       price: (a, b) => (effPrice(a, prefs) ?? Infinity) - (effPrice(b, prefs) ?? Infinity),
@@ -266,6 +275,9 @@ function Results({ search, settings }) {
 
   const { rows, dim, dims, displayUnit, bestRows } = model;
   const winner = bestRows[0];
+  // The chart's "Best" and the headline's savings line follow one rule: a store within the
+  // price-basis margin of the winner is 'close', not beaten (shared/compare.js standings).
+  const verdicts = Object.fromEntries(standings(Object.fromEntries(bestRows.map((p) => [p.storeId, p]))).map((r) => [r.storeId, r.verdict]));
   const anyResults = Object.values(results).some((r) => r.items?.length);
   const errors = Object.values(results).filter((r) => r.status === 'error');
   // Every store errored: the page already says "Can't reach the Cartworth server", and telling the
@@ -415,15 +427,16 @@ function Results({ search, settings }) {
       <div class="side-sticky">
         ${winner
           ? html`<div class="card hero-best">
-              <div class="hero-label">Best price${include.length ? ` · ${include.join(', ')}` : ''}</div>
+              <div class="hero-label">${loading ? 'Best price so far' : 'Best price'}${include.length ? ` · ${include.join(', ')}` : ''}</div>
               <div class="hero-value">${unitPrice(winner.cmp, displayUnit).text}<span class="per">/${unitLabel(displayUnit)}</span></div>
               <div class="row wrap" style=${{ gap: 6 }}>
                 <${StoreTag} id=${winner.storeId} short=${false} />
                 ${winner.cmpEst && html`<span class="badge" title="Estimated from a typical piece weight">est.</span>`}
-                ${winner.priceBasis !== 'shelf' && html`<span class="badge badge-outline" title=${BASIS_TITLE[winner.priceBasis]}>${BASIS_LABEL[winner.priceBasis]}</span>`}
+                ${winner.priceBasis && html`<span class="badge badge-outline" title=${BASIS_TITLE[winner.priceBasis]}>${BASIS_LABEL[winner.priceBasis] || BASIS_LABEL.online}</span>`}
               </div>
               <div class="hero-sub"><a href="#" onClick=${(e) => { e.preventDefault(); openProduct(winner, displayUnit); }}>${winner.name}</a>${winner.size ? ` · ${winner.size}` : ''} · ${money2(effPrice(winner, prefs))}${winner.soldBy === 'lb' ? '/lb' : ''}</div>
-              ${bestRows[1] && html`<div class="muted small">${savingsLine(winner, bestRows[1], displayUnit)}</div>`}
+              ${bestRows[1] && savingsLine(winner, bestRows[1], displayUnit) && html`<div class="muted small">${savingsLine(winner, bestRows[1], displayUnit)}</div>`}
+              ${loading && html`<div class="muted small">${pendingStores} more ${pendingStores === 1 ? 'store is' : 'stores are'} still answering; this can change.</div>`}
             </div>`
           : loading
             ? html`<div class="card hero-best"><div class="hero-label">Best price</div><div class="skeleton" style=${{ height: 40, width: '70%' }}></div><div class="skeleton" style=${{ height: 14, width: '90%' }}></div></div>`
@@ -432,7 +445,7 @@ function Results({ search, settings }) {
         html`<div class="card card-pad">
           <h2>Cheapest match at each store <span class="muted small" style=${{ fontWeight: 400 }}>per ${unitLabel(displayUnit)}</span></h2>
           <${BestBars}
-            rows=${bestRows.map((p, i) => ({ id: p.storeId, storeId: p.storeId, label: storeInfo(p.storeId).short, value: p.shown, text: unitPrice(p.cmp, displayUnit).text, sub: `${p.name}${p.size ? ` · ${p.size}` : ''} — ${money2(effPrice(p, prefs))}${p.soldBy === 'lb' ? '/lb' : ''}`, best: i === 0 }))}
+            rows=${bestRows.map((p, i) => ({ id: p.storeId, storeId: p.storeId, label: storeInfo(p.storeId).short, value: p.shown, text: unitPrice(p.cmp, displayUnit).text, sub: `${p.name}${p.size ? ` · ${p.size}` : ''} — ${money2(effPrice(p, prefs))}${p.soldBy === 'lb' ? '/lb' : ''}`, best: i === 0, close: verdicts[p.storeId] === 'close', basis: p.priceBasis ? BASIS_BADGE[p.priceBasis] || BASIS_BADGE.online : null }))}
             onPick=${(r) => openProduct(bestRows.find((p) => p.storeId === r.storeId), displayUnit)}
             note=${bestRows.some((p) => p.priceBasis === 'national')
               ? 'Some stores show online (Instacart) prices, which can run higher than the shelf. \u201CNational\u201D means Instacart\u2019s chain-wide listing rather than a store near you.'
@@ -462,9 +475,20 @@ export function effPrice(p, prefs) {
   return usesMember(p, prefs) ? p.memberPrice : p.price;
 }
 
-function savingsLine(a, b, displayUnit) {
-  const pctv = Math.round((1 - a.cmp / b.cmp) * 100);
-  return `${unitPrice(b.cmp - a.cmp, displayUnit).text}/${unitLabel(displayUnit)} (${pctv}%) less than the next-best store, ${storeInfo(b.storeId).short}`;
+// The sentence is decided in shared/compare.js savingsClaim, the same one the phone renders: an exact
+// figure only between two prices of the same basis, words across bases, nothing against a flagged
+// price. This only fills in the display unit and the store's name.
+export function savingsLine(a, b, displayUnit) {
+  // Pass the unambiguous { product, perBase, est } shape: a Compare row also carries the product's
+  // own `unit` map ({ volume: { perBase } }), which savingsClaim would otherwise read as a
+  // bestPerStore entry's single unit and find no price in, so the line silently never showed.
+  const side = (r) => ({ product: r, perBase: r.cmp, est: !!r.cmpEst });
+  const c = savingsClaim(side(a), side(b));
+  if (!c) return null;
+  return c.text
+    .replace('{amount}', c.diffPerBase != null ? unitPrice(c.diffPerBase, displayUnit).text : '')
+    .replace('{unit}', unitLabel(displayUnit))
+    .replace('{store}', storeInfo(c.storeId).short);
 }
 
 function openProduct(p, displayUnit) {
@@ -507,7 +531,7 @@ export function ProductRow({ p, displayUnit, best, prefs, q, compact }) {
         ${weak && html`<span class="badge badge-outline" title="Only loosely matches your search, so it is never counted as the best price">weak match</span>`}
         ${best && html`<span class="badge badge-good"><${Icon} name="check" size=${11} stroke=${3} /> Best</span>`}
         ${p.onSale && p.pctOff ? html`<span class="badge badge-sale">${p.pctOff}% off</span>` : p.onSale ? html`<span class="badge badge-sale">Sale</span>` : null}
-        ${p.promo && html`<span class="badge badge-sale" title=${p.promo}>${p.promo.length > 28 ? p.promo.slice(0, 26) + '…' : p.promo}</span>`}
+        ${p.promo && html`<span class="badge badge-sale badge-promo" title=${p.promo}>${shortPromo(p.promo)}</span>`}
         ${p.memberPrice != null && html`<span class="badge badge-info" title=${usesMember(p, prefs) ? 'Counted in the unit price (Settings)' : 'Not counted — turn on in Settings'}>${p.memberLabel} ${money2(p.memberPrice)}</span>`}
         ${lowest &&
         html`<span
@@ -519,12 +543,18 @@ export function ProductRow({ p, displayUnit, best, prefs, q, compact }) {
         ${rose && html`<span class="badge badge-warn" title="Since your last check"><${Icon} name="arrowUp" size=${11} stroke=${3} /> from ${money2(h.prev)}</span>`}
         ${oos && html`<span class="badge badge-bad">Out of stock</span>`}
         ${/low/i.test(p.stock || '') && html`<span class="badge badge-warn">Low stock</span>`}
-        ${p.priceBasis !== 'shelf' && html`<span class="badge badge-outline" title=${BASIS_TITLE[p.priceBasis]}>${BASIS_BADGE[p.priceBasis] || BASIS_BADGE.online}</span>`}
+        ${p.priceBasis && html`<span class="badge badge-outline" title=${BASIS_TITLE[p.priceBasis]}>${BASIS_BADGE[p.priceBasis] || BASIS_BADGE.online}</span>`}
         ${p.implausible &&
         html`<span
           class="badge warn"
           title=${`This works out ${p.implausible.ratio}\u00d7 the typical unit price for this search. Usually it means the listing's size is wrong, for example a multi-pack priced as one unit. Check the label before trusting it.`}
           >price looks wrong</span
+        >`}
+        ${p.sizeConflict && !p.implausible &&
+        html`<span
+          class="badge warn"
+          title=${`The store lists this as ${p.sizeConflict.text}, but its name says ${p.sizeConflict.name}. The price may be for a different amount than the size shown, so no unit price is given and it is never counted as the best price. Check the label.`}
+          >size unclear</span
         >`}
         ${p.sponsored && html`<span class="badge" title="The store’s search promoted this item">Ad</span>`}
       </div>

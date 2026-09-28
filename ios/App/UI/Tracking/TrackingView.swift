@@ -119,6 +119,9 @@ struct TrackingView: View {
         try? ctx.save()
         newWatch = ""
         Task { await refresh(w) }
+        // Watch alerts need notification permission, and until now only adding a favorite asked for
+        // it: someone who only watched prices never got their target alert. Asks once; a no is kept.
+        Task { _ = await BackgroundRefresh.requestPermission() }
     }
 
     private func addFavorite() {
@@ -222,6 +225,12 @@ struct WatchCard: View {
                     if status.atTarget { Badge(text: "at your target", kind: .good, symbol: "checkmark") }
                     else if let t = watch.target { Badge(text: "target \(Money.full(t))", kind: .neutral) }
                     if status.lowest { Badge(text: "lowest seen", kind: .good) }
+                    // Where the headline number came from (the owner's rule): an Instacart or
+                    // chain-wide listing is not the shelf price, and an estimate is not exact.
+                    if let b = watch.result?.stores[bestId] {
+                        if let tag = PriceProvenance.badge(b.priceBasis) { Badge(text: tag, kind: .outline) }
+                        if b.est { Badge(text: "est.", kind: .outline) }
+                    }
                 }
             } else if let err = watch.lastError {
                 Text(err).font(.footnote).foregroundStyle(.secondary)
@@ -234,7 +243,7 @@ struct WatchCard: View {
                     StoreTag(storeId: storeId)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(best.name).font(.caption).lineLimit(1)
-                        Text([best.size, Money.full(best.price) + (best.soldBy == .lb ? "/lb" : ""), best.onSale ? "sale" : nil].compactMap { $0 }.joined(separator: " · "))
+                        Text([best.size, Money.full(best.price) + (best.soldBy == .lb ? "/lb" : ""), best.onSale ? "sale" : nil, PriceProvenance.badge(best.priceBasis), best.est ? "est." : nil].compactMap { $0 }.joined(separator: " · "))
                             .font(.caption2).foregroundStyle(.secondary)
                     }
                     Spacer()
@@ -280,6 +289,11 @@ struct WatchEditSheet: View {
     @State private var include = ""
     @State private var exclude = ""
 
+    private var unitChoices: [DisplayUnit] {
+        guard let d = watch.dim.flatMap(Dim.init(rawValue:)) else { return DisplayUnit.allCases }
+        return DisplayUnit.units(for: d)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -288,7 +302,9 @@ struct WatchEditSheet: View {
                     HStack {
                         TextField("e.g. 2.50", text: $target).keyboardType(.decimalPad)
                         Picker("per", selection: $unit) {
-                            ForEach(DisplayUnit.allCases) { u in Text("per \(u.label)").tag(u) }
+                            // Only units of what the watch measures: butter "per gal" multiplied a per-ounce
+                            // price by 128 into the card, the chart and the target alert.
+                            ForEach(unitChoices) { u in Text("per \(u.label)").tag(u) }
                         }
                         .labelsHidden()
                     }
@@ -309,7 +325,8 @@ struct WatchEditSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         watch.label = label.isEmpty ? watch.query : label
-                        watch.target = Double(target)
+                        // A decimal-comma region types "2,50"; Double("2,50") is nil and silently cleared the target.
+                        watch.target = Double(target.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: "."))
                         watch.displayUnit = unit.rawValue
                         let newInclude = include.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
                         let newExclude = exclude.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
@@ -325,7 +342,8 @@ struct WatchEditSheet: View {
             .onAppear {
                 label = watch.label
                 target = watch.target.map { String($0) } ?? ""
-                unit = watch.displayUnit.flatMap(DisplayUnit.init(rawValue:)) ?? .lb
+                let saved = watch.displayUnit.flatMap(DisplayUnit.init(rawValue:))
+                unit = saved.flatMap { unitChoices.contains($0) ? $0 : nil } ?? [DisplayUnit.lb, .gal, .ct].first(where: unitChoices.contains) ?? .lb
                 include = watch.include.joined(separator: ", ")
                 exclude = watch.exclude.joined(separator: ", ")
             }

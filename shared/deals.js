@@ -242,3 +242,53 @@ export function isFreebie(deal, text = '') {
   const f = freeOffer(deal, text);
   return f && f.noPurchase ? f : null;
 }
+
+/**
+ * Whole Foods states a sale as calendar days ("Valid 09/23 - 09/29") but encodes each day as the
+ * instant it starts: endDate "2026-09-29T05:00:00Z" is 12:00 am on the LAST day, in Central time.
+ * Read as an instant, every sale "ended" a day early. Keep the UTC calendar date (the same day for
+ * every US time zone) and return it as a local-time string: the start of the first day, or the last
+ * second of the last day, wherever the shopper is.
+ */
+export function saleDay(iso, { end = false } = {}) {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  return `${new Date(t).toISOString().slice(0, 10)}T${end ? '23:59:59' : '00:00:00'}`;
+}
+
+/**
+ * Calendar days from `now` to `to` in local time: 0 = today, 1 = tomorrow. Counted in days on the
+ * calendar, not hours left: at 11:30 pm on Dec 23 an ad that ends on Christmas Eve ends tomorrow.
+ */
+export function calendarDaysUntil(to, now = Date.now()) {
+  const day = (t) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+  return Math.round((day(to) - day(now)) / 86400000);
+}
+
+/**
+ * Flipp states every ad in Eastern time: a Chicago store's "Valid 12/30 - 1/5" arrives as
+ * "2026-12-30T00:00:00-05:00" .. "2027-01-05T23:59:59-05:00". Read as instants, a Central shopper saw
+ * it start on Dec 29 and end at 10:59 pm (8:59 pm in Pacific). The circular means calendar days
+ * wherever the store is, so keep the wall-clock date and time and drop the offset: a string without
+ * an offset is local time to every reader.
+ */
+export function wallClock(s) {
+  if (!s) return null;
+  const m = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}(?::\d{2})?))?/.exec(String(s));
+  return m ? `${m[1]}T${m[2] || '00:00:00'}` : null;
+}
+
+/**
+ * The badge for a buy-some-get-some deal: the offer, never a percentage. Setting pctOff from the
+ * offer printed "50% off" (web) or "33% off" (iPhone, buy 2 get 1) above the untouched single-item
+ * price, telling anyone scanning the grid the item is that much cheaper today; the discount exists
+ * only if they buy the whole set. Null for any other kind of deal.
+ */
+export function offerBadge(deal) {
+  if (deal?.kind === 'bogo') return 'Buy 1 get 1 free';
+  if (deal?.kind !== 'bxgy') return null;
+  const buy = deal.buy ?? (deal.qty ? deal.qty - 1 : null);
+  const get = buy && deal.qty ? deal.qty - buy : null;
+  return buy && get ? `Buy ${buy} get ${get}${deal.freeUnit ? ' free' : ' deal'}` : 'Multi-buy deal';
+}

@@ -64,7 +64,7 @@ test('control: the Swift table was read at all', () => {
   assert.equal(swift.get('aldi')?.source, 'instacart https://www.aldi.us aldi implicit');
 });
 
-test('DEFECT: every chain the website knows exists on the phone with the same price source and the same chain-wide rule', { todo: 'handoff — regenerate ios/App/Sources/RetailerCatalog.swift from shared/catalog.js; remove this todo when it lands' }, () => {
+test('DEFECT: every chain the website knows exists on the phone with the same price source and the same chain-wide rule', () => {
   const problems = [];
   for (const c of CHAINS) {
     const s = swift.get(c.id);
@@ -79,7 +79,7 @@ test('DEFECT: every chain the website knows exists on the phone with the same pr
   assert.deepEqual(problems, [], `${problems.length} disagreements:\n  ${problems.join('\n  ')}`);
 });
 
-test('DEFECT: the phone recognises a store and a weekly ad by the same names the website does', { todo: 'handoff — regenerate ios/App/Sources/RetailerCatalog.swift from shared/catalog.js; remove this todo when it lands' }, () => {
+test('DEFECT: the phone recognises a store and a weekly ad by the same names the website does', () => {
   const problems = [];
   for (const c of CHAINS) {
     const s = swift.get(c.id);
@@ -88,4 +88,10 @@ test('DEFECT: the phone recognises a store and a weekly ad by the same names the
     if (JSON.stringify(web) !== JSON.stringify(s.names)) problems.push(`${c.id}: phone ${JSON.stringify(s.names)} web ${JSON.stringify(web)}`);
   }
   assert.deepEqual(problems, [], `${problems.length} disagreements:\n  ${problems.join('\n  ')}`);
+});
+
+test('control: the Swift table is exactly what scripts/gen-ios-catalog.js generates from shared/catalog.js', async () => {
+  const { generate } = await import('../scripts/gen-ios-catalog.js');
+  const src = fs.readFileSync(SWIFT, 'utf8');
+  assert.equal(generate(src), src, 'run: node scripts/gen-ios-catalog.js');
 });

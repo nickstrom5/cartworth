@@ -177,3 +177,69 @@ test('control: a declared host keeps the limits its adapter set', async () => {
   http.configureHost(host, { max: 3, gap: 150 });
   assert.deepEqual(http.hostPolicy(host), { max: 3, gap: 150, coolingUntil: null });
 });
+
+// ---------------------------------------------------------------------------
+// The owner's rule applies to every retailer host the live app reads, not only to the tracker
+// (decided Sept 2026). The adapters used to loosen it: Instacart 3 in flight 150 ms apart, Whole
+// Foods, Trader Joe's, ALDI, Woodman's, Kroger and Flipp 2 in flight 200-250 ms apart.
+// ---------------------------------------------------------------------------
+test('DEFECT: every retailer host the app reads is held to one request in flight, 700 ms apart', async () => {
+  await Promise.all(['instacart', 'wholefoods', 'traderjoes', 'flipp', 'kroger'].map((a) => import(`../src/adapters/${a}.js`)));
+  await import('../src/geo.js');
+  const hosts = [
+    'www.instacart.com', 'www.aldi.us', 'shopwoodmans.com', 'order.shopthepig.com', 'www.wholefoodsmarket.com',
+    'www.traderjoes.com', 'alphaapi.brandify.com', 'backflipp.wishabi.com', 'api.kroger.com', 'api.zippopotam.us',
+  ];
+  for (const h of hosts) {
+    const p = http.hostPolicy(h);
+    assert.ok(p.max <= 1 && p.gap >= 700, `${h} allows ${p.max} in flight ${p.gap} ms apart`);
+  }
+});
+
+// At one in flight and 700 ms apart, a caller at the back of a long queue waits a long time for its
+// turn. That wait is not the retailer being slow, and must not time the work out.
+test('DEFECT: a caller waiting its turn behind a busy but answering host is not timed out', async () => {
+  const host = freshHost('queue');
+  http.configureHost(host, { max: 1, gap: 100 });
+  const f = stubFetch(() => ({ status: 200, delay: 20 }));
+  try {
+    // Nine requests ahead of ours: about a second of queue against a 400 ms stall budget.
+    const ahead = Array.from({ length: 9 }, (_, i) => http.request(`https://${host}/a${i}`));
+    const mine = http.withStallTimeout(http.request(`https://${host}/mine`), 400, [host]);
+    const t0 = Date.now();
+    const r = await mine;
+    await Promise.all(ahead);
+    assert.equal(r.status, 200);
+    assert.ok(Date.now() - t0 > 400, 'the test must actually queue for longer than the stall budget');
+  } finally {
+    f.restore();
+  }
+});
+
+test('control: a host that stops answering is still timed out, after the stall budget', async () => {
+  const host = freshHost('silent');
+  http.configureHost(host, { max: 1, gap: 0 });
+  const f = stubFetch(() => ({ status: 200, delay: 5000 }));
+  try {
+    const t0 = Date.now();
+    await assert.rejects(http.withStallTimeout(http.request(`https://${host}/x`, { timeout: 10000, retries: 0 }), 300, [host]), (e) => e.code === 'TIMEOUT');
+    const took = Date.now() - t0;
+    assert.ok(took >= 300 && took < 1500, `timed out after ${took} ms`);
+  } finally {
+    f.restore();
+  }
+});
+
+test('control: the hard ceiling still ends work that keeps a host busy forever', async () => {
+  const host = freshHost('ceiling');
+  // Answers keep arriving, so the stall clock never runs out; only maxMs can end it.
+  const alive = setInterval(() => http.request(`https://${host}/ping`).catch(() => {}), 50);
+  http.configureHost(host, { max: 1, gap: 0 });
+  const f = stubFetch(() => ({ status: 200, delay: 5 }));
+  try {
+    await assert.rejects(http.withStallTimeout(new Promise(() => {}), 200, [host], { maxMs: 600 }), /longer than/);
+  } finally {
+    clearInterval(alive);
+    f.restore();
+  }
+});

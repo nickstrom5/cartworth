@@ -19,9 +19,11 @@ import * as instacart from './adapters/instacart.js';
 import * as wholefoods from './adapters/wholefoods.js';
 import * as traderjoes from './adapters/traderjoes.js';
 import * as flipp from './adapters/flipp.js';
+import * as kroger from './adapters/kroger.js';
 import { cached, peek, DAY, MIN } from './cache.js';
 import { cacheGetStale } from './db.js';
-import { geocodeZip } from './geo.js';
+import { withStallTimeout } from './http.js';
+import { geocodeZip, stateCode } from './geo.js';
 
 // Chains whose weekly ad we read from their OWN site rather than from Flipp's flyer list.
 // `hasAds` below is derived from Flipp, so without this Whole Foods was reported as having no
@@ -31,7 +33,14 @@ import { geocodeZip } from './geo.js';
 const OWN_SALES_FEED = new Set(['wholefoods']);
 
 const PROBE_CONCURRENCY = 4;
-const PROBE_TIMEOUT = 15000;
+// How long a retailer may go without answering ANYTHING before every lookup queued on it fails
+// (http.js withStallTimeout). It must outlast the slowest single request the adapters allow, or one
+// slow-but-permitted Instacart storefront load (up to 20 s, twice with its retry) could fail every chain queued behind
+// it. (In the Charlotte, Dallas and St. Louis audits all Instacart chains went unresolved at once;
+// a re-run showed Instacart rate-limiting too, so this was at most part of it.)
+// A request is retried once after a timeout (http.js request, retries = 1), so the longest silence
+// one permitted request can cause is two storefront timeouts plus the backoff: 40.5 s.
+export const PROBE_TIMEOUT = 45000;
 
 // How long a build with an unanswered probe is trusted before it is rebuilt. See directory().
 export const UNRESOLVED_RETRY_MS = 10 * MIN;
@@ -67,15 +76,39 @@ export function outsideRadius(distance, maxMiles) {
   return distance != null && Number.isFinite(Number(distance)) && Number.isFinite(Number(maxMiles)) && Number(distance) > Number(maxMiles);
 }
 
-function withTimeout(p, ms) {
-  let t;
-  return Promise.race([
-    Promise.resolve(p).finally(() => clearTimeout(t)),
-    new Promise((_, rej) => {
-      t = setTimeout(() => rej(new Error('timeout')), ms);
-    }),
-  ]);
+/**
+ * The hosts a price source talks to, for withStallTimeout. A probe or a search is only "timed out"
+ * when these stop answering; waiting in their queue is not the retailer being slow.
+ */
+export function sourceHosts(src) {
+  if (!src) return [];
+  switch (src.type) {
+    case 'instacart': return [new URL(src.base).host];
+    case 'wholefoods': return ['www.wholefoodsmarket.com'];
+    case 'traderjoes': return ['www.traderjoes.com', 'alphaapi.brandify.com'];
+    case 'kroger': return ['api.kroger.com'];
+    default: return [];
+  }
 }
+
+/**
+ * The server's own Kroger keys (ops/kroger-launch.md), when set. City Market and Baker's are Kroger
+ * banners with no Instacart listing: with these keys they are located and priced through the Kroger
+ * API; without them they stay weekly-ad only.
+ */
+function serverKroger() {
+  const clientId = String(process.env.KROGER_CLIENT_ID || '').trim();
+  const clientSecret = String(process.env.KROGER_CLIENT_SECRET || '').trim();
+  return clientId && clientSecret ? { kroger: { clientId, clientSecret, server: true } } : null;
+}
+function krogerOnly(chain) {
+  if (chain?.price || chain?.alt?.type !== 'kroger') return false;
+  const k = serverKroger();
+  return !!k && kroger.available(k);
+}
+export const priceable = (c) => !!c?.price || krogerOnly(c);
+
+const withTimeout = (p, ms, src) => withStallTimeout(p, ms, sourceHosts(src), { label: 'The store locator' });
 
 /** Ask one chain's own price source whether it serves this ZIP. */
 async function probe(chain, zip, geo, maxMiles) {
@@ -89,10 +122,18 @@ async function probe(chain, zip, geo, maxMiles) {
     note: chain.note || null,
     priceNote: null,
   };
-  if (!chain.price) return out;
+  const viaKroger = krogerOnly(chain);
+  if (!chain.price && !viaKroger) return out;
   try {
-    if (chain.price.type === 'instacart') {
-      const shop = await withTimeout(instacart.resolveShop(chain.price, zip), PROBE_TIMEOUT);
+    if (viaKroger) {
+      const s = await withTimeout(kroger.resolveStore(serverKroger(), zip, chain.alt.chain), PROBE_TIMEOUT, { type: 'kroger' });
+      if (!s || s.none) return out;
+      out.status = STATUS.shelf;
+      out.distance = s.distance ?? null;
+      out.address = s.address ?? null;
+      out.priceNote = 'Exact store prices (Kroger API)';
+    } else if (chain.price.type === 'instacart') {
+      const shop = await withTimeout(instacart.resolveShop(chain.price, zip), PROBE_TIMEOUT, chain.price);
       if (!shop || shop.none) return out;
       if (shop.canonical) {
         // Instacart's canonical storefront: no store of this chain serves this ZIP, so Instacart
@@ -122,13 +163,13 @@ async function probe(chain, zip, geo, maxMiles) {
       out.serviceType = shop.serviceType;
       out.canonical = false;
     } else if (chain.price.type === 'wholefoods') {
-      const s = await withTimeout(wholefoods.resolveStore(zip), PROBE_TIMEOUT);
+      const s = await withTimeout(wholefoods.resolveStore(zip), PROBE_TIMEOUT, chain.price);
       if (!s || s.none) return out;
       out.status = STATUS.shelf;
       out.distance = s.distance ?? null;
       out.address = s.address ?? null;
     } else if (chain.price.type === 'traderjoes') {
-      const s = await withTimeout(traderjoes.resolveStore(zip), PROBE_TIMEOUT);
+      const s = await withTimeout(traderjoes.resolveStore(zip), PROBE_TIMEOUT, chain.price);
       if (!s || s.none) return out;
       out.status = STATUS.shelf;
       out.distance = s.distance ?? null;
@@ -194,7 +235,8 @@ function previouslyNearby(key) {
 
 async function build(zip, { maxMiles, remembered = [] }) {
   const geo = await geocodeZip(zip);
-  const state = (geo.state || '').toUpperCase();
+  // stateCode: a geocode cached before the Nominatim fix may still carry the state's name.
+  const state = geo.state ? stateCode({ state: geo.state }) : '';
 
   // 1. Who publishes a circular for this ZIP? Flipp carries hardware stores, pharmacies and
   //    department stores too, so only grocery flyers count towards "stores near you".
@@ -233,9 +275,9 @@ async function build(zip, { maxMiles, remembered = [] }) {
   // priceable, and the nearest grocer a Milwaukee shopper has — was never asked at all, purely
   // because it HAS an ads name and Flipp happened to publish no Metro Market flyer that week.
   // Discovery of a store we can price must not hinge on a circular existing.
-  for (const c of CHAINS) if (inState.has(c.id) && c.price) candidates.add(c.id);
+  for (const c of CHAINS) if (inState.has(c.id) && priceable(c)) candidates.add(c.id);
   // And every chain an earlier build located inside this radius (see previouslyNearby).
-  for (const id of remembered) if (CHAIN_BY_ID[id]?.price) candidates.add(id);
+  for (const id of remembered) if (priceable(CHAIN_BY_ID[id])) candidates.add(id);
 
   // Ask everyone in that set who has a price source. The state list stays what the header says it
   // is — a cost filter on who to ASK, which is what keeps `candidates` small — but it must not
@@ -244,7 +286,7 @@ async function build(zip, { maxMiles, remembered = [] }) {
   // Wisconsin chain) while refusing to price a Jewel-Osco 7.1 mi away in Zion IL (Jewel is not).
   // Distance is the honest filter, and probe() already applies it: anything past maxMiles comes
   // back status none and falls through to ads-only below, exactly as before.
-  const toProbe = [...candidates].filter((id) => CHAIN_BY_ID[id]?.price);
+  const toProbe = [...candidates].filter((id) => priceable(CHAIN_BY_ID[id]));
 
   const probed = await pool(toProbe, (id) => probe(CHAIN_BY_ID[id], zip, geo, maxMiles), PROBE_CONCURRENCY);
   const byId = Object.fromEntries(probed.map((p) => [p.id, p]));

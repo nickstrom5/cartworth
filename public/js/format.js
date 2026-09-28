@@ -1,5 +1,6 @@
 // Formatting helpers.
 import { DISPLAY_UNITS } from '/shared/units.js';
+import { calendarDaysUntil } from '/shared/deals.js';
 
 export function money(n, { cents = true } = {}) {
   if (n == null || !Number.isFinite(n)) return '—';
@@ -19,8 +20,11 @@ export function unitPrice(perBase, displayUnit) {
   if (perBase == null || !d) return null;
   const v = perBase * d.factor;
   let s;
+  // Dollars from $1.00 only. The cut was 0.995, so 99.5¢ (a $1.99 two-pound bag, a common shape)
+  // printed "$0.99": toFixed(2) of 0.995 is "0.99", half a cent under the real price, beside a
+  // true 99¢ printed "99¢". Under a dollar the tenth of a cent is exact; 99.95¢ and up is $1.00.
   if (v >= 100) s = `$${v.toFixed(0)}`;
-  else if (v >= 0.995) s = `$${v.toFixed(2)}`;
+  else if (v >= 0.9995) s = `$${v.toFixed(2)}`;
   else if (v >= 0.1) s = `${(v * 100).toFixed(1).replace(/\.0$/, '')}¢`;
   else s = `${(v * 100).toFixed(2)}¢`;
   return { value: v, text: s, unit: d.label };
@@ -33,7 +37,7 @@ export function unitPrice(perBase, displayUnit) {
  */
 export function unitPriceStep(v) {
   if (v >= 100) return 1;
-  if (v >= 0.995) return 0.01;
+  if (v >= 0.9995) return 0.01;
   if (v >= 0.1) return 0.001;
   return 0.0001;
 }
@@ -74,12 +78,27 @@ export function dateRange(a, b) {
 export function endsLabel(validTo) {
   if (!validTo) return null;
   const to = Date.parse(validTo);
-  const days = (to - Date.now()) / 86400000;
-  if (days < 0) return 'Ended';
-  if (days < 1) return 'Ends today';
-  if (days < 2) return 'Ends tomorrow';
+  if (Number.isNaN(to)) return null;
+  const now = Date.now();
+  if (to < now) return 'Ended';
+  const days = calendarDaysUntil(to, now);
+  if (days === 0) return 'Ends today';
+  if (days === 1) return 'Ends tomorrow';
   if (days < 7) return `Ends ${weekday(to)}`;
   return `Thru ${shortDate(to)}`;
+}
+
+/**
+ * A promo badge's text, shortened only where that cannot change a price: a promo that names one
+ * ("Mix & match 5 for $12.50") is never cut (it was cut to "Mix & match 5 for $1…"); any other is
+ * cut at a word boundary. The full text stays in the badge's title.
+ */
+export function shortPromo(text, max = 28) {
+  const t = String(text || '').trim();
+  if (t.length <= max || /[$¢]|\d\s*(?:for|\/)/i.test(t)) return t;
+  const cut = t.slice(0, max - 1);
+  const sp = cut.lastIndexOf(' ');
+  return `${(sp > max / 2 ? cut.slice(0, sp) : cut).replace(/[\s,;:&–-]+$/, '')}…`;
 }
 
 export function plural(n, one, many = one + 's') {
@@ -109,6 +128,7 @@ export function capitalize(s) {
 // trust a number is owed the name of the place it came from.
 export const BASIS_LABEL = { shelf: 'shelf price', online: 'online (Instacart) price', national: 'national price' };
 export const BASIS_TITLE = {
+  shelf: 'The store\u2019s own in-store (shelf) price for its location nearest you.',
   online: 'From the store\u2019s Instacart listing for its location nearest you. Instacart prices can run higher than the shelf price in the store.',
   national: 'From Instacart\u2019s chain-wide listing, not a store near you. The shelf price at your local store may differ.',
 };
@@ -117,7 +137,9 @@ export const BASIS_TITLE = {
 // row itself has to carry the provenance: a shopper who sees Jewel-Osco's butter at $7.99 here and
 // cheaper in Jewel's own app should be able to tell, from the row alone, that $7.99 is Jewel's
 // price on Instacart.
-export const BASIS_BADGE = { online: 'Instacart', national: 'national' };
+// Every price says where it came from, the shelf included (the owner's rule; the launch review found
+// shelf prices were the one kind left unlabelled, on the headline too).
+export const BASIS_BADGE = { shelf: 'shelf', online: 'Instacart', national: 'national' };
 
 /**
  * The same provenance as a visible sentence, for the product sheet — the one place with room to

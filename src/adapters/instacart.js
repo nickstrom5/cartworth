@@ -5,17 +5,21 @@
 // The site uses persisted GraphQL queries identified by sha256 hashes. We read the current
 // hashes from the site's own "operation-hashes" manifest so we keep working after deploys,
 // and fall back to known hashes if discovery fails.
-import { request, CookieJar, HttpError, configureHost } from '../http.js';
+import { request, CookieJar, HttpError } from '../http.js';
 
-// Interactive searches, so a little more headroom than Flipp, still well under the default.
-configureHost('www.instacart.com', { max: 3, gap: 150 });
-configureHost('www.aldi.us', { max: 2, gap: 200 });
-configureHost('shopwoodmans.com', { max: 2, gap: 200 });
+// Every host this adapter reads gets the owner's rule from src/http.js (DEFAULT_HOST_POLICY: one
+// request in flight, 700 ms apart, stop on 429). The looser per-host limits that used to be set
+// here were removed at the owner's decision (Sept 2026); long queues are handled by
+// withStallTimeout, not by asking faster.
 import { cached, invalidate, HOUR, DAY } from '../cache.js';
 import { geocodeZip, miles } from '../geo.js';
 import { getKV, setKV, delKV } from '../db.js';
-import { makeProduct, money, settleByStatedCount, slugStates } from '../normalize.js';
+import { makeProduct, money, settleByStatedCount, slugStates, slugConfirms } from '../normalize.js';
 import { parseSize, sizeFromName } from '../../shared/units.js';
+
+// The longest one request to Instacart may take (a storefront page or a session bootstrap). A
+// caller's stall limit on the whole host must be longer than this: src/directory.js PROBE_TIMEOUT.
+export const STOREFRONT_TIMEOUT = 20000;
 
 const FALLBACK_HASHES = {
   SearchResultsPlacements: 'c127efb3fa85276388954593f2c1a27eb0775dd7b0964e39c949e7fd89c7ef19',
@@ -75,7 +79,7 @@ async function createSession(cfg, zip, { reset }) {
   const reuse = saved && Date.now() - saved.created < SESSION_MAX_AGE;
   const jar = reuse ? CookieJar.from(saved.cookies) : new CookieJar();
   const storefront = `${cfg.base}/store/${cfg.slug}/storefront`;
-  let res = await request(storefront, { jar, timeout: 20000, headers: { accept: 'text/html' } });
+  let res = await request(storefront, { jar, timeout: STOREFRONT_TIMEOUT, headers: { accept: 'text/html' } });
   let html = res.text;
 
   if (!jar.has('__Host-instacart_sid')) {
@@ -89,12 +93,12 @@ async function createSession(cfg, zip, { reset }) {
       jar,
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ operationName: op, variables: { postalCode: zip }, extensions: { persistedQuery: { version: 1, sha256Hash: hash } } }),
-      timeout: 20000,
+      timeout: STOREFRONT_TIMEOUT,
     });
     if (!jar.has('__Host-instacart_sid')) {
       throw new Error(`Could not start a guest session (HTTP ${r.status})`);
     }
-    res = await request(storefront, { jar, timeout: 20000, headers: { accept: 'text/html' } });
+    res = await request(storefront, { jar, timeout: STOREFRONT_TIMEOUT, headers: { accept: 'text/html' } });
     html = res.text;
   }
 
@@ -123,7 +127,7 @@ async function gqlRaw(cfg, session, op, variables) {
   const hash = session.hashes[op];
   if (!hash) throw new Error(`No hash known for ${op}`);
   const url = `${cfg.base}/graphql?operationName=${op}&variables=${encodeURIComponent(JSON.stringify(variables))}&extensions=${encodeURIComponent(JSON.stringify({ persistedQuery: { version: 1, sha256Hash: hash } }))}`;
-  const res = await request(url, { jar: session.jar, timeout: 20000, headers: { accept: 'application/json' } });
+  const res = await request(url, { jar: session.jar, timeout: STOREFRONT_TIMEOUT, headers: { accept: 'application/json' } });
   if (res.status === 401 || res.status === 403) {
     const e = new HttpError(`Session rejected (HTTP ${res.status})`, { status: res.status });
     e.code = 'AUTH';
@@ -332,6 +336,12 @@ function sectionsText(f) {
   return f.sections.map((s) => s.content || s.text || '').join('').trim() || null;
 }
 
+/** "$0.50/oz", "$3.49/gal", "$0.92 each" -> { price, unit }; null for anything else. */
+function listedUnit(s) {
+  const m = /^\s*\$\s*(\d+(?:\.\d+)?)\s*(?:\/\s*|\s+)(fl\.?\s*oz|oz|lbs?|gal|qt|l|ct|each|ea)\.?\s*$/i.exec(String(s || ''));
+  return m ? { price: +m[1], unit: m[2].toLowerCase().replace(/\s+/g, ' ').replace('fl. oz', 'fl oz') } : null;
+}
+
 function parsePerUnit(s) {
   // "$0.49 / lb", "$8.99/lb", "About $3.98 each"
   if (!s) return null;
@@ -383,7 +393,7 @@ export function dropStaleSizeFromName(name, sizeText, url = null) {
   // One unit and N of them, with N spelled out ("Pulmuone Teriyaki Stir-fry Udon, 30.9 oz", stated
   // 7.72 oz, slug "...-772-oz-4count-..."): not stale, the pack. See settleByStatedCount.
   if (settleByStatedCount(stated, tail, { name, url })) return name;
-  if (!slugStates(url, stated) || slugStates(url, tail)) return name;
+  if (!slugConfirms(url, stated) || slugStates(url, tail)) return name;
   return m[1].trim().replace(/[,\s]+$/, '');
 }
 
@@ -450,6 +460,8 @@ export function parseItem(x, cfg, shop, rank, total, sponsored) {
     sizeText: x.size,
     // Instacart's own unit line: "4 x 14.5 oz" when the price buys four (see listingPack).
     packText: card.pricingUnitString || null,
+    // Instacart's own unit price ("$0.50/oz"), a check on the stated size (unitLineConflict).
+    listedUnit: soldBy === 'lb' ? null : listedUnit(card.pricePerUnitString) || listedUnit(pv.itemDetails?.pricePerUnitString) || listedUnit(card.pricingUnitString),
     price,
     regularPrice: regular,
     memberPrice,

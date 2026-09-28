@@ -19,7 +19,14 @@ enum J: Equatable {
         case let s as String:
             self = .str(s)
         case let n as NSNumber:
-            if CFGetTypeID(n) == CFBooleanGetTypeID() {
+            // JSON true/false arrive as NSNumber; only CoreFoundation's type ID tells a boolean from
+            // 0/1 on Apple platforms. The #else lets the Core logic build and run its tests on Linux.
+            #if canImport(Darwin)
+            let isBool = CFGetTypeID(n) == CFBooleanGetTypeID()
+            #else
+            let isBool = String(cString: n.objCType) == "c"
+            #endif
+            if isBool {
                 self = .bool(n.boolValue)
             } else {
                 self = .num(n.doubleValue)

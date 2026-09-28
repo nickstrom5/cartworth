@@ -63,7 +63,9 @@ final class ThanksgivingMatcherParityTests: XCTestCase {
             ("sticks", "Margarine Sticks", "Sticks"),
             ("potatoes", "Mashed Potatoes", "Potatoes"),
             ("rice", "Rice Pilaf", "Rice"),
-            ("chips", "Potato Chips", "Chips"),
+            // Not "chips" vs "Potato Chips": potato chips ARE chips (the holiday matrix, Labor Day), so
+            // shared/match.js QUERY_ALLOWS lets "potato" describe chips. Salad pins the same trap word.
+            ("salad", "Potato Salad", "Salad"),
         ] {
             rejects(q, trapped, "the trap word is missing from Match.swift")
             matches(q, plain)

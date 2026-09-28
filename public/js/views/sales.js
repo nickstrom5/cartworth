@@ -6,8 +6,17 @@ import { api } from '../api.js';
 import { useStore, setState, getState, pref, setPref, openModal, closeModal } from '../store.js';
 import { runSearch, addToList, contextParams } from '../actions.js';
 import { money2, endsLabel, dateRange, plural, shortDate } from '../format.js';
-import { CATEGORIES } from '/shared/deals.js';
+import { CATEGORIES, offerBadge } from '/shared/deals.js';
+import { OccasionCards } from './occasions.js';
 import { normalize, tokens } from '/shared/match.js';
+
+// A weekly-ad picture that fails to load (a CDN refusing, a network hiccup) shows the deal's icon,
+// not the browser's broken-image glyph: the launch review's live journey saw ad images fail.
+function DealImage({ src, style, fallback }) {
+  const [broken, setBroken] = useState(false);
+  if (!src || broken) return fallback;
+  return html`<img src=${src} alt="" style=${style} loading="lazy" decoding="async" referrerpolicy="no-referrer" onError=${() => setBroken(true)} />`;
+}
 
 const FOOD = new Set(['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Bakery & Bread', 'Deli & Prepared', 'Frozen', 'Pantry', 'Snacks & Candy', 'Beverages']);
 
@@ -31,6 +40,7 @@ export function SalesView() {
   const dq = useDebounced(q, 150);
   const [sort, setSort] = useState(pref('dealsSort', 'best'));
   const [type, setType] = useState('all'); // all | bogo | multi | coupon | nocoupon
+  const [occ, setOcc] = useState(null); // { name, ids } when a holiday card's "matching deals" is on
   const [groceryOnly, setGroceryOnly] = useState(pref('groceryOnly', true));
   const [limit, setLimit] = useState(60);
   const [progress, setProgress] = useState(null);
@@ -85,7 +95,8 @@ export function SalesView() {
     };
   }, [data?.generatedAt]);
 
-  useEffect(() => setLimit(60), [store, cat, dq, sort, type, week, groceryOnly]);
+  useEffect(() => setLimit(60), [store, cat, dq, sort, type, week, groceryOnly, occ]);
+  useEffect(() => setOcc(null), [week]);
 
   const model = useMemo(() => {
     if (!data) return null;
@@ -101,7 +112,8 @@ export function SalesView() {
       (type === 'pct' && d.pctOff >= 30);
     const inStore = (d) => !store || d.storeId === store;
     const inCat = (d) => !cat || d.category === cat;
-    const shown = base.filter((d) => matchQ(d) && matchType(d) && inStore(d) && inCat(d));
+    const inOcc = (d) => !occ || occ.ids.has(d.id);
+    const shown = base.filter((d) => matchQ(d) && matchType(d) && inStore(d) && inCat(d) && inOcc(d));
     const storeCounts = {};
     const catCounts = {};
     for (const d of base) if (matchQ(d) && matchType(d) && inCat(d)) storeCounts[d.storeId] = (storeCounts[d.storeId] || 0) + 1;
@@ -109,14 +121,14 @@ export function SalesView() {
     const by = {
       best: (a, b) => dealScore(b) - dealScore(a),
       pct: (a, b) => (b.pctOff ?? -1) - (a.pctOff ?? -1),
-      price: (a, b) => (a.each ?? a.price ?? Infinity) - (b.each ?? b.price ?? Infinity),
+      price: (a, b) => termsPending(a) - termsPending(b) || (a.each ?? a.price ?? Infinity) - (b.each ?? b.price ?? Infinity),
       ending: (a, b) => (Date.parse(a.validTo || '2100-01-01') - Date.parse(b.validTo || '2100-01-01')),
       store: (a, b) => a.storeId.localeCompare(b.storeId) || dealScore(b) - dealScore(a),
       az: (a, b) => a.name.localeCompare(b.name),
     }[sort];
     shown.sort(by);
     return { shown, storeCounts, catCounts, total: base.length };
-  }, [data, dq, type, store, cat, sort, groceryOnly]);
+  }, [data, dq, type, store, cat, sort, groceryOnly, occ]);
 
   const flyersByStore = useMemo(() => {
     const m = {};
@@ -141,12 +153,14 @@ export function SalesView() {
     ${progress?.running && html`<div style=${{ marginBottom: 12 }}><${Notice} icon="sparkle"><span class="row"><${Spinner} size=${12} /> Reading deal details (multi-buy prices, BOGO, digital coupons)… ${progress.done}/${progress.total}</span></${Notice}></div>`}
     ${data?.errors?.length > 0 && html`<div style=${{ marginBottom: 12 }}><${Notice} kind="warn" icon="alert">${data.errors.map((e) => html`<div>${storeInfo(e.storeId).short} — ${e.flyer}: ${e.error}</div>`)}</${Notice}></div>`}
 
+    ${data && html`<${OccasionCards} deals=${data.deals} week=${week} onShowDeals=${(o, matches) => setOcc({ name: o.name, ids: new Set(matches.map((d) => d.id)) })} />`}
+    ${occ && html`<div style=${{ marginBottom: 12 }}><${Notice} icon="tag">Showing ${occ.name} deals. <button class="btn btn-sm" style=${{ marginLeft: 8 }} onClick=${() => setOcc(null)}>Show all deals</button></${Notice}></div>`}
     ${!data && loading && html`<div class="card card-pad row"><${Spinner} /> Loading weekly ads…</div>`}
     ${data &&
     html`<div class="deals-layout">
       <aside class="card filters">
         <div>
-          <h3>Store</h3>
+          <h2>Store</h2>
           <button class="fopt" aria-pressed=${!store ? 'true' : 'false'} onClick=${() => setStore(null)}>All stores <span class="n">${Object.values(model.storeCounts).reduce((a, b) => a + b, 0)}</span></button>
           ${Object.keys(flyersByStore).map(
             (id) => html`<button class="fopt" key=${id} aria-pressed=${store === id ? 'true' : 'false'} onClick=${() => setStore(store === id ? null : id)} title=${flyersByStore[id].map((f) => `${f.name}: ${dateRange(f.validFrom, f.validTo)}`).join('\n')}>
@@ -156,7 +170,7 @@ export function SalesView() {
           ${Object.keys(flyersByStore).length === 0 && html`<div class="muted small">No circulars ${week === 'next' ? 'posted yet for next week' : 'found'} for your stores.</div>`}
         </div>
         <div>
-          <h3>Category</h3>
+          <h2>Category</h2>
           <button class="fopt" aria-pressed=${!cat ? 'true' : 'false'} onClick=${() => setCat(null)}>Everything</button>
           ${CATEGORIES.filter((c) => model.catCounts[c]).map(
             (c) => html`<button class="fopt" key=${c} aria-pressed=${cat === c ? 'true' : 'false'} onClick=${() => setCat(cat === c ? null : c)}>${c}<span class="n">${model.catCounts[c]}</span></button>`,
@@ -166,7 +180,7 @@ export function SalesView() {
           </label>
         </div>
         <div>
-          <h3>Deal type</h3>
+          <h2>Deal type</h2>
           ${[
             ['all', 'All deals'],
             ['pct', '30% off or more'],
@@ -178,7 +192,7 @@ export function SalesView() {
         </div>
         ${Object.keys(flyersByStore).length > 0 &&
         html`<div>
-          <h3>Circulars</h3>
+          <h2>Circulars</h2>
           <div class="stack" style=${{ gap: 6 }}>
             ${Object.entries(flyersByStore).flatMap(([id, fl]) =>
               fl.map((f) => html`<div class="small ink2" key=${f.id}><${StoreDot} id=${id} /> <b>${storeInfo(id).short}</b> ${f.name} · ${dateRange(f.validFrom, f.validTo)}</div>`),
@@ -232,17 +246,27 @@ function badges(d) {
   return b;
 }
 
+/**
+ * A weekly-ad price whose terms Flipp has not sent yet. The flyer list carries the number without
+ * its qualifier: a "2/$7" deal arrives as $7.00 and "$3.99/lb" as $3.99. 14% of the Chicago deals
+ * enriched in the Christmas run were multi-buys, so until the terms arrive the number is labelled,
+ * sorted after the rest, and never read as one item's price.
+ */
+export const termsPending = (d) => d.source === 'flipp' && !d.enriched && d.price != null;
+const PENDING_TITLE = "Flipp hasn't sent this deal's full terms yet. The price may be for more than one (\"2 for\") or per pound. Open the deal to check.";
+
 export function DealCard({ d }) {
   const ends = endsLabel(d.validTo);
   const starts = d.week === 'next' && d.validFrom ? `Starts ${shortDate(d.validFrom)}` : null;
   const priceMain = d.price != null ? d.priceText : d.priceText || d.story || '';
   return html`<article class="deal">
-    <div class="deal-img" role="button" tabindex="0" onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)} style=${{ cursor: 'pointer' }}>
-      ${d.image ? html`<img src=${d.image} alt="" loading="lazy" referrerpolicy="no-referrer" />` : html`<${Icon} name="tag" size=${28} />`}
-      ${d.pctOff ? html`<span class="badge badge-sale deal-pct">${d.pctOff}% off</span>` : d.deal?.kind === 'bogo' ? html`<span class="badge badge-sale deal-pct">BOGO</span>` : null}
+    <div class="deal-img" role="button" tabindex="0" aria-label=${`Details: ${d.name}`} onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)} style=${{ cursor: 'pointer' }}>
+      <${DealImage} src=${d.image} fallback=${html`<${Icon} name="tag" size=${28} />`} />
+      ${offerBadge(d.deal) ? html`<span class="badge badge-sale deal-pct">${offerBadge(d.deal)}</span>` : d.pctOff ? html`<span class="badge badge-sale deal-pct">${d.pctOff}% off</span>` : null}
     </div>
     <div class="deal-body">
       <div class="deal-price">${priceMain || html`<span class="muted small">See ad</span>`}</div>
+      ${termsPending(d) && html`<div class="small muted" title=${PENDING_TITLE}>checking ad terms…</div>`}
       ${d.qty > 1 && d.each != null && html`<div class="small ink2">${money2(d.each)} each</div>`}
       ${(d.regular || d.regularText) && html`<div class="small muted">${d.regular ? `Reg. ${money2(d.regular)}` : regularLine(d.regularText)}</div>`}
       ${d.memberText && html`<div class="small" style=${{ color: 'var(--info-ink)', fontWeight: 600 }}>${d.memberText}</div>`}
@@ -265,9 +289,9 @@ export function DealCard({ d }) {
 export function DealCardMini({ deal: d }) {
   const ends = endsLabel(d.validTo);
   return html`<div class="ad-card" role="button" tabindex="0" style=${{ cursor: 'pointer' }} onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)}>
-    ${d.image ? html`<img src=${d.image} alt="" loading="lazy" referrerpolicy="no-referrer" />` : html`<div class="pimg ph" style=${{ width: 56, height: 56 }}><${Icon} name="tag" size=${18} /></div>`}
+    <${DealImage} src=${d.image} fallback=${html`<div class="pimg ph" style=${{ width: 56, height: 56 }}><${Icon} name="tag" size=${18} /></div>`} />
     <div style=${{ minWidth: 0, display: 'grid', gap: 2 }}>
-      <div class="ad-price">${d.priceText || d.story || 'See ad'}</div>
+      <div class="ad-price">${d.priceText || d.story || 'See ad'}${termsPending(d) ? html` <span class="muted small" title=${PENDING_TITLE}>· terms loading</span>` : ''}</div>
       <div class="small" style=${{ fontWeight: 600, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>${d.name}</div>
       <div class="row wrap" style=${{ gap: 5 }}>
         <${StoreTag} id=${d.storeId} />
@@ -298,12 +322,15 @@ function DealDetail({ d }) {
     }
   }, [d.id]);
   const desc = detail?.description || d.description;
+  // The terms, once they arrive, exactly as the ad prints them ("2/" "$7.00" "").
+  const terms = termsPending(d) && detail && `${detail.pre || ''} $${Number(detail.current ?? d.price).toFixed(2)} ${detail.post || ''}`.replace(/\s+/g, ' ').trim();
   const disclaimer = detail?.disclaimer || d.disclaimer;
   return html`<${Modal} title=${d.name} sub=${`${storeInfo(d.storeId).name} · ${dateRange(d.validFrom, d.validTo)}`}>
     <div class="row" style=${{ gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-      ${d.image && html`<img src=${d.image} alt="" style=${{ width: 180, maxHeight: 180, objectFit: 'contain', background: '#fff', borderRadius: 12, border: '1px solid var(--border)' }} referrerpolicy="no-referrer" />`}
+      <${DealImage} src=${d.image} style=${{ width: 180, maxHeight: 180, objectFit: 'contain', background: '#fff', borderRadius: 12, border: '1px solid var(--border)' }} fallback=${null} />
       <div class="grow stack" style=${{ gap: 6, minWidth: 220 }}>
         <div style=${{ fontSize: 26, fontWeight: 750 }}>${d.priceText || d.story || 'See ad'}</div>
+        ${termsPending(d) && html`<div class="ink2" title=${PENDING_TITLE}>${terms ? `Ad terms: ${terms}` : 'Checking the ad’s terms…'}</div>`}
         ${d.qty > 1 && d.each != null && html`<div class="ink2">${money2(d.each)} each</div>`}
         ${(d.regular || d.regularText) && html`<div class="ink2">Regular ${d.regular ? money2(d.regular) : d.regularText}${d.pctOff ? ` · save ${d.pctOff}%` : ''}</div>`}
         ${d.memberText && html`<div style=${{ color: 'var(--info-ink)', fontWeight: 600 }}>${d.memberText}</div>`}

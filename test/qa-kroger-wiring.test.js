@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sourceFor, searchStore } from '../src/search.js';
-import { sameBanner, siteFor } from '../src/adapters/kroger.js';
+import { sameBanner, siteFor, ensureValidated } from '../src/adapters/kroger.js';
 import { contextFrom } from '../src/context.js';
 
 const KEYS = { 'x-kroger-client-id': 'qa-client', 'x-kroger-client-secret': 'qa-secret' };
@@ -21,9 +21,17 @@ test('control: without keys, Mariano’s and Pick ’n Save are priced from Inst
   assert.equal(sourceFor('picknsave', ctx('53211')).type, 'instacart');
 });
 
-test('P18: with both keys, Mariano’s and Pick ’n Save switch to the Kroger API', () => {
-  assert.deepEqual(sourceFor('marianos', ctx('60618', KEYS)), { type: 'kroger', chain: 'MARIANOS' });
-  assert.deepEqual(sourceFor('picknsave', ctx('53211', KEYS)), { type: 'kroger', chain: 'PICK_N_SAVE' });
+// Keys are used once Kroger has accepted them (a token request; see kroger.js ensureValidated).
+async function accepted(c) {
+  const real = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ access_token: 'qa-token', expires_in: 1800 }), { status: 200, headers: { 'content-type': 'application/json' } });
+  try { await ensureValidated(c); } finally { globalThis.fetch = real; }
+  return c;
+}
+
+test('P18: with both keys, Mariano’s and Pick ’n Save switch to the Kroger API', async () => {
+  assert.deepEqual(sourceFor('marianos', await accepted(ctx('60618', KEYS))), { type: 'kroger', chain: 'MARIANOS' });
+  assert.deepEqual(sourceFor('picknsave', await accepted(ctx('53211', KEYS))), { type: 'kroger', chain: 'PICK_N_SAVE' });
   // Half a pair is "not configured", never an error.
   assert.equal(sourceFor('marianos', ctx('60618', { 'x-kroger-client-id': 'qa-client' })).type, 'instacart');
 });
@@ -58,7 +66,7 @@ test('P18: a Pick ’n Save search with keys returns shelf prices, the card pric
     throw new Error(`unexpected request ${u}`);
   };
   try {
-    const r = await searchStore('picknsave', 'butter', ctx('53222', KEYS), { fresh: true });
+    const r = await searchStore('picknsave', 'butter', await accepted(ctx('53222', KEYS)), { fresh: true });
     assert.equal(r.status, 'ok', r.error || r.message);
     assert.ok(seen.every((u) => /api\.kroger\.com|zippopotam/.test(u)), `left the Kroger API: ${seen}`);
     const [k, lol] = r.items;

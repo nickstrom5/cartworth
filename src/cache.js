@@ -31,7 +31,9 @@ export async function cached(key, ttlMs, fn, { persist = true, fresh = false, st
     if (persist) {
       const v = cacheGet(key);
       if (v !== undefined) {
-        remember(key, v, ttlMs);
+        // ttlMs may be a function of the value (see below); passing the function itself made the
+        // in-memory expiry NaN, so a disk hit was never reused from memory.
+        remember(key, v, typeof ttlMs === 'function' ? ttlMs(v) : ttlMs);
         return v;
       }
     }
@@ -40,8 +42,13 @@ export async function cached(key, ttlMs, fn, { persist = true, fresh = false, st
   const p = (async () => {
     try {
       const value = await fn();
-      remember(key, value, ttlMs);
-      if (persist) cacheSet(key, value, ttlMs);
+      // A source may say how long its answer may be kept (Kroger's terms: no longer than its own
+      // cache headers allow), so the TTL can be a function of the value. 0 means do not keep it.
+      const ttl = typeof ttlMs === 'function' ? ttlMs(value) : ttlMs;
+      if (ttl > 0) {
+        remember(key, value, ttl);
+        if (persist) cacheSet(key, value, ttl);
+      }
       return value;
     } catch (err) {
       if (staleOnError) {
@@ -100,6 +107,13 @@ function remember(key, value, ttlMs) {
   }
   mem.set(key, { value, bytes, expires: Date.now() + ttlMs });
   memBytes += bytes;
+}
+
+/** The last value for `key` however old (up to maxStaleMs), for a lookup we chose not to make. */
+export function peekStale(key, maxStaleMs) {
+  const hit = mem.get(key);
+  if (hit) return hit.value;
+  return cacheGetStale(key, maxStaleMs);
 }
 
 export function peek(key) {

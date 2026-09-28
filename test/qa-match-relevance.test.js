@@ -257,3 +257,45 @@ test('live control: the food itself is untouched by the non-food traps', () => {
   // And asking for the non-food on purpose still works, via the not-in-query guard.
   assert.ok(score('body wash', 'Dove Body Wash', 'Dove') >= RELEVANT);
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT (directory-fixer handoff): shellfish. Shrimp, crab, lobster and scallop were already
+// traps; clams, mussels, oysters, squid and octopus were not, so seafood cooked in butter or garlic
+// could answer a butter or garlic search.
+// ---------------------------------------------------------------------------
+test('DEFECT: shellfish dishes do not answer a search for their sauce', () => {
+  rejects('butter', 'Garlic Butter Mussels', 'Kirkland Signature');
+  rejects('butter', 'Butter Garlic Clams', 'Trader Joe’s');
+  rejects('butter', 'Lemon Butter Squid Rings', '');
+  rejects('garlic', 'Garlic Octopus Salad', '');
+  rejects('crackers', 'Oyster Crackers', 'Nabisco');
+});
+
+test('control: oyster mushrooms are still mushrooms, and each shellfish still answers its own search', () => {
+  matches('mushrooms', 'King Oyster Mushrooms', '');
+  matches('mushrooms', 'Organic Oyster Mushrooms', 'Wegmans');
+  matches('clams', 'Chopped Clams', 'Bumble Bee');
+  matches('oysters', 'Fancy Whole Oysters', 'Crown Prince');
+  matches('mussels', 'Fresh Mussels', '');
+});
+
+// ---------------------------------------------------------------------------
+// DEFECT (directory-fixer handoff): a weekly-ad "Butter" Chardonnay at $16.99 answered a butter
+// search. src/search.js searchAds keeps a flyer item at relevance >= 0.4 (AD_MIN below), so the
+// wine must fall under that, not merely under RELEVANT.
+// ---------------------------------------------------------------------------
+const AD_MIN = 0.4;
+test('DEFECT: wine named after a food is not a weekly-ad match for the food', () => {
+  for (const name of ['Butter Chardonnay', 'Apothic Red Blend Cabernet', 'Meiomi Pinot Noir', 'Guinness Draught Stout']) {
+    const q = { 'Butter Chardonnay': 'butter', 'Apothic Red Blend Cabernet': 'red blend', 'Meiomi Pinot Noir': 'noir', 'Guinness Draught Stout': 'draught' }[name];
+    const s = score(q, name);
+    assert.ok(s < AD_MIN, `"${q}" vs "${name}" scored ${s.toFixed(3)}: it would appear as a weekly-ad deal`);
+  }
+});
+
+test('control: someone looking for the wine still finds it, and butter is still butter', () => {
+  matches('chardonnay', 'Kendall-Jackson Vintner’s Reserve Chardonnay');
+  matches('pinot noir', 'Meiomi Pinot Noir');
+  matches('butter', 'Land O Lakes Salted Butter Sticks', 'Land O Lakes');
+  matches('butter', 'Truly Grass Fed Butter');
+});

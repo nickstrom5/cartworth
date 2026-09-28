@@ -115,7 +115,7 @@ final class DealsModel {
         return s.items.map { p in
             let sale = p.priceText.contains("$") ? ProductFactory.money(p.priceText) : nil
             let reg = p.regularText.contains("$") && !p.regularText.lowercased().contains("to") ? ProductFactory.money(p.regularText) : nil
-            let pct = Rx("(\\d+)\\s*%").match(p.priceText)?[1].flatMap { Int($0 ?? "") }
+            let pct = Rx("(\\d+)\\s*%").match(p.priceText)?[1].flatMap { Int($0) }
             let pctOff = pct ?? ((sale != nil && reg != nil && reg! > sale!) ? Int(((1 - sale! / reg!) * 100).rounded()) : nil)
             return Deal(
                 id: p.id, source: "wholefoods", flippId: nil, flyerId: nil, retailerId: "wholefoods", merchant: "Whole Foods Market",
@@ -146,5 +146,15 @@ final class DealsModel {
             if !hits.isEmpty { out[term] = hits.sorted { $0.score > $1.score } }
         }
         return out
+    }
+
+    /// Deals matching any of the terms, each deal once, best first. `matches(terms:)` is keyed by
+    /// term, so "Butter Cookies" came back under both "butter" and "cookies": the Christmas card
+    /// counted it twice, and OccasionView's ForEach got two rows with one id.
+    func matchingDeals(terms: [String], week: AdWeek = .current) -> [Deal] {
+        var seen = Set<String>()
+        return matches(terms: terms, week: week).values.joined()
+            .filter { seen.insert($0.id).inserted }
+            .sorted { $0.score != $1.score ? $0.score > $1.score : $0.id < $1.id }
     }
 }

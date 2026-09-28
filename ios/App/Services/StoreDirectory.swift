@@ -50,6 +50,9 @@ struct Directory: Codable, Hashable {
     var others: [MapStore]
     var adMerchants: [String]
     var builtAt: Date
+    /// Chains whose lookup failed (a timeout, a busy site): not an answer, so the counts may be low.
+    /// Same rule as src/directory.js: such a build is kept for minutes, not days, and retried.
+    var unresolved: [String]? = nil
 }
 
 actor StoreDirectory {
@@ -60,10 +63,16 @@ actor StoreDirectory {
 
     func directory(place: UserPlace, radius: Double, fresh: Bool = false, progress: (@Sendable (String) -> Void)? = nil) async throws -> Directory {
         let key = "dir:v2:\(place.zip):\(Int(radius))"
-        return try await Cache.shared.value(key, ttl: 3 * TTL.day, fresh: fresh) {
+        let r = try await Cache.shared.value(key, ttl: 3 * TTL.day, fresh: fresh) {
             try await self.build(place: place, radius: radius, progress: progress)
-        }.value
+        }
+        // A lookup that failed was cached as "no store here" for three days: one timeout during
+        // setup hid that chain until Thursday. Keep an incomplete build only until the retry.
+        if !r.fromCache, !(r.value.unresolved ?? []).isEmpty { await Cache.shared.put(key, r.value, ttl: Self.unresolvedRetry) }
+        return r.value
     }
+
+    static let unresolvedRetry: TimeInterval = 10 * 60
 
     private func build(place: UserPlace, radius: Double, progress: (@Sendable (String) -> Void)?) async throws -> Directory {
         progress?("Looking up grocery stores on the map…")
@@ -85,7 +94,8 @@ actor StoreDirectory {
         progress?("Finding prices at \(candidateIds.count) stores…")
         let candidates = candidateIds.compactMap { RetailerCatalog.byId[$0] }
         var results: [NearbyChain] = []
-        await withTaskGroup(of: NearbyChain?.self) { group in
+        var unresolved: [String] = []
+        await withTaskGroup(of: (NearbyChain?, String?).self) { group in
             var running = 0
             var iterator = candidates.makeIterator()
             func addNext() {
@@ -95,29 +105,36 @@ actor StoreDirectory {
                 group.addTask { await self.check(c, place: place, radius: radius, nearestOnMap: nearest, mapCount: byChain[c.id]?.count ?? 0, hasAds: adChainIds.contains(c.id)) }
             }
             for _ in 0..<4 { addNext() }
-            while let r = await group.next() {
+            while let (r, failed) = await group.next() {
                 running -= 1
                 if let r { results.append(r) }
+                if let failed { unresolved.append(failed) }
                 addNext()
             }
         }
         results.sort { ($0.distance ?? 999) < ($1.distance ?? 999) }
         others.sort { $0.distance < $1.distance }
-        return Directory(place: place, radius: radius, chains: results, others: Array(others.prefix(40)), adMerchants: merchants, builtAt: Date())
+        return Directory(place: place, radius: radius, chains: results, others: Array(others.prefix(40)), adMerchants: merchants, builtAt: Date(), unresolved: unresolved.isEmpty ? nil : unresolved.sorted())
     }
 
     /// Resolve a chain's price source near the user.
-    private func check(_ c: Chain, place: UserPlace, radius: Double, nearestOnMap: MapStore?, mapCount: Int, hasAds: Bool) async -> NearbyChain? {
+    /// Returns the chain (or nil when it has nothing here) and, when the lookup failed, its id.
+    private func check(_ c: Chain, place: UserPlace, radius: Double, nearestOnMap: MapStore?, mapCount: Int, hasAds: Bool) async -> (NearbyChain?, String?) {
+        var failed = false
         var out = NearbyChain(id: c.id, name: c.name, short: c.short, distance: nearestOnMap?.distance, address: nearestOnMap?.address,
                               latitude: nearestOnMap?.latitude, longitude: nearestOnMap?.longitude,
                               status: hasAds ? .adsOnly : .none, hasAds: hasAds, onMap: nearestOnMap != nil, mapCount: mapCount, note: c.note)
         let limit = max(radius * 1.6, radius + 8)
         switch c.source {
         case .instacart(let base, let slug, let guest):
-            if let shop = try? await InstacartSource.shared.resolveShop(.init(base: base, slug: slug, guest: guest), place: place), !shop.none {
+            let shop: InstacartSource.Shop?
+            do { shop = try await InstacartSource.shared.resolveShop(.init(base: base, slug: slug, guest: guest, chainWide: c.chainWide), place: place) } catch { shop = nil; failed = !(error is CancellationError) }
+            if let shop, !shop.none {
                 if shop.canonical {
-                    // Instacart's national storefront: real prices, but not this shopper's store.
-                    out.status = .national
+                    // Instacart's national storefront: real prices for a chain-wide chain (Walmart),
+                    // but no store of any other chain near this shopper — Hy-Vee's answer for
+                    // Milwaukee was its Lincoln, NE store. Same rule as src/directory.js probe().
+                    if c.chainWide { out.status = .national }
                     break
                 }
                 if let d = shop.distance, d > limit { break }
@@ -128,7 +145,9 @@ actor StoreDirectory {
                 out.longitude = shop.longitude ?? out.longitude
             }
         case .wholeFoods:
-            if let s = try? await WholeFoodsSource.shared.resolveStore(place: place), !s.none, (s.distance ?? 0) <= limit {
+            let found: WholeFoodsSource.Store?
+            do { found = try await WholeFoodsSource.shared.resolveStore(place: place) } catch { found = nil; failed = !(error is CancellationError) }
+            if let s = found, !s.none, (s.distance ?? 0) <= limit {
                 out.status = .shelf
                 out.distance = s.distance
                 out.address = s.address
@@ -136,7 +155,9 @@ actor StoreDirectory {
                 out.longitude = s.longitude
             }
         case .traderJoes:
-            if let s = try? await TraderJoesSource.shared.resolveStore(place: place), !s.none, (s.distance ?? 0) <= limit {
+            let found: TraderJoesSource.Store?
+            do { found = try await TraderJoesSource.shared.resolveStore(place: place) } catch { found = nil; failed = !(error is CancellationError) }
+            if let s = found, !s.none, (s.distance ?? 0) <= limit {
                 out.status = .shelf
                 out.distance = s.distance
                 out.address = s.address
@@ -146,14 +167,15 @@ actor StoreDirectory {
         case .adsOnly:
             break
         }
+        let failedId = failed ? c.id : nil
         // Drop chains with nothing to offer that aren't actually nearby
-        if out.status == .none && !out.onMap { return nil }
-        if let d = out.distance, d > limit && out.status != .adsOnly { return nil }
+        if out.status == .none && !out.onMap { return (nil, failedId) }
+        if let d = out.distance, d > limit && out.status != .adsOnly { return (nil, failedId) }
         if out.status == .adsOnly && !out.onMap && out.distance == nil {
             // Ads-only chains from the ZIP's circular list are still useful
-            return out
+            return (out, failedId)
         }
-        return out
+        return (out, failedId)
     }
 
     // MARK: Apple Maps

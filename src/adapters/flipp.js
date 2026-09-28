@@ -1,52 +1,63 @@
 // Flipp: weekly circulars (ads) for every merchant near a ZIP, plus item search and item details.
 // Flyer item lists lack the price qualifiers ("2/", "/lb", "BOGO", "for U"), so we fetch each item's
 // details once (they never change for a given flyer item) and keep them in SQLite.
-import { request, mapLimit, configureHost } from '../http.js';
+import { request, mapLimit, unscoped, hostBacklog } from '../http.js';
 
-// Ad enrichment fetches one item at a time in the background and is never user-blocking, so this
-// is the gentlest setting in the app.
-configureHost('backflipp.wishabi.com', { max: 2, gap: 250 });
+// Every host this adapter reads gets the owner's rule from src/http.js (DEFAULT_HOST_POLICY: one
+// request in flight, 700 ms apart, stop on 429). The looser per-host limits that used to be set
+// here were removed at the owner's decision (Sept 2026); long queues are handled by
+// withStallTimeout, not by asking faster.
 import { cached, HOUR } from '../cache.js';
 import { db } from '../db.js';
 import { storeForMerchant } from '../../shared/stores.js';
-import { parseDeal, categorize, freeOffer } from '../../shared/deals.js';
+import { parseDeal, categorize, freeOffer, wallClock } from '../../shared/deals.js';
 
 const API = 'https://backflipp.wishabi.com/flipp';
 const https = (u) => (u ? String(u).replace(/^http:\/\//, 'https://') : null);
 
+/** One flyer from Flipp's /flyers list. */
+export function flyerRow(f) {
+  return {
+    id: f.id,
+    merchant: String(f.merchant || '').trim(),
+    storeId: storeForMerchant(f.merchant),
+    name: f.name,
+    validFrom: wallClock(f.valid_from),
+    validTo: wallClock(f.valid_to),
+    thumbnail: https(f.thumbnail_url),
+    categories: f.categories || [],
+    merchantLogo: https(f.merchant_logo),
+  };
+}
+
+/** One item from a Flipp flyer. */
+export function flyerItemRow(i) {
+  return {
+    id: i.id,
+    flyerId: i.flyer_id,
+    name: String(i.name).trim(),
+    brand: i.brand || '',
+    price: i.price,
+    discount: i.discount,
+    image: https(i.cutout_image_url),
+    validFrom: wallClock(i.valid_from),
+    validTo: wallClock(i.valid_to),
+  };
+}
+
 export async function flyers(zip, { fresh = false, onStale } = {}) {
-  return cached(`flipp:flyers:${zip}`, 3 * HOUR, async () => {
+  return cached(`flipp:v2:flyers:${zip}`, 3 * HOUR, async () => {
     const d = (await request(`${API}/flyers?locale=en-us&postal_code=${zip}`, { timeout: 16000, retries: 0, okOnly: true })).json();
-    return (d.flyers || []).map((f) => ({
-      id: f.id,
-      merchant: String(f.merchant || '').trim(),
-      storeId: storeForMerchant(f.merchant),
-      name: f.name,
-      validFrom: f.valid_from,
-      validTo: f.valid_to,
-      thumbnail: https(f.thumbnail_url),
-      categories: f.categories || [],
-      merchantLogo: https(f.merchant_logo),
-    }));
+    return (d.flyers || []).map(flyerRow);
   }, { fresh, onStale });
 }
 
 export async function flyerItems(flyerId, { fresh = false, onStale } = {}) {
-  return cached(`flipp:flyer:${flyerId}`, 6 * HOUR, async () => {
+  return cached(`flipp:v2:flyer:${flyerId}`, 6 * HOUR, async () => {
     const d = (await request(`${API}/flyers/${flyerId}?locale=en-us`, { timeout: 20000, okOnly: true })).json();
     return (d.items || [])
       .filter((i) => i.name && String(i.name).trim().length > 1)
-      .map((i) => ({
-        id: i.id,
-        flyerId: i.flyer_id,
-        name: String(i.name).trim(),
-        brand: i.brand || '',
-        price: i.price,
-        discount: i.discount,
-        image: https(i.cutout_image_url),
-        validFrom: i.valid_from,
-        validTo: i.valid_to,
-      }));
+      .map(flyerItemRow);
   }, { fresh, onStale, maxStaleMs: 10 * 24 * HOUR });
 }
 
@@ -92,10 +103,17 @@ export function enrichFlyer(flyerId, items) {
   const st = enrich.get(flyerId);
   if (st?.running) return st;
   const todo = items.filter((i) => !storedDetail(i.id));
-  const state = { total: items.length, done: items.length - todo.length, running: todo.length > 0, error: null };
+  const state = { total: items.length, done: items.length - todo.length, running: todo.length > 0, error: null, paused: false };
   enrich.set(flyerId, state);
   if (!todo.length) return state;
-  mapLimit(todo, 6, async (i) => {
+  // Shared background work: not charged to the visitor who opened the Sales tab, and it steps aside
+  // when Flipp's queue is long (visitors' searches ask Flipp too). Paused, it picks up where it left
+  // off the next time anyone loads this flyer; details already fetched are stored.
+  unscoped(() => mapLimit(todo, 6, async (i) => {
+    if (state.paused || hostBacklog(new URL(API).host) >= 20) {
+      state.paused = true;
+      return;
+    }
     try {
       await itemDetail(i.id);
     } catch (err) {
@@ -104,12 +122,12 @@ export function enrichFlyer(flyerId, items) {
     state.done += 1;
   }).finally(() => {
     state.running = false;
-  });
+  }));
   return state;
 }
 
 export async function searchItems(query, zip) {
-  return cached(`flipp:search:${zip}:${query.toLowerCase()}`, HOUR, async () => {
+  return cached(`flipp:v2:search:${zip}:${query.toLowerCase()}`, HOUR, async () => {
     const d = (await request(`${API}/items/search?locale=en-us&postal_code=${zip}&q=${encodeURIComponent(query)}`, { timeout: 15000, okOnly: true })).json();
     return (d.items || [])
       .filter((i) => i.name && i.merchant_name)
@@ -121,8 +139,8 @@ export async function searchItems(query, zip) {
         brand: '',
         price: i.current_price,
         image: https(i.clean_image_url || i.clipping_image_url),
-        validFrom: i.valid_from,
-        validTo: i.valid_to,
+        validFrom: wallClock(i.valid_from),
+        validTo: wallClock(i.valid_to),
         detail: {
           pre: i.pre_price_text || null,
           post: i.post_price_text || null,

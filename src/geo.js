@@ -4,7 +4,7 @@ import { cached, DAY } from './cache.js';
 
 // Nominatim's usage policy asks for no more than one request a second, so honour it exactly.
 configureHost('nominatim.openstreetmap.org', { max: 1, gap: 1100 });
-configureHost('api.zippopotam.us', { max: 2, gap: 200 });
+// api.zippopotam.us: the owner's default rule (src/http.js).
 
 export function validZip(zip) {
   return /^\d{5}$/.test(String(zip || '').trim());
@@ -29,7 +29,8 @@ export async function geocodeZip(zip) {
           break;
         }
       }
-      if (!p) throw new Error(`ZIP ${zip} was not found`);
+      // The visitor's mistake, not a server fault: a 404, and not logged as a crash (launch review).
+      if (!p) throw Object.assign(new Error(`ZIP ${zip} was not found`), { status: 404 });
       // Territories come back with a FIPS number rather than a postal abbreviation.
       const abbr = String(p['state abbreviation'] || '').trim();
       const state = /^[A-Z]{2}$/.test(abbr) ? abbr : country.toUpperCase();
@@ -44,9 +45,34 @@ export async function geocodeZip(zip) {
       const d = res.json();
       if (!d?.[0]) throw new Error(`Could not locate ZIP ${zip}`);
       const a = d[0].address || {};
-      return { zip, lat: +d[0].lat, lng: +d[0].lon, city: a.city || a.town || a.village || '', state: a.state || '' };
+      return { zip, lat: +d[0].lat, lng: +d[0].lon, city: a.city || a.town || a.village || '', state: stateCode(a) };
     }
   });
+}
+
+// Nominatim names the state ("Washington"); the catalog's `states` lists are postal codes. Passing
+// the name through matched no regional chain at all, so a ZIP geocoded while zippopotam.us was
+// down lost PCC, Publix, Wegmans and the rest for the year the geocode is cached.
+const STATE_CODES = {
+  alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA', colorado: 'CO', connecticut: 'CT',
+  delaware: 'DE', 'district of columbia': 'DC', florida: 'FL', georgia: 'GA', hawaii: 'HI', idaho: 'ID',
+  illinois: 'IL', indiana: 'IN', iowa: 'IA', kansas: 'KS', kentucky: 'KY', louisiana: 'LA', maine: 'ME',
+  maryland: 'MD', massachusetts: 'MA', michigan: 'MI', minnesota: 'MN', mississippi: 'MS', missouri: 'MO',
+  montana: 'MT', nebraska: 'NE', nevada: 'NV', 'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM',
+  'new york': 'NY', 'north carolina': 'NC', 'north dakota': 'ND', ohio: 'OH', oklahoma: 'OK', oregon: 'OR',
+  pennsylvania: 'PA', 'rhode island': 'RI', 'south carolina': 'SC', 'south dakota': 'SD', tennessee: 'TN',
+  texas: 'TX', utah: 'UT', vermont: 'VT', virginia: 'VA', washington: 'WA', 'west virginia': 'WV',
+  wisconsin: 'WI', wyoming: 'WY', 'puerto rico': 'PR', guam: 'GU', 'united states virgin islands': 'VI',
+};
+
+export function stateCode(address = {}) {
+  const iso = /^US-([A-Z]{2})$/.exec(String(address['ISO3166-2-lvl4'] || ''));
+  if (iso) return iso[1];
+  const name = String(address.state || '').trim();
+  if (/^[A-Z]{2}$/.test(name)) return name;
+  // Unknown: keep the name. It matches no state list, so only the national chains are asked; ''
+  // would ask all of them (catalog.js chainsInState).
+  return STATE_CODES[name.toLowerCase()] || name.toUpperCase();
 }
 
 export function miles(a, b) {

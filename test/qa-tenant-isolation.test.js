@@ -136,24 +136,28 @@ test('control: the shopping list and watch spec are re-validated as visitor inpu
 
 const KEYS = { id: 'qa-client-id', secret: 'qa-client-secret' };
 
+// These check a VISITOR's keys, so the server's own keys (ops/kroger-launch.md) must not be set here.
+delete process.env.KROGER_CLIENT_ID;
+delete process.env.KROGER_CLIENT_SECRET;
+
 test('control: Kroger keys are read from headers only', () => {
   const ctx = contextFrom(urlFor('?zip=60614'), null, {
     'x-kroger-client-id': KEYS.id,
     'x-kroger-client-secret': KEYS.secret,
   });
-  assert.deepEqual(ctx.kroger, { clientId: KEYS.id, clientSecret: KEYS.secret });
+  assert.deepEqual(ctx.kroger, { clientId: KEYS.id, clientSecret: KEYS.secret, server: false });
 });
 
 test('control: Kroger keys sent in the query string or the body are ignored', () => {
   const viaQuery = contextFrom(urlFor(`?zip=60614&krogerClientId=${KEYS.id}&krogerClientSecret=${KEYS.secret}&x-kroger-client-id=${KEYS.id}`));
-  assert.deepEqual(viaQuery.kroger, { clientId: '', clientSecret: '' }, 'a secret in a URL must never be honoured');
+  assert.deepEqual(viaQuery.kroger, { clientId: '', clientSecret: '', server: false }, 'a secret in a URL must never be honoured');
   const viaBody = contextFrom(urlFor('?zip=60614'), { kroger: { clientId: KEYS.id, clientSecret: KEYS.secret }, 'x-kroger-client-id': KEYS.id });
-  assert.deepEqual(viaBody.kroger, { clientId: '', clientSecret: '' });
+  assert.deepEqual(viaBody.kroger, { clientId: '', clientSecret: '', server: false });
 });
 
 test('control: a half-configured Kroger pair is "not configured", not an error', () => {
   const half = contextFrom(urlFor('?zip=60614'), null, { 'x-kroger-client-id': KEYS.id });
-  assert.deepEqual(half.kroger, { clientId: '', clientSecret: '' });
+  assert.deepEqual(half.kroger, { clientId: '', clientSecret: '', server: false });
   assert.throws(
     () => contextFrom(urlFor('?zip=60614'), null, { 'x-kroger-client-id': 'x'.repeat(300), 'x-kroger-client-secret': 'y' }),
     /too long/i,
@@ -298,7 +302,7 @@ test('DEFECT 3: the shared store-health object must never hold a visitor’s ZIP
     maxMiles: 25,
     resultsPerStore: 36,
     overrides: {},
-    kroger: { clientId: '', clientSecret: '' },
+    kroger: { clientId: '', clientSecret: '', server: false },
   };
   // geocodeZip() rejects this locally, so nothing leaves the machine.
   await search.searchStore('aldi', 'qa-probe', ctx);
@@ -409,15 +413,21 @@ test('DEFECT 4: with BASKET_TRUST_PROXY on, a rotating X-Forwarded-For must not 
 //      875 flyer-item detail fetches, all after the response had been sent.
 // With 24 stores allowed per request, rotating ZIPs to miss the cache, and DEFECT 4 removing the
 // per-IP budget, one caller can keep the server at its 25/s ceiling against a retailer indefinitely.
-test('DEFECT 5: per-host politeness must be configured per retailer, not left at the default', () => {
-  const files = ['src/http.js', 'src/search.js', 'src/deals.js', 'src/directory.js', 'server.js']
+// Since Sept 2026 the default IS the owner's rule (one in flight, 700 ms apart) and no adapter may
+// loosen it, so "some adapter calls configureHost" no longer stands in for politeness. The property
+// itself — every retailer host held to the rule — is pinned in test/qa-http-politeness.test.js;
+// here, only that nothing in the server loosens a host past it.
+test('DEFECT 5: per-host politeness is never looser than the owner\'s rule', () => {
+  const files = ['src/http.js', 'src/search.js', 'src/deals.js', 'src/directory.js', 'src/geo.js', 'server.js']
     .concat(fs.readdirSync(path.join(ROOT, 'src/adapters')).map((f) => `src/adapters/${f}`));
-  const callers = files.filter((f) => /configureHost\s*\(/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')) && f !== 'src/http.js');
-  assert.ok(
-    callers.length > 0,
-    'configureHost() is exported and never called: every retailer is served by the same 4-concurrent / ' +
-      '40ms default (~25 req/s) with an unbounded queue, and background ad enrichment is outside the per-IP budget',
-  );
+  for (const f of files) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    for (const m of src.matchAll(/configureHost\(\s*'([^']+)'\s*,\s*\{([^}]*)\}/g)) {
+      const max = Number(/max:\s*(\d+)/.exec(m[2])?.[1] ?? 1);
+      const gap = Number(/gap:\s*(\d+)/.exec(m[2])?.[1] ?? 700);
+      assert.ok(max <= 1 && gap >= 700, `${f} sets ${m[1]} to ${max} in flight ${gap} ms apart`);
+    }
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -469,7 +479,7 @@ async function loadBrowserStore(storage) {
   const src = fs.readFileSync(path.join(ROOT, 'public/js/store.js'), 'utf8');
   const hooks = 'data:text/javascript,' + encodeURIComponent('export const useEffect=()=>{};export const useReducer=()=>[0,()=>{}];');
   const units = pathToFileURL(path.join(ROOT, 'shared/units.js')).href;
-  const patched = src.replace("from 'preact/hooks'", `from '${hooks}'`).replace("from '/shared/units.js'", `from '${units}'`);
+  const patched = src.replace("from '/vendor/preact-hooks.mjs'", `from '${hooks}'`).replace("from '/shared/units.js'", `from '${units}'`);
   assert.ok(patched.includes(hooks) && patched.includes(units), 'store.js imports changed — update this harness');
   const file = path.join(SCRATCH, `store.${process.pid}.${harnessSeq++}.mjs`);
   fs.writeFileSync(file, patched);

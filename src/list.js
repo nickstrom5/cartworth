@@ -56,6 +56,7 @@ export async function optimize(rawItems, ctx, { fresh = false } = {}) {
     for (const r of results) {
       byStore[r.storeId] = withHistory(r.items || []);
       if (r.status === 'error') errors[r.storeId] = r.error;
+      else if (r.status === 'busy') errors[r.storeId] = r.message; // not asked (src/guard.js): say so, not "no match"
     }
     return { ...priceItem(it, byStore, stores, ctx), errors };
   });

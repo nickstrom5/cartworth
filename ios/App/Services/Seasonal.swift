@@ -12,6 +12,9 @@ struct Occasion: Identifiable, Hashable {
     /// Starter shopping list
     var list: [String]
 
+    /// "is today", "is tomorrow", "in 9 days" ("in 1 days" before).
+    var whenText: String { daysAway == 0 ? "is today" : daysAway == 1 ? "is tomorrow" : "in \(daysAway) days" }
+
     var daysAway: Int { max(0, Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: Date()), to: Calendar.current.startOfDay(for: date)).day ?? 0) }
 }
 
@@ -133,6 +136,13 @@ enum Seasonal {
         return (occasions(year: y) + occasions(year: y + 1))
             .filter { $0.date >= start && $0.date <= end }
             .sorted { $0.date < $1.date }
+    }
+
+    /// The occasions to feature: the soonest two in the window. One card was not enough when two
+    /// holidays share a season: in 2027 Hanukkah begins Dec 24, and the single "next occasion" card
+    /// showed Hanukkah instead of Christmas for the whole three weeks before Christmas.
+    static func featured(from now: Date = Date(), within days: Int = 21) -> [Occasion] {
+        Array(upcoming(from: now, within: days).prefix(2))
     }
 
     struct Season: Hashable {

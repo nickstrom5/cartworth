@@ -43,7 +43,9 @@ enum BackgroundRefresh {
             if (st.atTarget || st.lowest), !recentlyAlerted, let best = st.best, let du = st.du, let storeId = w.result?.bestStoreId {
                 let store = RetailerCatalog.byId[storeId]?.short ?? "a store near you"
                 let title = st.atTarget ? "\(w.label) hit your target" : "\(w.label): lowest price yet"
-                await notify(id: "watch-\(w.id)", title: title, body: "\(Money.unit(best / du.factor, du))/\(du.label) at \(store).")
+                // Say where the price came from, as every screen does: "at Jewel" alone reads as the shelf.
+                let basis = w.result?.stores[storeId].map { $0.priceBasis == .shelf ? "" : " (\(PriceProvenance.label($0.priceBasis)))" } ?? ""
+                await notify(id: "watch-\(w.id)", title: title, body: "\(Money.unit(best / du.factor, du))/\(du.label) at \(store)\(basis).")
                 w.lastAlertAt = Date()
             }
         }
@@ -55,7 +57,8 @@ enum BackgroundRefresh {
         await DealsModel.shared.load(.current)
         let matches = DealsModel.shared.matches(terms: favorites.map(\.term))
         for f in favorites {
-            let fresh = (matches[f.term] ?? []).filter { !f.seenDealIds.contains($0.id) }
+            // Not before the terms are known: "$7.00" in a notification may be the price of two.
+            let fresh = (matches[f.term] ?? []).filter { !f.seenDealIds.contains($0.id) && !$0.termsPending }
             guard let top = fresh.first else { continue }
             let store = RetailerCatalog.byId[top.retailerId]?.short ?? top.merchant
             let more = fresh.count > 1 ? " +\(fresh.count - 1) more" : ""

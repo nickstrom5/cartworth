@@ -1,7 +1,10 @@
 // Trader Joe's: nearest store (Brandify locator used by traderjoes.com) + product search (GraphQL).
-import { request, configureHost } from '../http.js';
+import { request, HttpError } from '../http.js';
 
-configureHost('www.traderjoes.com', { max: 2, gap: 250 });
+// Every host this adapter reads gets the owner's rule from src/http.js (DEFAULT_HOST_POLICY: one
+// request in flight, 700 ms apart, stop on 429). The looser per-host limits that used to be set
+// here were removed at the owner's decision (Sept 2026); long queues are handled by
+// withStallTimeout, not by asking faster.
 import { cached, DAY } from '../cache.js';
 import { geocodeZip, miles } from '../geo.js';
 import { makeProduct } from '../normalize.js';
@@ -60,16 +63,41 @@ const QUERY = `query SearchProducts($search: String, $pageSize: Int, $currentPag
   }
 }`;
 
+/**
+ * traderjoes.com refuses this server outright: every request, robots.txt included, gets Akamai's
+ * edge "Access Denied" (HTTP 403) from cloud and datacenter addresses (round 3, Sept 2026). That is
+ * bot protection, and the owner's rule is never to work around it. So one 403 closes the door for
+ * BLOCK_MS: no retries, and the shopper is told plainly that Trader Joe's prices are not available
+ * on the website, instead of a "failed, retry" that invites more refused requests. The iPhone app
+ * asks from the shopper's own device and is unaffected.
+ */
+const BLOCK_MS = 6 * 60 * 60 * 1000;
+let blockedUntil = 0;
+export const BLOCKED_MESSAGE = "Trader Joe's does not allow automated price lookups from our server, so its prices are only in the iPhone app.";
+
 export async function search(query, zip, { limit = 40 } = {}) {
+  if (Date.now() < blockedUntil) return { items: [], location: null, message: BLOCKED_MESSAGE, blocked: true };
   const store = await resolveStore(zip);
-  const storeCode = store && !store.none ? store.id : '701';
-  const r = await request(`${BASE}/api/graphql`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ operationName: 'SearchProducts', variables: { storeCode, availability: '1', published: '1', search: query, currentPage: 1, pageSize: Math.min(limit, 60) }, query: QUERY }),
-    timeout: 15000,
-    okOnly: true,
-  });
+  // No Trader Joe's serves this ZIP: say so. This used to fall back to store 701 and price the
+  // search from a store somewhere else, unlabelled.
+  if (!store || store.none) return { items: [], location: null, message: `No Trader Joe's near ZIP ${zip}` };
+  const storeCode = store.id;
+  let r;
+  try {
+    r = await request(`${BASE}/api/graphql`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ operationName: 'SearchProducts', variables: { storeCode, availability: '1', published: '1', search: query, currentPage: 1, pageSize: Math.min(limit, 60) }, query: QUERY }),
+      timeout: 15000,
+      okOnly: true,
+    });
+  } catch (err) {
+    if (err instanceof HttpError && err.status === 403) {
+      blockedUntil = Date.now() + BLOCK_MS;
+      return { items: [], location: null, message: BLOCKED_MESSAGE, blocked: true };
+    }
+    throw err;
+  }
   const d = r.json();
   if (d.errors?.length && !d.data) throw new Error(d.errors[0].message);
   const list = d.data?.products?.items || [];
@@ -107,4 +135,9 @@ export async function search(query, zip, { limit = 40 } = {}) {
     items,
     location: store && !store.none ? { name: store.name, address: store.address, distance: store.distance, id: store.id, priceNote: 'Trader Joe’s posted prices (may vary slightly by store)' } : null,
   };
+}
+
+/** Tests only. */
+export function _resetBlock() {
+  blockedUntil = 0;
 }

@@ -107,6 +107,23 @@ enum Compare {
     /// Flags rather than hides: the item still appears, carrying the flag, so the UI can say the
     /// price looks wrong. Needs at least four comparable results, because with three you cannot
     /// tell an outlier from a genuinely cheap store.
+    /// A case size on a single piece ("Avocado", 40 ct, $1.09; applesauce stated 288 oz at $2.76): at
+    /// least `sizeOutlier` times the typical size AND at least `sizeOutlierCheap` times cheaper per
+    /// unit. A real bulk buy is big but only 2-5x cheaper. Runs in every dimension. Port of
+    /// flagSizeOutliers in shared/compare.js.
+    static let sizeOutlier = 4.0
+    static let sizeOutlierCheap = 6.0
+    static func flagSizeOutliers(_ items: inout [Product], priced: [(Int, Double)], dim: Dim) {
+        let sized = priced.filter { items[$0.0].dim == dim && (items[$0.0].base ?? 0) > 0 }
+        guard sized.count >= 4, let medSize = medianOf(sized.map { items[$0.0].base! }), medSize > 0,
+              let medPrice = medianOf(priced.map(\.1)), medPrice > 0 else { return }
+        for (idx, perBase) in sized where items[idx].implausible == nil {
+            if items[idx].base! >= sizeOutlier * medSize && perBase * sizeOutlierCheap <= medPrice {
+                items[idx].implausible = ImplausiblePrice(ratio: (perBase / medPrice * 10).rounded() / 10, median: medPrice, direction: "low", sizeOutlier: true)
+            }
+        }
+    }
+
     @discardableResult
     static func flagImplausible(_ items: inout [Product], dim: Dim, prefs: PricePrefs = PricePrefs()) -> [Product] {
         // The count dimension counts PACKAGES, so its median mixes a 50-sheet box of foil with a
@@ -114,10 +131,13 @@ enum Compare {
         // whether a price is right: it flagged six correct per-sheet foil prices as "price looks
         // wrong". Telling a shopper a correct price looks wrong is the mirror image of showing a
         // wrong one.
-        if dim == .count { return items }
         let priced = items.enumerated().compactMap { idx, p -> (Int, Double)? in
             guard let u = unitFor(p, dim: dim, prefs: prefs), u.perBase.isFinite, u.perBase > 0 else { return nil }
             return (idx, u.perBase)
+        }
+        if dim == .count {
+            flagSizeOutliers(&items, priced: priced, dim: dim)
+            return items
         }
         guard priced.count >= 4, let med = medianOf(priced.map(\.1)), med > 0 else { return items }
         let snapshot = items
@@ -141,6 +161,7 @@ enum Compare {
                 if !vouched { flag(unconfirmed: true) }
             }
         }
+        flagSizeOutliers(&items, priced: priced, dim: dim)
         return items
     }
 
@@ -339,13 +360,31 @@ enum Compare {
         var verdict: String
     }
 
+    /// Equal unit prices: shelf before online before chain-wide, exact before estimated. Mirrors
+    /// `tieBreak` in shared/compare.js (Mariano's Instacart carrots were named over the identical
+    /// price on Woodman's shelf because "marianos" < "woodmans").
+    static func basisRank(_ b: PriceBasis) -> Int { b == .shelf ? 0 : b == .online ? 1 : 2 }
+    static func tieBreak(_ a: PriceBasis, _ aEst: Bool, _ b: PriceBasis, _ bEst: Bool) -> Bool? {
+        if basisRank(a) != basisRank(b) { return basisRank(a) < basisRank(b) }
+        if aEst != bEst { return !aEst }
+        return nil
+    }
+
+    /// True when a store's price is within the price-basis margin of the winner's: the savings line
+    /// could not call it dearer, so no chart may draw it as beaten. `standings`' rule, for callers
+    /// that hold rows rather than `Best` entries.
+    static func isClose(winner a: Double, _ aBasis: PriceBasis, _ aEst: Bool, to b: Double, _ bBasis: PriceBasis, _ bEst: Bool) -> Bool {
+        let rel = relation(a, aBasis, aEst, b, bBasis, bEst)
+        return !(rel == "exact" || rel == "ahead")
+    }
+
     static func standings(_ stores: [String: Best]) -> [Standing] {
         var rows: [Standing] = stores.compactMap { id, b in
             guard b.perBase > 0 else { return nil }
             let sp = spread(b.product.priceBasis, est: b.est)
             return Standing(storeId: id, perBase: b.perBase, basis: b.product.priceBasis, est: b.est, low: b.perBase * (1 - sp.below), high: b.perBase * (1 + sp.above), verdict: "dearer")
         }
-        rows.sort { $0.perBase != $1.perBase ? $0.perBase < $1.perBase : $0.storeId < $1.storeId }
+        rows.sort { $0.perBase != $1.perBase ? $0.perBase < $1.perBase : tieBreak($0.basis, $0.est, $1.basis, $1.est) ?? ($0.storeId < $1.storeId) }
         guard let w = rows.first else { return rows }
         rows[0].verdict = "best"
         for i in rows.indices.dropFirst() {
@@ -399,6 +438,17 @@ enum Compare {
 // MARK: - Money & unit formatting
 
 enum Money {
+    /// A promo badge's text, shortened only where that cannot change a price: one that names a price
+    /// is never cut ("Mix & match 5 for $1…"), any other at a word boundary. Mirrors shortPromo in
+    /// public/js/format.js.
+    static func shortPromo(_ text: String, max: Int = 22) -> String {
+        let t = text.trimmingCharacters(in: .whitespaces)
+        if t.count <= max || t.contains("$") || t.contains("¢") || t.range(of: "\\d\\s*(for|/)", options: [.regularExpression, .caseInsensitive]) != nil { return t }
+        let cut = String(t.prefix(max - 1))
+        let body = cut.lastIndex(of: " ").map { i in cut.distance(from: cut.startIndex, to: i) > max / 2 ? String(cut[..<i]) : cut } ?? cut
+        return body.trimmingCharacters(in: CharacterSet(charactersIn: " ,;:&–-")) + "…"
+    }
+
     /// "$2.49", or "89¢" under a dollar
     static func short(_ n: Double?) -> String {
         guard let n, n.isFinite else { return "—" }
@@ -422,7 +472,8 @@ enum Money {
         guard let perBase, perBase.isFinite else { return "—" }
         let v = perBase * du.factor
         if v >= 100 { return String(format: "$%.0f", v) }
-        if v >= 0.995 { return String(format: "$%.2f", v) }
+        // Dollars from $1.00 only: at 0.995, 99.5¢ printed "$0.99" (mirrors public/js/format.js).
+        if v >= 0.9995 { return String(format: "$%.2f", v) }
         if v >= 0.1 {
             let c = (v * 1000).rounded() / 10
             return c == c.rounded() ? "\(Int(c))¢" : String(format: "%.1f¢", c)

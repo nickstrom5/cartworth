@@ -40,10 +40,8 @@ actor FlippSource {
         return f
     }()
 
-    private static func date(_ s: String?) -> Date? {
-        guard let s else { return nil }
-        return iso.date(from: s)
-    }
+    /// Ad dates are Eastern wall-clock times for stores in every time zone: see SaleDates.wallClock.
+    private static func date(_ s: String?) -> Date? { SaleDates.wallClock(s) }
 
     private static func https(_ s: String?) -> String? {
         s.map { $0.hasPrefix("http://") ? "https://" + $0.dropFirst(7) : $0 }
@@ -55,7 +53,7 @@ actor FlippSource {
 
     func flyers(postal: String, fresh: Bool = false) async throws -> (flyers: [Flyer], stale: Bool) {
         let code = postal.replacingOccurrences(of: " ", with: "").uppercased()
-        let r = try await Cache.shared.value("flipp:flyers:\(code)", ttl: 3 * TTL.hour, fresh: fresh) {
+        let r = try await Cache.shared.value("flipp:v2:flyers:\(code)", ttl: 3 * TTL.hour, fresh: fresh) {
             let url = URL(string: "https://backflipp.wishabi.com/flipp/flyers?locale=\(FlippSource.locale(for: code))&postal_code=\(code)")!
             let d = try await HTTP.shared.getJSON(url, timeout: 16)
             return d["flyers"].array.map { f in
@@ -75,7 +73,7 @@ actor FlippSource {
     }
 
     func flyerItems(_ flyerId: Int, fresh: Bool = false) async throws -> [FlyerItem] {
-        try await Cache.shared.value("flipp:flyer:\(flyerId)", ttl: 6 * TTL.hour, fresh: fresh, maxStale: 10 * TTL.day) {
+        try await Cache.shared.value("flipp:v2:flyer:\(flyerId)", ttl: 6 * TTL.hour, fresh: fresh, maxStale: 10 * TTL.day) {
             let d = try await HTTP.shared.getJSON(URL(string: "https://backflipp.wishabi.com/flipp/flyers/\(flyerId)?locale=en-us")!, timeout: 20)
             return d["items"].array.compactMap { i -> FlyerItem? in
                 guard let name = i["name"].text, name.count > 1, let id = i["id"].int else { return nil }
@@ -160,7 +158,7 @@ actor FlippSource {
 
     func search(_ query: String, postal: String) async throws -> [SearchHit] {
         let code = postal.replacingOccurrences(of: " ", with: "").uppercased()
-        return try await Cache.shared.value("flipp:search:\(code):\(query.lowercased())", ttl: TTL.hour) {
+        return try await Cache.shared.value("flipp:v2:search:\(code):\(query.lowercased())", ttl: TTL.hour) {
             let url = URL(string: "https://backflipp.wishabi.com/flipp/items/search?locale=\(FlippSource.locale(for: code))&postal_code=\(code)&q=\(query.urlQueryEncoded)")!
             let d = try await HTTP.shared.getJSON(url, timeout: 15)
             return d["items"].array.compactMap { i -> SearchHit? in

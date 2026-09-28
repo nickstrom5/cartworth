@@ -72,11 +72,15 @@ final class DuoTests: XCTestCase {
 
     /// The tab control is a bottom bar on a normal iPhone and a vertical floating bar on the Duo's
     /// cover panel. Which element type wraps the items is not stable, so try each.
+    ///
+    /// Every candidate is `.firstMatch`: on iPad more than one button answers to each tab's label,
+    /// and tapping a query that resolves to several throws "Multiple matching elements found".
+    /// See `SubmissionSet.tabButton`.
     func tabButton(_ name: String) -> XCUIElement {
         let candidates = [
-            app.tabBars.buttons[name],
-            app.segmentedControls.buttons[name],
-            app.buttons[name],
+            app.tabBars.buttons.matching(NSPredicate(format: "label ==[c] %@", name)).firstMatch,
+            app.segmentedControls.buttons.matching(NSPredicate(format: "label ==[c] %@", name)).firstMatch,
+            app.buttons.matching(NSPredicate(format: "label ==[c] %@", name)).firstMatch,
         ]
         return candidates.first { $0.exists } ?? candidates[0]
     }
@@ -145,13 +149,27 @@ final class DuoTests: XCTestCase {
         guard window != .zero else { return XCTFail("recordGeometry() first") }
         // A little slack: SwiftUI rounds frames, and a shadow may legitimately bleed a point.
         let bounds = window.insetBy(dx: -1, dy: -1)
+        let rows = horizontalScrollerRows()
         for e in elements where e.exists && e.isHittable {
             let f = e.frame
             guard f.width > 0, f.height > 0 else { continue }
             // A horizontal scroller's own content is allowed past the edge — that is what it is
-            // for — so only judge elements that are not inside one.
+            // for — so only judge elements that are not inside one. Without this the Deals tab's
+            // store chips failed or passed on the day's deal counts: the row bleeds to the screen
+            // edge, and a chip straddling it is judged only when its centre is on screen.
+            if rows.contains(where: { f.minY >= $0.minY - 1 && f.maxY <= $0.maxY + 1 }) { continue }
             XCTAssertTrue(f.minX >= bounds.minX && f.maxX <= bounds.maxX,
                           "\(what): “\(e.label)” at \(f) runs outside the \(Int(window.width))pt-wide panel")
+        }
+    }
+
+    /// The frames of the sideways scrollers on screen: a scroll view no taller than a row and far
+    /// wider than it is tall. XCUITest does not say which way a scroll view scrolls; the page's own
+    /// scroller is hundreds of points tall, and a row this short only scrolls sideways.
+    private func horizontalScrollerRows() -> [CGRect] {
+        app.scrollViews.allElementsBoundByIndex.compactMap { sv in
+            let f = sv.frame
+            return f.height > 0 && f.height <= 120 && f.width >= f.height * 3 ? f : nil
         }
     }
 
@@ -163,6 +181,13 @@ final class DuoTests: XCTestCase {
             XCTAssertTrue(f.height >= minimum - 0.5,
                           "\(what): “\(e.label)” is \(Int(f.height))pt tall, under the \(Int(minimum))pt floor")
         }
+    }
+
+    /// The floor for a tab item. On iPad the tab control is the system's floating tab bar, whose
+    /// items iPadOS draws 36pt tall; the app uses a stock `TabView` and cannot make them taller.
+    /// Held to that height, so an item that shrinks below the system's own still fails.
+    private var tabItemFloor: CGFloat {
+        UIDevice.current.userInterfaceIdiom == .pad ? 36 : 44
     }
 
     private func visibleButtons(limit: Int = 40) -> [XCUIElement] {
@@ -185,7 +210,7 @@ final class DuoTests: XCTestCase {
 
             XCTAssertTrue(app.staticTexts.count > 0, "\(tab) rendered nothing")
             assertInsideWindow(visibleButtons(), tab)
-            assertTapTargets([tabButton(tab)], "\(tab) tab item")
+            assertTapTargets([tabButton(tab)], "\(tab) tab item", minimum: tabItemFloor)
         }
     }
 
@@ -204,7 +229,7 @@ final class DuoTests: XCTestCase {
             XCTAssertTrue(item.exists, "Tab “\(name)” is missing on this panel")
         }
         assertInsideWindow(items, "tab bar")
-        assertTapTargets(items, "tab bar")
+        assertTapTargets(items, "tab bar", minimum: tabItemFloor)
         shoot("\(tag)-tabbar")
     }
 

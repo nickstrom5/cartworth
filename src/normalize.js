@@ -139,15 +139,45 @@ const SLUG_UNITS = {
  * True when a retailer URL slug spells out this size: ".../18848374-sweet-potatoes-10-lbs-10-lb"
  * states 10 lb (and never 5 lb). Slugs write 3.5 lb as "3-5-lb" or, as often, "35-lb".
  */
-export function slugStates(url, size) {
+export function slugStates(url, size, { beforeEnd = false } = {}) {
   const units = SLUG_UNITS[size?.unit];
   if (!url || !units || !(size.amount > 0)) return false;
   // A whole amount may carry a zero decimal: Plugra's slug is "...-extra-creamy-8-0-oz" (8.0 oz),
   // Cool Whip's "...-16-00-oz".
   const whole = Number.isInteger(+size.amount.toFixed(2));
   const amount = String(+size.amount.toFixed(2)).replace('.', '[-.]?') + (whole ? '(?:[-.]0{1,2})?' : '');
-  const slug = String(url).replace(/^[^?#]*\/products?\//, '/').replace(/[?#].*$/, '');
-  return new RegExp(`(?<!\\d)(?<!\\d[-.])${amount}-?(?:${units})(?=$|[-/])`, 'i').test(slug);
+  const slug = String(url).replace(/^[^?#]*\/products?\//, '/').replace(/[?#].*$/, '').replace(/\/+$/, '');
+  const re = new RegExp(`(?<!\\d)(?<!\\d[-.])${amount}-?(?:${units})(?=$|[-/])`, 'gi');
+  for (const m of slug.matchAll(re)) if (!beforeEnd || m.index + m[0].length < slug.length) return true;
+  return false;
+}
+
+/**
+ * Does the slug confirm this size independently of the stated size? Instacart appends the stated
+ * size to every slug, so a size found only at the very END is the stated size repeating itself.
+ * King Soopers' "2% Reduced Fat Milk Half Gallon", stated "2 gal" at $2.99, has the slug
+ * ".../19280305-king-soopers-2-reduced-fat-milk-2-gal": read as confirmation, it made Denver's best
+ * milk $1.50 a gallon (the nationwide audit). Costco's ".../sweet-potatoes-10-lbs-10-lb" still
+ * confirms: the name part of the slug says 10 lbs too.
+ */
+export const slugConfirms = (url, size) => slugStates(url, size, { beforeEnd: true });
+
+/**
+ * The retailer's own URL says the price is per pound, but the stated size is a fixed weight.
+ *
+ * Smart & Final's "Table Carrots": stated "25 lb" at $2.19, slug ".../26519058-bulk-carrots-per-lb".
+ * The $2.19 buys a pound; divided over the 25 lb case it made Phoenix's best carrots $0.09/lb (the
+ * state x holiday audit), and a stated size is trusted down to 1/30 of the median, so the
+ * plausibility guard let it through. The listing contradicts itself, so it keeps its price and
+ * loses its unit price, like every size contradiction.
+ */
+const SLUG_PER_LB_RE = /-per-(?:lb|lbs|pound)(?=$|[-/?#])/i;
+export function slugPerLbConflict(size, f, soldByLb) {
+  if (soldByLb || !size || size.dim !== 'weight' || size.perWeight || !(size.base > 0)) return null;
+  const slug = String(f.url || '').replace(/^[^?#]*\/products?\//, '/').replace(/[?#].*$/, '');
+  if (!SLUG_PER_LB_RE.test(slug)) return null;
+  if (Math.abs(size.base - 16) <= 0.32) return null; // stated 1 lb: the same thing said twice
+  return { text: formatSize(size), name: 'priced per lb' };
 }
 
 /**
@@ -322,6 +352,38 @@ export function listingPack(size, packText, { name = '', url = '' } = {}) {
   return { conflict: { text: formatSize(size), name: `${n} × ${formatSize(size)}` } };
 }
 
+/**
+ * A package price that is really a price PER POUND, caught by the retailer's own unit line.
+ *
+ * Round-3 price check, Piggly Wiggly (order.shopthepig.com) at 53142: "Certified Angus Beef 80%
+ * Ground Chuck Beef", size "10 lb", $7.99, and Instacart's own line under it "$0.50/oz" — $7.99 buys
+ * ONE pound. Divided by the stated 10 lb it was 80c/lb and took Kenosha's and Milwaukee's ground-beef
+ * headline "81% less than the next-best store". Cady Creek cheddar "5 lb" at $8.99, "$0.56/oz": the
+ * same. It is how a store that prices meat and cheese by the pound reads when the feed says "each".
+ *
+ * Measured twice over fresh listings at 53142 (16 stores, 14 staples; 5,834 then 3,782 rows). The
+ * line is NOT a reliable size on its own: on a sale it is often the regular price over the size, with
+ * no regular price sent (Mariano's Land O Lakes, 1 lb at $3.99 with "$0.50/oz"; Butternut bread 20 oz
+ * at $2.99 with "$0.25/oz"); on a warehouse pack it is one unit (Costco "Uncle Matt's ..., 52 oz,
+ * 2-count"); on counts it is arbitrary; and some lines are wrong the other way (Sargento 7.5 oz at
+ * $4.49, "$0.07/oz"). Every row that implied a smaller package for any of those reasons implied some
+ * other amount; every Piggly Wiggly row, and only those, implied exactly one pound (15.98 to 16.19 oz)
+ * against a stated 3, 5 or 10 lb. So the rule is that shape and no wider: a weight of 1.5 lb or more
+ * whose own line says the price buys one pound, +/-3% for rounding the line to the cent. The row then
+ * keeps its package price and loses its unit price (sizeConflict), like every size contradiction.
+ *
+ * `f.listedUnit` is { price, unit } from the adapter (the line as printed: "$0.50/oz", "$7.99/lb").
+ */
+const LISTED_WEIGHT = { oz: 1, lb: 16, lbs: 16 };
+export function unitLineConflict(size, f) {
+  const lu = f.listedUnit;
+  const per = lu && LISTED_WEIGHT[String(lu.unit || '').toLowerCase().replace(/\.$/, '').trim()];
+  if (!per || !(lu.price > 0) || !(f.price > 0) || !size || size.perWeight || size.dim !== 'weight' || !(size.base >= 24)) return null;
+  const implied = (f.price / lu.price) * per;
+  if (Math.abs(implied - 16) > 16 * 0.03) return null;
+  return { text: formatSize(size), name: `1 lb (the listing's own ${'$'}${lu.price}/${lu.unit})` };
+}
+
 const ROLL_GOODS_RE = /\b(?:alumin(?:i)?um foil|foil|plastic wrap|cling wrap|wax(?:ed)? paper|parchment(?: paper)?|freezer paper|butcher paper)\b/i;
 const NOT_A_ROLL_RE = /\b(?:pans?|trays?|roasters?|containers?|lids?|liners?|bags?|sheets?|cups?|plates?|tins?|dish(?:es)?|board|foilware|racks?|burners?|tape|ducts?)\b/i;
 const LENGTH_OR_AREA_RE = /\d+(?:\.\d+)?\s*(?:sq\.?\s*ft\.?|sqft|square\s+f(?:ee|oo)t|ft\.?|feet|foot|yds?\.?|yards?)(?![a-z])|\d+(?:\.\d+)?\s*['\u2019]\s*L\b/i;
@@ -350,7 +412,7 @@ export function makeProduct(f) {
   // "24-count", or "64 fl oz" against "Half Gallon, 3-count" — it has already resolved the
   // reading, and that is a decision, not a contradiction.
   const soldByLb = f.soldBy === 'lb' || size?.perWeight;
-  const sizeConflict =
+  const sizeConflict = slugPerLbConflict(size, f, soldByLb) || (
     // A range in the name ("4-10 Pounds HoKa Turkey Breast") describes a variable-weight item,
     // not a second statement of this package, so it contradicts nothing.
     // And when the retailer's own URL slug names the stated size and not the name's, the name's
@@ -358,7 +420,7 @@ export function makeProduct(f) {
     // "...-10-lbs-10-lb"): that is settled, not a conflict. src/adapters/instacart.js drops such a
     // clause from the displayed name by the same test; deciding it HERE too means a client whose
     // adapter does not (the iOS app) reaches the same price and the same verdict.
-    !(slugStates(f.url, textSize) && !slugStates(f.url, nameSize)) &&
+    !(slugConfirms(f.url, textSize) && !slugStates(f.url, nameSize)) &&
     chosen && chosen === textSize && nameSize && !nameSize.perWeight && !nameSize.range &&
     textSize.dim === nameSize.dim && textSize.base > 0 && nameSize.base > 0 && !size?.packFromUrl &&
     Math.max(textSize.base, nameSize.base) / Math.min(textSize.base, nameSize.base) >= 1.5
@@ -366,7 +428,7 @@ export function makeProduct(f) {
       : soldByLb ? null
       : listed?.conflict ? listed.conflict
       : size?.packFromListing ? null
-      : countOnlyConflict(size, chosen, textSize, nameSize);
+      : unitLineConflict(size, f) || countOnlyConflict(size, chosen, textSize, nameSize));
   // Where the size we priced from came from, so the plausibility guard can tell a number the
   // retailer stated from one we inferred (see flagImplausible in shared/compare.js):
   //   perLb    the retailer's own price per pound; no size is involved at all

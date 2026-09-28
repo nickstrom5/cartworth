@@ -244,7 +244,7 @@ The Display Name and Description limits below (30 and 45 characters) are what Ap
 | Duration | 1 year |
 | Price | $19.99 USD |
 | Display Name (30 char limit) | `Cartworth Pro Yearly` (20) |
-| Description (45 char limit) | `A year of Pro. Best value, about $1.67/mo` (41) |
+| Description (45 char limit) | `A year of Pro. Our best-value plan.` (35). No price in the text: it would be wrong after any price change and in any other currency; StoreKit shows the real price. |
 | Family Sharing | On |
 | Level | 1 (above monthly) |
 
@@ -309,8 +309,9 @@ from that one sheet. Restore Purchases is on the paywall and in Settings.
 
 WHERE THE PRICES COME FROM
 
-Cartworth has no server and no price database. Every price is read live, from the
-user's own device, from the public website of the retailer whose store is nearest the
+The iPhone app has no server and no price database. (A separate free web version at
+cartworth.app runs on our server; the app does not use it.) Every price is read live,
+from the user's own device, from the public website of the retailer whose store is nearest the
 user:
 
  - Retailers whose own storefronts are Instacart-powered (aldi.us, shopwoodmans.com
@@ -325,7 +326,8 @@ a browser. Nothing is behind a login, nothing is behind a paywall, no account is
 created, no authentication is bypassed, and no personal data is transmitted: the
 request carries a ZIP or approximate coordinates and a search term, which is what the
 site needs to answer the query. Results are cached on the device for 20 minutes and
-requests are rate-limited to at most four concurrent per host.
+the app asks each site politely: one request at a time per site, at least 0.7 seconds
+apart, and a site that answers "too many requests" is not asked again for a while.
 
 The app displays no retailer logos and no retailer branding. Stores are shown by name
 with a neutral color dot. Cartworth does not claim or imply any partnership,

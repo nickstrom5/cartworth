@@ -78,7 +78,7 @@
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "A year of Pro. Best value, about $1.67/mo",
+              "description" : "A year of Pro. Our best-value plan.",
               "displayName" : "Cartworth Pro Yearly",
               "locale" : "en_US"
             }

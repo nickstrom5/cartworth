@@ -91,14 +91,14 @@ export const CHAINS = [
   { id: 'qfc', name: 'QFC', short: 'QFC', aliases: ['qfc', 'quality food centers'], price: ic('qfc'), alt: { type: 'kroger', chain: 'QFC' }, ads: ['QFC'], states: ['WA', 'OR'] },
   { id: 'dillons', name: 'Dillons', short: 'Dillons', aliases: ['dillons'], price: ic('dillons'), alt: { type: 'kroger', chain: 'DILLONS' }, ads: ['Dillons'], states: ['KS'] },
   { id: 'harristeeter', name: 'Harris Teeter', short: 'Harris Teeter', aliases: ['harris teeter'], price: ic('harristeeter'), alt: { type: 'kroger', chain: 'HARRIS_TEETER' }, ads: ['Harris Teeter'], states: ['NC', 'SC', 'VA', 'GA', 'DE', 'MD', 'DC', 'FL'] },
-  { id: 'marianos', name: 'Mariano’s', short: 'Mariano’s', aliases: ['mariano'], price: ic('marianos'), alt: { type: 'kroger', chain: 'MARIANOS' }, ads: ["Mariano's"], states: ['IL'], note: 'Add free Kroger API keys in Settings for exact shelf + card prices.' },
+  { id: 'marianos', name: 'Mariano’s', short: 'Mariano’s', aliases: ['mariano'], price: ic('marianos'), alt: { type: 'kroger', chain: 'MARIANOS' }, ads: ["Mariano's"], states: ['IL'], note: 'Add free Kroger API keys in Settings for exact shelf + card prices.', iosNote: null },
   { id: 'picknsave', name: 'Pick ’n Save', short: 'Pick ’n Save', aliases: ["pick 'n save", 'pick n save'], price: ic('pick-n-save'), alt: { type: 'kroger', chain: 'PICK_N_SAVE' }, ads: ['Pick N Save'], states: ['WI'] },
-  { id: 'metromarket', name: 'Metro Market', short: 'Metro Market', aliases: ['metro market'], price: ic('metro-market'), ads: ['Metro Market'], states: ['WI'] },
-  { id: 'food4less', name: 'Food 4 Less', short: 'Food 4 Less', aliases: ['food 4 less', 'food4less'], price: ic('food4less'), ads: ['Food 4 Less'], states: ['CA', 'IL', 'IN', 'NV'] },
-  { id: 'citymarket', name: 'City Market', short: 'City Market', aliases: ['city market'], price: null, ads: ['City Market'], states: ['CO', 'UT', 'NM', 'WY'], note: 'Weekly ad only.' },
-  { id: 'gerbes', name: 'Gerbes', short: 'Gerbes', aliases: ['gerbes'], price: ic('gerbes'), ads: ['Gerbes'], states: ['MO'] },
-  { id: 'bakersplus', name: 'Baker’s', short: 'Baker’s', aliases: ["baker's supermarket", 'bakers supermarket'], price: null, ads: ["Baker's"], states: ['NE', 'IA'], note: 'Weekly ad only.' },
-  { id: 'jayc', name: 'JayC Food Stores', short: 'JayC', aliases: ['jay c food', 'jayc'], price: ic('jayc'), ads: ['JayC Food Stores'], states: ['IN'] },
+  { id: 'metromarket', name: 'Metro Market', short: 'Metro Market', aliases: ['metro market'], price: ic('metro-market'), alt: { type: 'kroger', chain: 'METRO_MARKET' }, ads: ['Metro Market'], states: ['WI'] },
+  { id: 'food4less', name: 'Food 4 Less', short: 'Food 4 Less', aliases: ['food 4 less', 'food4less'], price: ic('food4less'), alt: { type: 'kroger', chain: 'FOOD_4_LESS' }, ads: ['Food 4 Less'], states: ['CA', 'IL', 'IN', 'NV'] },
+  { id: 'citymarket', name: 'City Market', short: 'City Market', aliases: ['city market'], price: null, alt: { type: 'kroger', chain: 'CITY_MARKET' }, ads: ['City Market'], states: ['CO', 'UT', 'NM', 'WY'], note: 'Weekly ad only until Kroger API prices are on (not on Instacart).', iosNote: 'Weekly ad only: this chain does not publish prices Cartworth can read.' },
+  { id: 'gerbes', name: 'Gerbes', short: 'Gerbes', aliases: ['gerbes'], price: ic('gerbes'), alt: { type: 'kroger', chain: 'GERBES' }, ads: ['Gerbes'], states: ['MO'] },
+  { id: 'bakersplus', name: 'Baker’s', short: 'Baker’s', aliases: ["baker's supermarket", 'bakers supermarket'], price: null, alt: { type: 'kroger', chain: 'BAKERS' }, ads: ["Baker's"], states: ['NE', 'IA'], note: 'Weekly ad only until Kroger API prices are on (not on Instacart).', iosNote: 'Weekly ad only: this chain does not publish prices Cartworth can read.' },
+  { id: 'jayc', name: 'JayC Food Stores', short: 'JayC', aliases: ['jay c food', 'jayc'], price: ic('jayc'), alt: { type: 'kroger', chain: 'JAYC' }, ads: ['JayC Food Stores'], states: ['IN'] },
 
   // ---------------------------------------------------------------- Albertsons family
   { id: 'albertsons', name: 'Albertsons', short: 'Albertsons', aliases: ['albertsons'], price: ic('albertsons'), ads: ['Albertsons'], states: ['AK', 'AZ', 'AR', 'CA', 'CO', 'ID', 'LA', 'MT', 'NE', 'NV', 'NM', 'ND', 'OK', 'OR', 'SD', 'TX', 'UT', 'WA', 'WY'] },
@@ -121,7 +121,7 @@ export const CHAINS = [
   { id: 'heb', name: 'H-E-B', short: 'H-E-B', aliases: ['h-e-b', 'h e b'], price: null, ads: ['H-E-B', 'HEB'], states: ['TX'], note: 'Weekly ad only — H-E-B blocks automated price lookups.' },
   { id: 'meijer', name: 'Meijer', short: 'Meijer', aliases: ['meijer'], price: ic('meijer'), ads: ['Meijer'], states: ['MI', 'OH', 'IN', 'IL', 'KY', 'WI'] },
   { id: 'hyvee', name: 'Hy-Vee', short: 'Hy-Vee', aliases: ['hy-vee', 'hyvee'], price: ic('hy-vee'), ads: ['Hy-Vee'], states: ['IA', 'IL', 'KS', 'MN', 'MO', 'NE', 'SD', 'WI', 'IN'] },
-  { id: 'wegmans', name: 'Wegmans', short: 'Wegmans', aliases: ['wegmans'], price: ic('wegmans'), ads: ['Wegmans'], states: ['NY', 'PA', 'NJ', 'MD', 'VA', 'MA', 'NC', 'DE', 'DC'] },
+  { id: 'wegmans', name: 'Wegmans', short: 'Wegmans', aliases: ['wegmans'], price: ic('wegmans'), ads: ['Wegmans', "Wegman's"], states: ['NY', 'PA', 'NJ', 'MD', 'VA', 'MA', 'NC', 'DE', 'DC'] },
   { id: 'foodlion', name: 'Food Lion', short: 'Food Lion', aliases: ['food lion'], price: ic('food-lion'), ads: ['Food Lion'], states: ['DE', 'GA', 'KY', 'MD', 'NC', 'PA', 'SC', 'TN', 'VA', 'WV'] },
   { id: 'giant', name: 'Giant Food', short: 'Giant', aliases: ['giant food'], price: ic('giant'), ads: ['Giant', 'Giant Food'], states: ['MD', 'VA', 'DC', 'DE'] },
   { id: 'martins', name: 'Martin’s', short: 'Martin’s', aliases: ["martin's food", 'martins food'], price: ic('martins'), ads: ["Martin's"], states: ['PA', 'MD', 'VA', 'WV'] },
@@ -168,9 +168,37 @@ export const CHAINS = [
   { id: 'savemart', name: 'Save Mart', short: 'Save Mart', aliases: ['save mart'], price: ic('savemart'), ads: ['Save Mart'], states: ['CA', 'NV'] },
   { id: 'foodmaxx', name: 'FoodMaxx', short: 'FoodMaxx', aliases: ['foodmaxx', 'food maxx'], price: ic('foodmaxx'), ads: ['FoodMaxx'], states: ['CA', 'NV'] },
   { id: 'luckysupermarkets', name: 'Lucky Supermarkets', short: 'Lucky', aliases: ['lucky supermarket'], price: ic('lucky-supermarkets'), ads: ['Lucky Supermarkets'], states: ['CA'] },
-  { id: 'foodcity', name: 'Food City', short: 'Food City', aliases: ['food city'], price: ic('food-city'), ads: ['Food City'], states: ['TN', 'VA', 'GA', 'KY', 'AL'] },
+  { id: 'foodcity', name: 'Food City', short: 'Food City', aliases: ['food city'], price: ic('food-city'), ads: ['Food City', 'FoodCity'], states: ['TN', 'VA', 'GA', 'KY', 'AL'] },
   { id: 'lowesfoods', name: 'Lowes Foods', short: 'Lowes Foods', aliases: ['lowes foods'], price: null, ads: ['Lowes Foods'], states: ['NC', 'SC', 'VA'], note: 'Weekly ad only.' },
   { id: 'brookshires', name: 'Brookshire’s', short: 'Brookshire’s', aliases: ["brookshire's", 'brookshires'], price: ic('brookshires'), ads: ["Brookshire's"], states: ['TX', 'LA', 'AR'] },
+  // Added from the nationwide sweep (24 Sep 2026): grocers advertising into sampled ZIPs with no
+  // price source. Each slug verified by scripts/find-slugs.js against a LOCAL store (not a canonical
+  // storefront elsewhere). Not on Instacart, so still weekly-ad only: Shoppers, Shop 'n Save,
+  // Morton Williams, Times Supermarket.
+  { id: 'rulerfoods', name: 'Ruler Foods', short: 'Ruler', aliases: ['ruler foods'], price: ic('ruler-foods'), ads: ['Ruler Foods'], states: ['IL', 'IN', 'KY', 'MO', 'TN', 'OH'] },
+  { id: 'familyfare', name: 'Family Fare', short: 'Family Fare', aliases: ['family fare'], price: ic('family-fare-supermarkets'), ads: ['Family Fare'], states: ['MI', 'MN', 'ND', 'NE', 'SD', 'IA', 'WI'] },
+  { id: 'marcs', name: 'Marc’s', short: 'Marc’s', aliases: ["marc's", 'marcs'], price: ic('marcs'), ads: ["Marc's"], states: ['OH'] },
+  { id: 'strackvantil', name: 'Strack & Van Til', short: 'Strack & Van Til', aliases: ['strack & van til', 'strack and van til'], price: ic('strack-van-til'), ads: ['Strack and Van Til', 'Strack & Van Til'], states: ['IN', 'IL'] },
+  { id: 'ctown', name: 'C-Town', short: 'C-Town', aliases: ['c town', 'c-town', 'ctown'], price: ic('ctown-supermarkets'), ads: ['C Town', 'C-Town'], states: ['NY', 'NJ', 'CT', 'MA', 'PA'] },
+  { id: 'foodbazaar', name: 'Food Bazaar', short: 'Food Bazaar', aliases: ['food bazaar'], price: ic('food-bazaar'), ads: ['Food Bazaar Supermarket', 'Food Bazaar'], states: ['NY', 'NJ', 'CT'] },
+  { id: 'kings', name: 'Kings Food Markets', short: 'Kings', aliases: ['kings food markets', 'kings food market'], price: ic('kings-food-markets'), ads: ['Kings Food Markets'], states: ['NJ', 'NY', 'CT'] },
+  { id: 'bravo', name: 'Bravo Supermarkets', short: 'Bravo', aliases: ['bravo supermarket', 'bravo supermarkets'], price: ic('bravo-supermarkets'), ads: ['Bravo Supermarket', 'Bravo Supermarkets'], states: ['NY', 'NJ', 'CT', 'PA', 'MA', 'RI', 'FL'] },
+  { id: 'decicco', name: 'DeCicco & Sons', short: 'DeCicco’s', aliases: ['decicco & sons', "decicco's", 'deciccos', 'decicco and sons'], price: ic('deciccos'), ads: ['DeCicco & Sons'], states: ['NY', 'CT'] },
+  // Nationwide gaps by state (24 Sep 2026): slugs verified by scripts/find-slugs.js against a local
+  // store. Not on Instacart under any slug tried, so still weekly-ad only: Shaw's, Harps, Coborn's /
+  // Cash Wise, Sunshine Foods, Lidl (and H-E-B, which blocks automated access).
+  { id: 'rouses', name: 'Rouses Markets', short: 'Rouses', aliases: ['rouses', 'rouses markets', "rouse's"], price: ic('rouses'), ads: ['Rouses Markets', 'Rouses'], states: ['LA', 'MS', 'AL'] },
+  { id: 'foodland', name: 'Foodland', short: 'Foodland', aliases: ['foodland'], price: ic('foodland'), ads: ['Foodland'], states: ['HI'] },
+  { id: 'reasors', name: 'Reasor’s', short: 'Reasor’s', aliases: ["reasor's", 'reasors'], price: ic('reasors'), ads: ["Reasor's"], states: ['OK'] },
+  { id: 'homeland', name: 'Homeland', short: 'Homeland', aliases: ['homeland'], price: ic('homeland'), ads: ['Homeland'], states: ['OK'] },
+  { id: 'lundsbyerlys', name: 'Lunds & Byerlys', short: 'Lunds & Byerlys', aliases: ['lunds & byerlys', 'lunds and byerlys', 'lunds byerlys'], price: ic('lunds-and-byerlys'), ads: ['Lunds & Byerlys', 'Lunds and Byerlys'], states: ['MN'] },
+  { id: 'kowalskis', name: 'Kowalski’s Markets', short: 'Kowalski’s', aliases: ["kowalski's", 'kowalskis'], price: ic('kowalskis'), ads: ["Kowalski's Markets", "Kowalski's"], states: ['MN'] },
+  { id: 'hornbachers', name: 'Hornbacher’s', short: 'Hornbacher’s', aliases: ["hornbacher's", 'hornbachers'], price: ic('hornbachers'), ads: ["Hornbacher's"], states: ['ND', 'MN'] },
+  { id: 'ridleys', name: 'Ridley’s Family Markets', short: 'Ridley’s', aliases: ["ridley's", 'ridleys'], price: ic('ridleys'), ads: ["Ridley's Family Markets", "Ridley's"], states: ['ID', 'UT', 'WY', 'NV', 'MT'] },
+  { id: 'maceys', name: 'Macey’s', short: 'Macey’s', aliases: ["macey's", 'maceys'], price: ic('maceys'), ads: ["Macey's"], states: ['UT'] },
+  { id: 'pcc', name: 'PCC Community Markets', short: 'PCC', aliases: ['pcc community markets', 'pcc markets', 'pcc'], price: ic('pcc-community-markets'), ads: ['PCC Community Markets'], states: ['WA'] },
+  { id: 'metropolitanmarket', name: 'Metropolitan Market', short: 'Metropolitan', aliases: ['metropolitan market', 'met market'], price: ic('metropolitan-market'), ads: ['Metropolitan Market'], states: ['WA'] },
+  { id: 'townandcountry', name: 'Town & Country Markets', short: 'Town & Country', aliases: ['town & country markets', 'town and country markets'], price: ic('town-country-markets'), ads: ['Town & Country Markets'], states: ['WA'] },
   // Priced since 23 Sep 2026 from Piggly Wiggly MIDWEST's own store site. The marketplace's
   // 'piggly-wiggly' storefront is the Southern chain: it answers Milwaukee and Kenosha only with its
   // canonical store 844-878 mi away, which must never be read as a local price (see chainWide above),
@@ -233,7 +261,9 @@ export const CHAIN_BY_ID = Object.fromEntries(CHAINS.map((c) => [c.id, c]));
 export const ALWAYS_PROBE = ['walmart', 'aldi', 'target', 'costco', 'samsclub', 'wholefoods', 'traderjoes'];
 
 function norm(s) {
-  return String(s || '').toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, ' ').trim();
+  // Accents folded: the catalog's own "Northgate González" did not find its chain, and a Flipp
+  // merchant spelled with the accent would never reach the Sales tab (the every-state tests).
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, ' ').trim();
 }
 
 /**

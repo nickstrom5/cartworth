@@ -18,7 +18,7 @@ export async function api(path, { method = 'GET', body, signal, headers } = {}) 
     });
   } catch (err) {
     if (err.name === 'AbortError') throw err;
-    throw new ApiError('Can’t reach the Cartworth server. Is it still running?', 0);
+    throw new ApiError('Can’t reach Cartworth right now. Check your connection and try again.', 0);
   }
   let data = null;
   const text = await res.text();
@@ -56,7 +56,7 @@ export function searchStream(path, { headers, onStart, onStore, onAds, onDone, o
       res = await fetch(path, { headers: { accept: 'text/event-stream', ...headers }, signal: ctrl.signal });
     } catch (err) {
       if (finished || err.name === 'AbortError') return;
-      onError?.(new Error('Can’t reach the Cartworth server. Is it still running?'));
+      onError?.(new Error('Can’t reach Cartworth right now. Check your connection and try again.'));
       return;
     }
     if (!res.ok) {

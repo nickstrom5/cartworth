@@ -2,7 +2,25 @@ import Foundation
 
 /// Runs one product search against one store (cached 20 min, stale copies served if the store is down).
 enum PriceSearch {
-    static let cacheVersion = 3
+    // 4: "M oz, N ct" read as the package; a listing whose own unit line contradicts its size is a
+    // size conflict; Instacart pack lines are now passed through. Each changes a price.
+    // 5: Whole Foods sale dates are calendar days (SaleDates.wallClock); a sale was dropped at 7 pm
+    // Central on its last day. Eggnog and buttermilk are liquids (Units.liquidRx),
+    // and the Christmas-run matcher fixes change which listing wins.
+    // 6: a size only at the END of an Instacart slug no longer settles a name that says otherwise
+    // (ProductFactory.slugConfirms); a half gallon stated "2 gal" was $1.50 a gallon.
+    // 7: juice-flavoured drinks are not juice; "from concentrate" juice is (Match.juiceImpostorRx).
+    // 8: "<thing> a la <style>" is a prepared dish (Chicken a la King is not chicken).
+    // 9: a processed-form category (Dried/Frozen Bananas) does not cover the plain query; -ade is not juice.
+    // 10: supplements named after a food (apple pectin tablets) are not the food.
+    // 11: a dose on a grocery (Vitamin D 400 IU) is not a supplement; "a la carte" is not a dish.
+    // 12: ketchup and canned tomatoes are not "tomatoes"; spaghetti squash is not "spaghetti".
+    // 13: the holiday matrix (Match.queryAllows, compounds, canned vegetables and meats).
+    // 14: cuts, "for <food>" accessories, cottage cheese / Salisbury steak, champagne = sparkling wine.
+    // 15: per-lb slug over a fixed weight is a conflict; a canned aisle is not the fresh item.
+    // 16: the state x holiday audit (case-size outliers, pepper jack/jalapeno weights, non-food aisles,
+    // produce mixes, beef-only steak/brisket, bone-in token).
+    static let cacheVersion = 16
 
     struct Payload: Codable {
         var items: [Product]
@@ -19,7 +37,9 @@ enum PriceSearch {
         }
         let wasFresh = await Cache.shared.isFresh(key)
         do {
-            let r = try await withTimeout(seconds: 35) {
+            // 35 s without an answer from the store's site, not 35 s in all: at one request per
+            // host, a store at the back of a trip plan's queue waits its turn. See withStallTimeout.
+            let r = try await withStallTimeout(seconds: 35, hosts: hosts(chain.source)) {
                 try await Cache.shared.value(key, ttl: 20 * TTL.minute, fresh: fresh, maxStale: 3 * TTL.day) {
                     try await run(chain: chain, query: q, place: place, limit: limit)
                 }
@@ -40,7 +60,7 @@ enum PriceSearch {
     private static func run(chain: Chain, query: String, place: UserPlace, limit: Int) async throws -> Payload {
         switch chain.source {
         case .instacart(let base, let slug, let guest):
-            let r = try await InstacartSource.shared.search(.init(base: base, slug: slug, guest: guest), retailerId: chain.id, query: query, place: place, limit: limit)
+            let r = try await InstacartSource.shared.search(.init(base: base, slug: slug, guest: guest, chainWide: chain.chainWide), retailerId: chain.id, query: query, place: place, limit: limit)
             return Payload(items: r.items, location: r.location, message: r.message)
         case .wholeFoods:
             let r = try await WholeFoodsSource.shared.search(query: query, retailerId: chain.id, place: place, limit: limit)
@@ -50,6 +70,16 @@ enum PriceSearch {
             return Payload(items: r.items, location: r.location, message: r.message)
         case .adsOnly:
             return Payload(items: [], location: nil, message: "Weekly ad only")
+        }
+    }
+
+    /// The hosts a price source talks to. Mirrors `sourceHosts` in src/directory.js.
+    static func hosts(_ source: SourceKind) -> [String] {
+        switch source {
+        case .instacart(let base, _, _): return [URL(string: base)?.host].compactMap { $0 }
+        case .wholeFoods: return ["www.wholefoodsmarket.com"]
+        case .traderJoes: return ["www.traderjoes.com", "alphaapi.brandify.com"]
+        case .adsOnly: return []
         }
     }
 
@@ -68,6 +98,8 @@ enum PriceSearch {
             guard let chain = RetailerCatalog.chain(forMerchant: h.merchant), chainIds.contains(chain.id) else { continue }
             let d = FlippSource.deal(item: h.item, detail: h.detail, retailerId: chain.id, merchant: h.merchant, now: now)
             if let to = d.validTo, to < now { continue }
+            // Next week's circular is not "in this week's ads" (and is a Pro feature on its own tab).
+            if let from = d.validFrom, from > now { continue }
             let score = Match.relevance(query: query, name: "\(d.name) \(d.description ?? "")")
             if score >= 0.4 { out.append((d, score)) }
         }
@@ -83,6 +115,29 @@ func withTimeout<T>(seconds: Double, _ op: @escaping @Sendable () async throws -
         group.addTask {
             try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             throw TimeoutError()
+        }
+        let r = try await group.next()!
+        group.cancelAll()
+        return r
+    }
+}
+
+/// A timeout that fires when `hosts` stop answering, not when the work has taken a while. Port of
+/// `withStallTimeout` in src/http.js: at one request in flight per host, 700 ms apart, a caller can
+/// wait a long time for its turn, and that wait is not the store being slow. The clock restarts
+/// whenever any of `hosts` answers; `maxSeconds` is a hard ceiling for the whole call.
+func withStallTimeout<T>(seconds: Double, hosts: [String], maxSeconds: Double = 300, _ op: @escaping @Sendable () async throws -> T) async throws -> T {
+    let start = Date()
+    return try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask { try await op() }
+        group.addTask {
+            while true {
+                try await Task.sleep(nanoseconds: 500_000_000)
+                let now = Date()
+                if now.timeIntervalSince(start) > maxSeconds { throw TimeoutError() }
+                let last = max(start, await HTTP.shared.lastAnswer(hosts) ?? start)
+                if now.timeIntervalSince(last) > seconds { throw TimeoutError() }
+            }
         }
         let r = try await group.next()!
         group.cancelAll()

@@ -78,8 +78,11 @@ export function niceDomain(min, max, { count = 4, minStep = 0 } = {}) {
 
 // ---------------- horizontal bars ----------------
 /**
- * rows: [{ id, storeId, label, value, text, sub, best }]
+ * rows: [{ id, storeId, label, value, text, sub, best, close, basis }]
  * One hue for magnitude, the winner emphasized (and labeled "Best" — never color alone).
+ * `close`: within the price-basis margin of the winner (shared/compare.js standings), so it is
+ * labelled "about the same" rather than drawn as beaten. `basis`: a non-shelf price source,
+ * shown on the row itself ("Instacart", "national"), not only in the note under the chart.
  */
 export function BestBars({ rows, onPick, note }) {
   const [tip, setTip] = useState(null);
@@ -117,13 +120,15 @@ export function BestBars({ rows, onPick, note }) {
             onMouseLeave=${() => setTip(null)}
             onFocus=${showTip}
             onBlur=${() => setTip(null)}
-            aria-label=${`${r.label}: ${r.text}${r.best ? ' (best)' : ''}${r.sub ? `. ${r.sub}` : ''}`}
+            aria-label=${`${r.label}: ${r.text}${r.basis ? ` (${r.basis} price)` : ''}${r.best ? ' (best)' : r.close ? ' (about the same as the best)' : ''}${r.sub ? `. ${r.sub}` : ''}`}
           >
             <div class="bar-label"><${StoreDot} id=${r.storeId} /><span class="nm">${r.label}</span></div>
             <div class="bar-track">
               <div class="bar-fill" style=${{ width: `calc((100% - 92px) * ${pctW / 100})` }}></div>
               <span class="bar-val">${r.text}</span>
               ${r.best && html`<span class="badge badge-good">Best</span>`}
+              ${r.close && html`<span class="badge badge-outline" title="Within the difference between online and shelf prices, so not really dearer than the best">≈ same</span>`}
+              ${r.basis && html`<span class="bar-basis muted small">${r.basis}</span>`}
             </div>
           </button>
         </div>`;

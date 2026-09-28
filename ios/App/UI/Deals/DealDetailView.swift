@@ -33,7 +33,7 @@ struct DealDetailView: View {
                         Text("Regular \(Money.full(reg))\(deal.pctOff.map { " · save \($0)%" } ?? "")").font(.subheadline).foregroundStyle(.secondary)
                     }
                     if let m = deal.memberText { Text(m).font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor) }
-                    if let s = deal.story, deal.price != nil { Text(s).font(.subheadline.weight(.medium)).foregroundStyle(Color(hex: 0xB23A0C)) }
+                    if let s = deal.story, deal.price != nil { Text(s).font(.subheadline.weight(.medium)).foregroundStyle(Color.dealInk) }
                 }
 
                 Text(deal.name).font(.headline)
@@ -105,7 +105,7 @@ struct OccasionView: View {
     @State private var model = DealsModel.shared
     @State private var added = false
 
-    private var matches: [Deal] { model.matches(terms: occasion.keywords).flatMap(\.value).sorted { $0.score > $1.score } }
+    private var matches: [Deal] { model.matchingDeals(terms: occasion.keywords) }
 
     var body: some View {
         ScrollView {

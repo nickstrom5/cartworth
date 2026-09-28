@@ -82,14 +82,26 @@ final class AppState {
                 let ads = dir.chains.filter { $0.status == .adsOnly }.prefix(3).map(\.id)
                 selectedChainIds = Array(priced.prefix(10)) + ads
             } else {
-                // Keep choices that still exist here
-                let valid = Set(dir.chains.map(\.id))
+                // Keep choices that still exist here. A chain whose lookup failed this time
+                // (dir.unresolved) was not found absent, so the shopper's choice stays.
+                let valid = Set(dir.chains.map(\.id)).union(dir.unresolved ?? [])
                 let kept = selectedChainIds.filter { valid.contains($0) }
                 if !kept.isEmpty { selectedChainIds = kept }
             }
         } catch {
             lastDirectoryError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+
+    /// Re-ask the chains whose lookup failed. Switches on only what it finds: during onboarding a
+    /// plain reload resets the selection to the defaults, which would undo the shopper's choices.
+    func recheckDirectory() async {
+        let waiting = Set(directory?.unresolved ?? [])
+        let chosen = selectedChainIds
+        await loadDirectory(fresh: true)
+        guard let dir = directory else { selectedChainIds = chosen; return }
+        let found = dir.chains.filter { waiting.contains($0.id) && [.shelf, .online, .national].contains($0.status) }.map(\.id)
+        selectedChainIds = chosen + found.filter { !chosen.contains($0) }
     }
 
     func setPlace(_ p: UserPlace) async {

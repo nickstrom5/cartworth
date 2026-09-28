@@ -44,16 +44,24 @@ function token(name, { dark = false } = {}) {
   return m[1].toLowerCase();
 }
 
+test('GUARD: the site is light only, as the owner decided (Sept 2026)', () => {
+  // In dark mode the Sprout dark palette read as the old dark site, and the owner wants it light
+  // whatever the visitor's OS setting. So there is no dark palette to measure; this pins that.
+  assert.doesNotMatch(css, /prefers-color-scheme:\s*dark/, 'a dark palette is back in styles.css');
+  assert.match(css.slice(css.indexOf(':root {'), css.indexOf(':root {') + 200), /color-scheme: light/);
+});
+
 test('GUARD: the palette tokens the rest of this file relies on are unchanged', () => {
   // Updated after the contrast fixes below landed. --accent-soft and --surface-2 were lightened
   // so that the accent-on-tint PAIR itself clears 4.5:1 (it was 4.40:1), rather than relying on
   // one rule happening to use the darker accent. --line-strong was darkened from #b6d2c1, which
   // measured 1.53:1 against the page and could not act as a control boundary at all.
-  assert.equal(token('--accent'), '#15803d');
-  assert.equal(token('--accent-soft'), '#eef9f1');
-  assert.equal(token('--surface-2'), '#eef7f0');
-  assert.equal(token('--line-strong'), '#5f8a72');
-  assert.equal(token('--accent', { dark: true }), '#4ade80');
+  // Sprout (design/sprout/tokens.css), Sept 2026: the owner moved the site to the lighter Sprout
+  // look. Each value is the Sprout token of the same role; CONTRAST.md measures them.
+  assert.equal(token('--accent'), '#1c7c4b'); // --sp-accent
+  assert.equal(token('--accent-soft'), '#e6f4ea'); // --sp-mint
+  assert.equal(token('--surface-2'), '#f3f6f4'); // --sp-surface-soft
+  assert.equal(token('--line-strong'), '#7a8981'); // --sp-control-edge, 3.67:1 on white
 });
 
 // ---------------------------------------------------------------------------
@@ -73,10 +81,6 @@ test('DEFECT 1b: .btn-soon:hover label reaches 4.5:1 (--accent on --surface-2, l
   assert.ok(r >= 4.5, `${r.toFixed(2)}:1 — .btn-soon:hover overrides only the background`);
 });
 
-test('GUARD: the same two hover pairs are comfortable in the dark theme', () => {
-  assert.ok(contrast(token('--accent', { dark: true }), token('--accent-soft', { dark: true })) >= 4.5);
-  assert.ok(contrast(token('--accent', { dark: true }), token('--surface-2', { dark: true })) >= 4.5);
-});
 
 // ---------------------------------------------------------------------------
 // DEFECT 2: button boundaries fail 1.4.11 Non-text Contrast (3:1).
@@ -93,10 +97,6 @@ test('DEFECT 2b: .btn-soon dashed border reaches 3:1 against the page around it'
   assert.ok(r >= 3, `${r.toFixed(2)}:1`);
 });
 
-test('DEFECT 2c: the same borders fail in the dark theme too', () => {
-  const r = contrast(token('--line-strong', { dark: true }), token('--surface-2', { dark: true }));
-  assert.ok(r >= 3, `${r.toFixed(2)}:1`);
-});
 
 // ---------------------------------------------------------------------------
 // DEFECT 3: the skip link has nothing focusable to skip to.
@@ -171,7 +171,9 @@ test('DEFECT 6: every referenced image file exists on disk', () => {
 // ---------------------------------------------------------------------------
 test('DEFECT 7: the hero gradient is anchored to something other than body height', () => {
   const body = css.slice(css.indexOf('body {'), css.indexOf('body {') + 700);
-  assert.match(body, /radial-gradient/, 'the hero wash is still a body background-image');
+  // Sprout's page is pure white, so the wash is gone; the defect cannot recur without one. If a
+  // wash comes back as a body background, it must be anchored as below.
+  if (!/radial-gradient/.test(body)) return;
   const usesPercentY = /radial-gradient\([^)]*at\s+[\d.]+%\s+-?[\d.]+%/.test(body);
   const hasSize = /background-size:/.test(body);
   assert.ok(

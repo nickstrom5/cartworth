@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var zip = ""
     @State private var busy = false
     @State private var error: String?
+    @State private var restoreMessage: String?
     @State private var showPaywall = false
     @State private var counts: (products: Int, points: Int) = (0, 0)
     @State private var fetcher = LocationFetcher()
@@ -111,8 +112,11 @@ struct SettingsView: View {
                         }
                     }
                     Button("Restore purchases") {
-                        Task { error = await pro.restore() }
+                        Task { restoreMessage = await pro.restore() }
                     }
+                    // Beside the button that asked. It used to go to `error`, the ZIP field's red
+                    // line at the top of the form: a success printed as an error, out of sight.
+                    if let restoreMessage { Text(restoreMessage).font(.footnote).foregroundStyle(.secondary) }
                 }
 
                 Section {

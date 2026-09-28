@@ -307,6 +307,11 @@ const REFLOW_CHECK = `(() => {
     if (!el.getBoundingClientRect().width || inScroller(el)) continue;
     if (el.scrollWidth > el.clientWidth + 1) bad.push((el.className || el.tagName) + ' "' + el.textContent.trim().slice(0, 40) + '" is wider than its box (' + el.scrollWidth + ' > ' + el.clientWidth + ')');
   }
+  // A control label cut to "Close mat…" is the ellipsis safety net in app.css firing: the control
+  // no longer fits its row and needs a real fix, not a shorter label nobody chose.
+  for (const el of document.querySelectorAll('.seg button')) {
+    if (el.getBoundingClientRect().width && el.scrollWidth > el.clientWidth + 0.5) bad.push('control label "' + el.textContent.trim() + '" is cut off');
+  }
   for (const el of document.querySelectorAll('.unit-big, .pkg, .pkg .nw, .pkg .was, .hero-value, .bar-val, .plan-total, .tabs .tab')) {
     const r = el.getBoundingClientRect();
     if (!r.width || inScroller(el)) continue;
@@ -439,10 +444,338 @@ test('DEFECT (W6b): the theme a visitor picked is applied again on the next load
   await page.viewport(1280, 900, { dark: false });
   await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare' });
   await page.waitFor(`!!document.querySelector('.top-actions button[aria-label^="Theme"]')`, { what: 'the theme toggle' });
-  // auto -> light -> dark, through the real toggle, which is what writes the preference.
-  for (let i = 0; i < 2; i++) await page.eval(`document.querySelector('.top-actions button[aria-label^="Theme"]').click()`);
+  // Click through the real toggle, which is what writes the preference, until it reaches dark
+  // (light -> dark since the Sprout default became light).
+  for (let i = 0; i < 3 && (await page.eval('document.documentElement.dataset.theme || null')) !== 'dark'; i++) {
+    await page.eval(`document.querySelector('.top-actions button[aria-label^="Theme"]').click()`);
+  }
   assert.equal(await page.eval('document.documentElement.dataset.theme'), 'dark');
   await page.reload();
   await page.waitFor(`!!document.querySelector('.topbar')`, { what: 'reload' });
   assert.equal(await page.eval('document.documentElement.dataset.theme || null'), 'dark', 'the theme picked before the reload was lost');
+});
+
+test('DEFECT (Christmas run): a listing whose size and name disagree says so on the row', { skip: SKIP }, async () => {
+  // Jewel's live row for "sparkling cider": the listing says 750 ml, its name and URL say a case of
+  // 12, and it costs $48.99. The server flagged it (sizeConflict), but the row showed "750 ml · $48.99"
+  // with nothing to say the price was not for one bottle.
+  // Served here as Pick 'n Save, a store in this fixture's ZIP; the row is otherwise Jewel's.
+  const row = (items) => ({ storeId: 'picknsave', status: 'ok', items, location: { name: "Pick 'n Save", distance: 1.2 } });
+  const conflicted = { id: 'j1', storeId: 'picknsave', name: "Martinelli's Gold Medal Sparkling Apple Cider", size: '750 ml', sizeText: '750 ml', price: 48.99, unit: {}, priceBasis: 'online', score: 0.9, sizeConflict: { text: '750 ml', name: '12 × 750 ml' }, url: 'https://www.instacart.com/products/3350910?retailerSlug=jewel-osco' };
+  const plain = { ...conflicted, id: 'j2', name: "Martinelli's Sparkling Cider", size: '25.4 fl oz', sizeText: '25.4 fl oz', price: 4.69, unit: { volume: { perBase: 4.69 / 25.4, est: false } }, sizeConflict: null };
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/search': (req, url) => {
+    const asked = (url.searchParams.get('stores') || '').split(',').filter(Boolean);
+    const events = [['start', { query: 'sparkling cider', stores: asked, zip: fx.zip }]];
+    for (const id of asked) events.push(['store', id === 'picknsave' ? row([plain, conflicted]) : { storeId: id, status: 'empty', items: [] }]);
+    events.push(['ads', { deals: [] }], ['done', { ms: 5 }]);
+    return { sse: events };
+  } }) });
+  await search('sparkling cider');
+  const badges = await page.eval(`[...document.querySelectorAll('.prow')].map((r) => [r.querySelector('.pname')?.textContent.trim(), [...r.querySelectorAll('.badge')].map((b) => b.textContent.trim())])`);
+  const gold = badges.find(([n]) => /Gold Medal/.test(n));
+  const ok = badges.find(([n]) => n === "Martinelli's Sparkling Cider");
+  assert.ok(gold, `no Gold Medal row: ${JSON.stringify(badges)}`);
+  assert.ok(gold[1].includes('size unclear'), `the case-priced row is not marked: ${JSON.stringify(gold)}`);
+  assert.ok(ok && !ok[1].includes('size unclear'), `control: a clean row is not marked: ${JSON.stringify(ok)}`);
+  await srv.close();
+  srv = await startAppServer({ api: api() });
+});
+
+test('DEFECT (nationwide sweep): a chain-wide price is not counted as a store found within the radius', { skip: SKIP }, async () => {
+  // Vredenburgh AL (36481), live: no store located within 25 miles, Walmart's chain-wide listing, and
+  // four weekly ads. Onboarding said "found 1 store it can price ... within 25 miles".
+  const rural = {
+    ...fx.directory, zip: '36481', city: 'Vredenburgh', state: 'AL', otherMerchants: [],
+    chains: [
+      { id: 'walmart', name: 'Walmart', short: 'Walmart', status: 'national', hasAds: true, distance: null, address: null },
+      { id: 'dollargeneral', name: 'Dollar General', short: 'Dollar General', status: 'adsOnly', hasAds: true, distance: 9.8, address: null },
+    ],
+  };
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/directory': rural }) });
+  await page.viewport(390, 844);
+  await openApp(page, srv.origin, { storage: {}, hash: '#/' });
+  await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'the ZIP step' });
+  await page.eval(`(() => { const i = document.querySelector('input[aria-label="Your ZIP code"]'); i.value = '36481'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
+  await page.waitFor(`/Cartworth found/.test(document.body.innerText)`, { what: 'the store summary' });
+  const t = await page.eval(`document.querySelector('.onboard').innerText.replace(/\\s+/g, ' ')`);
+  assert.match(t, /found 0 stores it can price/, t);
+  assert.match(t, /plus chain-wide prices from Walmart/, t);
+  await srv.close();
+  srv = await startAppServer({ api: api() });
+});
+
+test('DEFECT (Apple-device review): the watch card headline says when its best price is an Instacart listing', { skip: SKIP }, async () => {
+  // The rows under the headline named the source, the "Best right now" number did not.
+  const watch = {
+    id: 'w-eggs', query: 'eggs', label: 'eggs', include: [], exclude: [], dim: 'count', displayUnit: 'dozen', target: null,
+    createdAt: Date.now() - 2 * DAY, lastChecked: Date.now(), lastError: null,
+    result: { dim: 'count', stores: { meijer: { name: 'Meijer Large Eggs', size: '12 ct', price: 2.49, unitPerBase: 2.49 / 12, priceBasis: 'online' }, aldi: { name: 'Goldhen Eggs', size: '12 ct', price: 2.79, unitPerBase: 2.79 / 12, priceBasis: 'shelf' } } },
+    points: [],
+  };
+  await page.viewport(1280, 900);
+  await openApp(page, srv.origin, { storage: { ...STORAGE(), 'cartworth:v1:watches': JSON.stringify([watch]) }, hash: '#/watch' });
+  await page.waitFor(`/best right now/i.test(document.body.innerText)`, { what: "the watch card" });
+  const head = await page.eval(`(() => { const h = [...document.querySelectorAll('.hero-label')].find((e) => /best right now/i.test(e.textContent)); return h.parentElement.innerText.replace(/\\s+/g, ' '); })()`);
+  assert.match(head, /Instacart/, head);
+});
+
+test('DEFECT (Apple-device review): each chart row names a non-shelf price source, and a near-tie is "≈ same", not beaten', { skip: SKIP }, async () => {
+  await search('brown sugar');
+  const rows = await page.eval(`[...document.querySelectorAll('.bar-row')].map((b) => ({ aria: b.getAttribute('aria-label'), text: b.innerText.replace(/\\s+/g, ' '), best: b.classList.contains('best') }))`);
+  const online = rows.filter((r) => /\((Instacart|national) price\)/.test(r.aria));
+  assert.ok(online.length > 0, `no chart row names its source: ${JSON.stringify(rows)}`);
+  for (const r of online) assert.match(r.text, /Instacart|national/, `the row itself does not say it: ${r.text}`);
+  for (const r of rows.filter((x) => /≈ same/.test(x.text))) assert.equal(r.best, false, 'the winner is never "≈ same"');
+  assert.equal(rows.filter((r) => /Best/.test(r.text)).length, 1);
+});
+
+test('holiday cards: in December the Christmas card appears, adds its list, and finds its deals', { skip: SKIP }, async () => {
+  const clock = await page.initScript(`(() => { const T = new Date(2026, 11, 10, 12).getTime(); const R = Date;
+    class D extends R { constructor(...a) { super(...(a.length ? a : [T])); } static now() { return T; } }
+    globalThis.Date = D; })();`);
+  try {
+    const deals = [
+      { id: 'd-ham', source: 'flipp', flippId: 9, storeId: 'meijer', name: 'Spiral Sliced Half Ham', price: 1.99, perLb: true, priceText: '$1.99/lb', enriched: true, category: 'Meat & Seafood', week: 'current' },
+      { id: 'd-coffee', source: 'flipp', flippId: 10, storeId: 'meijer', name: 'Dark Roast Coffee', price: 6.99, priceText: '$6.99', enriched: true, category: 'Beverages', week: 'current' },
+    ];
+    await srv.close();
+    srv = await startAppServer({ api: api({ 'GET /api/deals': { week: 'current', deals, flyers: [], errors: [] } }) });
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare' });
+    await page.waitFor(`/Christmas in 15 days/.test(document.body.innerText)`, { what: 'the Christmas card' });
+    await clickText('.occasion button', 'Add all to my list');
+    const list = await page.eval(`JSON.parse(localStorage.getItem('cartworth:v1:list') || '[]').map((i) => i.text)`);
+    assert.deepEqual(list, ['spiral ham', 'flour', 'sugar', 'butter', 'chocolate chips', 'eggs', 'eggnog', 'cream cheese']);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/sales' });
+    await page.waitFor(`/1 matching deal in this week/.test(document.body.innerText)`, { what: 'the matching-deals button' });
+    await page.eval(`[...document.querySelectorAll('.occasion button')].find((b) => /matching deal/.test(b.textContent)).click()`);
+    await page.waitFor(`/Showing Christmas deals/.test(document.body.innerText)`, { what: 'the holiday filter' });
+    const names = await page.eval(`[...document.querySelectorAll('.deal .deal-name')].map((e) => e.textContent.trim())`);
+    assert.deepEqual(names, ['Spiral Sliced Half Ham']);
+  } finally {
+    await page.removeInitScript(clock);
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+test('a store the server did not ask (busy) says so and offers a retry, not "no results"', { skip: SKIP }, async () => {
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/search': (req, url) => {
+    const asked = (url.searchParams.get('stores') || '').split(',').filter(Boolean);
+    const events = [['start', { query: 'milk', stores: asked, zip: fx.zip }]];
+    for (const id of asked) events.push(['store', { storeId: id, status: 'busy', items: [], message: 'Cartworth is busy, so ALDI was not asked just now. Try again in a minute.' }]);
+    events.push(['ads', { deals: [] }], ['done', { ms: 1 }]);
+    return { sse: events };
+  } }) });
+  try {
+    await page.viewport(1280, 900);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare?q=milk' });
+    await page.waitFor(`/busy, try again/.test(document.querySelector('.status-strip')?.innerText || '')`, { what: 'the busy chip' });
+    const strip = await page.eval(`document.querySelector('.status-strip').innerText`);
+    assert.doesNotMatch(strip, /no results/);
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+test('DEFECT (nationwide sweep): a rural ZIP with nothing in 25 miles is offered 40 miles in one tap', { skip: SKIP }, async () => {
+  const asked = [];
+  const near = { ...fx.directory, zip: '71635', city: 'Crossett', state: 'AR', otherMerchants: [], maxMiles: 25,
+    chains: [{ id: 'walmart', name: 'Walmart', short: 'Walmart', status: 'national', hasAds: true, distance: null, address: null }], suggested: ['walmart'] };
+  const wide = { ...near, maxMiles: 40,
+    chains: [{ id: 'aldi', name: 'ALDI', short: 'ALDI', status: 'shelf', hasAds: true, distance: 32.4, address: '1 Main St, Monroe, LA' }, ...near.chains], suggested: ['aldi', 'walmart'] };
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/directory': (req, url) => { asked.push(url.searchParams.get('miles')); return url.searchParams.get('miles') === '40' ? wide : near; } }) });
+  try {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: {}, hash: '#/' });
+    await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'the ZIP step' });
+    await page.eval(`(() => { const i = document.querySelector('input[aria-label="Your ZIP code"]'); i.value = '71635'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+    await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
+    await page.waitFor(`[...document.querySelectorAll("button")].some((b) => /Look within 40 miles/.test(b.textContent))`, { what: "the widen button" });
+    await page.eval(`[...document.querySelectorAll('button')].find((b) => /Look within 40 miles/.test(b.textContent)).click()`);
+    await page.waitFor(`/found 1 store it can price/.test(document.querySelector('.onboard').innerText)`, { what: 'the wider result' });
+    const stores = await page.eval(`JSON.parse(localStorage.getItem('cartworth:v1:settings')).stores`);
+    assert.ok(stores.includes('aldi'), `the store found by widening is switched on: ${stores}`);
+    assert.ok(asked.includes('40'));
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+// DEFECT (four-city audit): in Charlotte 14 of 17 chains timed out while the directory was built.
+// Onboarding said "found 3 stores", switched on those 3, and never mentioned the rest; rebuilt a
+// minute later the same ZIP had 13. The page now says the list may be short and can check again.
+test('DEFECT (nationwide audit): lookups that timed out are named, and "Check again" adds what they find', { skip: SKIP }, async () => {
+  let calls = 0;
+  const base = { ...fx.directory, zip: '28205', city: 'Charlotte', state: 'NC', otherMerchants: [], maxMiles: 25 };
+  // Costco was found the first time but is not switched on (not in `suggested`); the re-check must
+  // not switch on anything but what it found.
+  const costco = { id: 'costco', name: 'Costco', short: 'Costco', status: 'online', hasAds: true, distance: 6.3, address: '3 C St' };
+  const partial = { ...base, chains: [{ id: 'aldi', name: 'ALDI', short: 'ALDI', status: 'shelf', hasAds: true, distance: 2.1, address: '1 A St' }, costco], suggested: ['aldi'], unresolved: ['foodlion', 'harristeeter'] };
+  const full = { ...base, chains: [...partial.chains, { id: 'foodlion', name: 'Food Lion', short: 'Food Lion', status: 'shelf', hasAds: true, distance: 1.2, address: '2 B St' }], suggested: ['foodlion', 'aldi', 'costco'], unresolved: [] };
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/directory': () => (++calls === 1 ? partial : full) }) });
+  try {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: {}, hash: '#/' });
+    await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'the ZIP step' });
+    await page.eval(`(() => { const i = document.querySelector('input[aria-label="Your ZIP code"]'); i.value = '28205'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+    await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
+    await page.waitFor(`/2 more stores didn’t answer in time/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the short-list notice' });
+    await page.eval(`[...document.querySelectorAll('button')].find((b) => /Check again/.test(b.textContent)).click()`);
+    await page.waitFor(`!/didn’t answer in time/.test(document.querySelector('.onboard').innerText) && /found 3 stores/.test(document.querySelector('.onboard').innerText)`, { what: 'the complete result' });
+    const stores = await page.eval(`JSON.parse(localStorage.getItem('cartworth:v1:settings')).stores`);
+    assert.ok(stores.includes('foodlion') && stores.includes('aldi'), `the late store is switched on and ALDI kept: ${stores}`);
+    assert.ok(!stores.includes('costco'), `a store the re-check did not find is not switched on: ${stores}`);
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+
+// DEFECT (launch review, live journey): the first look at a new ZIP takes up to a minute, and the
+// ZIP form waited for all of it on a silent spinner. A failed lookup then left the store step on
+// "Checking…" for ever, and an unknown ZIP was a 500. The store step now appears at once and says
+// why it is slow, a failure offers Try again and Change ZIP, and an unknown ZIP says so.
+async function onboardWith(directoryHandler, zip) {
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/directory': directoryHandler }) });
+  await page.viewport(390, 844);
+  await openApp(page, srv.origin, { storage: {}, hash: '#/' });
+  await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'the ZIP step' });
+  await page.eval(`(() => { const i = document.querySelector('input[aria-label="Your ZIP code"]'); i.value = '${zip}'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
+}
+
+test('DEFECT (launch): a slow first store lookup shows the store step at once, and says why', { skip: SKIP }, async () => {
+  let release;
+  const slow = new Promise((r) => (release = r));
+  try {
+    await onboardWith(async () => { await slow; return { ...fx.directory }; }, '60618');
+    await page.waitFor(`/up to a minute/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the store step, explaining the wait' });
+    release();
+    await page.waitFor(`/found \\d+ stores?/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the stores, once found' });
+  } finally {
+    release();
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+test('DEFECT (launch): a failed store lookup offers Try again instead of spinning for ever', { skip: SKIP }, async () => {
+  let calls = 0;
+  try {
+    await onboardWith(() => { calls += 1; if (calls === 1) return { status: 503, body: { error: 'Could not reach the store site (network)' } }; return { ...fx.directory }; }, '60618');
+    await page.waitFor(`/couldn’t look up the stores/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the failure notice' });
+    await page.eval(`[...document.querySelectorAll('button')].find((b) => /Try again/.test(b.textContent)).click()`);
+    await page.waitFor(`/found \\d+ stores?/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the stores after retrying' });
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+test('DEFECT (launch): an unknown ZIP says so and offers Change ZIP', { skip: SKIP }, async () => {
+  try {
+    await onboardWith(() => ({ status: 404, body: { error: 'ZIP 00000 was not found' } }), '00000');
+    await page.waitFor(`/no US ZIP code 00000/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the not-found notice' });
+    await page.eval(`[...document.querySelectorAll('.onboard button')].find((b) => /Change ZIP/.test(b.textContent)).click()`);
+    await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]')`, { what: 'back on the ZIP step' });
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+
+// DEFECT (launch review, live journey): the owner's rule is that every price says where it came
+// from, but shelf prices were the one kind with no label: on the result rows, on the per-store bars,
+// and on the headline "Best price" itself. And the headline read "Best price" while seven of eight
+// stores were still answering.
+test('DEFECT (launch): every result row and the headline say where the price came from, shelf included', { skip: SKIP }, async () => {
+  await page.viewport(1280, 900);
+  await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare?q=brown%20sugar' });
+  await page.waitFor(`document.querySelectorAll('[aria-label="Add to list"]').length > 5 && !!document.querySelector('.hero-best .hero-value')`, { what: 'results and a best price' });
+  const unlabelled = await page.eval(`[...document.querySelectorAll('.plist > *')].filter((row) => row.querySelector('[aria-label="Add to list"]') && !/\\b(shelf|instacart|national)\\b/i.test(row.innerText)).length`);
+  assert.equal(unlabelled, 0, 'rows with no source label');
+  assert.match(await page.eval(`document.querySelector('.hero-best').innerText`), /shelf price|online \\(instacart\\) price|national price/i);
+});
+
+test('DEFECT (launch): while stores are still answering, the headline says "so far"', { skip: SKIP }, async () => {
+  let release;
+  const hold = new Promise((r) => (release = r));
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/search': (req, url) => {
+    const asked = (url.searchParams.get('stores') || '').split(',').filter(Boolean);
+    const aldi = fx.search['brown sugar'].find((r) => r.storeId === 'aldi');
+    return { sse: [['start', { query: 'brown sugar', stores: asked, zip: fx.zip }], ['store', aldi]], hold };
+  } }) });
+  try {
+    await page.viewport(1280, 900);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/compare?q=brown%20sugar' });
+    await page.waitFor(`/Best price so far/i.test(document.querySelector('.hero-best')?.innerText || '')`, { what: 'the provisional headline' });
+    assert.match(await page.eval(`document.querySelector('.hero-best').innerText`), /still answering/);
+  } finally {
+    release();
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+// DEFECT (launch review, live journey): weekly-ad pictures were bare <img> tags, so an image a CDN
+// refused showed the browser's broken-image glyph on the Sales tab. They fall back to the deal icon.
+test('DEFECT (launch): a weekly-ad picture that fails to load shows the deal icon, not a broken image', { skip: SKIP }, async () => {
+  const deals = [{ id: 'd-x', source: 'flipp', flippId: 11, storeId: 'meijer', name: 'Dark Roast Coffee', price: 6.99, priceText: '$6.99', enriched: true, category: 'Beverages', week: 'current', image: `${srv.origin}/no-such-image.png` }];
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/deals': { week: 'current', deals: deals.map((d) => ({ ...d, image: d.image.replace(/^http:\/\/[^/]+/, '') })), flyers: [], errors: [] } }) });
+  try {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/sales' });
+    await page.waitFor(`/Dark Roast Coffee/.test(document.body.innerText)`, { what: 'the deal' });
+    await page.waitFor(`![...document.querySelectorAll('.deal img')].some((i) => i.getAttribute('src'))`, { what: 'the failed picture replaced' });
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+// DEFECT (launch review): the public web app linked to no privacy policy, terms or support page.
+test('DEFECT (launch): every screen links to the privacy policy, terms and support', { skip: SKIP }, async () => {
+  for (const [hash, storage] of [['#/', {}], ['#/compare', STORAGE()], ['#/settings', STORAGE()]]) {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage, hash });
+    await page.waitFor(`!!document.querySelector('.app-footer')`, { what: `the footer on ${hash}` });
+    const links = await page.eval(`[...document.querySelectorAll('.app-footer a')].map((a) => a.getAttribute('href'))`);
+    for (const want of ['/privacy', '/terms', '/support']) assert.ok(links.some((h) => h.endsWith(want)), `${hash}: no ${want} link`);
+  }
+  // And no screen prints a missing value: Settings read "tracking undefined products" when the
+  // server's counts were absent.
+  for (const hash of ['#/compare', '#/sales', '#/watch', '#/list', '#/settings']) {
+    await openApp(page, srv.origin, { storage: STORAGE(), hash });
+    await page.waitFor(`!!document.querySelector('.app-footer')`, { what: `the page ${hash}` });
+    await new Promise((r) => setTimeout(r, 300));
+    assert.doesNotMatch(await page.eval(`document.body.innerText`), /\bundefined\b|\bNaN\b/, hash);
+  }
+});
+
+test('DEFECT (launch): Settings does not print "undefined" when the server sends no counts', { skip: SKIP }, async () => {
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/state': { version: 2, app: 'cartworth', stateless: true, catalog: { storeCount: 119, coreStoreIds: [], stores: [] }, defaults: {}, limits: {}, counts: {}, health: {} } }) });
+  try {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/settings' });
+    await page.waitFor(`/anonymous record/.test(document.body.innerText)`, { what: 'the Server section' });
+    assert.doesNotMatch(await page.eval(`document.body.innerText`), /\bundefined\b|\bNaN\b/);
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
 });
