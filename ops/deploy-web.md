@@ -30,14 +30,15 @@ Weekly, schedule the vacuum the live server deliberately does not run:
 
 ## Fly.io, step by step (the chosen host)
 
-`fly.toml` at the repo root holds the settings: one always-on machine in Chicago (`ord`), 512 MB,
+`fly.toml` at the repo root holds the settings: one always-on machine in Ashburn (`iad`, a
+base-price region; about $3 a month with the volume, before traffic at $0.02/GB), 512 MB,
 a 3 GB volume at `/data`, the `/api/health` check and a 15 s stop. Steps 1 and 5 need the owner's
 accounts; the rest are commands from the repo root.
 
 1. **Account (owner):** `brew install flyctl`, then `fly auth login`, which opens the browser. Fly
    asks for a card; check fly.io/pricing for what one small machine and a 3 GB volume cost.
 2. **App and volume:** `fly apps create cartworth` (names are global: if it is taken, pick another
-   and change `app` in `fly.toml`), then `fly volumes create cartworth_data --region ord --size 3 --yes`.
+   and change `app` in `fly.toml`), then `fly volumes create cartworth_data --region iad --size 3 --yes`.
 3. **Health token:** `TOKEN=$(openssl rand -hex 24); echo "$TOKEN"; fly secrets set BASKET_HEALTH_TOKEN="$TOKEN"`.
    Keep the printed value: Fly never shows a secret again, and monitoring `/api/health` needs it.
 4. **Deploy:** `fly deploy`. Then `fly status` must show exactly one machine, and

@@ -6,7 +6,10 @@
 # halve every limit. The volume attaches to one machine only, which keeps it that way: never
 # `fly scale count` above 1. Scale up (`fly scale vm` / `fly scale memory`), never out.
 app = "cartworth"
-primary_region = "ord"
+# Ashburn, Virginia: one of Fly's base-price regions (Chicago is 1.25x). Budget: under $5 a month,
+# about $3 fixed (this machine and the volume) plus $0.02/GB outbound traffic. Keep the shared
+# IPv4 (free); a dedicated one is $2 a month.
+primary_region = "iad"
 kill_signal = "SIGTERM"
 # The server drains for BASKET_SHUTDOWN_GRACE_MS (10 s) on SIGTERM; the host must wait longer.
 kill_timeout = "15s"
