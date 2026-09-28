@@ -1,0 +1,47 @@
+# Fly.io: the Cartworth web app (server + browser app) at app.cartworth.app. The marketing site
+# (cartworth.app) deploys separately, on Cloudflare. Steps and launch checklist: ops/deploy-web.md.
+#
+# Exactly one machine, always on. The politeness to retailers and every per-visitor limit live in
+# the process (see the Dockerfile), so a second machine would double what each retailer sees and
+# halve every limit. The volume attaches to one machine only, which keeps it that way: never
+# `fly scale count` above 1. Scale up (`fly scale vm` / `fly scale memory`), never out.
+app = "cartworth"
+primary_region = "ord"
+kill_signal = "SIGTERM"
+# The server drains for BASKET_SHUTDOWN_GRACE_MS (10 s) on SIGTERM; the host must wait longer.
+kill_timeout = "15s"
+
+[build]
+  dockerfile = "Dockerfile"
+
+# HOST, PORT, BASKET_DATA_DIR=/data and BASKET_TRUST_PROXY=1 come from the Dockerfile. One trusted
+# hop is Fly's proxy, which appends the visitor's address to X-Forwarded-For. That holds only while
+# app.cartworth.app's DNS record in Cloudflare is "DNS only": proxied through Cloudflare there
+# would be two hops, and BASKET_TRUST_PROXY=2 plus BASKET_TRUST_CF=1 would be needed.
+# Secrets (`fly secrets set`, never here): BASKET_HEALTH_TOKEN, and once Kroger approves,
+# KROGER_CLIENT_ID and KROGER_CLIENT_SECRET (ops/kroger-launch.md).
+
+# The shared cache and price history (SQLite). Retention bounds it at 1-2 GB.
+[[mounts]]
+  source = "cartworth_data"
+  destination = "/data"
+  initial_size = "3gb"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = false
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "30s"
+    method = "GET"
+    path = "/api/health"
+    timeout = "5s"
+
+# The load test peaked at 160 MB for 300 shoppers.
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
