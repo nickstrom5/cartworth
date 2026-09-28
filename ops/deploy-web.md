@@ -41,13 +41,21 @@ accounts; the rest are commands from the repo root.
    and change `app` in `fly.toml`), then `fly volumes create cartworth_data --region iad --size 3 --yes`.
 3. **Health token:** `TOKEN=$(openssl rand -hex 24); echo "$TOKEN"; fly secrets set BASKET_HEALTH_TOKEN="$TOKEN"`.
    Keep the printed value: Fly never shows a secret again, and monitoring `/api/health` needs it.
-4. **Deploy:** `fly deploy`. Then `fly status` must show exactly one machine, and
+   (The live deployment's value is in `~/.config/cartworth/fly-health-token` on the owner's Mac.)
+4. **Deploy:** `fly deploy --ha=false` (a first deploy otherwise starts two machines, which
+   breaks the one-instance rule and doubles the bill). Then `fly status` must show exactly one machine, and
    `curl https://cartworth.fly.dev/api/health` must answer `{"ok":true}`.
-5. **Address (owner, in Cloudflare):** `fly certs add app.cartworth.app`, then in Cloudflare's DNS
-   for cartworth.app add a CNAME `app` → `cartworth.fly.dev` set to **DNS only** (grey cloud), and
-   run `fly certs check app.cartworth.app` until the certificate is issued. Proxied through
+5. **Address (owner, in Cloudflare):** `fly certs add app.cartworth.app` prints the records Fly
+   wants: an **A** record `app` → the app's shared IPv4 and an **AAAA** record `app` → its IPv6
+   (`fly ips list`). Add both in Cloudflare's DNS for cartworth.app as **DNS only** (grey cloud),
+   then `fly certs check app.cartworth.app` until it says Issued; Fly renews it. Proxied through
    Cloudflare instead, the server would see two proxy hops; see the note in `fly.toml`.
 6. Carry on with "After deploying" below.
+
+**Live since 28 Sep 2026:** app `cartworth` on the owner's Fly account, one machine and the
+`cartworth_data` volume in `iad`, at https://app.cartworth.app (and https://cartworth.fly.dev).
+The certificate is issued. `npm run smoke -- --url https://cartworth.fly.dev` and one `--live` run
+passed (store directory for 60618 in 61 s, a search streamed in 4 s). It is not linked from cartworth.app until the site's `/app/` page is changed (step 4 below).
 
 ## Launch checklist
 
