@@ -14,7 +14,9 @@ struct DealDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if let url = deal.imageURL {
+                // Screenshot capture drops the ad clipping: retailer flyer artwork and brand
+                // packaging stay out of marketing images (see `QAShot`, `ProductThumb`).
+                if !QAShot.hideRemoteImages, let url = deal.imageURL {
                     AsyncImage(url: url) { img in
                         img.resizable().scaledToFit()
                     } placeholder: {

@@ -1,0 +1,5 @@
+# Cartworth web app (https://app.cartworth.app). Not for crawlers: every search here makes live,
+# rate-limited requests to retailer websites, so a crawler would spend the retailers' patience and
+# the visitors' allowance. The pages to index are on https://cartworth.app.
+User-agent: *
+Disallow: /

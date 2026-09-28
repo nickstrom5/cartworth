@@ -14,6 +14,34 @@ Build point: `ios/App` as of **2026-09-23 06:45** local. Other work was editing 
 this ran, so re-shoot if `Compare`, `Components`, `SearchView`, `DealsView`, `ListsView` or
 `TrackingView` change again.
 
+## Re-capture, 2026-09-28 (read this first)
+
+`2026-09-28-iphone/` (20 frames, iPhone 18 Pro Max, iOS 27.0) and `2026-09-28-ipad/` (9 frames,
+iPad Pro 13-inch (M5), iOS 27.0): `scripts/capture-site-shots.sh`, the same `SubmissionSet`, ZIP
+60618, `MARKETING=1`, built from `main` at 14dbdc6 plus bc012b8. Two blockers described below are
+gone:
+
+- **Shot #3 exists on iPhone:** `2026-09-28-iphone/06-deal-detail-fineprint.png`. Deal pictures
+  now obey `-qaHideRemoteImages`, so the frame has no flyer clipping and no packaging. (The
+  `HAS-FLYER-ART` file names are fixed in the test; the pictures are hidden in those frames too.)
+- **The iPad chips no longer cover the best-price card:** `2026-09-28-ipad/02-search-results.png`
+  can be iPad shot #1. Its card reads "49.6¢/lb (33%) less than the next-best store", a savings
+  figure that §11's rules keep out of screenshots: decide before using it. (The iPhone card says
+  no saving is claimed, because Walmart's chain-wide price was about the same.)
+
+Still open:
+
+- The iPad run skipped the deal, list, recipe and watch steps (the test did not find those
+  controls on iPad), so iPad shots #3 to #6 remain the 2026-09-23 frames in `iPad-13in/`.
+- `08-your-stores` was skipped on both devices (its toolbar button was not found).
+- Confirm on the store's own listing before publishing: Tony's Fresh Market, Dutch Farms Grade A
+  Large Eggs, 5 dozen for $5.99 on sale ($1.20 a dozen). It is in the trip plan and watch frames.
+
+iPhone frames for the six shots: `02-search-results` (#1; it also makes #2's point, the 10 lb bag
+at 99.9¢/lb against the 20 lb one at $1.02/lb), `02b-search-rows` or `02d-chart-and-rows` (#2),
+`06-deal-detail-fineprint` (#3), `04-trip-plan` (#4), `05-recipe-import` with `05b` for prices
+(#5), `07-price-watch` with `07b` for the chart (#6).
+
 ---
 
 ## If you only read one paragraph

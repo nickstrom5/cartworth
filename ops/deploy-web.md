@@ -28,6 +28,35 @@ Environment (full list in `server-security.md`): `HOST=0.0.0.0`, `PORT`, `BASKET
 Weekly, schedule the vacuum the live server deliberately does not run:
 `node scripts/db-maintenance.js --json` (Sunday 04:17 is the documented slot).
 
+## Fly.io, step by step (the chosen host)
+
+`fly.toml` at the repo root holds the settings: one always-on machine in Ashburn (`iad`, a
+base-price region; about $3 a month with the volume, before traffic at $0.02/GB), 512 MB,
+a 3 GB volume at `/data`, the `/api/health` check and a 15 s stop. Steps 1 and 5 need the owner's
+accounts; the rest are commands from the repo root.
+
+1. **Account (owner):** `brew install flyctl`, then `fly auth login`, which opens the browser. Fly
+   asks for a card; check fly.io/pricing for what one small machine and a 3 GB volume cost.
+2. **App and volume:** `fly apps create cartworth` (names are global: if it is taken, pick another
+   and change `app` in `fly.toml`), then `fly volumes create cartworth_data --region iad --size 3 --yes`.
+3. **Health token:** `TOKEN=$(openssl rand -hex 24); echo "$TOKEN"; fly secrets set BASKET_HEALTH_TOKEN="$TOKEN"`.
+   Keep the printed value: Fly never shows a secret again, and monitoring `/api/health` needs it.
+   (The live deployment's value is in `~/.config/cartworth/fly-health-token` on the owner's Mac.)
+4. **Deploy:** `fly deploy --ha=false` (a first deploy otherwise starts two machines, which
+   breaks the one-instance rule and doubles the bill). Then `fly status` must show exactly one machine, and
+   `curl https://cartworth.fly.dev/api/health` must answer `{"ok":true}`.
+5. **Address (owner, in Cloudflare):** `fly certs add app.cartworth.app` prints the records Fly
+   wants: an **A** record `app` → the app's shared IPv4 and an **AAAA** record `app` → its IPv6
+   (`fly ips list`). Add both in Cloudflare's DNS for cartworth.app as **DNS only** (grey cloud),
+   then `fly certs check app.cartworth.app` until it says Issued; Fly renews it. Proxied through
+   Cloudflare instead, the server would see two proxy hops; see the note in `fly.toml`.
+6. Carry on with "After deploying" below.
+
+**Live since 28 Sep 2026:** app `cartworth` on the owner's Fly account, one machine and the
+`cartworth_data` volume in `iad`, at https://app.cartworth.app (and https://cartworth.fly.dev).
+The certificate is issued. `npm run smoke -- --url https://cartworth.fly.dev` and one `--live` run
+passed (store directory for 60618 in 61 s, a search streamed in 4 s). It is not linked from cartworth.app until the site's `/app/` page is changed (step 4 below).
+
 ## Launch checklist
 
 Before:
