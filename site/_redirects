@@ -4,7 +4,8 @@
 # /privacy to /privacy.html here loops forever (308 to itself, measured with `wrangler pages dev`).
 # Netlify gets its rewrites from netlify.toml instead. Do not add them back here.
 
-# The free web app is served by server.js and is not public yet; /app/ is the "not open yet" page
-# in site/app/index.html. When it is deployed, delete that folder and point /app/* at it:
-# /app/*   https://app.cartworth.app/:splat   302
+# The free web app is served by server.js on Fly.io at app.cartworth.app (ops/deploy-web.md). Every
+# "Open the free web app" link on this site points at /app/, which sends visitors there.
 # (Never rewrite to /index.html: Cloudflare strips /index and the rule loops.)
+/app/*   https://app.cartworth.app/:splat   302
+/app     https://app.cartworth.app/         302
