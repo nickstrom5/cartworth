@@ -142,12 +142,14 @@ This doubles as your EULA for the subscriptions. It must include Apple's minimum
 
 ## 6. 🔴 Create the App Store Connect record
 
-**Created:** "Cartworth", Apple ID 6816954374, bundle ID `app.cartworth.ios`, SKU `cartworth-ios`. Still to set: the full name, subtitle, categories, content rights, age rating, territories.
+**Created:** "Cartworth", Apple ID 6816954374, bundle ID `app.cartworth.ios`, SKU `cartworth-ios`.
 
-- [ ] Check that your chosen app name is **available** (App Store names are globally unique per platform)
+**Set 2 Oct 2026:** name `Cartworth: Grocery Prices` (accepted, so available), subtitle, Shopping / Food & Drink, Content Rights Yes, age rating 13+ (see `APP_STORE_LISTING.md` section 7), United States only, price Free. On the 1.0.0 version page: copyright `2026 Nicholas Soderstrom`, support and marketing URLs; the Privacy Policy URL is on the App Privacy page. The version record was renamed 1.0 → 1.0.0 to match the build's `MARKETING_VERSION`.
+
+- [x] Check that your chosen app name is **available** (App Store names are globally unique per platform)
 - [x] Create the app: Platform iOS, the name, Primary Language English (U.S.), Bundle ID `app.cartworth.ios`, and an SKU of your choosing
-- [ ] Set Primary Category **Shopping**, Secondary **Food & Drink**
-- [ ] Decide and set **availability territories**
+- [x] Set Primary Category **Shopping**, Secondary **Food & Drink**
+- [x] Decide and set **availability territories**
 
 **Why the name check comes first.** If "Cartworth: Grocery Prices" is taken, you find out here, and you would rather find out before you have icons, screenshots and a domain built around it. Creating the record reserves the name for a period, so create it early even if you are months from submitting. **Verify the current reservation period in App Store Connect; Apple has changed how long an unused reservation holds.**
 
@@ -161,18 +163,20 @@ This doubles as your EULA for the subscriptions. It must include Apple's minimum
 
 ## 7. 🔴 Create the three in-app purchase products
 
-- [ ] Create the subscription group `Cartworth Pro`
-- [ ] Create `app.cartworth.ios.pro.monthly`, auto-renewable, 1 month, $3.99
-- [ ] Create `app.cartworth.ios.pro.yearly`, auto-renewable, 1 year, $19.99
-- [ ] Create `app.cartworth.ios.pro.lifetime`, **Non-Consumable**, $29.99
-- [ ] Add a localization (display name and description) to every product
-- [ ] Upload the review screenshot to every product
-- [ ] Enable Family Sharing on all three
-- [ ] Set the subscription levels: yearly above monthly
-- [ ] Add the Privacy Policy URL and Terms of Use (EULA) link to the subscription group metadata
+- [x] Create the subscription group `Cartworth Pro`
+- [x] Create `app.cartworth.ios.pro.monthly`, auto-renewable, 1 month, $3.99
+- [x] Create `app.cartworth.ios.pro.yearly`, auto-renewable, 1 year, $19.99
+- [x] Create `app.cartworth.ios.pro.lifetime`, **Non-Consumable**, $29.99
+- [x] Add a localization (display name and description) to every product
+- [x] Upload the review screenshot to every product
+- [x] Enable Family Sharing on all three
+- [x] Set the subscription levels: yearly above monthly
+- [ ] Add the Privacy Policy URL and Terms of Use (EULA) link to the subscription group metadata. (2 Oct 2026: the group page in App Store Connect has no such fields any more. The Privacy Policy URL is on App Privacy; the Terms link has to go in the App Store description, e.g. a last line `Terms of Use: https://cartworth.app/terms`, or into App Information > License Agreement. Neither is done yet.)
 - [ ] Attach all three products to version 1.0 when you submit
 
 Field-by-field values are in `APP_STORE_LISTING.md` section 9. Use them verbatim.
+
+**Done 2 Oct 2026:** group `Cartworth Pro` (ID 22434371, display name `Cartworth Pro`), Pro Yearly (Apple ID 6818549580, level 1), Pro Monthly (6818551820, level 2), Pro Lifetime (6818552644). Each is US-only at its price, with Family Sharing on (the owner confirmed it is permanent), the section 9 display name and description, the paywall screenshot from d267d52 and the section 9 review notes. All three are Prepare for Submission and none has been submitted.
 
 **Why the product IDs must be exact.** `Entitlements.productPrefix` returns `Bundle.main.bundleIdentifier`, and `Plan.productId` builds `"\(prefix).pro.\(rawValue)"`. A typo in App Store Connect does not produce an error; it produces a paywall with no prices and the message "Subscriptions aren't available right now."
 
@@ -243,7 +247,7 @@ The six shots, their captions and the content rules are specified in `APP_STORE_
 
 ## 11. 🔴 Export compliance
 
-- [ ] Confirm `ITSAppUsesNonExemptEncryption` is `false` in `ios/App/Resources/Info.plist` (it already is)
+- [x] Confirm `ITSAppUsesNonExemptEncryption` is `false` in `ios/App/Resources/Info.plist` (it already is; build 1 went through TestFlight without the question being asked)
 - [ ] If App Store Connect asks anyway, answer: the app uses encryption, and it is **exempt**
 
 **What to answer and why it is correct.** The app's only cryptography is TLS, provided by the operating system through `URLSession`, plus a single `SHA256.hash` call in `ios/App/Networking/Cache.swift` used to turn a cache key into a filename. A hash is not encryption, and OS-provided HTTPS falls squarely within the exemption for standard encryption supplied by the platform. There is no custom crypto, no bundled crypto library, and no encryption of user data at rest beyond what iOS does itself.
@@ -258,13 +262,15 @@ Because the key is already `false` in `Info.plist`, App Store Connect should sto
 
 Depends on items 1, 5, 6 and 8.
 
-- [ ] Decide the final `MARKETING_VERSION` (currently `1.0.0`) and `CURRENT_PROJECT_VERSION` (currently `1`)
-- [ ] Regenerate the project
-- [ ] Archive
-- [ ] Upload
-- [ ] Confirm the build appears in App Store Connect and finishes processing
+- [x] Decide the final `MARKETING_VERSION` (currently `1.0.0`) and `CURRENT_PROJECT_VERSION` (currently `1`)
+- [x] Regenerate the project (not needed for build 1: `project.yml` was unchanged, so the committed project was used)
+- [x] Archive
+- [x] Upload
+- [x] Confirm the build appears in App Store Connect and finishes processing
 
 **Read this first: the Xcode project is generated.** `ios/Cartworth.xcodeproj` is produced by XcodeGen from `ios/project.yml`. Any change you make in Xcode's project settings is destroyed the next time anyone runs `xcodegen generate`. Version numbers, the team, the bundle id and the device family all live in `project.yml` and must be edited there.
+
+**Done 2 Oct 2026:** 1.0.0 (1) archived with `xcodebuild archive -allowProvisioningUpdates` and uploaded with `xcodebuild -exportArchive` (`method` `app-store-connect`, `destination` `upload`). Xcode's signed-in account used cloud-managed distribution signing, so no Apple Distribution certificate had to be created on this Mac. The next upload must be build 2.
 
 ### The Xcode Organizer path (recommended for a first submission)
 
@@ -338,6 +344,16 @@ Setting `destination` to `upload` instead of `export` makes `-exportArchive` upl
 - [ ] Read guideline 5.2.2 and decide whether you accept the risk
 - [ ] Decide whether this needs a lawyer before launch, not after
 
+**What the owner's other app taught (checked 2 Oct 2026).** "Wisconsin Eats: Restaurants" 1.0.0
+was not rejected under 5.2.2. It came back on 28 Sep 2026 as **2.1 Information Needed**, because
+the account has little App Review history: Apple wants a screen recording from a physical device,
+purpose and audience, setup steps, the external services used, regional differences and, sixth,
+documentation of authorization for protected third-party material. Cartworth comes from the same
+account and will get the same request, and its sixth point is this item in different words. The
+App Review notes (`APP_STORE_LISTING.md` section 10) now answer all six. They say plainly that
+there is no written agreement with any retailer or with Flipp. The owner still has to record the
+video and attach it.
+
 **What the app actually does, stated plainly.** Cartworth reads prices from retailers' public websites from the user's device. Some of that reading goes through interfaces that are not published, documented developer APIs:
 
 - `ios/App/Sources/InstacartSource.swift` calls Instacart's persisted GraphQL operations, identifying them by sha256 hashes that the app **reads out of the site's own operation-hashes manifest at runtime**, with hardcoded hashes as a fallback, so it keeps working after site deploys
@@ -357,7 +373,7 @@ I am not going to tell you this is fine, because I do not know that it is. What 
 
 ## 14. 🟡 TestFlight
 
-- [ ] Add internal testers (your own team members, no review required)
+- [x] Add internal testers (your own team members, no review required). Group `Owner` (automatic distribution on) with the owner's account; build 1 is in it, and the owner is Invited (2 Oct 2026)
 - [ ] Install on at least one real iPhone and run the full flow on real data
 - [ ] If you want external testers: fill in the Beta App Description, a feedback email, and submit for Beta App Review
 

@@ -128,25 +128,30 @@ Apple sometimes shows nothing for a 1.0 because there is no previous version to 
 |---|---|---|
 | Primary category | **Shopping** | Where price comparison lives and where the intent is. |
 | Secondary category | **Food & Drink** | Weaker competition, and the recipe and weekly-ad features justify it honestly. |
-| Copyright | `2026 Cartworth` | App Store Connect wants year plus the legal owner. If you incorporate before submitting, use the entity name exactly as registered, for example `2026 Cartworth LLC`. Do not put a © symbol in the field; Apple adds it. |
+| Copyright | `2026 Nicholas Soderstrom` | App Store Connect wants year plus the legal owner. The enrollment is Individual, so the owner is Nicholas Soderstrom (entered 2 Oct 2026). If you incorporate later, use the entity name exactly as registered. Do not put a © symbol in the field; Apple adds it. |
 | Support URL | `https://cartworth.app/support` | Must be live before you submit. Linked from Settings in the app (`SettingsView.swift`). |
 | Marketing URL | `https://cartworth.app` | Optional field, but you have a real site, so use it. |
 | Privacy Policy URL | `https://cartworth.app/privacy` | Mandatory. Linked from both Settings and the paywall. |
 | Terms of Use (EULA) | `https://cartworth.app/terms` | Not a separate App Store Connect field unless you supply a custom EULA, but it is linked from `PaywallView.swift`, so the page must exist. |
 
-### Age rating: 4+
+### Age rating: 13+ (entered 2 Oct 2026)
 
-Answer the questionnaire with **None** for every content category: no violence of any kind, no profanity, no sexual content, no nudity, no horror, no alcohol/tobacco/drug references, no simulated gambling, no real gambling, no contests, no medical or treatment information, no mature themes.
-
-The three non-obvious questions:
+App Store Connect's questionnaire now has seven steps (in-app controls and capabilities, mature
+themes, medical, sexuality, violence, chance-based activities, then the calculated rating). The
+answers saved, with the owner's decisions of 2 Oct 2026:
 
 | Question | Answer | Why |
 |---|---|---|
+| Alcohol, Tobacco, or Drug Use or References | **Infrequent** | The Deals tab has a "Beer, Wine & Spirits" category (`Deals.swift`), so weekly-ad beer, wine and liquor listings appear, and a search can return them. This is what moves the rating from 4+ to **13+** (12+ in Vietnam and Korea, A14 in Brazil). A rating that is too strict costs nothing; one that is too loose is a rejection. |
+| Advertising | **Yes** | Search results include retailers' own sponsored listings, badged "Ad" (`Components.swift`). There is no ad SDK and Cartworth is not paid for them, but paid placements are visible. It does not change the rating on its own. |
 | Unrestricted Web Access | **No** | The app has no embedded browser. There is no `WKWebView` and no `SFSafariViewController` anywhere in the source. Recipe import accepts a URL, but it fetches the HTML and parses the ingredient list; it never renders the page. Outbound links (`Link(destination:)` in Settings, the paywall and product detail) hand off to Safari, which does not count as in-app web access. |
-| User Generated Content | **No** | Lists, watches and favorites are private to the device. There is no sharing, no feed, no upload, no comments and no server. |
-| In-App Purchases | **Yes** | Three products, section 9. Apple sets the "In-App Purchases" badge on the product page from this. |
+| User-Generated Content, Social Media, Messaging and Chat | **No** | Lists, watches and favorites are private to the device. There is no sharing, no feed, no upload, no comments and no server. |
+| Parental Controls, Age Assurance | **No** | |
+| Everything else (profanity, horror, medical, health topics, sexual content, violence, weapons, gambling, contests, loot boxes) | **None / No** | |
 
-If Apple has added a question since this was written that you cannot map to the source, do not guess. Answer conservatively and note it; a rating that is too strict costs you nothing, a rating that is too loose is a rejection.
+The questionnaire no longer asks about In-App Purchases; the product page badge comes from the
+products themselves. If Apple adds a question you cannot map to the source, do not guess. Answer
+conservatively and note it here.
 
 ## 8. App Privacy answers
 
@@ -158,7 +163,7 @@ That is the defensible answer, and here is the evidence, all of which you should
 
 - `ios/App/Resources/PrivacyInfo.xcprivacy` declares `NSPrivacyTracking: false`, an empty `NSPrivacyTrackingDomains`, and an empty `NSPrivacyCollectedDataTypes`. The only declared API reasons are `CA92.1` (UserDefaults for app settings) and `C617.1` (file timestamps).
 - There are no third-party SDKs at all. `ios/project.yml` declares no Swift packages; the only `dependencies:` entries are the test targets depending on the app target. A grep of the whole source for Firebase, Amplitude, Mixpanel, Sentry, AppsFlyer, Adjust, Facebook, Google, IDFA, `ASIdentifier` and `AppTrackingTransparency` returns nothing.
-- You operate no backend. Every outbound request goes to a retailer site or a circular service. The full set of hosts in the binary is `www.instacart.com`, `www.aldi.us`, `shopwoodmans.com`, `www.wholefoodsmarket.com`, `www.traderjoes.com`, `alphaapi.brandify.com` (Trader Joe's store locator), `backflipp.wishabi.com` (weekly circulars), plus `cartworth.app` and `apps.apple.com` as tapped links.
+- You operate no backend. Every outbound request goes to a retailer site or a circular service. The full set of hosts in the binary is `www.instacart.com`, `www.aldi.us`, `shopwoodmans.com`, `order.shopthepig.com` (Piggly Wiggly Midwest's Instacart-powered store site), `www.wholefoodsmarket.com`, `www.traderjoes.com`, `alphaapi.brandify.com` (Trader Joe's store locator), `backflipp.wishabi.com` (weekly circulars), plus `cartworth.app` and `apps.apple.com` as tapped links.
 - Everything the user creates is local. The SwiftData container in `StoredModels.swift` is a plain `ModelConfiguration` with no CloudKit, and the HTTP cache writes to the app's Caches directory.
 
 ### Per data type
@@ -276,93 +281,88 @@ Capture it with the app running against the StoreKit configuration file or a san
 
 ## 10. App Review notes
 
-Paste this whole block into the App Review Information notes field.
+**Why this section is shaped the way it is (2 Oct 2026).** The owner's first submission from this
+account, "Wisconsin Eats: Restaurants" (1.0.0 build 2), came back on 28 Sep 2026 under
+**Guideline 2.1 - Information Needed - New App Submission**: the account "has a limited App Review
+history", so Apple asked, before reviewing at all, for (1) a screen recording on a physical device
+running the latest OS, starting at launch and showing paid features, (2) the app's purpose and
+audience, (3) setup instructions, (4) a list of external services the app relies on, (5) regional
+differences, and (6) documentation of authorization for any protected third-party material. Apple
+asked for the answers in a reply *and* in this Notes field "for reference on future submissions".
+Cartworth comes from the same account, so expect the same request. The block below answers all
+six up front, in Apple's numbering, and stays under the field's 4,000-character limit (the
+previous version was 4,931 characters and would not have fit).
+
+Before submitting:
+
+- [ ] **Record the video** (point 1) on the owner's iPhone from the TestFlight build: Control
+      Center > Screen Recording, then launch Cartworth from the home screen and show onboarding
+      with a ZIP, a "milk" search, the Deals tab, the List tab's trip plan reaching the paywall,
+      the paywall's three plans and Restore Purchases, and Settings > How prices work. There are
+      no accounts and no user-generated content, so nothing else is required. Keep it under
+      ~2 minutes and attach it under App Review Information > Attachment on the 1.0.0 version page.
+- [ ] Paste the block below into App Review Information > Notes, and untick **Sign-in required**.
+
+Point 6 is where guideline 5.2.2 shows up. The honest answer is in the block: the prices are
+publicly posted, there is **no written license from any retailer or from Flipp**, and Apple may
+still ask for one. That is the owner's accepted risk (checklist item 13); nothing in the app can
+change it. Do not claim a partnership or an official API.
 
 ```
-NO ACCOUNT IS REQUIRED. There is no sign-in of any kind, so no demo credentials are
-needed. Please do not reject for missing demo account information; the app has no
-accounts at all.
+NO ACCOUNT IS REQUIRED. There is no sign-in of any kind; no demo account exists or is needed.
 
-WALKTHROUGH (about three minutes, no login)
+1. SCREEN RECORDING: attached (iPhone, latest iOS, TestFlight build). It starts at launch and
+shows onboarding, a search, weekly ads, the trip planner, the paywall and Restore Purchases.
 
-1. Launch. Onboarding asks for a location. Tap "or enter ZIP code" and enter 60601
-   (Chicago) or 60010 (Barrington, IL), then Continue. You can instead tap "Use my
-   location" and grant when-in-use access. Either path works; the ZIP path avoids
-   needing a simulated location.
-2. The app finds grocery stores within the radius and shows which of them publish
-   prices. Select three or four, then tap "Start comparing".
-3. Search tab: type "milk" and hit search. Live prices are fetched from several
-   retailer sites at once, so allow 20 to 60 seconds on a first run. You will see a
-   best-price card, then each store's closest match, all normalized to a common unit
-   (per gallon here). Each store is badged "shelf" or "online".
-4. Tap any result to see the product detail and its unit price breakdown.
-5. Deals tab: this week's weekly-ad circulars for those stores, with multi-buy, BOGO
-   and coupon conditions spelled out. Tap any deal for the full fine print.
-6. List tab: add "milk 1 gal", then "Plan the cheapest trip" to see what the list
-   costs at one store versus a two- or three-store split. This is a Pro feature and
-   will show the paywall.
-7. Settings > "How prices work" explains the price sourcing in the app's own words.
+2. PURPOSE AND AUDIENCE: Cartworth is for US grocery shoppers who want to know which store near
+them is cheapest for what they are buying today. One search checks the stores near the user's ZIP
+at once and converts every price to a common unit (per lb, gallon, dozen, count), so different
+package sizes compare honestly. It also shows weekly-ad deals with their conditions, prices a
+shopping list across stores, turns a recipe photo into a priced list (on-device text
+recognition), and watches prices. Free: 3 searches a day and 1 price watch. Cartworth Pro
+(monthly, yearly or lifetime In-App Purchase) removes the limits and adds alerts, trip planning,
+recipes and price history.
 
-SANDBOX / IAP: the paywall appears after three searches in a day, or from Settings >
-Cartworth Pro > Get Pro, or from any Pro-gated feature. All three products are sold
-from that one sheet. Restore Purchases is on the paywall and in Settings.
+3. HOW TO USE IT (about 3 minutes):
+ a. Launch. Tap "or enter ZIP code", enter 60601 (Chicago), Continue. (Or allow location.)
+ b. Select three or four of the stores found, tap "Start comparing".
+ c. Search "milk". Live prices take 20-60 s on a first run. Each store is badged "shelf" or
+    "online"; tap a result for its unit-price breakdown.
+ d. Deals tab: this week's ads with multi-buy, BOGO and coupon conditions.
+ e. List tab: add "milk 1 gal", tap "Plan the cheapest trip". This is Pro and shows the paywall.
+ f. The paywall also opens from Settings > Cartworth Pro > Get Pro and after 3 searches a day.
+    All three products are on that sheet; Restore Purchases is on it and in Settings.
+ g. Settings > "How prices work" explains the sourcing.
 
-WHERE THE PRICES COME FROM
+4. EXTERNAL SERVICES: there is no Cartworth server and no third-party SDK. Prices are read live
+from the user's device, as a browser would, from the retailers' own public websites: Instacart-
+powered storefronts (www.instacart.com, www.aldi.us, shopwoodmans.com, order.shopthepig.com),
+www.wholefoodsmarket.com, www.traderjoes.com (store locator alphaapi.brandify.com), and weekly
+ads from backflipp.wishabi.com (Flipp), the circular service the chains publish through. A
+recipe link the user pastes is fetched from that site. Payments: Apple In-App Purchase only.
+Text recognition and recipe parsing run on the device (Vision; Apple's on-device model where
+available). No cloud AI, no analytics, no ads SDK, no tracking.
 
-The iPhone app has no server and no price database. (A separate free web version at
-cartworth.app runs on our server; the app does not use it.) Every price is read live,
-from the user's own device, from the public website of the retailer whose store is nearest the
-user:
+5. REGIONS: United States only. Stores are found from a 5-digit US ZIP; the app behaves the same
+everywhere in the US, with the stores available varying by ZIP.
 
- - Retailers whose own storefronts are Instacart-powered (aldi.us, shopwoodmans.com
-   and the instacart.com storefronts most national and regional chains use)
- - wholefoodsmarket.com
- - traderjoes.com, whose store locator is served by alphaapi.brandify.com
- - Weekly circulars via backflipp.wishabi.com, the circular service the chains
-   themselves distribute their weekly ads through
+6. THIRD-PARTY CONTENT: Cartworth shows prices, product names and product photos that retailers
+publish on their own public sites, with no login, no paywall bypass and no account. Cartworth
+has no written agreement with these retailers or with Flipp and claims no partnership: there
+are no retailer logos, stores appear by name with a neutral dot, every price says where it came
+from ("shelf", "online" or "weekly ad"), and the Terms state that Cartworth is not affiliated
+with any retailer. Requests are polite: one at a time per site, at least 0.7 s apart, stopping
+on "too many requests", and results are cached on the device for 20 minutes. Some results are
+the retailer's own sponsored listings and are labeled "Ad"; Cartworth is not paid for them.
 
-These are the same publicly posted prices any shopper sees by visiting those sites in
-a browser. Nothing is behind a login, nothing is behind a paywall, no account is
-created, no authentication is bypassed, and no personal data is transmitted: the
-request carries a ZIP or approximate coordinates and a search term, which is what the
-site needs to answer the query. Results are cached on the device for 20 minutes and
-the app asks each site politely: one request at a time per site, at least 0.7 seconds
-apart, and a site that answers "too many requests" is not asked again for a while.
+PRIVACY: searches, lists, watches and history stay on the device (SwiftData, no sync).
+Location is when-in-use, 1 km accuracy, used only to find stores.
 
-The app displays no retailer logos and no retailer branding. Stores are shown by name
-with a neutral color dot. Cartworth does not claim or imply any partnership,
-affiliation or endorsement by any retailer, and says so in its terms.
+BACKGROUND: one BGAppRefreshTask (app.cartworth.ios.refresh) re-checks watched prices for Pro
+users who turned alerts on and posts local notifications. No push.
 
-Cartworth labels every price by provenance, because the distinction matters to
-shoppers: "shelf" where the retailer publishes in-store prices, "online" where the
-retailer only publishes a delivery listing that it itself says can run higher than the
-shelf. Weekly-ad prices are labeled as coming from that store's circular. The app
-tells the user in plain language that stores change prices without notice and to check
-the shelf tag.
-
-PRIVACY
-
-No accounts, no analytics, no advertising SDKs, no third-party SDKs at all, no
-tracking. Searches, shopping lists, price watches and price history are stored only in
-SwiftData on the device, with no CloudKit and no sync. Location is when-in-use only,
-requested at one-kilometer accuracy, and used solely to find nearby stores.
-PrivacyInfo.xcprivacy declares no collected data types.
-
-WHY THERE IS A FREE WEBSITE
-
-cartworth.app is a free browser version of the comparison and weekly-ad features. The
-iPhone app is the paid personal layer: price watches with alerts, favorite-brand
-alerts, recipe-to-list, trip planning, price history and next week's ads. Nothing is
-purchased on the website, nothing purchased elsewhere is unlocked in the app, and the
-app contains no link or reference to any external purchase mechanism. All paid access
-inside the app is sold exclusively through In-App Purchase.
-
-BACKGROUND REFRESH
-
-The app registers one BGAppRefreshTask (app.cartworth.ios.refresh) that re-checks
-watched items and favorite brands and posts local notifications when a target price is
-hit or a favorite appears in an ad. It runs only for Pro subscribers who have turned
-alerts on in Settings. No remote push, no push certificate, no notification server.
+cartworth.app is a free web version; nothing is sold there and the app does not link to any
+external purchase.
 ```
 
 ### Preemptive answers to the objections most likely to come back
