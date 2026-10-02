@@ -15,9 +15,9 @@ Where a rule has been changing at Apple's end, it is marked **verify** rather th
 
 ## 1. 🔴 Apple Developer Program enrollment
 
-- [ ] Confirm the membership on Team ID **4C8TU6U7MQ** is active and not within 30 days of expiry (developer.apple.com/account, Membership Details)
-- [ ] Confirm your role on that team is **Account Holder** or **Admin**, not Developer
-- [ ] Decide and confirm the enrollment type: **Individual** or **Organization**
+- [x] Confirm the membership on Team ID **4C8TU6U7MQ** is active and not within 30 days of expiry (developer.apple.com/account, Membership Details)
+- [x] Confirm your role on that team is **Account Holder** or **Admin**, not Developer
+- [x] Decide and confirm the enrollment type: **Individual** or **Organization**
 
 **Why it matters.** `DEVELOPMENT_TEAM: "4C8TU6U7MQ"` is already hardcoded in `ios/project.yml`, which means an account exists. What matters now is that it is paid, current, and that you personally have the rights to create identifiers, certificates and app records. A Developer-role account can build and run on a device but cannot create the App Store Connect record.
 
@@ -27,9 +27,11 @@ Where a rule has been changing at Apple's end, it is marked **verify** rather th
 
 ## 2. 🔴 Paid Applications Agreement, banking, and tax forms
 
-- [ ] App Store Connect > Business (older UI: Agreements, Tax, and Banking) > **Paid Applications** agreement shows **Active**
-- [ ] A bank account is attached to the agreement and has passed validation
-- [ ] Tax forms are complete and show a valid status: the US form (W-9 for a US person or entity), plus any additional forms App Store Connect asks for based on where you sell
+**Done (checked 2 Oct 2026):** Paid Apps Agreement active Sep 21, 2026 to Sep 20, 2027; bank account and W-9 active. The enrollment is Individual, so the seller and the copyright line are Nicholas Soderstrom.
+
+- [x] App Store Connect > Business (older UI: Agreements, Tax, and Banking) > **Paid Applications** agreement shows **Active**
+- [x] A bank account is attached to the agreement and has passed validation
+- [x] Tax forms are complete and show a valid status: the US form (W-9 for a US person or entity), plus any additional forms App Store Connect asks for based on where you sell
 - [ ] The legal entity on the agreement matches the entity you will name in the copyright line
 
 **Why this is at the top of the list, above every technical step.**
@@ -140,8 +142,10 @@ This doubles as your EULA for the subscriptions. It must include Apple's minimum
 
 ## 6. 🔴 Create the App Store Connect record
 
+**Created:** "Cartworth", Apple ID 6816954374, bundle ID `app.cartworth.ios`, SKU `cartworth-ios`. Still to set: the full name, subtitle, categories, content rights, age rating, territories.
+
 - [ ] Check that your chosen app name is **available** (App Store names are globally unique per platform)
-- [ ] Create the app: Platform iOS, the name, Primary Language English (U.S.), Bundle ID `app.cartworth.ios`, and an SKU of your choosing
+- [x] Create the app: Platform iOS, the name, Primary Language English (U.S.), Bundle ID `app.cartworth.ios`, and an SKU of your choosing
 - [ ] Set Primary Category **Shopping**, Secondary **Food & Drink**
 - [ ] Decide and set **availability territories**
 
