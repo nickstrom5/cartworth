@@ -79,7 +79,7 @@ Tax forms and bank validation are the slow part. Bank validation in particular d
 - [x] `https://cartworth.app/terms` returns a real page
 - [x] `https://cartworth.app/support` returns a real page
 - [ ] Each page renders correctly in Safari on an iPhone
-- [ ] Merge `fix-round-3` into `main` (pull request 1) before submitting: the site deploys from
+- [x] Merge `fix-round-3` into `main` (pull request 1) before submitting: the site deploys from
       `main`, and the live `/privacy` does not yet have the corrected disclosures from c0c1a6f
 
 **Why the HTTPS line is not boilerplate.** `.app` is one of the TLDs on the HSTS preload list. Browsers refuse plain HTTP for `.app` domains entirely. There is no "we will add TLS later" option; without a certificate the pages simply do not load.
@@ -128,11 +128,13 @@ This doubles as your EULA for the subscriptions. It must include Apple's minimum
 
 ## 5. 🔴 Identifiers, certificates and provisioning
 
-- [ ] Register an **explicit** App ID for `app.cartworth.ios` at developer.apple.com/account > Identifiers
-- [ ] Confirm **In-App Purchase** is enabled on that App ID
-- [ ] Confirm you have a valid **Apple Distribution** certificate on the team (Xcode can create it: Settings > Accounts > Manage Certificates)
-- [ ] Let Xcode manage the App Store provisioning profile (signing is already `Automatic`)
-- [ ] Do **not** enable Push Notifications
+- [x] Register an **explicit** App ID for `app.cartworth.ios` at developer.apple.com/account > Identifiers
+- [x] Confirm **In-App Purchase** is enabled on that App ID
+- [x] Confirm you have a valid **Apple Distribution** certificate on the team (Xcode can create it: Settings > Accounts > Manage Certificates)
+- [x] Let Xcode manage the App Store provisioning profile (signing is already `Automatic`)
+- [x] Do **not** enable Push Notifications
+
+Done 28 Sep and 5 Oct 2026: the owner registered the explicit App ID with no capabilities ticked (In-App Purchase is on by default for an explicit ID); the 2 Oct and 5 Oct uploads were signed with an Apple Distribution certificate and App Store profile that `xcodebuild -exportArchive -allowProvisioningUpdates` created.
 
 **Why it matters.** In-App Purchase requires an explicit App ID; a wildcard ID will not carry it. Without it the products never attach to your app and `Product.products(for:)` returns empty for a second, entirely different reason than item 2, which makes it maddening to diagnose.
 
