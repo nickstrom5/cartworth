@@ -9,6 +9,7 @@
 // is a failure. Screenshots go to --shots (default: a scratch folder).
 //
 //   CHROME_PATH=... NODE_USE_ENV_PROXY=1 node scripts/e2e-live.mjs [--zip 60618] [--query milk] [--shots dir]
+//   ... node scripts/e2e-live.mjs --url https://app.cartworth.app   (the deployed app; no server started)
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -39,25 +40,58 @@ async function freePort() {
   return new Promise((resolve) => { const s = net.createServer().listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)); }); });
 }
 
-const port = await freePort();
-const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cartworth-e2e-data-'));
-const server = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', path.join(ROOT, 'server.js')], {
-  env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', BASKET_DATA_DIR: dataDir },
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+const URL_ARG = arg('--url', null);
+let server = null;
 let serverLog = '';
-server.stdout.on('data', (d) => (serverLog += d));
-server.stderr.on('data', (d) => (serverLog += d));
-const base = `http://127.0.0.1:${port}`;
+let base;
+if (URL_ARG) {
+  base = URL_ARG.replace(/\/$/, '');
+} else {
+  const port = await freePort();
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cartworth-e2e-data-'));
+  server = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', path.join(ROOT, 'server.js')], {
+    env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', BASKET_DATA_DIR: dataDir },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  server.stdout.on('data', (d) => (serverLog += d));
+  server.stderr.on('data', (d) => (serverLog += d));
+  server.on('exit', () => fs.rmSync(dataDir, { recursive: true, force: true }));
+  base = `http://127.0.0.1:${port}`;
+}
 for (let i = 0; i < 100; i++) { try { if ((await fetch(`${base}/api/health`)).ok) break; } catch {} await new Promise((r) => setTimeout(r, 100)); }
 
-const browser = await playwright.chromium.launch({ executablePath: process.env.CHROME_PATH || undefined });
+// A deployed app is reached the way the rest of this machine reaches the internet: through its proxy.
+// Chromium tries HTTP/3 (QUIC) first, which an HTTP proxy cannot carry: every load then ends in
+// ERR_TOO_MANY_RETRIES. Through a proxy, pages are also slower, hence the longer default timeout.
+const proxy = URL_ARG && (process.env.HTTPS_PROXY || process.env.https_proxy);
+const browser = await playwright.chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, ...(proxy ? { proxy: { server: proxy }, args: ['--disable-quic'] } : {}) });
+
+// Behind this machine's proxy Chromium's own connections fail at random (ERR_TOO_MANY_RETRIES on a
+// different file each run) while Node's go through. So with --url behind a proxy, the browser hands
+// every request to Node's fetch and is given back exactly what the server answered.
+async function viaNode(context) {
+  await context.route('**/*', async (route) => {
+    const req = route.request();
+    const headers = { ...req.headers() };
+    for (const h of ['host', 'connection', 'content-length', 'accept-encoding']) delete headers[h];
+    try {
+      const r = await fetch(req.url(), { method: req.method(), headers, body: req.postDataBuffer() ?? undefined, redirect: 'manual' });
+      const out = Object.fromEntries(r.headers);
+      delete out['content-encoding']; delete out['content-length']; delete out['transfer-encoding'];
+      await route.fulfill({ status: r.status, headers: out, body: Buffer.from(await r.arrayBuffer()) });
+    } catch {
+      await route.abort('failed').catch(() => {});
+    }
+  });
+}
 
 async function journey(label, viewport, { isMobile = false } = {}) {
   console.log(`\n${label} (${viewport.width}x${viewport.height})`);
   // --insecure: product images come from retailer CDNs, and a network that re-signs HTTPS (a proxy
   // with its own CA, as in a cloud sandbox) makes each one a certificate error that is not the app's.
   const context = await browser.newContext({ viewport, isMobile, hasTouch: isMobile, deviceScaleFactor: isMobile ? 3 : 1, ignoreHTTPSErrors: argv.includes('--insecure') });
+  if (URL_ARG) context.setDefaultTimeout(90_000);
+  if (proxy) await viaNode(context);
   const page = await context.newPage();
   const problems = [];
   const thirdParty = new Set();
@@ -161,10 +195,11 @@ await journey('Desktop', { width: 1280, height: 800 });
 await journey('iPhone', { width: 390, height: 844 }, { isMobile: true });
 
 await browser.close();
-server.kill('SIGTERM');
-await new Promise((r) => server.on('exit', r));
+if (server) {
+  server.kill('SIGTERM');
+  await new Promise((r) => server.on('exit', r));
+}
 if (failures) console.log(`\nserver log:\n${serverLog.slice(-3000)}`);
-fs.rmSync(dataDir, { recursive: true, force: true });
 console.log(`\nscreenshots: ${SHOTS}`);
 console.log(failures ? `\n${failures} check(s) FAILED` : '\nall journeys passed');
 process.exit(failures ? 1 : 0);
