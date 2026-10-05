@@ -95,3 +95,30 @@ test('the local StoreKit configuration is not copied into the app (d8367eb: the 
   const yml = read('project.yml');
   assert.match(yml, /Resources\/Products\.storekit[\s\S]{0,300}buildPhase: none/, 'xcodegen would put it back in Resources');
 });
+
+test('the App Store Connect text fits its fields (the review notes once ran to 4,931 of 4,000)', () => {
+  const L = fs.readFileSync(new URL('../marketing/APP_STORE_LISTING.md', import.meta.url), 'utf8').split('\n');
+  const at = (heading) => L.findIndex((l) => l.startsWith(heading));
+  const fenced = (heading) => { const i = L.indexOf('```', at(heading)); return L.slice(i + 1, L.indexOf('```', i + 1)).join('\n'); };
+  const ruled = (heading) => { const i = L.indexOf('---', at(heading)); return L.slice(i + 1, L.indexOf('---', i + 1)).join('\n').trim(); };
+  const limits = [['promotional text', fenced('## 3.'), 170], ['description', ruled('## 4.'), 4000], ['keywords', fenced('## 5.'), 100], ["what's new", fenced('## 6.'), 4000], ['App Review notes', fenced('## 10.'), 4000]];
+  for (const [name, text, max] of limits) {
+    assert.ok(text.length > 0, `${name}: not found`);
+    assert.ok(text.length <= max, `${name}: ${text.length} of ${max} characters`);
+  }
+  assert.doesNotMatch(fenced('## 5.'), /,\s/, 'keywords: a space after a comma costs a character');
+  const all = L.join('\n');
+  for (const m of all.matchAll(/\| Display Name[^|]*\| `([^`]*)`/g)) assert.ok(m[1].length <= 30, `IAP name ${m[1]}`);
+  for (const m of all.matchAll(/\| Description[^|]*\| `([^`]*)`/g)) assert.ok(m[1].length <= 45, `IAP description ${m[1]}`);
+  for (const [, s] of all.matchAll(/\*\*Primary\*\* \| `([^`]*)`/g)) assert.ok(s.length <= 30, `name or subtitle ${s}`);
+});
+
+test('project.yml and the Xcode project agree on the version and build number (each upload needs a new build)', () => {
+  const yml = read('project.yml');
+  const pbx = read('Cartworth.xcodeproj/project.pbxproj');
+  for (const key of ['MARKETING_VERSION', 'CURRENT_PROJECT_VERSION']) {
+    const want = yml.match(new RegExp(`${key}: "?([^"\\n]+)"?`))[1];
+    const got = new Set([...pbx.matchAll(new RegExp(`${key} = ([^;]+);`, 'g'))].map((m) => m[1]));
+    assert.deepEqual([...got], [want], `${key}: project.yml ${want}, project ${[...got]}`);
+  }
+});
