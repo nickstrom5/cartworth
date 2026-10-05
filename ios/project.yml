@@ -17,7 +17,7 @@ settings:
   base:
     SWIFT_VERSION: "5.10"
     MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "2"
+    CURRENT_PROJECT_VERSION: "3"
     DEVELOPMENT_TEAM: "4C8TU6U7MQ"
     CODE_SIGN_STYLE: Automatic
     # Universal (1 = iPhone, 2 = iPad). Setting it here is not enough on its own — see the note

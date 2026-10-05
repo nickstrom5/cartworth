@@ -276,6 +276,8 @@ Depends on items 1, 5, 6 and 8.
 
 **Done 5 Oct 2026:** 1.0.0 (2) uploaded the same way (from `fix-round-3` at d267d52 plus the bump), so internal testers get the current code. Every upload needs a higher build number: raise `CURRENT_PROJECT_VERSION` in `ios/project.yml` and the project first.
 
+**Build with the release Xcode, not `Xcode.app`.** On the build Mac, `/Applications/Xcode.app` is a copy of the Xcode 27.1 beta (build 27A9269, the same as `Xcode-beta.app`); the release Xcode 27.0 (27A266a) is `/Applications/Xcode 1.app`. Builds 1 and 2 came from the beta and its iOS 27.1 SDK, and TestFlight would not install them on the owner's iPhone, which runs iOS 27.0. A beta-built app also cannot be submitted to the App Store. Archive and export with `DEVELOPER_DIR="/Applications/Xcode 1.app/Contents/Developer"` in front of each `xcodebuild` (or pick it in Xcode > Settings > Locations), and check `DTSDKName` in the archived `Info.plist` reads `iphoneos27.0`. **Done 5 Oct 2026:** 1.0.0 (3) built and uploaded that way.
+
 ### The Xcode Organizer path (recommended for a first submission)
 
 ```
