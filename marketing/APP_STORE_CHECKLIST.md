@@ -272,6 +272,8 @@ Depends on items 1, 5, 6 and 8.
 
 **Done 2 Oct 2026:** 1.0.0 (1) archived with `xcodebuild archive -allowProvisioningUpdates` and uploaded with `xcodebuild -exportArchive` (`method` `app-store-connect`, `destination` `upload`). Xcode's signed-in account used cloud-managed distribution signing, so no Apple Distribution certificate had to be created on this Mac. The next upload must be build 2.
 
+**Done 5 Oct 2026:** 1.0.0 (2) uploaded the same way (from `fix-round-3` at d267d52 plus the bump), so internal testers get the current code. Every upload needs a higher build number: raise `CURRENT_PROJECT_VERSION` in `ios/project.yml` and the project first.
+
 ### The Xcode Organizer path (recommended for a first submission)
 
 ```
