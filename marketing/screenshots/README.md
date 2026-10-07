@@ -37,6 +37,11 @@ Still open:
 - Confirm on the store's own listing before publishing: Tony's Fresh Market, Dutch Farms Grade A
   Large Eggs, 5 dozen for $5.99 on sale ($1.20 a dozen). It is in the trip plan and watch frames.
 
+**In-app purchase review screenshot** (one file, uploaded on all three products):
+`2026-09-28-iphone/10-paywall-review.png`, taken 2 Oct 2026 by
+`PurchaseTests.testPaywallReviewScreenshot` (opt-in: `TEST_RUNNER_PAYWALL_SHOT=1`) with the
+prices from `Products.storekit`, since a UI-test launch shows "—" for every plan.
+
 iPhone frames for the six shots: `02-search-results` (#1; it also makes #2's point, the 10 lb bag
 at 99.9¢/lb against the 20 lb one at $1.02/lb), `02b-search-rows` or `02d-chart-and-rows` (#2),
 `06-deal-detail-fineprint` (#3), `04-trip-plan` (#4), `05-recipe-import` with `05b` for prices

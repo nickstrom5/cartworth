@@ -89,7 +89,8 @@ Still by hand, with Scheme > Run > Options > StoreKit Configuration: `Products.s
       subscription renew (sandbox months are minutes).
 
 ### 5. TestFlight
-- [ ] Upload the Release archive. Internal testing first (no review).
+- [x] Upload the Release archive. Internal testing first (no review). Done 2 Oct 2026: 1.0.0 (1)
+      is in the internal group `Owner`; install it from the TestFlight app on the owner's iPhone.
 - [ ] External testing: it goes through Beta App Review, a lighter pass of the same rules. It is the
       cheapest place to learn how Apple reads guideline 5.2.2 (third-party content), the one
       open risk in `marketing/APP_STORE_CHECKLIST.md` item 13.

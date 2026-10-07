@@ -15,9 +15,9 @@ Where a rule has been changing at Apple's end, it is marked **verify** rather th
 
 ## 1. 🔴 Apple Developer Program enrollment
 
-- [ ] Confirm the membership on Team ID **4C8TU6U7MQ** is active and not within 30 days of expiry (developer.apple.com/account, Membership Details)
-- [ ] Confirm your role on that team is **Account Holder** or **Admin**, not Developer
-- [ ] Decide and confirm the enrollment type: **Individual** or **Organization**
+- [x] Confirm the membership on Team ID **4C8TU6U7MQ** is active and not within 30 days of expiry (developer.apple.com/account, Membership Details)
+- [x] Confirm your role on that team is **Account Holder** or **Admin**, not Developer
+- [x] Decide and confirm the enrollment type: **Individual** or **Organization**
 
 **Why it matters.** `DEVELOPMENT_TEAM: "4C8TU6U7MQ"` is already hardcoded in `ios/project.yml`, which means an account exists. What matters now is that it is paid, current, and that you personally have the rights to create identifiers, certificates and app records. A Developer-role account can build and run on a device but cannot create the App Store Connect record.
 
@@ -27,9 +27,11 @@ Where a rule has been changing at Apple's end, it is marked **verify** rather th
 
 ## 2. 🔴 Paid Applications Agreement, banking, and tax forms
 
-- [ ] App Store Connect > Business (older UI: Agreements, Tax, and Banking) > **Paid Applications** agreement shows **Active**
-- [ ] A bank account is attached to the agreement and has passed validation
-- [ ] Tax forms are complete and show a valid status: the US form (W-9 for a US person or entity), plus any additional forms App Store Connect asks for based on where you sell
+**Done (checked 2 Oct 2026):** Paid Apps Agreement active Sep 21, 2026 to Sep 20, 2027; bank account and W-9 active. The enrollment is Individual, so the seller and the copyright line are Nicholas Soderstrom.
+
+- [x] App Store Connect > Business (older UI: Agreements, Tax, and Banking) > **Paid Applications** agreement shows **Active**
+- [x] A bank account is attached to the agreement and has passed validation
+- [x] Tax forms are complete and show a valid status: the US form (W-9 for a US person or entity), plus any additional forms App Store Connect asks for based on where you sell
 - [ ] The legal entity on the agreement matches the entity you will name in the copyright line
 
 **Why this is at the top of the list, above every technical step.**
@@ -77,7 +79,7 @@ Tax forms and bank validation are the slow part. Bank validation in particular d
 - [x] `https://cartworth.app/terms` returns a real page
 - [x] `https://cartworth.app/support` returns a real page
 - [ ] Each page renders correctly in Safari on an iPhone
-- [ ] Merge `fix-round-3` into `main` (pull request 1) before submitting: the site deploys from
+- [x] Merge `fix-round-3` into `main` (pull request 1) before submitting: the site deploys from
       `main`, and the live `/privacy` does not yet have the corrected disclosures from c0c1a6f
 
 **Why the HTTPS line is not boilerplate.** `.app` is one of the TLDs on the HSTS preload list. Browsers refuse plain HTTP for `.app` domains entirely. There is no "we will add TLS later" option; without a certificate the pages simply do not load.
@@ -126,11 +128,13 @@ This doubles as your EULA for the subscriptions. It must include Apple's minimum
 
 ## 5. 🔴 Identifiers, certificates and provisioning
 
-- [ ] Register an **explicit** App ID for `app.cartworth.ios` at developer.apple.com/account > Identifiers
-- [ ] Confirm **In-App Purchase** is enabled on that App ID
-- [ ] Confirm you have a valid **Apple Distribution** certificate on the team (Xcode can create it: Settings > Accounts > Manage Certificates)
-- [ ] Let Xcode manage the App Store provisioning profile (signing is already `Automatic`)
-- [ ] Do **not** enable Push Notifications
+- [x] Register an **explicit** App ID for `app.cartworth.ios` at developer.apple.com/account > Identifiers
+- [x] Confirm **In-App Purchase** is enabled on that App ID
+- [x] Confirm you have a valid **Apple Distribution** certificate on the team (Xcode can create it: Settings > Accounts > Manage Certificates)
+- [x] Let Xcode manage the App Store provisioning profile (signing is already `Automatic`)
+- [x] Do **not** enable Push Notifications
+
+Done 28 Sep and 5 Oct 2026: the owner registered the explicit App ID with no capabilities ticked (In-App Purchase is on by default for an explicit ID); the 2 Oct and 5 Oct uploads were signed with an Apple Distribution certificate and App Store profile that `xcodebuild -exportArchive -allowProvisioningUpdates` created.
 
 **Why it matters.** In-App Purchase requires an explicit App ID; a wildcard ID will not carry it. Without it the products never attach to your app and `Product.products(for:)` returns empty for a second, entirely different reason than item 2, which makes it maddening to diagnose.
 
@@ -140,10 +144,14 @@ This doubles as your EULA for the subscriptions. It must include Apple's minimum
 
 ## 6. 🔴 Create the App Store Connect record
 
-- [ ] Check that your chosen app name is **available** (App Store names are globally unique per platform)
-- [ ] Create the app: Platform iOS, the name, Primary Language English (U.S.), Bundle ID `app.cartworth.ios`, and an SKU of your choosing
-- [ ] Set Primary Category **Shopping**, Secondary **Food & Drink**
-- [ ] Decide and set **availability territories**
+**Created:** "Cartworth", Apple ID 6816954374, bundle ID `app.cartworth.ios`, SKU `cartworth-ios`.
+
+**Set 2 Oct 2026:** name `Cartworth: Grocery Prices` (accepted, so available), subtitle, Shopping / Food & Drink, Content Rights Yes, age rating 13+ (see `APP_STORE_LISTING.md` section 7), United States only, price Free. On the 1.0.0 version page: copyright `2026 Nicholas Soderstrom`, support and marketing URLs; the Privacy Policy URL is on the App Privacy page. The version record was renamed 1.0 → 1.0.0 to match the build's `MARKETING_VERSION`.
+
+- [x] Check that your chosen app name is **available** (App Store names are globally unique per platform)
+- [x] Create the app: Platform iOS, the name, Primary Language English (U.S.), Bundle ID `app.cartworth.ios`, and an SKU of your choosing
+- [x] Set Primary Category **Shopping**, Secondary **Food & Drink**
+- [x] Decide and set **availability territories**
 
 **Why the name check comes first.** If "Cartworth: Grocery Prices" is taken, you find out here, and you would rather find out before you have icons, screenshots and a domain built around it. Creating the record reserves the name for a period, so create it early even if you are months from submitting. **Verify the current reservation period in App Store Connect; Apple has changed how long an unused reservation holds.**
 
@@ -157,18 +165,20 @@ This doubles as your EULA for the subscriptions. It must include Apple's minimum
 
 ## 7. 🔴 Create the three in-app purchase products
 
-- [ ] Create the subscription group `Cartworth Pro`
-- [ ] Create `app.cartworth.ios.pro.monthly`, auto-renewable, 1 month, $3.99
-- [ ] Create `app.cartworth.ios.pro.yearly`, auto-renewable, 1 year, $19.99
-- [ ] Create `app.cartworth.ios.pro.lifetime`, **Non-Consumable**, $29.99
-- [ ] Add a localization (display name and description) to every product
-- [ ] Upload the review screenshot to every product
-- [ ] Enable Family Sharing on all three
-- [ ] Set the subscription levels: yearly above monthly
-- [ ] Add the Privacy Policy URL and Terms of Use (EULA) link to the subscription group metadata
+- [x] Create the subscription group `Cartworth Pro`
+- [x] Create `app.cartworth.ios.pro.monthly`, auto-renewable, 1 month, $3.99
+- [x] Create `app.cartworth.ios.pro.yearly`, auto-renewable, 1 year, $19.99
+- [x] Create `app.cartworth.ios.pro.lifetime`, **Non-Consumable**, $29.99
+- [x] Add a localization (display name and description) to every product
+- [x] Upload the review screenshot to every product
+- [x] Enable Family Sharing on all three
+- [x] Set the subscription levels: yearly above monthly
+- [ ] Add the Privacy Policy URL and Terms of Use (EULA) link to the subscription group metadata. (2 Oct 2026: the group page in App Store Connect has no such fields any more. The Privacy Policy URL is on App Privacy; the Terms link has to go in the App Store description, e.g. a last line `Terms of Use: https://cartworth.app/terms`, or into App Information > License Agreement. Neither is done yet.)
 - [ ] Attach all three products to version 1.0 when you submit
 
 Field-by-field values are in `APP_STORE_LISTING.md` section 9. Use them verbatim.
+
+**Done 2 Oct 2026:** group `Cartworth Pro` (ID 22434371, display name `Cartworth Pro`), Pro Yearly (Apple ID 6818549580, level 1), Pro Monthly (6818551820, level 2), Pro Lifetime (6818552644). Each is US-only at its price, with Family Sharing on (the owner confirmed it is permanent), the section 9 display name and description, the paywall screenshot from d267d52 and the section 9 review notes. All three are Prepare for Submission and none has been submitted.
 
 **Why the product IDs must be exact.** `Entitlements.productPrefix` returns `Bundle.main.bundleIdentifier`, and `Plan.productId` builds `"\(prefix).pro.\(rawValue)"`. A typo in App Store Connect does not produce an error; it produces a paywall with no prices and the message "Subscriptions aren't available right now."
 
@@ -239,7 +249,7 @@ The six shots, their captions and the content rules are specified in `APP_STORE_
 
 ## 11. 🔴 Export compliance
 
-- [ ] Confirm `ITSAppUsesNonExemptEncryption` is `false` in `ios/App/Resources/Info.plist` (it already is)
+- [x] Confirm `ITSAppUsesNonExemptEncryption` is `false` in `ios/App/Resources/Info.plist` (it already is; build 1 went through TestFlight without the question being asked)
 - [ ] If App Store Connect asks anyway, answer: the app uses encryption, and it is **exempt**
 
 **What to answer and why it is correct.** The app's only cryptography is TLS, provided by the operating system through `URLSession`, plus a single `SHA256.hash` call in `ios/App/Networking/Cache.swift` used to turn a cache key into a filename. A hash is not encryption, and OS-provided HTTPS falls squarely within the exemption for standard encryption supplied by the platform. There is no custom crypto, no bundled crypto library, and no encryption of user data at rest beyond what iOS does itself.
@@ -254,13 +264,19 @@ Because the key is already `false` in `Info.plist`, App Store Connect should sto
 
 Depends on items 1, 5, 6 and 8.
 
-- [ ] Decide the final `MARKETING_VERSION` (currently `1.0.0`) and `CURRENT_PROJECT_VERSION` (currently `1`)
-- [ ] Regenerate the project
-- [ ] Archive
-- [ ] Upload
-- [ ] Confirm the build appears in App Store Connect and finishes processing
+- [x] Decide the final `MARKETING_VERSION` (currently `1.0.0`) and `CURRENT_PROJECT_VERSION` (currently `1`)
+- [x] Regenerate the project (not needed for build 1: `project.yml` was unchanged, so the committed project was used)
+- [x] Archive
+- [x] Upload
+- [x] Confirm the build appears in App Store Connect and finishes processing
 
 **Read this first: the Xcode project is generated.** `ios/Cartworth.xcodeproj` is produced by XcodeGen from `ios/project.yml`. Any change you make in Xcode's project settings is destroyed the next time anyone runs `xcodegen generate`. Version numbers, the team, the bundle id and the device family all live in `project.yml` and must be edited there.
+
+**Done 2 Oct 2026:** 1.0.0 (1) archived with `xcodebuild archive -allowProvisioningUpdates` and uploaded with `xcodebuild -exportArchive` (`method` `app-store-connect`, `destination` `upload`). Xcode's signed-in account used cloud-managed distribution signing, so no Apple Distribution certificate had to be created on this Mac. The next upload must be build 2.
+
+**Done 5 Oct 2026:** 1.0.0 (2) uploaded the same way (from `fix-round-3` at d267d52 plus the bump), so internal testers get the current code. Every upload needs a higher build number: raise `CURRENT_PROJECT_VERSION` in `ios/project.yml` and the project first.
+
+**Build with the release Xcode, not `Xcode.app`.** On the build Mac, `/Applications/Xcode.app` is a copy of the Xcode 27.1 beta (build 27A9269, the same as `Xcode-beta.app`); the release Xcode 27.0 (27A266a) is `/Applications/Xcode 1.app`. Builds 1 and 2 came from the beta and its iOS 27.1 SDK, and TestFlight would not install them on the owner's iPhone, which runs iOS 27.0. A beta-built app also cannot be submitted to the App Store. Archive and export with `DEVELOPER_DIR="/Applications/Xcode 1.app/Contents/Developer"` in front of each `xcodebuild` (or pick it in Xcode > Settings > Locations), and check `DTSDKName` in the archived `Info.plist` reads `iphoneos27.0`. **Done 5 Oct 2026:** 1.0.0 (3) built and uploaded that way.
 
 ### The Xcode Organizer path (recommended for a first submission)
 
@@ -334,6 +350,16 @@ Setting `destination` to `upload` instead of `export` makes `-exportArchive` upl
 - [ ] Read guideline 5.2.2 and decide whether you accept the risk
 - [ ] Decide whether this needs a lawyer before launch, not after
 
+**What the owner's other app taught (checked 2 Oct 2026).** "Wisconsin Eats: Restaurants" 1.0.0
+was not rejected under 5.2.2. It came back on 28 Sep 2026 as **2.1 Information Needed**, because
+the account has little App Review history: Apple wants a screen recording from a physical device,
+purpose and audience, setup steps, the external services used, regional differences and, sixth,
+documentation of authorization for protected third-party material. Cartworth comes from the same
+account and will get the same request, and its sixth point is this item in different words. The
+App Review notes (`APP_STORE_LISTING.md` section 10) now answer all six. They say plainly that
+there is no written agreement with any retailer or with Flipp. The owner still has to record the
+video and attach it.
+
 **What the app actually does, stated plainly.** Cartworth reads prices from retailers' public websites from the user's device. Some of that reading goes through interfaces that are not published, documented developer APIs:
 
 - `ios/App/Sources/InstacartSource.swift` calls Instacart's persisted GraphQL operations, identifying them by sha256 hashes that the app **reads out of the site's own operation-hashes manifest at runtime**, with hardcoded hashes as a fallback, so it keeps working after site deploys
@@ -353,7 +379,7 @@ I am not going to tell you this is fine, because I do not know that it is. What 
 
 ## 14. 🟡 TestFlight
 
-- [ ] Add internal testers (your own team members, no review required)
+- [x] Add internal testers (your own team members, no review required). Group `Owner` (automatic distribution on) with the owner's account; build 1 is in it, and the owner is Invited (2 Oct 2026)
 - [ ] Install on at least one real iPhone and run the full flow on real data
 - [ ] If you want external testers: fill in the Beta App Description, a feedback email, and submit for Beta App Review
 

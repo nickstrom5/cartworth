@@ -88,6 +88,32 @@ final class PurchaseTests: XCTestCase {
         XCTAssertEqual(session.allTransactions().map(\.productIdentifier), [plan.productId], file: file, line: line)
     }
 
+    // MARK: - The review screenshot
+
+    /// The screenshot App Store Connect requires on each in-app purchase (APP_STORE_LISTING.md §9):
+    /// the one paywall that sells all three plans, priced. A UI test cannot take it, because the
+    /// app it launches is outside Xcode's StoreKit test environment and every plan reads "—"; this
+    /// suite is inside it. Skipped unless TEST_RUNNER_PAYWALL_SHOT=1. It puts the paywall on the
+    /// device's screen, writes `tmp/paywall-on-screen` and holds for 20 s, so the simulator's own
+    /// screenshot (status bar included) can be taken: `xcrun simctl io <udid> screenshot`.
+    func testPaywallReviewScreenshot() throws {
+        try XCTSkipUnless(ProcessInfo.processInfo.environment["PAYWALL_SHOT"] == "1", "opt-in: TEST_RUNNER_PAYWALL_SHOT=1")
+        let paywall = HostedScreen(PaywallView().environment(pro), size: UIScreen.main.bounds.size)
+        defer { paywall.tearDown() }
+        // HostedScreen's window belongs to no scene, so nothing draws it; this one has to be seen.
+        paywall.window.windowScene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        paywall.window.windowLevel = .alert + 1
+        paywall.window.makeKeyAndVisible()
+        paywall.pump(2)
+        // setUp has already required all three products; the frame itself is the check on what
+        // the rows show, since a scene window's labels do not read back the way HostedScreen's do.
+        print("PAYWALL prices:", pro.products.map { "\($0.id)=\($0.displayPrice)" })
+        let marker = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("paywall-on-screen")
+        try Data().write(to: marker)
+        defer { try? FileManager.default.removeItem(at: marker) }
+        paywall.pump(20)
+    }
+
     // MARK: - Cancel
 
     /// Cancelling at the payment sheet unlocks nothing, charges nothing and puts nothing on the
