@@ -231,3 +231,25 @@ test('GUARD: reduced motion neutralises every transition and animation', () => {
   assert.match(block, /scroll-behavior:\s*auto/);
   assert.equal([...css.matchAll(/@keyframes/g)].length, 0, 'a new @keyframes needs an iteration-count reset too');
 });
+
+test('GUARD: the three host configs send the same security headers (Cloudflare, Netlify, Vercel)', () => {
+  const NAMES = ['Content-Security-Policy', 'Strict-Transport-Security', 'Permissions-Policy', 'Cross-Origin-Opener-Policy', 'X-Frame-Options', 'X-Content-Type-Options', 'Referrer-Policy'];
+  const fromHeaders = Object.fromEntries(NAMES.map((n) => [n, (read('_headers').match(new RegExp(`^\\s+${n}: (.+)$`, 'm')) || [])[1]]));
+  const fromNetlify = Object.fromEntries(NAMES.map((n) => [n, (read('netlify.toml').match(new RegExp(`^\\s+${n} = "(.+)"$`, 'm')) || [])[1]]));
+  const vercel = JSON.parse(read('vercel.json')).headers.flatMap((h) => h.headers);
+  const fromVercel = Object.fromEntries(NAMES.map((n) => [n, vercel.find((h) => h.key === n)?.value]));
+  for (const n of NAMES) assert.ok(fromHeaders[n], `_headers has no ${n}`);
+  assert.deepEqual(fromNetlify, fromHeaders, 'netlify.toml differs from _headers');
+  assert.deepEqual(fromVercel, fromHeaders, 'vercel.json differs from _headers');
+  assert.match(fromHeaders['Permissions-Policy'], /camera=\(\)/);
+  assert.match(fromHeaders['Permissions-Policy'], /geolocation=\(\)/);
+});
+
+test('GUARD: the web fonts swap in without moving text (size-matched fallbacks, 7 Oct 2026: CLS 0.18 to 0)', () => {
+  for (const [family, fallback] of [['DM Sans', 'DM Sans Fallback'], ['Baloo 2', 'Baloo 2 Fallback']]) {
+    const faces = [...css.matchAll(new RegExp(`@font-face \\{ font-family: '${fallback}';[^}]*\\}`, 'g'))].map((m) => m[0]);
+    assert.ok(faces.length >= 2, `${fallback}: regular and bold faces`);
+    for (const f of faces) assert.match(f, /src: local\('Arial[^)]*\).*size-adjust: [\d.]+%; ascent-override: [\d.]+%; descent-override: [\d.]+%/, f);
+    assert.match(css, new RegExp(`'${family}', '${fallback}',`), `${family} is followed by ${fallback} in its font stack`);
+  }
+});

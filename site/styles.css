@@ -14,6 +14,14 @@
 @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/dm-sans-500.woff2') format('woff2'); }
 @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/dm-sans-600.woff2') format('woff2'); }
 @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/dm-sans-700.woff2') format('woff2'); }
+/* Fallbacks sized to the web fonts, so the swap from Arial to DM Sans or Baloo 2 moves no text.
+   Measured from the woff2 files against Arial's metrics (average glyph width over a sample line,
+   hhea ascent and descent); the live audit of 7 Oct 2026 found 0.18 of layout shift on a phone
+   from the swap alone. Regenerate if a font file changes. */
+@font-face { font-family: 'DM Sans Fallback'; font-weight: 400 500; src: local('Arial'), local('ArialMT'), local('Liberation Sans'); size-adjust: 104.42%; ascent-override: 95.00%; descent-override: 29.69%; line-gap-override: 0%; }
+@font-face { font-family: 'DM Sans Fallback'; font-weight: 600 700; src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'); size-adjust: 102.79%; ascent-override: 96.51%; descent-override: 30.16%; line-gap-override: 0%; }
+@font-face { font-family: 'Baloo 2 Fallback'; font-weight: 600; src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'); size-adjust: 91.80%; ascent-override: 117.43%; descent-override: 57.08%; line-gap-override: 0%; }
+@font-face { font-family: 'Baloo 2 Fallback'; font-weight: 700; src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'); size-adjust: 93.40%; ascent-override: 115.42%; descent-override: 56.10%; line-gap-override: 0%; }
 
 :root {
   color-scheme: light;
@@ -56,8 +64,8 @@
   --radius: 18px;
   --radius-sm: 12px;
   --radius-lg: 24px;
-  --font: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Baloo 2', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font: 'DM Sans', 'DM Sans Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Baloo 2', 'Baloo 2 Fallback', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, monospace;
   --gutter: 16px;
   --measure: 1120px;

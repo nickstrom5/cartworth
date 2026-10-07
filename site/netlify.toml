@@ -24,11 +24,13 @@
     X-Frame-Options = "DENY"
     # The pages are hand-written with no inline event handlers and no third-party scripts.
     Content-Security-Policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Permissions-Policy = "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=()"
+    Cross-Origin-Opener-Policy = "same-origin"
 
 [[headers]]
   for = "/*.css"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 # The free web app is served by server.js. Point /app/* at wherever it is deployed. Until then
 # /app/ returns the landing page rather than a 404. Mirrors site/_redirects.

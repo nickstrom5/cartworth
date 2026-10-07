@@ -53,7 +53,7 @@ async function startServer() {
 }
 
 const HEALTH_TOKEN = 'smoke-health-token';
-const PAGE_HEADERS = ['content-security-policy', 'x-content-type-options', 'x-frame-options', 'referrer-policy', 'strict-transport-security'];
+const PAGE_HEADERS = ['content-security-policy', 'x-content-type-options', 'x-frame-options', 'referrer-policy', 'strict-transport-security', 'permissions-policy', 'cross-origin-opener-policy'];
 
 async function checks(base) {
   console.log(`\nPages (${base})`);
@@ -63,6 +63,7 @@ async function checks(base) {
   ok(/<script[^>]+src=/.test(html), 'the page loads its script');
   for (const h of PAGE_HEADERS) ok(!!home.headers.get(h), `page header ${h}`);
   ok(!/unsafe-eval/.test(home.headers.get('content-security-policy') || ''), 'CSP has no unsafe-eval');
+  ok(/geolocation=\(\)/.test(home.headers.get('permissions-policy') || '') && /camera=\(\)/.test(home.headers.get('permissions-policy') || ''), 'Permissions-Policy turns off location and camera');
   const etag = home.headers.get('etag');
   ok(!!etag, 'pages carry an ETag');
   if (etag) ok((await fetch(`${base}/`, { headers: { 'if-none-match': etag } })).status === 304, 'an unchanged page revalidates as 304');
@@ -101,6 +102,7 @@ async function checks(base) {
   ok(state.status === 200 && /application\/json/.test(state.headers.get('content-type')), '/api/state answers JSON');
   ok(state.headers.get('x-content-type-options') === 'nosniff', 'API answers are nosniff');
   ok(state.headers.get('cache-control') === 'no-store', 'API answers are not cached');
+  ok(/^(br|gzip)$/.test(state.headers.get('content-encoding') || ''), 'API answers are compressed', state.headers.get('content-encoding') || 'none');
   ok((await fetch(`${base}/api/nope`)).status === 404, 'an unknown endpoint is 404');
   const noZip = await fetch(`${base}/api/directory`);
   ok(noZip.status >= 400 && noZip.status < 500, 'a request without a ZIP is a 4xx, not a crash', `${noZip.status}`);

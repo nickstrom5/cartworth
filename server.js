@@ -68,9 +68,23 @@ const SECURITY_HEADERS = {
   // Ignored over plain http (localhost); over https, the browser never downgrades.
   'strict-transport-security': 'max-age=31536000',
   'content-security-policy': "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
+  // Every powerful browser feature off, for this page and anything it could ever embed. The app asks
+  // for a ZIP, never for location; it only writes to the clipboard (List > Copy), for itself.
+  'permissions-policy': 'accelerometer=(), browsing-topics=(), camera=(), clipboard-write=(self), display-capture=(), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=()',
+  // A window this page opens cannot reach back into it (window.opener), and vice versa.
+  'cross-origin-opener-policy': 'same-origin',
 };
 function send(res, status, body, headers = {}) {
-  const data = typeof body === 'string' ? body : JSON.stringify(body);
+  let data = typeof body === 'string' ? body : JSON.stringify(body);
+  // API answers are compressed like the static files (/api/state is ~21 KB of JSON on every app
+  // load). Fast settings: these are built per request, not cached.
+  const enc = data.length > 1024 && res.req ? pickEncoding(res.req) : null;
+  if (enc) {
+    data = enc === 'br'
+      ? zlib.brotliCompressSync(data, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } })
+      : zlib.gzipSync(data, { level: 6 });
+    headers = { ...headers, 'content-encoding': enc, vary: 'Accept-Encoding' };
+  }
   res.writeHead(status, { 'content-type': typeof body === 'string' ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', ...headers });
   res.end(data);
 }
