@@ -16,3 +16,8 @@ try {
   if (t === 'dark') document.documentElement.dataset.theme = 'dark';
   else if (t !== 'auto') document.documentElement.dataset.theme = 'light';
 } catch {}
+// A visitor with a saved ZIP is going straight to their stores: hide the static welcome screen in
+// index.html for them (app.css), so it never flashes before the app takes over.
+try {
+  if (JSON.parse(localStorage.getItem('cartworth:v1:settings') || 'null')?.zip) document.documentElement.dataset.returning = '';
+} catch {}

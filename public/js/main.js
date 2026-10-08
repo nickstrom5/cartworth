@@ -4,7 +4,7 @@ import { useEffect, useState } from '/vendor/preact-hooks.mjs';
 import { html, Toasts, ModalHost, Notice, Spinner } from './ui.js';
 import { Icon } from './icons.js';
 import { useStore, setState, getState, pref, setPref } from './store.js';
-import { boot, loadLocations, loadDirectory, parseRoute, runSearch, go, refreshStaleWatches } from './actions.js';
+import { boot, bootLocal, loadLocations, loadDirectory, parseRoute, runSearch, go, refreshStaleWatches } from './actions.js';
 import { CompareView } from './views/compare.js';
 import { SalesView } from './views/sales.js';
 import { WatchView } from './views/watch.js';
@@ -101,7 +101,7 @@ function App() {
     window.addEventListener('hashchange', onHash);
     (async () => {
       try {
-        const own = await boot();
+        const own = await boot(local);
         if (!own.settings.zip) setState({ onboarding: true });
         else {
           loadDirectory();
@@ -160,4 +160,10 @@ function OnboardingGate() {
   return html`<${Onboarding} />`;
 }
 
-render(html`<${App} />`, document.getElementById('app'));
+// Saved settings first, synchronously, so the first render is the real screen rather than a
+// "Loading" frame. Then the static first screen in index.html (drawn before any script loaded) is
+// swapped for the live one in the same task: no paint in between, and the layout is identical.
+const local = bootLocal();
+const root = document.getElementById('app');
+root.replaceChildren();
+render(html`<${App} />`, root);
