@@ -166,7 +166,7 @@ export async function runDirect(client, Anthropic, cases, opts, onResult) {
         verdict = readVerdict(message);
         verdict.usage = message.usage;
       } catch (err) {
-        if (err instanceof Anthropic.AuthenticationError) throw new Error('the API key was rejected (set ANTHROPIC_API_KEY)');
+        if (err instanceof Anthropic.AuthenticationError) throw new Error(`the API key was rejected (${err.message}). Check ANTHROPIC_API_KEY: it should start sk-ant- and be about 100 characters (echo \${#ANTHROPIC_API_KEY})`);
         verdict = { verdict: 'error', reason: err instanceof Anthropic.APIError ? `API ${err.status}: ${err.message}` : err.message };
       }
       onResult(c, verdict);
