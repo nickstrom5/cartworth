@@ -617,7 +617,9 @@ test('control: an imported bundle is re-sanitised, so a hostile export file cann
 
 test('control: the web app loads no third-party script, style, font or pixel', () => {
   const html = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
-  const external = [...html.matchAll(/(?:src|href)="(https?:)?\/\/[^"]+"/g)].map((m) => m[0]);
+  // Tags that make the browser fetch something. Plain <a href> links (the footer's privacy and terms
+  // pages, also in the static first screen) load nothing until clicked.
+  const external = [...html.matchAll(/<(?:script|link|img|iframe|source|video|audio|embed|object)\b[^>]*\b(?:src|href|srcset|data)="(?:https?:)?\/\/[^"]+"/g)].map((m) => m[0]);
   assert.deepEqual(external, [], `public/index.html pulls in ${external.join(', ')}`);
   const js = fs.readdirSync(path.join(ROOT, 'public/js'), { recursive: true })
     .filter((f) => String(f).endsWith('.js'))

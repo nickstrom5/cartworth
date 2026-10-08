@@ -81,13 +81,18 @@ export function hasKrogerKeys() {
 }
 
 // ---------------- boot ----------------
+/** What this browser has saved, loaded before the first render: no network, so the first frame
+ * the app draws is already the right screen (and matches the first screen in index.html). */
+export function bootLocal() {
+  const own = hydrate();
+  setState({ ready: true, stores: buildStores(null, own.settings) });
+  return own;
+}
 /**
  * Load this visitor's own data, then ask the server what it can do. The server part is optional:
  * a fresh visitor with no data still gets onboarding even if /api/state is slow.
  */
-export async function boot() {
-  const own = hydrate();
-  setState({ ready: true, stores: buildStores(null, own.settings) });
+export async function boot(own = bootLocal()) {
   try {
     const s = await api('/api/state');
     setState({ server: s, counts: s.counts, health: s.health });
