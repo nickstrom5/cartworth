@@ -2221,13 +2221,18 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "celery", name: "Organic Celery Hearts"), Match.relevant, "Organic Celery Hearts")
         XCTAssertLessThan(Match.relevance(query: "celery", name: "Celery Salt McCormick"), Match.relevant, "Celery Salt McCormick")
         XCTAssertLessThan(Match.relevance(query: "celery", name: "Celery Seed"), Match.relevant, "Celery Seed")
+        XCTAssertLessThan(Match.relevance(query: "celery", name: "Celery Root (Knob)"), Match.relevant, "Celery Root (Knob)")
     }
     func testOnions() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "onions", name: "Yellow Onions 3 lb Bag"), Match.relevant, "Yellow Onions 3 lb Bag")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "onions", name: "Red Onion"), Match.relevant, "Red Onion")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "onions", name: "Fresh Yellow Onions"), Match.relevant, "Fresh Yellow Onions")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "onions", name: "Pearl Onions"), Match.relevant, "Pearl Onions")
         XCTAssertLessThan(Match.relevance(query: "onions", name: "French's Crispy Fried Onions"), Match.relevant, "French's Crispy Fried Onions")
         XCTAssertLessThan(Match.relevance(query: "onions", name: "Onion Powder McCormick"), Match.relevant, "Onion Powder McCormick")
         XCTAssertLessThan(Match.relevance(query: "onions", name: "Onion Rings Frozen"), Match.relevant, "Onion Rings Frozen")
+        XCTAssertLessThan(Match.relevance(query: "onions", name: "Green Onions (Scallions)"), Match.relevant, "Green Onions (Scallions)")
+        XCTAssertLessThan(Match.relevance(query: "onions", name: "Spring Onions"), Match.relevant, "Spring Onions")
     }
     func testChickenBroth() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "chicken broth", name: "Swanson Chicken Broth 32 oz"), Match.relevant, "Swanson Chicken Broth 32 oz")

@@ -749,19 +749,24 @@
   ],
   "reject": [
    "Celery Salt McCormick",
-   "Celery Seed"
+   "Celery Seed",
+   "Celery Root (Knob)"
   ]
  },
  {
   "query": "onions",
   "match": [
    "Yellow Onions 3 lb Bag",
-   "Red Onion"
+   "Red Onion",
+   "Fresh Yellow Onions",
+   "Pearl Onions"
   ],
   "reject": [
    "French's Crispy Fried Onions",
    "Onion Powder McCormick",
-   "Onion Rings Frozen"
+   "Onion Rings Frozen",
+   "Green Onions (Scallions)",
+   "Spring Onions"
   ]
  },
  {
