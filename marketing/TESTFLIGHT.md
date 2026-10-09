@@ -44,7 +44,8 @@ Send feedback with a screenshot from TestFlight (take a screenshot in the app an
 
 Build 4 (1.0.0) carries everything since build 3: the Thanksgiving fixes (pumpkin puree,
 scallions, celery root) and the other matcher changes. Archive it with the **release** Xcode, as
-for build 3 (`APP_STORE_CHECKLIST.md` item 12: `/Applications/Xcode 1.app`, SDK `iphoneos27.0`).
+for build 3 (`APP_STORE_CHECKLIST.md` item 12): `scripts/ios-upload.sh` does it in one command,
+with `/Applications/Xcode 1.app` by default, and prints the SDK (build 3: `iphoneos27.0`).
 
 ## Then
 
