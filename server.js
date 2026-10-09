@@ -152,8 +152,9 @@ function serveStatic(req, res, pathname) {
   if (file !== base && !file.startsWith(base.endsWith(path.sep) ? base : base + path.sep)) return send(res, 403, 'Forbidden');
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) {
-      // SPA fallback for hash-less deep links
-      if (!path.extname(rel)) return serveStatic(req, res, '/');
+      // SPA fallback for hash-less deep links. Not for dot paths: the app has no /.env or /.git,
+      // and answering them with the page made scanners report both as exposed (7 Oct review).
+      if (!path.extname(rel) && !/(^|\/)\./.test(decoded)) return serveStatic(req, res, '/');
       return send(res, 404, 'Not found');
     }
     // 'no-cache' means "check with me first", which only saves anything with a validator: without

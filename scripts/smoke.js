@@ -80,6 +80,7 @@ async function checks(base) {
   ok(head.status === 200 && (await head.text()) === '', 'HEAD / answers with no body');
   ok((await fetch(`${base}/compare/deep-link`)).status === 200, 'a deep link serves the app');
   ok((await fetch(`${base}/nope.png`)).status === 404, 'a missing file is 404');
+  for (const p of ['/.env', '/.git/HEAD', '/.git/config']) ok((await fetch(`${base}${p}`)).status === 404, `${p} is 404, not the page`);
   ok([400, 403, 404].includes((await fetch(`${base}/%`)).status), 'a malformed path is refused');
   for (const bad of ['/..%2f..%2fserver.js', '/..%2F..%2Fpackage.json', '/%2e%2e/%2e%2e/etc/passwd']) {
     const r = await fetch(`${base}${bad}`);

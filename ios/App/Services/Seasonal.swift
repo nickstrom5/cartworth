@@ -100,7 +100,7 @@ enum Seasonal {
                      list: ["halloween candy", "pumpkin", "apple cider", "caramel apples"]),
             Occasion(id: "thanksgiving-\(y)", name: "Thanksgiving", date: nth(4, weekday: 5, month: 11, year: y), symbol: "leaf.fill", blurb: "Turkey is often free or under $1/lb with a purchase — compare the weekly ads.",
                      keywords: ["turkey", "stuffing", "cranberry", "sweet potatoes", "pumpkin", "pie", "green beans", "rolls", "butter", "heavy cream", "potatoes", "gravy", "celery", "onions"],
-                     list: ["whole turkey", "stuffing", "cranberry sauce", "sweet potatoes", "russet potatoes", "green beans", "dinner rolls", "butter", "heavy cream", "pumpkin pie filling", "pie crust", "celery", "onions", "chicken broth"]),
+                     list: ["whole turkey", "stuffing", "cranberry sauce", "sweet potatoes", "russet potatoes", "green beans", "dinner rolls", "butter", "heavy cream", "pumpkin puree", "pie crust", "celery", "onions", "chicken broth"]),
             Occasion(id: "christmas-\(y)", name: "Christmas", date: d(y, 12, 25), symbol: "gift.fill", blurb: "Holiday roasts and baking — flour, sugar and butter hit yearly lows.",
                      keywords: ["ham", "prime rib", "roast", "flour", "sugar", "butter", "chocolate chips", "eggnog", "cookies", "baking", "cream cheese"],
                      list: ["spiral ham", "flour", "sugar", "butter", "chocolate chips", "eggs", "eggnog", "cream cheese"]),

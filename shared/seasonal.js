@@ -427,7 +427,7 @@ export const OCCASIONS = [
       "dinner rolls",
       "butter",
       "heavy cream",
-      "pumpkin pie filling",
+      "pumpkin puree",
       "pie crust",
       "celery",
       "onions",

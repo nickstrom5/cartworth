@@ -12,6 +12,8 @@ enum Match {
         "oj": ["orange", "juice"], "tp": ["toilet", "paper"], "evoo": ["extra", "virgin", "olive", "oil"],
         "pb": ["peanut", "butter"], "pj": ["pajama"], "bsb": ["boneless", "skinless", "breast"], "bscb": ["boneless", "skinless", "chicken", "breast"],
         "hh": ["half", "half"], "half-and-half": ["half", "half"],
+        // "100% Pure Pumpkin" is pumpkin puree (the Thanksgiving run, Dallas). Port of shared/match.js.
+        "puree": ["pure"],
         // One spelling each ("bbq sauce" finds Barbecue Sauce, "black-eyed peas" Blackeye Peas).
         // One token each: split, the "in" of "Bone-In" hid the next words from the trap check. Port of shared/match.js.
         "bone-in": ["bonein"], "skin-on": ["skinon"],

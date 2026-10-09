@@ -716,6 +716,24 @@
   "reject": []
  },
  {
+  "query": "pumpkin puree",
+  "match": [
+   "Libby's 100% Pure Pumpkin",
+   "Baker's Corner 100% Pure Pumpkin",
+   "Organic Pumpkin Puree",
+   "365 Organic Pumpkin Puree 15 oz"
+  ],
+  "reject": [
+   "Libby's Easy Pumpkin Pie Mix",
+   "Pumpkin Pie",
+   "Pie Pumpkin",
+   "Pumpkin Spice Coffee",
+   "Pumpkin Bread Mix",
+   "Pumpkin Spice Latte Creamer",
+   "Pumpkin Seeds"
+  ]
+ },
+ {
   "query": "pie crust",
   "match": [
    "Pillsbury Refrigerated Pie Crusts 2 ct",

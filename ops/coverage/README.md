@@ -119,3 +119,48 @@ Items with no answer: Irish soda bread (Michigan, South Dakota) and dumpling wra
 Oklahoma): no store near those metros listed them. Still open: ALDI's "Savoritz Protein Crackers"
 stated 120 oz at $3.99 (Massachusetts) is caught only if other results make it an outlier; the
 retailer's own listing is wrong.
+
+## Match audit with Claude (`scripts/match-audit.mjs`, added 8 Oct 2026)
+
+A second opinion on the matcher, run over a saved audit instead of live searches: for every
+distinct product the matcher picked (239 in `stats/samples.jsonl`), Claude is given the staple's
+definition (its exclusions and package-size window) and the listing, and answers `match`,
+`wrong_product`, `wrong_form`, `wrong_variety`, `wrong_size` or `unsure`, with a one-line reason.
+Only retailer listings are sent; no ZIP, state or store. It never touches a retailer.
+
+```sh
+npm install --no-save @anthropic-ai/sdk         # dev-only; the server and tests never load it
+export ANTHROPIC_API_KEY=...                    # a Claude Console key (Max plans include monthly API credits)
+node scripts/match-audit.mjs --dry-run          # the exact request and its size; no API call
+node scripts/match-audit.mjs --limit 20         # a first look, one request each
+node scripts/match-audit.mjs --batch            # all of it through the Batches API, at half price
+```
+
+Defaults: Claude Opus 5.5 at low effort, a fixed answer schema, cached instructions, and on direct
+runs the server-side refusal fallback (`fallbacks: "default"`); batches record a decline as an
+error instead. Verdicts land in `ops/coverage/match-audit-<date>.jsonl`, flagged picks are printed
+most-widely-seen first. A flag is a lead, not a fix: check it against the listing, and if it holds,
+fix it as any matcher bug (`shared/match.js` and `ios/App/Core/Match.swift`, with a regression
+test). Rough cost for the 239 picks: about $1-2 direct (short reasoning is billed as output), half that as a batch.
+
+## Thanksgiving, live (9 Oct 2026)
+
+The 14-item Thanksgiving list through `scripts/price-audit.js` at Dallas (75206), meant for seven
+states. **Stopped after Texas:** instacart.com answered HTTP 429 to this sandbox for every chain priced
+through it, as it does to the Fly server (5 Oct). The app reported each as "rate-limiting us" and
+moved on, as designed; the run script's stop check looked for the literal "429", missed that wording,
+and was stopped by hand while California started. Next run: stop on "rate-limiting" too.
+
+Dallas, from ALDI, Walmart and Whole Foods (the hosts that answered): 13 of 14 items answered, every
+price labelled. Fixed from it:
+
+- **"pumpkin pie filling" had no answer**: ALDI sells "100% Pure Pumpkin", which is not filling (no
+  sugar or spice), and pure pumpkin is what most pie recipes call for. The list item is now
+  "pumpkin puree" (Seasonal.swift and shared/seasonal.js), and the matcher reads "puree" and "pure"
+  as one word (`SYNONYMS` in both matchers), so Libby's and ALDI's Pure Pumpkin and any Pumpkin
+  Puree answer it while pie mix, pumpkin pie, pie pumpkins and pumpkin-spice products do not.
+
+For the owner, not changed: "pie crust" is answered by graham, Oreo and shortbread crusts (the
+fixture accepts "Keebler Ready Crust Graham Pie Crust", Sept 2026), so where a store's search shows
+no pastry crust, a graham crust wins Thanksgiving's pie crust. Whole Foods' celery answer was
+"Organic Celery Sticks" 8 oz; cut celery is still celery, but it sets a high median.
