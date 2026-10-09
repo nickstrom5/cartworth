@@ -178,9 +178,13 @@ enum Match {
     /// Compound names that are a different product. Ports of HEAD_COMPOUNDS / MODIFIER_COMPOUNDS.
     private static let headCompounds = ["peanut butter cup", "bacon bit", "corn flake", "corn tortilla", "flour tortilla", "celery salt", "celery seed",
         "onion salt", "garlic salt", "yogurt raisin", "yogurt covered", "yogurt pretzel", "wine glass", "glass set", "champagne flute",
-        "sugar free", "charcoal toothpaste", "chocolate milk"].map { tokens($0) }
+        "sugar free", "charcoal toothpaste", "chocolate milk",
+        // Celery root is another vegetable (Thanksgiving, NYC). Port of shared/match.js.
+        "celery root"].map { tokens($0) }
     private static let modifierCompounds = ["baking soda", "cooking wine", "creme egg", "cadbury egg", "chocolate egg", "plastic egg", "mini egg",
-        "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak"].map { tokens($0) }
+        "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak",
+        // Scallions are not onions (Thanksgiving, NYC). Port of shared/match.js.
+        "green onion", "spring onion"].map { tokens($0) }
     private static func stem(_ w: String) -> String { w.hasSuffix("s") ? String(w.dropLast()) : w }
     private static func hasPhrase(_ words: [String], _ phrase: [String]) -> Bool {
         guard !phrase.isEmpty, words.count >= phrase.count else { return false }

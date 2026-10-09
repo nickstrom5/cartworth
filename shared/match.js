@@ -196,9 +196,13 @@ const FLAVOR_OK_HEADS = new Set(['bar', 'chip', 'cereal', 'candy', 'soda', 'brea
 // the first. Both from the holiday matrix.
 const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn tortilla', 'flour tortilla', 'celery salt', 'celery seed',
   'onion salt', 'garlic salt', 'yogurt raisin', 'yogurt covered', 'yogurt pretzel', 'wine glass', 'glass set', 'champagne flute',
-  'sugar free', 'charcoal toothpaste', 'chocolate milk'];
+  'sugar free', 'charcoal toothpaste', 'chocolate milk',
+  // Celery root (celeriac) is another vegetable: Food Bazaar's "Celery Root (Knob)" answered "celery" (Thanksgiving, NYC).
+  'celery root'];
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
-  'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak'];
+  'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
+  // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
+  'green onion', 'spring onion'];
 // Tokenised with the matcher's own tokens() ("tortillas" stays "tortillas"), on first use: tokens()
 // depends on constants declared further down this file.
 let compounds = null;
