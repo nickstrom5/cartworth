@@ -2199,6 +2199,19 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin pie filling", name: "Comstock Pumpkin Pie Filling"), Match.relevant, "Comstock Pumpkin Pie Filling")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin pie filling", name: "Libby's Easy Pumpkin Pie Filling Mix"), Match.relevant, "Libby's Easy Pumpkin Pie Filling Mix")
     }
+    func testPumpkinPuree() {
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin puree", name: "Libby's 100% Pure Pumpkin"), Match.relevant, "Libby's 100% Pure Pumpkin")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin puree", name: "Baker's Corner 100% Pure Pumpkin"), Match.relevant, "Baker's Corner 100% Pure Pumpkin")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin puree", name: "Organic Pumpkin Puree"), Match.relevant, "Organic Pumpkin Puree")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin puree", name: "365 Organic Pumpkin Puree 15 oz"), Match.relevant, "365 Organic Pumpkin Puree 15 oz")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Libby's Easy Pumpkin Pie Mix"), Match.relevant, "Libby's Easy Pumpkin Pie Mix")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Pumpkin Pie"), Match.relevant, "Pumpkin Pie")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Pie Pumpkin"), Match.relevant, "Pie Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Pumpkin Spice Coffee"), Match.relevant, "Pumpkin Spice Coffee")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Pumpkin Bread Mix"), Match.relevant, "Pumpkin Bread Mix")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Pumpkin Spice Latte Creamer"), Match.relevant, "Pumpkin Spice Latte Creamer")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Pumpkin Seeds"), Match.relevant, "Pumpkin Seeds")
+    }
     func testPieCrust() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pie crust", name: "Pillsbury Refrigerated Pie Crusts 2 ct"), Match.relevant, "Pillsbury Refrigerated Pie Crusts 2 ct")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pie crust", name: "Keebler Ready Crust Graham Pie Crust"), Match.relevant, "Keebler Ready Crust Graham Pie Crust")

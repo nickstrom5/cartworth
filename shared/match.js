@@ -22,6 +22,9 @@ const SYNONYMS = {
   bscb: ['boneless', 'skinless', 'chicken', 'breast'],
   hh: ['half', 'half'],
   'half-and-half': ['half', 'half'],
+  // One word for one product: Libby's "100% Pure Pumpkin" is pumpkin puree, and Thanksgiving's
+  // "pumpkin puree" missed it, and ALDI's, by name (the Thanksgiving run, Dallas).
+  puree: ['pure'],
 };
 
 // Words that turn a product into something else when they FOLLOW the searched noun:
