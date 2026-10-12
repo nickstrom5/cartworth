@@ -1,0 +1,60 @@
+# Tests on every pull request; on main, tests then deploys the web app to Fly and smoke-tests it.
+#
+# Why: merged fixes sat undeployed for days because the Fly deploy was a manual step on the
+# owner's laptop (production served the 8 Oct build after #6 and #7 merged on 9 Oct).
+# The marketing site already deploys from main on its own (Cloudflare Workers Builds).
+#
+# The deploy job runs only when the FLY_API_TOKEN repository secret exists:
+#   fly tokens create deploy -x 999999h   (on the laptop, logged in to Fly)
+#   GitHub > nickstrom5/cartworth > Settings > Secrets and variables > Actions > New secret
+# Without it, main still gets the tests and the deploy step says how to turn it on.
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The suite never reaches a retailer: adapters are tested against local mock servers, which
+      # is also why BASKET_OFFLINE must not be set here (it refuses those too; 12 tests fail).
+      - run: npm test
+        env:
+          BASKET_DATA_DIR: ${{ runner.temp }}/basket-data
+          CHROME_PATH: /usr/bin/google-chrome
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # One deploy at a time; a newer push waits rather than racing the older one.
+    concurrency:
+      group: fly-deploy
+      cancel-in-progress: false
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip without a Fly token
+        if: env.FLY_API_TOKEN == ''
+        run: echo "::notice::No FLY_API_TOKEN secret, so the web app was not deployed. See the top of .github/workflows/ci.yml."
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: env.FLY_API_TOKEN != ''
+      # One machine, always (fly.toml): never scale out.
+      - run: flyctl deploy --remote-only --ha=false
+        if: env.FLY_API_TOKEN != ''
+      - uses: actions/setup-node@v4
+        if: env.FLY_API_TOKEN != ''
+        with:
+          node-version: 22
+      # Read-only production checks (headers, compression, refusals, health): no retailer requests.
+      - run: node --disable-warning=ExperimentalWarning scripts/smoke.js --url https://app.cartworth.app
+        if: env.FLY_API_TOKEN != ''
