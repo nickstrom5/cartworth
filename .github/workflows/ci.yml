@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       # The suite never reaches a retailer: adapters are tested against local mock servers, which
@@ -42,7 +42,7 @@ jobs:
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Skip without a Fly token
         if: env.FLY_API_TOKEN == ''
         run: echo "::notice::No FLY_API_TOKEN secret, so the web app was not deployed. See the top of .github/workflows/ci.yml."
@@ -51,7 +51,7 @@ jobs:
       # One machine, always (fly.toml): never scale out.
       - run: flyctl deploy --remote-only --ha=false
         if: env.FLY_API_TOKEN != ''
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: env.FLY_API_TOKEN != ''
         with:
           node-version: 22

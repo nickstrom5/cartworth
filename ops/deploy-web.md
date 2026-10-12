@@ -57,6 +57,14 @@ accounts; the rest are commands from the repo root.
 The certificate is issued. `npm run smoke -- --url https://cartworth.fly.dev` and one `--live` run
 passed (store directory for 60618 in 61 s, a search streamed in 4 s). It is not linked from cartworth.app until the site's `/app/` page is changed (step 4 below).
 
+## Deploys
+
+Every push to `main` runs the tests and, when the repository has a `FLY_API_TOKEN` secret, deploys
+to Fly and runs the read-only production smoke test (`.github/workflows/ci.yml`). To turn it on, on
+a machine logged in to Fly: `fly tokens create deploy -x 999999h`, then add the token at GitHub >
+Settings > Secrets and variables > Actions as `FLY_API_TOKEN`. Until then, deploy by hand:
+`fly deploy --ha=false`.
+
 ## Launch checklist
 
 Before:
