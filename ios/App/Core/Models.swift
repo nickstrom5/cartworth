@@ -247,6 +247,8 @@ struct StoreResult: Identifiable {
     var message: String?
     var cached: Bool = false
     var stale: String?
+    /// When a stale copy was fetched, so the chip can say how old it is
+    var savedAt: Date? = nil
     var ms: Int = 0
     var id: String { retailerId }
 }

@@ -174,9 +174,9 @@ function StatusStrip({ search }) {
       // Not asked: the store's queue was long or this visitor ran many new searches (src/guard.js).
       if (r.status === 'busy')
         return html`<button class="sstat off" key=${id} title=${`${r.message} Click to try again.`} onClick=${() => runSearch(search.q, { only: [id] })}>${s.short} · busy, try again</button>`;
-      return html`<span class="sstat" key=${id} title=${title + (r.stale ? ` · ⚠ ${r.stale}` : '')}>
+      return html`<span class="sstat" key=${id} title=${title + (r.stale ? ` · ⚠ ${r.stale}${r.savedAt ? ` (prices from ${new Date(r.savedAt).toLocaleString()})` : ''}` : '')}>
         <${StoreDot} id=${id} /><b>${s.short}</b> ${r.items?.length ? r.items.length : 'no results'}
-        ${r.stale && html`<span class="badge badge-warn" title=${r.stale}>stale</span>`}
+        ${r.stale && html`<span class="badge badge-warn" title=${r.stale}>${r.savedAt ? `saved ${ago(r.savedAt)}` : 'stale'}</span>`}
         ${r.cached && !r.stale && html`<span class="muted" title="Loaded from the last 20 minutes">· cached</span>`}
       </span>`;
     })}

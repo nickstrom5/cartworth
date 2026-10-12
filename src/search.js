@@ -141,7 +141,7 @@ export async function searchStore(storeId, query, settings, { fresh = false } = 
     const r = shedStale
       ? peekStale(key, maxStaleMs)
       : await withStallTimeout(
-        cached(key, (v) => (v?.cacheTtlMs != null ? Math.min(20 * MIN, v.cacheTtlMs) : 20 * MIN), () => runAdapter(storeId, src, query, zip, settings), { fresh, staleOnError: maxStaleMs > 0, maxStaleMs, onStale: (e) => (staleErr = e) }),
+        cached(key, (v) => (v?.cacheTtlMs != null ? Math.min(20 * MIN, v.cacheTtlMs) : 20 * MIN), async () => ({ ...(await runAdapter(storeId, src, query, zip, settings)), savedAt: Date.now() }), { fresh, staleOnError: maxStaleMs > 0, maxStaleMs, onStale: (e) => (staleErr = e) }),
         STORE_TIMEOUT,
         sourceHosts(src),
         { label: STORE_BY_ID[storeId].name },
@@ -150,7 +150,10 @@ export async function searchStore(storeId, query, settings, { fresh = false } = 
     health[storeId] = staleErr
       ? { ok: false, at: Date.now(), ms, error: publicError(staleErr.message), source: src.type }
       : { ok: true, at: Date.now(), ms: wasCached ? health[storeId]?.ms ?? ms : ms, error: null, source: src.type };
-    const base = { storeId, ms, cached: wasCached || !!shedStale, source: src.type, stale: shedStale || (staleErr ? friendlyError(staleErr) : null) };
+    const stale = shedStale || (staleErr ? friendlyError(staleErr) : null);
+    // Saved prices say when they were fetched, so "stale" never hides how old a price is. Answers
+    // saved before the stamp existed have none; the client then shows "stale" alone.
+    const base = { storeId, ms, cached: wasCached || !!shedStale, source: src.type, stale, savedAt: stale ? r.savedAt ?? null : null };
     // Chain-wide prices (priceBasis 'national') come from a storefront somewhere else in the
     // country. They carry no location the shopper could visit, and the radius does not apply to
     // them: the directory decided the chain belongs in this search, and the badge says what the

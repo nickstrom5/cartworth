@@ -51,7 +51,8 @@ enum PriceSearch {
             // the watch list consistent with one another during a capture.
             let items = QAShot.hideSponsored ? r.value.items.filter { !$0.sponsored } : r.value.items
             return StoreResult(retailerId: chain.id, status: items.isEmpty ? .empty : .ok, items: items, location: r.value.location,
-                               message: r.value.message, cached: wasFresh && !fresh, stale: r.staleError.map { friendly($0) }, ms: ms)
+                               message: r.value.message, cached: wasFresh && !fresh, stale: r.staleError.map { friendly($0) },
+                               savedAt: r.staleError == nil ? nil : r.storedAt, ms: ms)
         } catch {
             return StoreResult(retailerId: chain.id, status: .error(friendly(error)), items: [], location: nil, message: nil, ms: Int(Date().timeIntervalSince(started) * 1000))
         }

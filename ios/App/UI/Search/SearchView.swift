@@ -492,7 +492,15 @@ struct StoreStatusStrip: View {
                     Text("\(r.items.count)").foregroundStyle(.secondary)
                     if r.stale != nil {
                         Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange)
-                            .accessibilityLabel("saved prices; the store did not answer just now")
+                            .accessibilityHidden(true)
+                        if let saved = r.savedAt {
+                            Text(saved, format: .relative(presentation: .named, unitsStyle: .abbreviated))
+                                .foregroundStyle(.orange)
+                                .accessibilityLabel("saved prices from \(saved.formatted(.relative(presentation: .named))); the store did not answer just now")
+                        } else {
+                            Text("saved").foregroundStyle(.orange)
+                                .accessibilityLabel("saved prices; the store did not answer just now")
+                        }
                     }
                 }
             }

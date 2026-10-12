@@ -468,6 +468,31 @@ async function search(storeId, qs, { fresh = true } = {}) {
   }
 }
 
+test('DEFECT: saved prices served when the store is skipped say when the store answered', async () => {
+  seedZip('53211');
+  const before = Date.now();
+  const first = await search('costco', 'zip=53211&miles=25');
+  const after = Date.now();
+  assert.equal(first.status, 'ok', first.error || first.message);
+  assert.equal(first.savedAt, null, 'a fresh answer is not stale and carries no saved age');
+  // An hour later the 20-minute cache has expired and the guard sheds the lookup (src/guard.js),
+  // so the saved answer is served. Its savedAt is when the store answered, not when the copy was
+  // served. Nothing in this lookup reaches a retailer, so moving the clock for it is safe.
+  const ctx = contextFrom(new URL('http://x/api/search?zip=53211&miles=25&stores=costco'));
+  Object.defineProperty(ctx, 'admitCold', { value: () => false, enumerable: false });
+  const realNow = Date.now;
+  let r;
+  try {
+    Date.now = () => realNow() + 3600_000;
+    r = await searchStore('costco', 'butter', ctx);
+  } finally {
+    Date.now = realNow;
+  }
+  assert.equal(r.status, 'ok');
+  assert.match(r.stale, /busy/);
+  assert.ok(r.savedAt >= before && r.savedAt <= after, `savedAt ${r.savedAt} is not when the store answered (${before}..${after})`);
+});
+
 test('DEFECT C1: /api/search at a 10-mile radius does not price Costco’s warehouse 13.2 miles away', async () => {
   seedZip('53211');
   const r = await search('costco', 'zip=53211&miles=10');
