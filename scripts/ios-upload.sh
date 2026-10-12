@@ -20,7 +20,8 @@ echo "Using $version ($build) from $XCODE"
 [[ "$XCODE" == *[Bb]eta* ]] && { echo "$XCODE is a beta Xcode: use the release one"; exit 1; }
 
 number=$(grep -m1 'CURRENT_PROJECT_VERSION:' project.yml | grep -oE '[0-9]+')
-echo "Archiving 1.0.0 ($number)"
+marketing=$(grep -m1 'MARKETING_VERSION:' project.yml | grep -oE '[0-9]+(\.[0-9]+)+')
+echo "Archiving $marketing ($number)"
 rm -rf build/Cartworth.xcarchive build/export
 xcodebuild -project Cartworth.xcodeproj -scheme App -configuration Release \
   -destination 'generic/platform=iOS' -archivePath build/Cartworth.xcarchive \
@@ -31,7 +32,8 @@ echo "Built against $sdk"
 [[ "$sdk" == iphoneos* ]] || { echo "unexpected SDK $sdk: not uploading"; exit 1; }
 echo "(Builds must use an SDK no newer than the iOS your testers run: build 3 used iphoneos27.0.)"
 
-opts=$(mktemp -t ExportOptions).plist
+opts="$(mktemp -d)/ExportOptions.plist"
+trap 'rm -rf "$(dirname "$opts")"' EXIT
 cat > "$opts" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -44,4 +46,4 @@ cat > "$opts" <<PLIST
 PLIST
 xcodebuild -exportArchive -archivePath build/Cartworth.xcarchive -exportOptionsPlist "$opts" \
   -exportPath build/export -allowProvisioningUpdates | tail -3
-echo "Uploaded 1.0.0 ($number). It appears in App Store Connect > TestFlight after processing (10-30 min)."
+echo "Uploaded $marketing ($number). It appears in App Store Connect > TestFlight after processing (10-30 min)."

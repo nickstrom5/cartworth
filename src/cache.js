@@ -38,7 +38,13 @@ export async function cached(key, ttlMs, fn, { persist = true, fresh = false, st
       }
     }
   }
-  if (inflight.has(key)) return inflight.get(key);
+  // Every caller sharing an in-flight lookup is told if the answer is a stale copy, not only the
+  // one that started it: a second visitor's search must not show saved prices as live.
+  const settle = ({ value, staleErr }) => {
+    if (staleErr) onStale?.(staleErr);
+    return value;
+  };
+  if (inflight.has(key)) return inflight.get(key).then(settle);
   const p = (async () => {
     try {
       const value = await fn();
@@ -49,15 +55,11 @@ export async function cached(key, ttlMs, fn, { persist = true, fresh = false, st
         remember(key, value, ttl);
         if (persist) cacheSet(key, value, ttl);
       }
-      return value;
+      return { value, staleErr: null };
     } catch (err) {
       if (staleOnError) {
-        const m = mem.get(key);
-        const stale = m ? m.value : persist ? cacheGetStale(key, maxStaleMs) : undefined;
-        if (stale !== undefined) {
-          onStale?.(err);
-          return stale;
-        }
+        const stale = memStale(key, maxStaleMs) ?? (persist ? cacheGetStale(key, maxStaleMs) : undefined);
+        if (stale !== undefined) return { value: stale, staleErr: err };
       }
       throw err;
     } finally {
@@ -65,7 +67,13 @@ export async function cached(key, ttlMs, fn, { persist = true, fresh = false, st
     }
   })();
   inflight.set(key, p);
-  return p;
+  return p.then(settle);
+}
+
+/** The in-memory copy if it expired no more than maxStaleMs ago: the same bound as the disk copy. */
+function memStale(key, maxStaleMs) {
+  const hit = mem.get(key);
+  return hit && hit.expires >= Date.now() - maxStaleMs ? hit.value : undefined;
 }
 
 /**
@@ -111,9 +119,7 @@ function remember(key, value, ttlMs) {
 
 /** The last value for `key` however old (up to maxStaleMs), for a lookup we chose not to make. */
 export function peekStale(key, maxStaleMs) {
-  const hit = mem.get(key);
-  if (hit) return hit.value;
-  return cacheGetStale(key, maxStaleMs);
+  return memStale(key, maxStaleMs) ?? cacheGetStale(key, maxStaleMs);
 }
 
 export function peek(key) {

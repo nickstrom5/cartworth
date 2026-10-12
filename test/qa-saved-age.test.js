@@ -16,6 +16,8 @@ test('DEFECT: the web store chip shows the saved age instead of a bare "stale"',
 test('DEFECT: the iPhone app carries the saved time to its store chip', () => {
   const search = fs.readFileSync(new URL('../ios/App/Services/PriceSearch.swift', import.meta.url), 'utf8');
   const view = fs.readFileSync(new URL('../ios/App/UI/Search/SearchView.swift', import.meta.url), 'utf8');
-  assert.match(search, /savedAt: r\.staleError == nil \? nil : r\.storedAt/);
+  assert.match(search, /savedAt: r\.storedAt/);
+  assert.match(fs.readFileSync(new URL('../ios/App/Networking/Cache.swift', import.meta.url), 'utf8'), /staleError: error, fromCache: true, storedAt: e\.stored/);
+  assert.match(view, /TimelineView\(\.periodic/, 'the age must keep up while results stay on screen');
   assert.match(view, /r\.savedAt/);
 });

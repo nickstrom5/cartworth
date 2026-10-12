@@ -493,6 +493,21 @@ test('DEFECT: saved prices served when the store is skipped say when the store a
   assert.ok(r.savedAt >= before && r.savedAt <= after, `savedAt ${r.savedAt} is not when the store answered (${before}..${after})`);
 });
 
+test('DEFECT: saved prices served because the store failed say when the store answered', async () => {
+  seedZip('53211');
+  const before = Date.now();
+  const first = await search('costco', 'zip=53211&miles=25');
+  const after = Date.now();
+  assert.equal(first.status, 'ok', first.error || first.message);
+  // The store is asked again (fresh) and fails: fakeInstacart is off, so Instacart errors. The clock
+  // is left alone here, because this lookup does reach the (fake) network and its politeness spacing.
+  await new Promise((res) => setTimeout(res, 20));
+  const r = await searchStore('costco', 'butter', contextFrom(new URL('http://x/api/search?zip=53211&miles=25&stores=costco')), { fresh: true });
+  assert.equal(r.status, 'ok', r.error || r.message);
+  assert.ok(r.stale, 'saved prices served after a failure are marked stale');
+  assert.ok(r.savedAt >= before && r.savedAt <= after, `savedAt ${r.savedAt} is not when the store answered (${before}..${after})`);
+});
+
 test('DEFECT C1: /api/search at a 10-mile radius does not price Costco’s warehouse 13.2 miles away', async () => {
   seedZip('53211');
   const r = await search('costco', 'zip=53211&miles=10');

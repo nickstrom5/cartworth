@@ -494,9 +494,12 @@ struct StoreStatusStrip: View {
                         Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange)
                             .accessibilityHidden(true)
                         if let saved = r.savedAt {
-                            Text(saved, format: .relative(presentation: .named, unitsStyle: .abbreviated))
-                                .foregroundStyle(.orange)
-                                .accessibilityLabel("saved prices from \(saved.formatted(.relative(presentation: .named))); the store did not answer just now")
+                            // Re-drawn every minute, so the age keeps up while results stay on screen.
+                            TimelineView(.periodic(from: .now, by: 60)) { _ in
+                                Text(saved, format: .relative(presentation: .named, unitsStyle: .abbreviated))
+                                    .foregroundStyle(.orange)
+                                    .accessibilityLabel("saved prices from \(saved.formatted(.relative(presentation: .named))); the store did not answer just now")
+                            }
                         } else {
                             Text("saved").foregroundStyle(.orange)
                                 .accessibilityLabel("saved prices; the store did not answer just now")

@@ -29,7 +29,7 @@ actor Cache {
         /// Set when the value is an expired copy served because the source failed
         var staleError: Error?
         var fromCache: Bool
-        /// When the value was fetched from the source; shown with stale copies ("saved 5 hr ago")
+        /// When a stale copy was fetched from the source ("saved 5 hr ago"); nil for a fresh value
         var storedAt: Date? = nil
     }
 

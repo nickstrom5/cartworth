@@ -24,7 +24,7 @@ Thanks for testing Cartworth. Please try:
 4. Make a list and plan a trip.
 5. Pro: in TestFlight, purchases are free test purchases. You will not be charged. Try monthly, yearly or lifetime, then Restore Purchases.
 
-Some stores priced through Instacart can be slow or briefly unavailable. The app shows them as unavailable rather than guessing a price.
+Some stores priced through Instacart can be slow or briefly unavailable. The app then shows the last prices it saved for that store, with how old they are ("5 hr. ago"), or says the store is unavailable. It never guesses a price.
 
 Send feedback with a screenshot from TestFlight (take a screenshot in the app and tap Share Beta Feedback), or email support@cartworth.app.
 ```
