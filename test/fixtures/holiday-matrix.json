@@ -245,7 +245,9 @@
    "Smithfield Spiral Sliced Honey Ham",
    "HoneyBaked Spiral Ham Half"
   ],
-  "reject": []
+  "reject": [
+   "Smithfield Spiral Ham Glaze Packet"
+  ]
  },
  {
   "query": "eggs",
@@ -694,7 +696,9 @@
   "reject": [
    "Jif Creamy Peanut Butter",
    "Butter Popcorn Orville",
-   "Country Crock Spread"
+   "Country Crock Spread",
+   "Musselman's Apple Butter",
+   "Trader Joe's Speculoos Cookie Butter"
   ]
  },
  {
@@ -781,7 +785,8 @@
   "query": "flour",
   "match": [
    "Gold Medal All Purpose Flour 5 lb",
-   "King Arthur Unbleached All-Purpose Flour"
+   "King Arthur Unbleached All-Purpose Flour",
+   "King Arthur Unbleached Bread Flour 5 lb"
   ],
   "reject": [
    "Flour Tortillas Mission"
@@ -802,7 +807,8 @@
   "query": "chocolate chips",
   "match": [
    "Nestle Toll House Semi-Sweet Chocolate Chips",
-   "Ghirardelli Semi-Sweet Chocolate Chips"
+   "Ghirardelli Semi-Sweet Chocolate Chips",
+   "Nestle Toll House Semi-Sweet Chocolate Morsels 12 oz"
   ],
   "reject": [
    "Chips Ahoy Chocolate Chip Cookies"
@@ -822,7 +828,9 @@
    "Philadelphia Original Cream Cheese Brick",
    "Great Value Cream Cheese 8 oz"
   ],
-  "reject": []
+  "reject": [
+   "Pillsbury Cream Cheese Frosting"
+  ]
  },
  {
   "query": "vegetable oil",
@@ -830,13 +838,16 @@
    "Crisco Pure Vegetable Oil 48 fl oz",
    "Wesson Vegetable Oil"
   ],
-  "reject": []
+  "reject": [
+   "Season Brand Sardines in Vegetable Oil"
+  ]
  },
  {
   "query": "applesauce",
   "match": [
    "Mott's Original Applesauce",
-   "Musselman's Unsweetened Applesauce"
+   "Musselman's Unsweetened Applesauce",
+   "Musselman's Cinnamon Applesauce"
   ],
   "reject": []
  },

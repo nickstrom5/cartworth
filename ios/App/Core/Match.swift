@@ -14,6 +14,8 @@ enum Match {
         "hh": ["half", "half"], "half-and-half": ["half", "half"],
         // "100% Pure Pumpkin" is pumpkin puree (the Thanksgiving run, Dallas). Port of shared/match.js.
         "puree": ["pure"],
+        // Toll House chocolate chips are "Morsels". Port of shared/match.js.
+        "morsel": ["chip"], "morsels": ["chip"],
         // One spelling each ("bbq sauce" finds Barbecue Sauce, "black-eyed peas" Blackeye Peas).
         // One token each: split, the "in" of "Bone-In" hid the next words from the trap check. Port of shared/match.js.
         "bone-in": ["bonein"], "skin-on": ["skinon"],
@@ -93,6 +95,8 @@ enum Match {
         // Seasonings and dressings named after the dish. A 1.12 oz jar of "McCormick Pumpkin Pie
         // Spice" is correctly priced at $99.86/lb and has nothing to do with the price of a pie.
         "spice", "vinaigrette",
+        // Christmas and Hanukkah look-alikes (ham glaze, cream cheese frosting, sardines in oil). Port of shared/match.js.
+        "glaze", "frosting", "icing", "sardine", "anchovy", "mackerel", "herring",
     ]
 
     /// Whole-name markers for things that are not groceries at all.
@@ -140,7 +144,7 @@ enum Match {
     private static let benignAfter: [String: Set<String>] = ["cream": ["sweet", "whipping"], "mix": ["sprinkle"], "spray": ["ocean"], "cocktail": ["juice"], "concentrate": ["from"], "squash": ["zucchini", "yellow", "summer", "butternut", "acorn"]]
     /// A trap noun forgiven when the next word names what it is: "King Oyster Mushrooms" are
     /// mushrooms. Mirrors BENIGN_BEFORE in shared/match.js.
-    private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"]]
+    private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"], "bread": ["flour"]]
 
     /// How the food is kept, not what it is. Only these are forgiven when the retailer's own
     /// category is exactly what was searched. 'dried' is deliberately absent: dried cranberries are
@@ -174,7 +178,7 @@ enum Match {
         "bacon": ["smoked", "hardwood", "pork"],
     ]
     /// Products that normally come in flavours. Port of FLAVOR_OK_HEADS.
-    private static let flavorOkHeads: Set<String> = ["bar", "chip", "cereal", "candy", "soda", "bread", "ham", "meat", "cracker", "cookie", "sauce", "bean", "granola"]
+    private static let flavorOkHeads: Set<String> = ["bar", "chip", "cereal", "candy", "soda", "bread", "ham", "meat", "cracker", "cookie", "sauce", "bean", "granola", "applesauce"]
     /// Compound names that are a different product. Ports of HEAD_COMPOUNDS / MODIFIER_COMPOUNDS.
     private static let headCompounds = ["peanut butter cup", "bacon bit", "corn flake", "corn tortilla", "flour tortilla", "celery salt", "celery seed",
         "onion salt", "garlic salt", "yogurt raisin", "yogurt covered", "yogurt pretzel", "wine glass", "glass set", "champagne flute",
@@ -184,7 +188,9 @@ enum Match {
     private static let modifierCompounds = ["baking soda", "cooking wine", "creme egg", "cadbury egg", "chocolate egg", "plastic egg", "mini egg",
         "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak",
         // Scallions are not onions (Thanksgiving, NYC). Port of shared/match.js.
-        "green onion", "spring onion"].map { tokens($0) }
+        "green onion", "spring onion",
+        // Fruit and nut butters, and margarine that says so. Port of shared/match.js.
+        "apple butter", "pumpkin butter", "shea butter", "cocoa butter", "not butter"].map { tokens($0) }
     private static func stem(_ w: String) -> String { w.hasSuffix("s") ? String(w.dropLast()) : w }
     private static func hasPhrase(_ words: [String], _ phrase: [String]) -> Bool {
         guard !phrase.isEmpty, words.count >= phrase.count else { return false }

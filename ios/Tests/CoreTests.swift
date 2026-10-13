@@ -1949,6 +1949,7 @@ final class HolidayMatrixTests: XCTestCase {
     func testSpiralHam() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "spiral ham", name: "Smithfield Spiral Sliced Honey Ham"), Match.relevant, "Smithfield Spiral Sliced Honey Ham")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "spiral ham", name: "HoneyBaked Spiral Ham Half"), Match.relevant, "HoneyBaked Spiral Ham Half")
+        XCTAssertLessThan(Match.relevance(query: "spiral ham", name: "Smithfield Spiral Ham Glaze Packet"), Match.relevant, "Smithfield Spiral Ham Glaze Packet")
     }
     func testEggs() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "eggs", name: "Eggland's Best Large Eggs 12 ct"), Match.relevant, "Eggland's Best Large Eggs 12 ct")
@@ -2189,6 +2190,8 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertLessThan(Match.relevance(query: "butter", name: "Jif Creamy Peanut Butter"), Match.relevant, "Jif Creamy Peanut Butter")
         XCTAssertLessThan(Match.relevance(query: "butter", name: "Butter Popcorn Orville"), Match.relevant, "Butter Popcorn Orville")
         XCTAssertLessThan(Match.relevance(query: "butter", name: "Country Crock Spread"), Match.relevant, "Country Crock Spread")
+        XCTAssertLessThan(Match.relevance(query: "butter", name: "Musselman's Apple Butter"), Match.relevant, "Musselman's Apple Butter")
+        XCTAssertLessThan(Match.relevance(query: "butter", name: "Trader Joe's Speculoos Cookie Butter"), Match.relevant, "Trader Joe's Speculoos Cookie Butter")
     }
     func testHeavyCream() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "heavy cream", name: "Horizon Organic Heavy Whipping Cream"), Match.relevant, "Horizon Organic Heavy Whipping Cream")
@@ -2241,6 +2244,7 @@ final class HolidayMatrixTests: XCTestCase {
     func testFlour() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "flour", name: "Gold Medal All Purpose Flour 5 lb"), Match.relevant, "Gold Medal All Purpose Flour 5 lb")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "flour", name: "King Arthur Unbleached All-Purpose Flour"), Match.relevant, "King Arthur Unbleached All-Purpose Flour")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "flour", name: "King Arthur Unbleached Bread Flour 5 lb"), Match.relevant, "King Arthur Unbleached Bread Flour 5 lb")
         XCTAssertLessThan(Match.relevance(query: "flour", name: "Flour Tortillas Mission"), Match.relevant, "Flour Tortillas Mission")
     }
     func testSugar() {
@@ -2252,6 +2256,7 @@ final class HolidayMatrixTests: XCTestCase {
     func testChocolateChips() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "chocolate chips", name: "Nestle Toll House Semi-Sweet Chocolate Chips"), Match.relevant, "Nestle Toll House Semi-Sweet Chocolate Chips")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "chocolate chips", name: "Ghirardelli Semi-Sweet Chocolate Chips"), Match.relevant, "Ghirardelli Semi-Sweet Chocolate Chips")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "chocolate chips", name: "Nestle Toll House Semi-Sweet Chocolate Morsels 12 oz"), Match.relevant, "Nestle Toll House Semi-Sweet Chocolate Morsels 12 oz")
         XCTAssertLessThan(Match.relevance(query: "chocolate chips", name: "Chips Ahoy Chocolate Chip Cookies"), Match.relevant, "Chips Ahoy Chocolate Chip Cookies")
     }
     func testEggnog() {
@@ -2261,14 +2266,17 @@ final class HolidayMatrixTests: XCTestCase {
     func testCreamCheese() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "cream cheese", name: "Philadelphia Original Cream Cheese Brick"), Match.relevant, "Philadelphia Original Cream Cheese Brick")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "cream cheese", name: "Great Value Cream Cheese 8 oz"), Match.relevant, "Great Value Cream Cheese 8 oz")
+        XCTAssertLessThan(Match.relevance(query: "cream cheese", name: "Pillsbury Cream Cheese Frosting"), Match.relevant, "Pillsbury Cream Cheese Frosting")
     }
     func testVegetableOil() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "vegetable oil", name: "Crisco Pure Vegetable Oil 48 fl oz"), Match.relevant, "Crisco Pure Vegetable Oil 48 fl oz")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "vegetable oil", name: "Wesson Vegetable Oil"), Match.relevant, "Wesson Vegetable Oil")
+        XCTAssertLessThan(Match.relevance(query: "vegetable oil", name: "Season Brand Sardines in Vegetable Oil"), Match.relevant, "Season Brand Sardines in Vegetable Oil")
     }
     func testApplesauce() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "applesauce", name: "Mott's Original Applesauce"), Match.relevant, "Mott's Original Applesauce")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "applesauce", name: "Musselman's Unsweetened Applesauce"), Match.relevant, "Musselman's Unsweetened Applesauce")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "applesauce", name: "Musselman's Cinnamon Applesauce"), Match.relevant, "Musselman's Cinnamon Applesauce")
     }
     func testBrisket() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "brisket", name: "Beef Brisket Flat Cut"), Match.relevant, "Beef Brisket Flat Cut")

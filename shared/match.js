@@ -25,6 +25,8 @@ const SYNONYMS = {
   // One word for one product: Libby's "100% Pure Pumpkin" is pumpkin puree, and Thanksgiving's
   // "pumpkin puree" missed it, and ALDI's, by name (the Thanksgiving run, Dallas).
   puree: ['pure'],
+  // Nestle Toll House sells chocolate chips as "Morsels"; "chocolate chips" missed the best-known bag.
+  morsel: ['chip'], morsels: ['chip'],
 };
 
 // Words that turn a product into something else when they FOLLOW the searched noun:
@@ -109,6 +111,9 @@ const TRAPS = new Set([
   // is correctly priced at $99.86/lb and has nothing to do with the price of a pumpkin pie, but it
   // scored as one in every ZIP and then tripped the plausibility guard on a price that was right.
   'spice', 'vinaigrette',
+  // Christmas and Hanukkah look-alikes: a ham glaze packet is not a ham, cream cheese frosting is not
+  // cream cheese, and "Sardines in Vegetable Oil" is not vegetable oil (tuna was already a trap).
+  'glaze', 'frosting', 'icing', 'sardine', 'anchovy', 'mackerel', 'herring',
 ]);
 
 /**
@@ -143,7 +148,8 @@ const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|fa
 const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['sprinkle']), spray: new Set(['ocean']), cocktail: new Set(['juice']), concentrate: new Set(['from']), squash: new Set(['zucchini', 'yellow', 'summer', 'butternut', 'acorn']) };
 /** The mirror image: a trap noun forgiven when the word right AFTER it names what it is. "King
  * Oyster Mushrooms" are mushrooms, so 'oyster' must not bury them in a mushroom search. */
-const BENIGN_BEFORE = { oyster: new Set(['mushroom']) };
+// Bread flour is flour: 'bread' is a trap so that "banana bread" is not bananas.
+const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour']) };
 
 // Plant bases in front of the noun make a different product: "almond milk", "coconut milk", "oat creamer".
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
@@ -187,7 +193,7 @@ const QUERY_ALLOWS = Object.fromEntries(Object.entries({
   watermelon: ['mini', 'seedless', 'personal'], bar: ['oat', 'honey'], bacon: ['smoked', 'hardwood', 'pork'],
 }).map(([k, v]) => [k, new Set(v)]));
 // Products that normally come in flavours, where a flavour word is the variety, not a different food.
-const FLAVOR_OK_HEADS = new Set(['bar', 'chip', 'cereal', 'candy', 'soda', 'bread', 'ham', 'meat', 'cracker', 'cookie', 'sauce', 'bean', 'granola']);
+const FLAVOR_OK_HEADS = new Set(['bar', 'chip', 'cereal', 'candy', 'soda', 'bread', 'ham', 'meat', 'cracker', 'cookie', 'sauce', 'bean', 'granola', 'applesauce']);
 
 // Compound names that are a different product from the query word inside them. HEAD: the query
 // word is the modifier ("peanut butter cups" are candy, "celery salt" a seasoning); fires when the
@@ -202,7 +208,9 @@ const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn to
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
   'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
   // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
-  'green onion', 'spring onion'];
+  'green onion', 'spring onion',
+  // Fruit and nut butters, and margarine that says so: apple butter is not butter.
+  'apple butter', 'pumpkin butter', 'shea butter', 'cocoa butter', 'not butter'];
 // Tokenised with the matcher's own tokens() ("tortillas" stays "tortillas"), on first use: tokens()
 // depends on constants declared further down this file.
 let compounds = null;
