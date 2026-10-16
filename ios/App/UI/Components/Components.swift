@@ -173,6 +173,27 @@ extension Color {
     })
 }
 
+/// The age of a price taken from a store's saved copy because the store did not answer just now
+/// ("saved 5 hr. ago"). Re-drawn every minute so it keeps up. Port of savedNote in public/js/format.js.
+struct SavedNote: View {
+    var date: Date
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { _ in
+            Group {
+                if date > Date(timeIntervalSince1970: 0) {
+                    Text("saved ") + Text(date, format: .relative(presentation: .named, unitsStyle: .abbreviated))
+                } else {
+                    Text("saved price")
+                }
+            }
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.orange)
+            .accessibilityElement(children: .combine)
+            .accessibilityHint("The store did not answer just now, so this is the last price Cartworth saved for it")
+        }
+    }
+}
+
 struct Badge: View {
     enum Kind { case neutral, sale, good, warn, info, outline }
     let text: String

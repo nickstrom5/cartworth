@@ -190,10 +190,14 @@ export function getHealth() {
   return health;
 }
 
-/** Attach price-history stats, then record the new observations. */
-export function withHistory(items) {
+/**
+ * Attach price-history stats, then record the new observations. A saved copy served because the
+ * store did not answer (`stale`) is not a new observation: recording it would stamp a price seen up
+ * to three days ago with today's date. Callers pass `record: !result.stale`.
+ */
+export function withHistory(items, { record = true } = {}) {
   const stats = historyStats(items);
-  recordProducts(items);
+  if (record) recordProducts(items);
   return items.map((p) => (stats[p.key] ? { ...p, hist: stats[p.key] } : p));
 }
 

@@ -19,7 +19,9 @@ actor HistoryStore {
     private let repeatInterval: TimeInterval = 12 * 3600
 
     /// Stats for products (computed before recording the new prices so "prev" reflects the last visit).
-    func statsThenRecord(_ products: [Product]) -> [String: HistStats] {
+    /// `record: false` for a saved copy served because the store did not answer: it is not a new
+    /// observation, and recording it would stamp a price seen days ago with today's date.
+    func statsThenRecord(_ products: [Product], record: Bool = true) -> [String: HistStats] {
         let keys = Array(Set(products.map(\.key)))
         guard !keys.isEmpty else { return [:] }
         let descriptor = FetchDescriptor<PricePoint>(predicate: #Predicate { keys.contains($0.key) }, sortBy: [SortDescriptor(\.at)])
@@ -45,7 +47,7 @@ actor HistoryStore {
             // Record when new, changed, or stale
             let last = series.last
             let changed = last == nil || abs(last!.price - p.price) > 0.004 || (last!.regular ?? -1) != (p.regularPrice ?? -1) || last!.onSale != p.onSale
-            if changed || now.timeIntervalSince(last!.at) > repeatInterval {
+            if record, changed || now.timeIntervalSince(last!.at) > repeatInterval {
                 let dim = p.dim ?? p.dims.first
                 modelContext.insert(PricePoint(key: p.key, storeId: p.storeId, name: p.name, price: p.price, regular: p.regularPrice,
                                                unitPerBase: dim.flatMap { p.unitPrice($0)?.perBase }, dim: dim?.rawValue, onSale: p.onSale, at: now))

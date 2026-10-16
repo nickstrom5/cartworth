@@ -42,10 +42,12 @@ export async function checkWatch(spec, ctx, { fresh = false } = {}) {
   const results = await Promise.all(stores.map((s) => searchStore(s, q, ctx, { fresh })));
   const byStore = {};
   const errors = {};
+  const savedAt = {};
   for (const r of results) {
     if (r.status === 'error') errors[r.storeId] = r.error;
     else if (r.status === 'busy') errors[r.storeId] = r.message;
-    byStore[r.storeId] = withHistory(r.items || []);
+    byStore[r.storeId] = withHistory(r.items || [], { record: !r.stale });
+    if (r.stale) savedAt[r.storeId] = r.savedAt ?? 0;
   }
 
   const best = bestPerStore(query, byStore, { dim, include, exclude, prefs: ctx });
@@ -60,8 +62,11 @@ export async function checkWatch(spec, ctx, { fresh = false } = {}) {
       key: p.key, name: p.name, brand: p.brand, size: p.size, price,
       regularPrice: p.regularPrice, onSale: p.onSale, promo: p.promo, unitPerBase: b.unit.perBase, est: b.unit.est, member: b.unit.member,
       memberLabel: p.memberLabel, url: p.url, image: p.image, soldBy: p.soldBy, priceBasis: p.priceBasis, hist: p.hist || null,
+      ...(storeId in savedAt ? { savedAt: savedAt[storeId] } : {}),
     };
-    points.push({ storeId, pkey: p.key, name: p.name, price, unit: b.unit.perBase, onSale: !!p.onSale, t: now });
+    // A saved copy is not a new reading: a point stamped now would put a days-old price on today's
+    // date in the watch's history, and a drop it never saw could alert.
+    if (!(storeId in savedAt)) points.push({ storeId, pkey: p.key, name: p.name, price, unit: b.unit.perBase, onSale: !!p.onSale, t: now });
     if (!overall || b.unit.perBase < overall.unitPerBase) overall = { storeId, unitPerBase: b.unit.perBase };
   }
 

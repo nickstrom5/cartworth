@@ -350,6 +350,7 @@ struct TripPlanSummary: View {
                                         if let p = c.product {
                                             Text([p.size.isEmpty ? nil : p.size, Money.full(p.price) + (p.soldBy == .lb ? "/lb" : "")].compactMap { $0 }.joined(separator: " · "))
                                                 .font(.caption).foregroundStyle(.secondary).unbreakablePrice()
+                                            if let saved = p.savedAt { SavedNote(date: saved) }
                                         }
                                     }
                                 }

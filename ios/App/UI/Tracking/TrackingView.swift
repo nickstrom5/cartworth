@@ -230,6 +230,7 @@ struct WatchCard: View {
                     if let b = watch.result?.stores[bestId] {
                         if let tag = PriceProvenance.badge(b.priceBasis) { Badge(text: tag, kind: .outline) }
                         if b.est { Badge(text: "est.", kind: .outline) }
+                        if let saved = b.savedAt { SavedNote(date: saved) }
                     }
                 }
             } else if let err = watch.lastError {
@@ -245,6 +246,7 @@ struct WatchCard: View {
                         Text(best.name).font(.caption).lineLimit(1)
                         Text([best.size, Money.full(best.price) + (best.soldBy == .lb ? "/lb" : ""), best.onSale ? "sale" : nil, PriceProvenance.badge(best.priceBasis), best.est ? "est." : nil].compactMap { $0 }.joined(separator: " · "))
                             .font(.caption2).foregroundStyle(.secondary)
+                        if let saved = best.savedAt { SavedNote(date: saved) }
                     }
                     Spacer()
                     if let du = status.du {

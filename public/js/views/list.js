@@ -4,7 +4,7 @@ import { html, StoreTag, StoreDot, Spinner, Notice, Empty, Seg, storeInfo, Produ
 import { Icon } from '../icons.js';
 import { useStore, setState, toast } from '../store.js';
 import { addToList, updateListItem, removeListItem, clearDoneItems, optimizeList, runSearch } from '../actions.js';
-import { money2, plural, ago, unitLabel, BASIS_LABEL, BASIS_TITLE, linkDestination } from '../format.js';
+import { money2, plural, ago, unitLabel, savedNote, BASIS_LABEL, BASIS_TITLE, linkDestination } from '../format.js';
 import { formatSize } from '/shared/units.js';
 import { planSavingsClaim } from '/shared/compare.js';
 
@@ -181,7 +181,7 @@ function PlanView({ plan, onRefresh, planning }) {
                   <${ProductImage} src=${c.product.image} size=${34} />
                   <div class="grow">
                     <div style=${{ fontWeight: 600 }}>${i.qty > 1 ? `${i.qty} × ` : ''}${i.text}</div>
-                    <div class="muted small">${c.product.url ? html`<a href=${c.product.url} target="_blank" rel="noopener noreferrer" title=${linkDestination(c.product.url, storeInfo(storeId))?.text}>${c.product.name}</a>` : c.product.name}${c.product.size ? ` · ${c.product.size}` : ''} · ${money2(c.product.price)}${c.product.soldBy === 'lb' ? '/lb' : ''}${c.product.onSale ? ' · on sale' : ''}${c.product.priceBasis ? html` · <span title=${BASIS_TITLE[c.product.priceBasis]}>${BASIS_LABEL[c.product.priceBasis] || BASIS_LABEL.online}</span>` : ''}</div>
+                    <div class="muted small">${c.product.url ? html`<a href=${c.product.url} target="_blank" rel="noopener noreferrer" title=${linkDestination(c.product.url, storeInfo(storeId))?.text}>${c.product.name}</a>` : c.product.name}${c.product.size ? ` · ${c.product.size}` : ''} · ${money2(c.product.price)}${c.product.soldBy === 'lb' ? '/lb' : ''}${c.product.onSale ? ' · on sale' : ''}${c.product.priceBasis ? html` · <span title=${BASIS_TITLE[c.product.priceBasis]}>${BASIS_LABEL[c.product.priceBasis] || BASIS_LABEL.online}</span>` : ''}${savedNote(c) ? html` · <span class="saved-note" title="The store did not answer just now, so this is the last price Cartworth saved for it">${savedNote(c)}</span>` : ''}</div>
                   </div>
                   <div class="num" style=${{ fontWeight: 650, textAlign: 'right' }}>
                     ${money2(c.cost)}${c.est ? html`<span class="muted small"> est.</span>` : ''}
@@ -217,7 +217,7 @@ function PlanView({ plan, onRefresh, planning }) {
                 ${storesUsed.map((s) => {
                   const c = i.perStore[s];
                   const cellBasis = c?.product?.priceBasis || 'shelf';
-                  return html`<td key=${s} class=${i.cheapest === s ? 'cheap' : ''} title=${c ? `${c.product.name}${c.product.size ? ' · ' + c.product.size : ''}${cellBasis !== 'shelf' ? ' — ' + BASIS_LABEL[cellBasis] : ''}` : 'Not found'}>${c ? money2(c.cost) : html`<span class="muted">—</span>`}</td>`;
+                  return html`<td key=${s} class=${i.cheapest === s ? 'cheap' : ''} title=${c ? `${c.product.name}${c.product.size ? ' · ' + c.product.size : ''}${cellBasis !== 'shelf' ? ' — ' + BASIS_LABEL[cellBasis] : ''}${savedNote(c) ? ` — ${savedNote(c)}` : ''}` : 'Not found'}>${c ? money2(c.cost) : html`<span class="muted">—</span>`}${c && savedNote(c) ? html`<div class="saved-note small">${savedNote(c)}</div>` : ''}</td>`;
                 })}
               </tr>`,
             )}

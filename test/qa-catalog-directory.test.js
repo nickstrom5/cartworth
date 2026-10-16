@@ -508,6 +508,60 @@ test('DEFECT: saved prices served because the store failed say when the store an
   assert.ok(r.savedAt >= before && r.savedAt <= after, `savedAt ${r.savedAt} is not when the store answered (${before}..${after})`);
 });
 
+// Trip plans and watches use the same saved copies. Two days on, with every lookup shed, a plan and
+// a watch are both priced from the copy saved now: they must say so, and neither may write that
+// days-old price into the price history (or a watch's own history) as if it were seen today.
+async function shedTwoDaysOn(fn) {
+  seedZip('53211');
+  const first = await search('costco', 'zip=53211&miles=25');
+  assert.equal(first.status, 'ok', first.error || first.message);
+  const ctx = contextFrom(new URL('http://x/api/search?zip=53211&miles=25&stores=costco'));
+  Object.defineProperty(ctx, 'admitCold', { value: () => false, enumerable: false });
+  const realNow = Date.now;
+  const later = realNow() + 2 * 86400_000;
+  try {
+    Date.now = () => later; // frozen is safe here: nothing in a shed lookup waits on the clock
+    return { out: await fn(ctx), key: first.items[0].key, later };
+  } finally {
+    Date.now = realNow;
+  }
+}
+
+test('DEFECT: a trip plan priced from saved prices says when they were saved, and records no history', async () => {
+  const { optimize } = await import('../src/list.js');
+  const { productHistory } = await import('../src/history.js');
+  const { out, key, later } = await shedTwoDaysOn((ctx) => optimize([{ id: 1, text: 'butter' }], ctx));
+  const cell = out.items[0].perStore.costco;
+  assert.ok(cell, JSON.stringify(out.items[0]));
+  assert.ok(cell.savedAt > 0 && cell.savedAt < later - 86400_000, `savedAt ${cell.savedAt}`);
+  assert.ok(!productHistory(key).series.some((pt) => pt.t >= later), 'a saved price was recorded as seen two days later');
+});
+
+test('DEFECT: a watch checked from saved prices marks them saved and adds no reading', async () => {
+  const { checkWatch } = await import('../src/watch.js');
+  const { productHistory } = await import('../src/history.js');
+  const { out, key, later } = await shedTwoDaysOn((ctx) => checkWatch({ query: 'butter' }, ctx));
+  assert.ok(!productHistory(key).series.some((pt) => pt.t >= later), 'a saved price was recorded as seen two days later');
+  assert.ok(out.result.stores.costco, JSON.stringify(out.result));
+  assert.ok(out.result.stores.costco.savedAt > 0 && out.result.stores.costco.savedAt < later - 86400_000);
+  assert.deepEqual(out.points, [], 'a saved price became a new watch reading');
+});
+
+test('control: a watch checked live adds its reading and carries no saved time', async () => {
+  const { checkWatch } = await import('../src/watch.js');
+  seedZip('53211');
+  setKV('ic:session:https://www.instacart.com', { cookies: { '__Host-instacart_sid': 'qa' }, created: Date.now() });
+  fakeInstacart = { items: [BUTTER] };
+  let out;
+  try {
+    out = await checkWatch({ query: 'butter' }, contextFrom(new URL('http://x/api/search?zip=53211&miles=25&stores=costco')), { fresh: true });
+  } finally {
+    fakeInstacart = null;
+  }
+  assert.equal(out.points.length, 1);
+  assert.equal('savedAt' in out.result.stores.costco, false);
+});
+
 test('DEFECT C1: /api/search at a 10-mile radius does not price Costco’s warehouse 13.2 miles away', async () => {
   seedZip('53211');
   const r = await search('costco', 'zip=53211&miles=10');
