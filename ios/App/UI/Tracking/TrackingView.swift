@@ -93,6 +93,7 @@ struct TrackingView: View {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button { Task { for w in watches { await refresh(w) } } } label: { Image(systemName: "arrow.clockwise") }
                             .disabled(!refreshing.isEmpty)
+                            .accessibilityLabel("Check every price now")
                     }
                 }
             }
@@ -206,6 +207,7 @@ struct WatchCard: View {
                         Button { onCompare() } label: { Label("Compare now", systemImage: "magnifyingglass") }
                         Button(role: .destructive) { onDelete() } label: { Label("Remove", systemImage: "trash") }
                     } label: { Image(systemName: "ellipsis.circle").foregroundStyle(.secondary) }
+                    .accessibilityLabel("Options for \(watch.label)")
                 }
             }
 

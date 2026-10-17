@@ -107,7 +107,7 @@ struct PaywallView: View {
         }
 
         if let message { Text(message).font(.footnote).foregroundStyle(.secondary) }
-        if let err = pro.loadError { Text(err).font(.footnote).foregroundStyle(.orange) }
+        if let err = pro.loadError { Text(err).font(.footnote).foregroundStyle(Color.warnInk) }
 
         Button {
             Task { await buy() }

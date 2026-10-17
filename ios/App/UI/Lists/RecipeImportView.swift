@@ -105,7 +105,7 @@ struct RecipeImportView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Or paste the ingredients", systemImage: "text.alignleft").font(.subheadline.weight(.semibold))
                     TextEditor(text: $pastedText)
-                        .frame(height: 120)
+                        .frame(minHeight: 120)
                         .padding(6)
                         .background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
                     Button("Use this text") { Task { await handle(text: pastedText) } }

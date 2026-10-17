@@ -7,6 +7,8 @@ struct DealDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var detail: FlippSource.Detail?
     @State private var added = false
+    /// The ad price, scaled with Dynamic Type (it was a flat 30 pt). See `HeroBestCard.heroSize`.
+    @ScaledMetric(relativeTo: .title) private var priceSize: CGFloat = 30
 
     private var description: String? { detail?.description ?? deal.description }
     private var disclaimer: String? { detail?.disclaimer ?? deal.disclaimer }
@@ -29,7 +31,8 @@ struct DealDetailView: View {
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(deal.priceText.isEmpty ? (deal.story ?? "See ad") : deal.priceText)
-                        .font(.system(size: 30, weight: .bold))
+                        .font(.system(size: priceSize, weight: .bold))
+                        .minimumScaleFactor(0.6)
                     if deal.qty > 1, let each = deal.each { Text("\(Money.full(each)) each").foregroundStyle(.secondary) }
                     if let reg = deal.regular ?? ProductFactory.money(deal.regularText) {
                         Text("Regular \(Money.full(reg))\(deal.pctOff.map { " · save \($0)%" } ?? "")").font(.subheadline).foregroundStyle(.secondary)

@@ -40,6 +40,19 @@ extension Color {
     init(hex: UInt32) {
         self.init(.sRGB, red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255, blue: Double(hex & 0xFF) / 255, opacity: 1)
     }
+
+    /// Text in a warning or error colour. System orange is 2.2:1 on white and system red 3.6:1,
+    /// under the 4.5:1 small text needs; these are the `Badge` inks (7.0:1 and 6.5:1 on white,
+    /// 10.8:1 and 7.5:1 on Dark Mode's grouped background), and follow Dark Mode by themselves.
+    static let warnInk = dynamic(light: 0x7A5100, dark: 0xF2C95C)
+    static let badInk = dynamic(light: 0xB3261E, dark: 0xFF8A80)
+
+    private static func dynamic(light: UInt32, dark: UInt32) -> Color {
+        Color(UIColor { trait in
+            let v = trait.userInterfaceStyle == .dark ? dark : light
+            return UIColor(red: CGFloat((v >> 16) & 0xFF) / 255, green: CGFloat((v >> 8) & 0xFF) / 255, blue: CGFloat(v & 0xFF) / 255, alpha: 1)
+        })
+    }
 }
 
 struct StoreDot: View {
@@ -187,7 +200,7 @@ struct SavedNote: View {
                 }
             }
             .font(.caption2.weight(.semibold))
-            .foregroundStyle(.orange)
+            .foregroundStyle(Color.warnInk)
             .accessibilityElement(children: .combine)
             .accessibilityHint("The store did not answer just now, so this is the last price Cartworth saved for it")
         }
@@ -244,7 +257,7 @@ struct Badge: View {
         case .neutral, .outline: return .secondary
         case .sale: return Color(hex: dark ? 0xFF9A6B : 0xB23A0C)
         case .good: return Color(hex: dark ? 0x6FD08C : 0x146B14)
-        case .warn: return Color(hex: dark ? 0xF2C95C : 0x7A5100)
+        case .warn: return .warnInk
         case .info: return Color(hex: dark ? 0x7DB4FF : 0x1C5CAB)
         }
     }

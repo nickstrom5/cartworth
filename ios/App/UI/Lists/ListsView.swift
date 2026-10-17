@@ -102,6 +102,7 @@ struct ListsView: View {
                             Button { copyList() } label: { Label("Copy list", systemImage: "doc.on.doc") }
                             Button(role: .destructive) { delete(entries) } label: { Label("Clear everything", systemImage: "trash") }
                         } label: { Image(systemName: "ellipsis.circle") }
+                        .accessibilityLabel("List options")
                     }
                 }
             }
@@ -161,9 +162,13 @@ struct ListsView: View {
             }
             Spacer()
             if e.qty > 1 { Text("×\(e.qty)").font(.footnote).foregroundStyle(.secondary) }
-            Button { router.compare(e.pinned?.name ?? e.text) } label: { Image(systemName: "magnifyingglass") }
+            Button { router.compare(e.pinned?.name ?? e.text) } label: {
+                // 44 pt: Apple's minimum tap target; the bare glyph was about 20.
+                Image(systemName: "magnifyingglass").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+            }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
+                .accessibilityLabel("Compare prices for \(e.pinned?.name ?? e.text)")
         }
         .swipeActions(edge: .leading) {
             Button { e.qty += 1; try? ctx.save() } label: { Label("More", systemImage: "plus") }.tint(.blue)
@@ -276,7 +281,7 @@ struct TripPlanSummary: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                 if o.1.missing > 0 {
-                    Text("\(o.1.missing) not found").font(.caption2).foregroundStyle(.orange)
+                    Text("\(o.1.missing) not found").font(.caption2).foregroundStyle(Color.warnInk)
                 } else if i > 0, let single = plan.single.first,
                           let claim = TripPlanner.savingsClaim(o.1, over: single, items: plan.items) {
                     // "saves $X" only between two all-shelf plans; see

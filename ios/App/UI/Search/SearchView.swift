@@ -81,6 +81,7 @@ struct SearchView: View {
                     ToolbarItem(placement: .topBarLeading) {
                         Button { start(model.query, fresh: true) } label: { Image(systemName: "arrow.clockwise") }
                             .disabled(model.isRunning)
+                            .accessibilityLabel("Check every store again")
                     }
                 }
             }
@@ -497,11 +498,11 @@ struct StoreStatusStrip: View {
                             // Re-drawn every minute, so the age keeps up while results stay on screen.
                             TimelineView(.periodic(from: .now, by: 60)) { _ in
                                 Text(saved, format: .relative(presentation: .named, unitsStyle: .abbreviated))
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.warnInk)
                                     .accessibilityLabel("saved prices from \(saved.formatted(.relative(presentation: .named))); the store did not answer just now")
                             }
                         } else {
-                            Text("saved").foregroundStyle(.orange)
+                            Text("saved").foregroundStyle(Color.warnInk)
                                 .accessibilityLabel("saved prices; the store did not answer just now")
                         }
                     }
