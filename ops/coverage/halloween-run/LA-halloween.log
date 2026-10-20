@@ -1,0 +1,8 @@
+
+== 70115 New Orleans: 8 priced stores (traderjoes, wholefoods, aldi, freshmarket, rouses, costco, samsclub, walmart); unresolved: none
+70115 halloween candy $3.92/lb     rouses [online] "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows" 8 oz $1.96 | Less than the next-best store, {store} (chain-wide price)
+70115 pumpkin         $1.45/ct     rouses [online] "Licensed LSU Tigers Pumpkin" 8 ct $11.59 | Less than the next-best store, {store} (shelf price)
+70115 apple cider     $6.90/gal    aldi [shelf] "Nature's Nectar Honeycrisp Apple Cider" 64 fl oz $3.45 | {amount}/{unit} (48%) less than the next-best store, {store}
+70115 caramel apples  $3.07/lb     aldi [shelf est] "Caramel Apples" 3 ct $3.69 | Less than the next-best store, {store} (shelf price)
+
+wrote 4 answers to /Users/nicksoderstrom/cartworth/ops/coverage/halloween-run/LA-halloween.json

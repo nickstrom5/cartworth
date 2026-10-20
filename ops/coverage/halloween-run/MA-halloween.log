@@ -1,0 +1,8 @@
+
+== 02130 Jamaica Plain: 14 priced stores (wholefoods, traderjoes, aldi, stopandshop, starmarket, hmart, wegmans, 99ranch, bjs, costco, hannaford, bigy, freshmarket, walmart); unresolved: none
+02130 halloween candy $4.91/lb     walmart [national] "Child's Play Individually Wrapped Assorted Halloween Candy" 16.2 oz $4.97 | About the same as {store} (shelf price), so no saving is claimed
+02130 pumpkin         $1.49/ct     traderjoes [shelf] "Lil' Tiger Stripe Pumpkin" 1 ea $1.49 | About the same as {store} (online price), so no saving is claimed
+02130 apple cider     $5.38/gal    stopandshop [online] "Store Brand Apple 100% Cider" 64 fl oz $2.69 | {amount}/{unit} (4%) less than the next-best store, {store} (both online prices)
+02130 caramel apples  $3.07/lb     aldi [shelf est] "Caramel Apples" 3 ct $3.69 | About the same as {store} (estimated price), so no saving is claimed
+
+wrote 4 answers to /Users/nicksoderstrom/cartworth/ops/coverage/halloween-run/MA-halloween.json
