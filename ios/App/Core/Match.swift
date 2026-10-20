@@ -93,6 +93,10 @@ enum Match {
         // Seasonings and dressings named after the dish. A 1.12 oz jar of "McCormick Pumpkin Pie
         // Spice" is correctly priced at $99.86/lb and has nothing to do with the price of a pie.
         "spice", "vinaigrette",
+        // Pie filling and marshmallows named after a Halloween treat: "Lucky Leaf Caramel Apple Fruit
+        // Filling" answered "caramel apples", "Jet-Puffed Candy Corn Shaped Halloween Fall
+        // Marshmallows" "halloween candy" (the Halloween run). Mirrors shared/match.js.
+        "filling", "marshmallow",
     ]
 
     /// Whole-name markers for things that are not groceries at all.
@@ -108,7 +112,7 @@ enum Match {
     private static let aLaRx = Rx("\\ba la\\b")
     private static let supplementRx = Rx("\\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewables?)\\b")
     private static let wantsSupplementRx = Rx("\\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\\b")
-    private static let nonGroceryRx = Rx("\\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\\b")
+    private static let nonGroceryRx = Rx("\\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?|gift bags?|battery[- ]operated|books?)\\b")
 
     /// Imitation markers: a product that says it merely tastes like the thing is not the thing.
     /// Flavoured waters named after the drink they taste of ("Spiced Cider Sparkling Water" is not
@@ -179,6 +183,8 @@ enum Match {
     private static let headCompounds = ["peanut butter cup", "bacon bit", "corn flake", "corn tortilla", "flour tortilla", "celery salt", "celery seed",
         "onion salt", "garlic salt", "yogurt raisin", "yogurt covered", "yogurt pretzel", "wine glass", "glass set", "champagne flute",
         "sugar free", "charcoal toothpaste", "chocolate milk",
+        // A pumpkin pie is not a pumpkin (Halloween). Port of shared/match.js.
+        "pumpkin pie",
         // Celery root is another vegetable (Thanksgiving, NYC). Port of shared/match.js.
         "celery root"].map { tokens($0) }
     private static let modifierCompounds = ["baking soda", "cooking wine", "creme egg", "cadbury egg", "chocolate egg", "plastic egg", "mini egg",
@@ -197,11 +203,14 @@ enum Match {
     private static let champagneGrapesRx = Rx("\\bchampagne grapes?\\b")
     private static let grapeRx = Rx("\\bgrape")
     /// Ports of NON_FOOD_CATEGORY_RE, LUNCH_*_RE, PRODUCE_HEAD_RE, PRODUCE_WORD_RE (the state x holiday audit).
-    private static let nonFoodCategoryRx = Rx("\\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|crafts?|disposable|cutlery|utensils?|tableware|herbal tea|pet (?:food|treats|supplies)|dog|cat)\\b")
+    private static let nonFoodCategoryRx = Rx("\\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|decor|gift bags?|crafts?|disposable|cutlery|utensils?|tableware|herbal tea|pet (?:food|treats|supplies)|dog|cat)\\b")
     private static let lunchNameRx = Rx("\\b(?:deli|sliced|lunchmeat|lunch meat|cold cuts?)\\b")
     private static let lunchCatRx = Rx("\\b(?:deli|lunch ?meats?|lunchmeat|cold cuts?)\\b")
     private static let produceHeadRx = Rx("^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|parsley|basil|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|garlic|ginger|scallion|avocado)$")
     private static let produceWordRx = Rx("^(?:onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$")
+    /// "pumpkin" alone is a pumpkin to carve, not a mini or ornamental one, a licensed novelty or a
+    /// pail (the Halloween run). Port of DECORATIVE_PUMPKIN_RE.
+    private static let decorativePumpkinRx = Rx("\\b(?:mini|miniature|ornamental|decorative|decor|jack be little|wee b(?:ee)? little|lil ?tiger|licensed|pails?|buckets?)\\b")
     private static let sweetPotatoRx = Rx("\\bsweet potato")
     private static let otherPotatoRx = Rx("\\b(?:russet|yukon|red potato|gold potato|white potato)")
     private static let freshVegMeatRx = Rx("^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$")
@@ -429,6 +438,7 @@ enum Match {
             if !others.isEmpty { mult *= 0.3 }
             if (catTok.contains("juice") || catTok.contains("juices") || catTok.contains("pressed")) && !qset.contains("juice") { mult *= 0.3 }
         }
+        if head == "pumpkin" && decorativePumpkinRx.test(nameNorm) && !decorativePumpkinRx.test(normalize(query)) { mult *= 0.2 }
         if sweetPotatoRx.test(normalize(query)) && otherPotatoRx.test(nameNorm) { mult *= 0.2 }
         if freshVegMeatRx.test(head) {
             if let m = shelfFormRx.match(nameNorm)?.first ?? nil {

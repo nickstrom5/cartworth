@@ -164,3 +164,34 @@ For the owner, not changed: "pie crust" is answered by graham, Oreo and shortbre
 fixture accepts "Keebler Ready Crust Graham Pie Crust", Sept 2026), so where a store's search shows
 no pastry crust, a graham crust wins Thanksgiving's pie crust. Whole Foods' celery answer was
 "Organic Celery Sticks" 8 oz; cut celery is still celery, but it sets a high median.
+
+## Halloween, live (19-20 Oct 2026)
+
+The 4-item Halloween list through `ops/coverage/holiday-matrix.mjs` in CO (80218), FL (33135),
+LA (70115), MA (02130), OH (43214), PA (19147), TX (75206) and WA (98103). Every store answered.
+Apple cider was right in all eight. Fixed from it (`test/qa-halloween.test.js`, fixture cases in
+`test/fixtures/holiday-matrix.json`, both matchers):
+
+- **"caramel apples"**: Meijer and Food Lion headlined "Lucky Leaf Caramel Apple Fruit Filling", 21 oz
+  of pie filling. 'filling' is a trap word now; "pumpkin pie filling" still finds filling.
+- **"halloween candy"**: Rouses and ShopRite headlined "Jet-Puffed Candy Corn Shaped Halloween Fall
+  Marshmallows". 'marshmallow' is a trap word now; "marshmallows" still finds them.
+- **"pumpkin"**: Rouses headlined "Licensed LSU Tigers Pumpkin", 8 ct. Gift bags, a pail, a bucket,
+  LED decor, a children's book and BJ's 12 inch pumpkin pie all scored above 0.8.
+- **Per-lb pumpkins**: Grocery Outlet's $0.99/lb "Small White Pumpkin" came to $0.26 a pumpkin through
+  Instacart's "each (est.)" figure and was Seattle's best. The same estimates put Key Food's pumpkin
+  at 10 lb and Star Market's "Weight Between 4-5 Lb" at 1.5 lb. A pumpkin sold by the pound now keeps
+  only its per-lb price (`pieceWeightVaries` in shared/units.js and Units.swift). It is listed, not
+  ranked per pumpkin.
+
+Decided, reversible: on its own, "pumpkin" means a pumpkin to carve. Every state's headline was a mini
+decorative pumpkin (Trader Joe's "Lil' Tiger Stripe Pumpkin" $1.49 in four states, "Mini Pumpkin"
+$0.99, "Wee B Little" $1.00), ranked per pumpkin against carving pumpkins at $4 to $9. Mini, miniature,
+ornamental, decor, Jack Be Little, Wee B Little, Lil' Tiger, licensed, pail and bucket no longer
+answer "pumpkin" (`DECORATIVE_PUMPKIN_RE`). A search for "mini pumpkins" still finds them. Pie pumpkins
+and heirloom pumpkins still answer.
+
+Not changed, for the next pass: "caramel apples" also scores caramel-apple candies (Werther's Apple
+Soft Caramels, Tootsie Apple Pops) and Whole Foods' "Caramel Apple Blossom" pastry at 0.8. None of them
+won a store. Variety names for mini pumpkins that do not say so (Hooligan, Munchkin) still
+answer "pumpkin".

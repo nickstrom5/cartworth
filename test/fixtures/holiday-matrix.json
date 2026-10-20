@@ -591,20 +591,41 @@
   "query": "halloween candy",
   "match": [
    "Hershey's Halloween Candy Assortment Snack Size",
-   "Mars Halloween Candy Variety Pack"
+   "Mars Halloween Candy Variety Pack",
+   "Mars & Chocolate Halloween Candy Variety Bulk",
+   "Child's Play Individually Wrapped Assorted Halloween Candy"
   ],
-  "reject": []
+  "reject": [
+   "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows"
+  ]
  },
  {
   "query": "pumpkin",
   "match": [
    "Pie Pumpkin",
-   "Carving Pumpkin Large"
+   "Carving Pumpkin Large",
+   "Pumpkin",
+   "Jumbo Pumpkin",
+   "Halloween Pumpkins",
+   "Rent's Due Ranch Local Organic |Jack-O-Lantern Pumpkins",
+   "Heirloom Pumpkins, Each, Assorted Colors",
+   "Sugar Pie Pumpkin"
   ],
   "reject": [
    "Libby's Pumpkin Pie Mix",
    "Pumpkin Spice Coffee Creamer",
-   "Pumpkin Seeds"
+   "Pumpkin Seeds",
+   "Licensed LSU Tigers Pumpkin",
+   "Lil' Tiger Stripe Pumpkin",
+   "Mini Pumpkin",
+   "Wee B Little Mini Orange Pumpkin",
+   "PUMPKIN JACK BE LITTLE",
+   "Lolita Ornamental Pumpkin",
+   "Kercher's Sunrise Orchards Fall Pumpkin Decor",
+   "Meijer Corporate Seasonal Hot Pink Halloween Pumpkin Pail",
+   "SYLVANIA LED Battery-Operated Ghost Pumpkin Bat",
+   "Ten Little Pumpkins Book",
+   "Wellsley Farms 12 Inch Pumpkin Pie"
   ]
  },
  {
@@ -622,9 +643,13 @@
   "query": "caramel apples",
   "match": [
    "Caramel Apples 4 ct",
-   "Gourmet Caramel Apples 2 ct"
+   "Gourmet Caramel Apples 2 ct",
+   "Tastee Caramel Apples",
+   "Affy Tapple Plain Caramel Apples"
   ],
-  "reject": []
+  "reject": [
+   "Lucky Leaf Caramel Apple Fruit Filling"
+  ]
  },
  {
   "query": "whole turkey",

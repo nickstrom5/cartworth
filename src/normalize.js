@@ -1,5 +1,5 @@
 // Build the normalized product shape every adapter returns.
-import { parseSize, sizeFromName, coerceLiquid, unitPrices, formatSize, produceWeightLb } from '../shared/units.js';
+import { parseSize, sizeFromName, coerceLiquid, unitPrices, formatSize, produceWeightLb, pieceWeightVaries } from '../shared/units.js';
 
 export function money(s) {
   if (s == null) return null;
@@ -449,7 +449,7 @@ export function makeProduct(f) {
     price: soldByLb ? null : effective,
     size: soldByLb ? null : size,
     perLbPrice: soldByLb ? effective : null,
-    estEach: soldByLb && f.estEach ? f.estEach : null,
+    estEach: soldByLb && f.estEach && !pieceWeightVaries(name) ? f.estEach : null,
     estPkgWeightOz: null,
   });
   // Produce sold "each" vs "per lb": add an estimated cross-unit price so they can be compared.

@@ -2135,13 +2135,33 @@ final class HolidayMatrixTests: XCTestCase {
     func testHalloweenCandy() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "halloween candy", name: "Hershey's Halloween Candy Assortment Snack Size"), Match.relevant, "Hershey's Halloween Candy Assortment Snack Size")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "halloween candy", name: "Mars Halloween Candy Variety Pack"), Match.relevant, "Mars Halloween Candy Variety Pack")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "halloween candy", name: "Mars & Chocolate Halloween Candy Variety Bulk"), Match.relevant, "Mars & Chocolate Halloween Candy Variety Bulk")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "halloween candy", name: "Child's Play Individually Wrapped Assorted Halloween Candy"), Match.relevant, "Child's Play Individually Wrapped Assorted Halloween Candy")
+        XCTAssertLessThan(Match.relevance(query: "halloween candy", name: "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows"), Match.relevant, "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows")
     }
     func testPumpkin() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pie Pumpkin"), Match.relevant, "Pie Pumpkin")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Carving Pumpkin Large"), Match.relevant, "Carving Pumpkin Large")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pumpkin"), Match.relevant, "Pumpkin")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Jumbo Pumpkin"), Match.relevant, "Jumbo Pumpkin")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Halloween Pumpkins"), Match.relevant, "Halloween Pumpkins")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Rent's Due Ranch Local Organic |Jack-O-Lantern Pumpkins"), Match.relevant, "Rent's Due Ranch Local Organic |Jack-O-Lantern Pumpkins")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Heirloom Pumpkins, Each, Assorted Colors"), Match.relevant, "Heirloom Pumpkins, Each, Assorted Colors")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Sugar Pie Pumpkin"), Match.relevant, "Sugar Pie Pumpkin")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Libby's Pumpkin Pie Mix"), Match.relevant, "Libby's Pumpkin Pie Mix")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Spice Coffee Creamer"), Match.relevant, "Pumpkin Spice Coffee Creamer")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Seeds"), Match.relevant, "Pumpkin Seeds")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Licensed LSU Tigers Pumpkin"), Match.relevant, "Licensed LSU Tigers Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Lil' Tiger Stripe Pumpkin"), Match.relevant, "Lil' Tiger Stripe Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Mini Pumpkin"), Match.relevant, "Mini Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Wee B Little Mini Orange Pumpkin"), Match.relevant, "Wee B Little Mini Orange Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "PUMPKIN JACK BE LITTLE"), Match.relevant, "PUMPKIN JACK BE LITTLE")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Lolita Ornamental Pumpkin"), Match.relevant, "Lolita Ornamental Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Kercher's Sunrise Orchards Fall Pumpkin Decor"), Match.relevant, "Kercher's Sunrise Orchards Fall Pumpkin Decor")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Meijer Corporate Seasonal Hot Pink Halloween Pumpkin Pail"), Match.relevant, "Meijer Corporate Seasonal Hot Pink Halloween Pumpkin Pail")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "SYLVANIA LED Battery-Operated Ghost Pumpkin Bat"), Match.relevant, "SYLVANIA LED Battery-Operated Ghost Pumpkin Bat")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Ten Little Pumpkins Book"), Match.relevant, "Ten Little Pumpkins Book")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Wellsley Farms 12 Inch Pumpkin Pie"), Match.relevant, "Wellsley Farms 12 Inch Pumpkin Pie")
     }
     func testAppleCider() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "apple cider", name: "Martinelli's Apple Cider"), Match.relevant, "Martinelli's Apple Cider")
@@ -2152,6 +2172,9 @@ final class HolidayMatrixTests: XCTestCase {
     func testCaramelApples() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Caramel Apples 4 ct"), Match.relevant, "Caramel Apples 4 ct")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Gourmet Caramel Apples 2 ct"), Match.relevant, "Gourmet Caramel Apples 2 ct")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Tastee Caramel Apples"), Match.relevant, "Tastee Caramel Apples")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Affy Tapple Plain Caramel Apples"), Match.relevant, "Affy Tapple Plain Caramel Apples")
+        XCTAssertLessThan(Match.relevance(query: "caramel apples", name: "Lucky Leaf Caramel Apple Fruit Filling"), Match.relevant, "Lucky Leaf Caramel Apple Fruit Filling")
     }
     func testWholeTurkey() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "whole turkey", name: "Butterball Whole Turkey Frozen 12-16 lb"), Match.relevant, "Butterball Whole Turkey Frozen 12-16 lb")
