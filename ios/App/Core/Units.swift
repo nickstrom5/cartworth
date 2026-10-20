@@ -545,9 +545,16 @@ enum Units {
     /// 0.5 lb onion, and pricing it as one published $25.98/lb against a real median of $1.75.
     private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\\b")
 
+    /// Produce whose pieces differ too much in weight for an "each" price worked out from a price per
+    /// pound: a pumpkin weighs a quarter pound to twenty-five. Grocery Outlet's $0.99/lb "Small White
+    /// Pumpkin" came to $0.26 each and was Seattle's best pumpkin (the Halloween run). Port of
+    /// pieceWeightVaries in shared/units.js.
+    private static let pieceWeightVariesRx = Rx("\\bpumpkins?\\b")
+    static func pieceWeightVaries(_ name: String) -> Bool { pieceWeightVariesRx.test(name.lowercased()) }
+
     static func produceWeightLb(_ name: String) -> Double? {
         let n = name.lowercased()
-        if notProduceRx.test(n) { return nil }
+        if notProduceRx.test(n) || pieceWeightVaries(n) { return nil }
         for (rx, lb) in produce where rx.test(n) { return lb }
         return nil
     }

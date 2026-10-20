@@ -297,3 +297,40 @@ final class ThanksgivingPriceGuardTests: XCTestCase {
         XCTAssertEqual(Units.coerceLiquid(Units.parseSize("5 oz"), name: "StarKist Chunk Light Tuna in Water")?.dim, .weight)
     }
 }
+
+/// The Halloween run (ops/coverage/holiday-matrix.mjs, 2026-10-19/20, eight states). The matcher
+/// cases are in the generated HolidayMatrixTests; these are the ones a fixture of names cannot hold.
+/// Mirrors test/qa-halloween.test.js.
+final class HalloweenParityTests: XCTestCase {
+    private func perLbPumpkin(_ store: String, _ name: String, _ price: Double, estEach: Double) -> Product {
+        ProductFactory.make(ProductInput(storeId: store, id: "\(store)-\(name)", name: name, sizeText: "1 each", price: price, soldBy: .lb, estEach: estEach, category: "Pumpkin"))!
+    }
+
+    // DEFECT 3: the matcher reads the retailer's aisle too. Rouses filed "Licensed LSU Tigers
+    // Pumpkin" (8 ct, $11.59) under Pumpkin and Meijer a pail under Halloween Decor.
+    func testDecorAndNoveltyPumpkinsDoNotAnswerPumpkin() {
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Licensed LSU Tigers Pumpkin", category: "Pumpkin"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Mini Pumpkin", category: "Pumpkin"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Meijer Corporate Seasonal Hot Pink Halloween Pumpkin Pail", category: "Halloween Decor"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "caramel apples", name: "Lucky Leaf Caramel Apple Fruit Filling", category: "Pie Fillings"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "halloween candy", name: "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows", category: "Marshmallows"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pumpkin", category: "Pumpkin"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "mini pumpkins", name: "Mini Pumpkin", category: "Pumpkin"), Match.relevant)
+    }
+
+    // DEFECT 4: Grocery Outlet's $0.99/lb "Small White Pumpkin" came to $0.26 a pumpkin through
+    // Instacart's "each (est.)" figure and was Seattle's best pumpkin. A per-lb pumpkin keeps its
+    // per-lb price and has no per-pumpkin one.
+    func testAPerPoundPumpkinHasNoPerPumpkinPrice() {
+        let p = perLbPumpkin("groceryoutlet", "Small White Pumpkin", 0.99, estEach: 0.26)
+        XCTAssertNil(p.unitPrice(.count))
+        XCTAssertEqual(p.unitPrice(.weight)!.perBase * 16, 0.99, accuracy: 1e-9)
+        // Not through the orange's piece weight either.
+        XCTAssertNil(perLbPumpkin("starmarket", "Orange Pumpkin Small/Mini - Weight Between 4-5 Lb", 1.99, estEach: 2.98).unitPrice(.count))
+    }
+
+    func testOtherPerPoundProduceKeepsItsEachEstimate() {
+        let bananas = ProductFactory.make(ProductInput(storeId: "kroger", id: "b", name: "Bananas", sizeText: "1 each", price: 0.59, soldBy: .lb, estEach: 0.2))!
+        XCTAssertEqual(bananas.unitPrice(.count)?.perBase, 0.2)
+    }
+}

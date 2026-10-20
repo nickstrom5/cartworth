@@ -114,6 +114,11 @@ const TRAPS = new Set([
   // Christmas and Hanukkah look-alikes: a ham glaze packet is not a ham, cream cheese frosting is not
   // cream cheese, and "Sardines in Vegetable Oil" is not vegetable oil (tuna was already a trap).
   'glaze', 'frosting', 'icing', 'sardine', 'anchovy', 'mackerel', 'herring',
+  // A can of pie filling and a bag of marshmallows named after what they taste of or look like:
+  // "Lucky Leaf Caramel Apple Fruit Filling" (Meijer, Food Lion) answered "caramel apples", and
+  // "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows" (Rouses, ShopRite) "halloween candy"
+  // (the Halloween run).
+  'filling', 'marshmallow',
 ]);
 
 /**
@@ -130,7 +135,7 @@ const TRAPS = new Set([
  * Debbie's Christmas Tree Cakes are food), 'decorations' (cake decorations are baking aisle) or
  * 'stocking' (a candy-filled stocking is candy).
  */
-const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\b/i;
+const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?|gift bags?|battery[- ]operated|books?)\b/i;
 
 /**
  * Qualifiers that turn a trap noun back into an ordinary description of the searched product.
@@ -203,6 +208,8 @@ const FLAVOR_OK_HEADS = new Set(['bar', 'chip', 'cereal', 'candy', 'soda', 'brea
 const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn tortilla', 'flour tortilla', 'celery salt', 'celery seed',
   'onion salt', 'garlic salt', 'yogurt raisin', 'yogurt covered', 'yogurt pretzel', 'wine glass', 'glass set', 'champagne flute',
   'sugar free', 'charcoal toothpaste', 'chocolate milk',
+  // BJ's "Wellsley Farms 12 Inch Pumpkin Pie" answered "pumpkin" (the Halloween run). "Pie Pumpkin" is a pumpkin.
+  'pumpkin pie',
   // Celery root (celeriac) is another vegetable: Food Bazaar's "Celery Root (Knob)" answered "celery" (Thanksgiving, NYC).
   'celery root'];
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
@@ -329,7 +336,12 @@ const WANTS_SUPPLEMENT_RE = /\b(?:tablets?|caplets?|capsules?|softgels?|suppleme
 const PROCESSED_FORM_RE = /\bin (?:light |heavy )?(?:syrup|juice)\b|\b(?:canned|diced|crushed|stewed|sun[- ]?dried|freeze[- ]?dried|dried|dehydrated|pureed?|frozen)\b/;
 const LUNCH_NAME_RE = /\b(?:deli|sliced|lunchmeat|lunch meat|cold cuts?)\b/;
 const LUNCH_CAT_RE = /\b(?:deli|lunch ?meats?|lunchmeat|cold cuts?)\b/;
-const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|crafts?|disposable|cutlery|utensils?|tableware|herbal tea|pet (?:food|treats|supplies)|dog|cat)\b/;
+const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|decor|gift bags?|crafts?|disposable|cutlery|utensils?|tableware|herbal tea|pet (?:food|treats|supplies)|dog|cat)\b/;
+// "pumpkin" on its own is a pumpkin to carve. Mini and ornamental pumpkins are table decorations at
+// a dollar or two, and priced per pumpkin they beat every carving pumpkin: Trader Joe's "Lil' Tiger
+// Stripe Pumpkin" was the best pumpkin in four states, Rouses' "Licensed LSU Tigers Pumpkin" (8 ct)
+// in New Orleans, and a pail and a bucket scored 0.85 (the Halloween run). Asking for them finds them.
+const DECORATIVE_PUMPKIN_RE = /\b(?:mini|miniature|ornamental|decorative|decor|jack be little|wee b(?:ee)? little|lil ?tiger|licensed|pails?|buckets?)\b/;
 const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
 const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
 
@@ -502,6 +514,7 @@ export function relevance(query, product, opts = {}) {
     if (catTok.has('juice') || catTok.has('juices') || catTok.has('pressed')) { if (!qset.has('juice')) mult *= 0.3; }
   }
   // "Garden Sweet Russet Potato" answered "sweet potatoes": another potato entirely.
+  if (head === 'pumpkin' && DECORATIVE_PUMPKIN_RE.test(nameNorm) && !DECORATIVE_PUMPKIN_RE.test(normalize(query))) mult *= 0.2;
   if (/\bsweet potato/.test(normalize(query)) && /\b(?:russet|yukon|red potato|gold potato|white potato)/.test(nameNorm)) mult *= 0.2;
   if (FRESH_VEG_MEAT_RE.test(head || '')) {
     const m = SHELF_FORM_RE.exec(nameNorm);
