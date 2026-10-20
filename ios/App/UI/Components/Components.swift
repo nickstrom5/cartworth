@@ -1097,3 +1097,69 @@ extension View {
         modifier(ReadablePage(max: max, background: background))
     }
 }
+
+/// A search field in the navigation bar drawer that gives the tab bar back once it loses focus.
+///
+/// On an iPad (regular width, iPadOS 18 and later) the tab bar sits at the top of the screen,
+/// and a presented search takes that space: the tabs and the toolbar go, and there is no Cancel
+/// button. Submitting or hiding the keyboard left search presented for as long as the field held
+/// text, so the only way back to Deals, List, Tracking or Settings was to clear the query and
+/// then hide the keyboard. Found during App Store capture on 2026-10-20 (iPad Pro 13", iOS 27.0).
+/// The text, and so the results or the deals filter, stay; only the presentation ends. On a phone the tab bar is at the
+/// bottom and search keeps its Cancel button, so nothing changes there.
+struct DrawerSearch: ViewModifier {
+    @Binding var text: String
+    let prompt: String
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @State private var presented = false
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.modifier(FocusAware(text: $text, presented: $presented, prompt: prompt, wide: sizeClass == .regular))
+        } else {
+            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
+        }
+    }
+
+    @available(iOS 18.0, *)
+    private struct FocusAware: ViewModifier {
+        @Binding var text: String
+        @Binding var presented: Bool
+        let prompt: String
+        let wide: Bool
+        @FocusState private var focused: Bool
+
+        func body(content: Content) -> some View {
+            content
+                .searchable(text: $text, isPresented: $presented, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
+                .searchFocused($focused)
+                .onChange(of: focused) { _, now in
+                    guard !now, wide, presented else { return }
+                    let kept = text
+                    presented = false
+                    // Ending the presentation empties the field the way Cancel does: on the Search
+                    // tab through the binding, on the Deals tab without telling it (the grid stayed
+                    // filtered under a blank field). Once the dismissal has finished, the query is
+                    // set again so the field and the binding agree. Set while it is still
+                    // animating, the field stays blank.
+                    guard !kept.isEmpty else { return }
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(700))
+                        guard !focused, !presented, text.isEmpty || text == kept else { return }
+                        if text == kept {
+                            text = ""
+                            try? await Task.sleep(for: .milliseconds(50))
+                        }
+                        text = kept
+                    }
+                }
+        }
+    }
+}
+
+extension View {
+    /// `.searchable` in the navigation bar drawer, always shown. See `DrawerSearch`.
+    func drawerSearch(text: Binding<String>, prompt: String) -> some View {
+        modifier(DrawerSearch(text: text, prompt: prompt))
+    }
+}
