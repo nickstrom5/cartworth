@@ -61,7 +61,7 @@ struct SearchView: View {
             .scrollDismissesKeyboard(.immediately)
             .navigationTitle(model.query.isEmpty ? "Cartworth" : model.query)
             .navigationBarTitleDisplayMode(model.query.isEmpty ? .large : .inline)
-            .searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search any food item")
+            .drawerSearch(text: $text, prompt: "Search any food item")
             .searchSuggestions {
                 if !text.isEmpty {
                     ForEach(suggestions, id: \.self) { s in

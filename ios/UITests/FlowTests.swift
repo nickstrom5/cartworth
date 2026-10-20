@@ -123,6 +123,43 @@ final class FlowTests: XCTestCase {
         shoot("08-settings")
     }
 
+    /// iPad: a presented search hid the top tab bar, with no Cancel button, for as long as the
+    /// field held text. A shopper who had searched could not reach Deals, List, Tracking or
+    /// Settings without clearing the query first. Found by `SubmissionSet` on 2026-10-20 (iPad
+    /// Pro 13", iOS 27.0), whose every later `goTo` logged "tab … not found". See `DrawerSearch`.
+    ///
+    /// Both ways a field loses focus: hiding the keyboard on the Search tab (no search is sent),
+    /// and submitting a filter on the Deals tab. Live network: the Deals tab loads this week's ads.
+    func testTabsStayReachableAfterSearchingOnIPad() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad, "The phone's tab bar is at the bottom and search keeps its Cancel button")
+        app.launch()
+        waitForTabs()
+
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        field.tap()
+        field.typeText("yogurt")
+        let hide = app.keyboards.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'hide keyboard' OR label CONTAINS[c] 'dismiss'")).firstMatch
+        if hide.waitForExistence(timeout: 3) {
+            hide.tap()
+            XCTAssertTrue(tabButton("Deals").waitForExistence(timeout: 5), "tabs are hidden while the search field holds text")
+            let kept = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == 'yogurt'"), object: app.searchFields.firstMatch)
+            XCTAssertEqual(XCTWaiter.wait(for: [kept], timeout: 5), .completed, "the query was cleared to bring the tabs back")
+        }
+
+        tabButton("Deals").tap()
+        let deals = app.searchFields.firstMatch
+        XCTAssertTrue(deals.waitForExistence(timeout: 20))
+        deals.tap()
+        deals.typeText("yogurt\n")
+        sleep(2)
+        shoot("10-ipad-tabs-after-deals-search")
+        XCTAssertTrue(tabButton("List").waitForExistence(timeout: 5), "tabs are hidden after a deals search")
+        XCTAssertEqual(app.searchFields.firstMatch.value as? String, "yogurt", "the deals filter was cleared")
+        tabButton("List").tap()
+        XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 10), "the List tab did not open")
+    }
+
     func testStoresScreen() {
         app.launch()
         waitForTabs()

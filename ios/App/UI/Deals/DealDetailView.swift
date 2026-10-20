@@ -6,12 +6,17 @@ struct DealDetailView: View {
     @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
     @State private var detail: FlippSource.Detail?
+    /// The item's own detail could not be read, so the ad's terms stay unknown.
+    @State private var detailFailed = false
     @State private var added = false
     /// The ad price, scaled with Dynamic Type (it was a flat 30 pt). See `HeroBestCard.heroSize`.
     @ScaledMetric(relativeTo: .title) private var priceSize: CGFloat = 30
 
     private var description: String? { detail?.description ?? deal.description }
     private var disclaimer: String? { detail?.disclaimer ?? deal.disclaimer }
+    /// The deal as its terms say once they arrive: a "10 for $10.00" listed as $10.00 becomes ten
+    /// at $1.00 each, with its percent off worked out per unit.
+    private var shown: Deal { detail.map { FlippSource.deal(deal, detail: $0) } ?? deal }
 
     var body: some View {
         ScrollView {
@@ -29,28 +34,18 @@ struct DealDetailView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(deal.priceText.isEmpty ? (deal.story ?? "See ad") : deal.priceText)
-                        .font(.system(size: priceSize, weight: .bold))
-                        .minimumScaleFactor(0.6)
-                    if deal.qty > 1, let each = deal.each { Text("\(Money.full(each)) each").foregroundStyle(.secondary) }
-                    if let reg = deal.regular ?? ProductFactory.money(deal.regularText) {
-                        Text("Regular \(Money.full(reg))\(deal.pctOff.map { " · save \($0)%" } ?? "")").font(.subheadline).foregroundStyle(.secondary)
-                    }
-                    if let m = deal.memberText { Text(m).font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor) }
-                    if let s = deal.story, deal.price != nil { Text(s).font(.subheadline.weight(.medium)).foregroundStyle(Color.dealInk) }
-                }
+                priceBlock(shown)
 
                 Text(deal.name).font(.headline)
                 if let description { Text(description).font(.subheadline).foregroundStyle(.secondary) }
 
                 FlowRow(spacing: 6) {
                     StoreTag(storeId: deal.retailerId, full: true)
-                    if deal.needsCoupon { Badge(text: "needs digital coupon", kind: .info) }
-                    if deal.needsCard { Badge(text: "needs store card", kind: .info) }
-                    if let l = deal.limit { Badge(text: "limit \(l)", kind: .neutral) }
-                    if let m = deal.mustBuy { Badge(text: "must buy \(m)", kind: .warn) }
-                    Badge(text: deal.category.rawValue, kind: .neutral)
+                    if shown.needsCoupon { Badge(text: "needs digital coupon", kind: .info) }
+                    if shown.needsCard { Badge(text: "needs store card", kind: .info) }
+                    if let l = shown.limit { Badge(text: "limit \(l)", kind: .neutral) }
+                    if let m = shown.mustBuy { Badge(text: "must buy \(m)", kind: .warn) }
+                    Badge(text: shown.category.rawValue, kind: .neutral)
                 }
 
                 if let from = deal.validFrom, let to = deal.validTo {
@@ -90,6 +85,42 @@ struct DealDetailView: View {
         .task {
             if deal.source == "flipp", !deal.enriched, let id = deal.flippId, let fid = deal.flyerId {
                 detail = try? await FlippSource.shared.detail(itemId: id, flyerId: fid)
+                detailFailed = detail == nil
+            }
+        }
+    }
+
+    /// Never quotes a price the shopper cannot get. Until a weekly-ad price's terms are known, the
+    /// number may be for several items ("10 for $10.00" arrives as $10.00) or per pound, so it is
+    /// not the headline and no per-unit regular price or percent off is worked out from it.
+    @ViewBuilder private func priceBlock(_ d: Deal) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if d.termsPending {
+                if detailFailed {
+                    Text("See ad")
+                        .font(.system(size: priceSize, weight: .bold))
+                        .minimumScaleFactor(0.6)
+                    if let price = d.price {
+                        Text("The ad lists \(Money.full(price)). Flipp didn't send whether that's for one item, several or a pound.")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                } else {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                        Text("Checking the ad's terms…").font(.headline).foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            } else {
+                Text(d.priceText.isEmpty ? (d.story ?? "See ad") : d.priceText)
+                    .font(.system(size: priceSize, weight: .bold))
+                    .minimumScaleFactor(0.6)
+                if d.qty > 1, let each = d.each { Text("\(Money.full(each)) each").foregroundStyle(.secondary) }
+                if let reg = d.regular ?? ProductFactory.money(d.regularText) {
+                    Text("Regular \(Money.full(reg))\(d.pctOff.map { " · save \($0)%" } ?? "")").font(.subheadline).foregroundStyle(.secondary)
+                }
+                if let m = d.memberText { Text(m).font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor) }
+                if let s = d.story, d.price != nil { Text(s).font(.subheadline.weight(.medium)).foregroundStyle(Color.dealInk) }
             }
         }
     }

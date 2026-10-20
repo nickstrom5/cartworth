@@ -2376,3 +2376,74 @@ final class HolidayMatrixTests: XCTestCase {
     }
 }
 // END GENERATED HOLIDAY MATRIX
+
+/// Multi-buy weekly-ad terms, found during App Store screenshot capture on 2026-10-20: Fresh Thyme
+/// ZIP 60618, Flipp item 1045842565 Chobani is "10 for $10.00". The search result has price 10 and
+/// no pre_price_text; the item's detail has pre "10 for" and original_price 18.9 (ten at $1.89).
+/// Same values as test/qa-multibuy-terms.test.js.
+final class FlippMultiBuyTermsTests: XCTestCase {
+    private let item = FlippSource.FlyerItem(id: 1045842565, flyerId: 7001, name: "Chobani Greek, Less Sugar, No Sugar or Flip Yogurt", brand: "",
+                                             price: "10", discount: nil, image: nil, validFrom: nil, validTo: nil)
+    private func itemDetail(pre: String? = "10 for", story: String? = nil, original: Double? = 18.9, current: Double? = 10) -> FlippSource.Detail {
+        FlippSource.Detail(description: "4.5-5.3 oz", pre: pre, priceText: nil, post: nil, story: story, original: original, current: current,
+                           disclaimer: nil, dollarsOff: nil, percentOff: nil, externalCategory: nil)
+    }
+
+    /// DEFECT: compared with $18.90 for all ten, one cup at $1.00 read as 95% off.
+    func testBundleRegularPriceIsReadPerUnit() {
+        let d = FlippSource.deal(item: item, detail: itemDetail(), retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertEqual(d.priceText, "10 for $10.00")
+        XCTAssertEqual(d.qty, 10)
+        XCTAssertEqual(d.each, 1)
+        XCTAssertEqual(d.regular, 1.89)
+        XCTAssertEqual(d.pctOff, 47)
+    }
+
+    /// DEFECT: the ad's "save up to $8.90" and the percent off tell the same story.
+    func testSaveUpToAgreesWithPercentOff() {
+        let d = FlippSource.deal(item: item, detail: itemDetail(story: "SAVE UP TO $8.90"), retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertEqual(d.pctOff, 47)
+        XCTAssertEqual(((d.regular ?? 0) - (d.each ?? 0)) * Double(d.qty), 8.9, accuracy: 0.005)
+    }
+
+    /// DEFECT: a bare "10 for" made the terms ten for $1.00.
+    func testBareMultiplierIsReadAgainstTheTotal() {
+        let d = FlippSource.deal(item: item, detail: itemDetail(), retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertEqual(d.terms?.kind, .multi)
+        XCTAssertEqual(d.terms?.total, 10)
+        XCTAssertEqual(d.terms?.each, 1)
+    }
+
+    /// DEFECT: a search hit without its multiplier counted as enriched, so the deal screen showed
+    /// "$10.00" as one cup's price and never fetched the terms.
+    func testSearchHitWithoutMultiplierIsPending() {
+        var search = itemDetail(pre: nil)
+        search.description = nil
+        search.partial = true
+        let d = FlippSource.deal(item: item, detail: search, retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertFalse(d.enriched)
+        XCTAssertTrue(d.termsPending)
+    }
+
+    /// DEFECT: a deal shown before enrichment (qty 1, "$10.00") is rebuilt from the item's detail
+    /// when the deal screen reads it.
+    func testUnenrichedDealIsRebuiltFromItsDetail() {
+        let before = FlippSource.deal(item: item, detail: nil, retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertTrue(before.termsPending)
+        XCTAssertEqual(before.qty, 1)
+        let after = FlippSource.deal(before, detail: itemDetail())
+        XCTAssertFalse(after.termsPending)
+        XCTAssertEqual(after.priceText, "10 for $10.00")
+        XCTAssertEqual(after.each, 1)
+        XCTAssertEqual(after.pctOff, 47)
+        XCTAssertEqual(after.id, before.id)
+    }
+
+    /// control: a unit regular price below the bundle total is left alone.
+    func testUnitRegularPriceIsLeftAlone() {
+        let d = FlippSource.deal(item: item, detail: itemDetail(pre: "2 for", original: 3.49, current: 5), retailerId: "jewel", merchant: "Jewel-Osco")
+        XCTAssertEqual(d.regular, 3.49)
+        XCTAssertEqual(d.each, 2.5)
+        XCTAssertEqual(d.pctOff, 28)
+    }
+}

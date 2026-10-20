@@ -134,8 +134,35 @@ final class SubmissionSet: XCTestCase {
     }
 
     private func goTo(_ tab: String) {
-        let b = tabButton(tab)
-        if b.waitForExistence(timeout: 25) { b.tap() } else { note("tab \(tab) not found") }
+        var b = tabButton(tab)
+        if !b.waitForExistence(timeout: 8) {
+            leaveSearch()
+            b = tabButton(tab)
+        }
+        if b.waitForExistence(timeout: 20) { b.tap() } else { note("tab \(tab) not found") }
+        settle(1.5)
+    }
+
+    /// On iPad a presented search takes the top of the screen and the tab bar goes with it. The
+    /// 2026-10-20 iPad run lost every tab after the first search ("tab Deals not found") and then
+    /// typed the deal and list steps into the search field ("basmati riceyogurt"). The app now
+    /// ends the presentation when the field loses focus (`DrawerSearch`); this gets the tabs back
+    /// on a build without that too: hide the keyboard, and if the tabs are still gone, empty the
+    /// field, which is the only thing that ends a presented search there.
+    private func leaveSearch() {
+        let hide = app.keyboards.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'hide keyboard' OR label CONTAINS[c] 'dismiss'")).firstMatch
+        if hide.exists {
+            hide.tap()
+            settle(1.5)
+            if tabButton("Search").exists { return }
+        }
+        let field = app.searchFields.firstMatch
+        guard field.exists else { return }
+        note("tabs hidden behind a presented search; emptying the field to get them back")
+        if field.buttons["Clear text"].exists { field.buttons["Clear text"].tap() }
+        else if app.buttons["Clear text"].exists { app.buttons["Clear text"].tap() }
+        settle(1)
+        if hide.exists { hide.tap() }
         settle(1.5)
     }
 
