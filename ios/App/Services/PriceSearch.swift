@@ -97,7 +97,9 @@ enum PriceSearch {
         var out: [(Deal, Double)] = []
         for h in hits {
             guard let chain = RetailerCatalog.chain(forMerchant: h.merchant), chainIds.contains(chain.id) else { continue }
-            let d = FlippSource.deal(item: h.item, detail: h.detail, retailerId: chain.id, merchant: h.merchant, now: now)
+            // A search result without its multiplier yields to the item's own detail when it is on hand.
+            let stored = h.detail.partial == true ? await FlippSource.shared.storedDetails(h.item.flyerId)[h.item.id] : nil
+            let d = FlippSource.deal(item: h.item, detail: stored ?? h.detail, retailerId: chain.id, merchant: h.merchant, now: now)
             if let to = d.validTo, to < now { continue }
             // Next week's circular is not "in this week's ads" (and is a Pro feature on its own tab).
             if let from = d.validFrom, from > now { continue }

@@ -32,6 +32,11 @@ actor FlippSource {
         var dollarsOff: Double?
         var percentOff: Double?
         var externalCategory: String?
+        /// A search result's terms, which often leave out the multiplier: Fresh Thyme's "10 for
+        /// $10.00" Chobani (item 1045842565) comes back as price 10 with no pre_price_text. True
+        /// when that qualifier is missing, so the deal still counts as un-enriched. Mirrors
+        /// `partial` in src/adapters/flipp.js.
+        var partial: Bool? = nil
     }
 
     private static let iso: ISO8601DateFormatter = {
@@ -169,7 +174,8 @@ actor FlippSource {
                 let detail = Detail(description: nil, pre: i["pre_price_text"].text, priceText: nil, post: i["post_price_text"].text,
                                     story: i["sale_story"].text, original: i["original_price"].double, current: i["current_price"].double,
                                     disclaimer: nil, dollarsOff: nil, percentOff: nil,
-                                    externalCategory: [i["_L1"].text, i["_L2"].text].compactMap { $0 }.joined(separator: " / ").nilIfEmpty)
+                                    externalCategory: [i["_L1"].text, i["_L2"].text].compactMap { $0 }.joined(separator: " / ").nilIfEmpty,
+                                    partial: i["pre_price_text"].text == nil)
                 return SearchHit(item: item, merchant: merchant.trimmingCharacters(in: .whitespaces), detail: detail)
             }
         }.value
@@ -183,7 +189,16 @@ actor FlippSource {
     private static let withoutCouponRx = Rx("(?:without coupon|reg(?:ular)?\\.?(?: price)?)\\s*\\$?\\s*(\\d+(?:\\.\\d{2})?)")
     private static let multiPreRx = Rx("^(\\d+)\\s*/?\\s*(?:for)?\\s*$|^(\\d+)\\s*(?:/|for)")
 
+    /// `deal` rebuilt with the item's own detail, for a deal that was shown before its terms arrived.
+    static func deal(_ d: Deal, detail: Detail, now: Date = Date()) -> Deal {
+        guard let id = d.flippId, let flyerId = d.flyerId else { return d }
+        let item = FlyerItem(id: id, flyerId: flyerId, name: d.name, brand: d.brand, price: d.price.map { String($0) }, discount: nil,
+                             image: d.imageURL?.absoluteString, validFrom: d.validFrom, validTo: d.validTo)
+        return deal(item: item, detail: detail, retailerId: d.retailerId, merchant: d.merchant, now: now)
+    }
+
     static func deal(item raw: FlyerItem, detail det: Detail?, retailerId: String, merchant: String, now: Date = Date()) -> Deal {
+        let enriched = det != nil && det?.partial != true
         var price = det?.current ?? raw.price.flatMap { Double($0) }
         let pre = det?.pre ?? ""
         let post = det?.post ?? ""
@@ -221,7 +236,7 @@ actor FlippSource {
                 regular: nil, regularText: nil, memberText: nil, pctOff: det?.percentOff.map { Int($0.rounded()) }, story: nil,
                 terms: off.map { DealTerms(kind: .save, text: story, qty: need > 1 ? need : nil, save: $0) },
                 needsCoupon: true, needsCard: false, limit: nil, mustBuy: need > 1 ? need : nil, disclaimer: disclaimer.nilIfEmpty,
-                validFrom: from, validTo: to, week: week, category: category, enriched: det != nil, coupon: true, url: nil
+                validFrom: from, validTo: to, week: week, category: category, enriched: enriched, coupon: true, url: nil
             )
         }
 
@@ -235,11 +250,17 @@ actor FlippSource {
         let each = price.map { ($0 / Double(qty) * 100).rounded() / 100 }
         var regular = det?.original
         if regular == nil, let m = withoutCouponRx.match(disclaimer), let v = Double(m[1] ?? "") { regular = v }
+        // On a multi-buy, original_price is sometimes the whole bundle's regular price: "10 for
+        // $10.00" Chobani has 18.90, ten cups at $1.89. A regular price above the bundle's sale total
+        // is read as the bundle's and divided down to one unit (it was 95% off, not 47%). Mirrors toDeal.
+        if let r = regular, qty > 1, let p = price, r > p { regular = (r / Double(qty) * 100).rounded() / 100 }
         var pctOff: Int?
         if let r = regular, let e = each, r > e { pctOff = Int(((1 - e / r) * 100).rounded()) }
         else if let p = det?.percentOff { pctOff = Int(p.rounded()) }
         else if let d = raw.discount, d > 0, d < 95 { pctOff = Int(d.rounded()) }
-        let terms = DealParser.parse("\(pre) \(story) \(disclaimer)", basePrice: each)
+        // A bare "10 for" is read against the TOTAL (see DealParser); given one unit's $1.00 it
+        // made the deal ten for $1.00. Mirrors toDeal.
+        let terms = DealParser.parse("\(pre) \(story) \(disclaimer)", basePrice: qty > 1 && story.isEmpty && disclaimer.isEmpty ? price : each)
         if pctOff == nil, let t = terms, t.kind == .bogo || t.kind == .bxgy, let p = t.pct { pctOff = Int(p) }
         var priceText = ""
         if let price {
@@ -256,7 +277,7 @@ actor FlippSource {
             pctOff: (pctOff ?? 0) > 0 && (pctOff ?? 0) < 100 ? pctOff : nil, story: story.nilIfEmpty, terms: terms,
             needsCoupon: needsCoupon, needsCard: needsCard, limit: terms?.limit, mustBuy: terms?.mustBuy,
             disclaimer: disclaimer.nilIfEmpty, validFrom: from, validTo: to, week: week, category: category,
-            enriched: det != nil, coupon: false, url: nil
+            enriched: enriched, coupon: false, url: nil
         )
     }
 }
