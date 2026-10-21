@@ -191,6 +191,14 @@ ornamental, decor, Jack Be Little, Wee B Little, Lil' Tiger, licensed, pail and 
 answer "pumpkin" (`DECORATIVE_PUMPKIN_RE`). A search for "mini pumpkins" still finds them. Pie pumpkins
 and heirloom pumpkins still answer.
 
+Rerun, 21 Oct, same ZIPs with the above in place. Four more, fixed (DEFECT 5-8 in the same test):
+Walmart's chain-wide "Poppin Pumpkin Snaps" won "pumpkin" in CO, FL, LA and TX; Walmart's "Great
+Value Pumpkin", a 15 oz can, in PA (a pumpkin sold by the piece with a net weight under 2 lb is a can
+now, so `relevance` reads the product's size; Match.swift takes `dim`, `base` and `soldBy` from
+Compare.swift); Fresh Thyme's "Tiger Striped Pumpkin" in OH; and Fred Meyer's "Caramel Apple Scented
+Wax Melts" won "caramel apples" in WA. Star Market's 10 lb medium pumpkin, Albertsons' per-lb pumpkin
+and the candy, caramel apple and cider picks were right and stay right.
+
 Not changed, for the next pass: "caramel apples" also scores caramel-apple candies (Werther's Apple
 Soft Caramels, Tootsie Apple Pops) and Whole Foods' "Caramel Apple Blossom" pastry at 0.8. None of them
 won a store. Variety names for mini pumpkins that do not say so (Hooligan, Munchkin) still

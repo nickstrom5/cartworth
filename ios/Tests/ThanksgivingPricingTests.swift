@@ -329,6 +329,28 @@ final class HalloweenParityTests: XCTestCase {
         XCTAssertNil(perLbPumpkin("starmarket", "Orange Pumpkin Small/Mini - Weight Between 4-5 Lb", 1.99, estEach: 2.98).unitPrice(.count))
     }
 
+    private func score(_ q: String, _ p: Product) -> Double {
+        Match.relevance(query: q, name: p.name, brand: p.brand, category: p.category, dim: p.dim, base: p.base, soldBy: p.soldBy)
+    }
+
+    // DEFECT 6 (the rerun, 21 Oct): Walmart's "Great Value Pumpkin", 15 oz, is a can, and only its
+    // net weight says so. It was Philadelphia's best pumpkin.
+    func testACanOfPumpkinIsNotAPumpkinToCarve() {
+        let can = ProductFactory.make(ProductInput(storeId: "walmart", id: "gv", name: "Great Value Pumpkin", sizeText: "15 oz", price: 1.0))!
+        XCTAssertEqual(can.dim, .weight)
+        XCTAssertEqual(can.base ?? 0, 15, accuracy: 1e-9)
+        XCTAssertLessThan(score("pumpkin", can), Match.relevant)
+        let pure = ProductFactory.make(ProductInput(storeId: "walmart", id: "gvp", name: "Great Value 100% Pure Pumpkin", sizeText: "15 oz", price: 1.0))!
+        XCTAssertGreaterThanOrEqual(score("pumpkin puree", pure), Match.relevant)
+        let medium = ProductFactory.make(ProductInput(storeId: "starmarket", id: "m", name: "Orange Pumpkin Medium - Weight Between 10-15 Lb", sizeText: "10 lb", price: 6.99, category: "Pumpkin"))!
+        XCTAssertGreaterThanOrEqual(score("pumpkin", medium), Match.relevant)
+        let perLb = ProductFactory.make(ProductInput(storeId: "albertsons", id: "p", name: "Pumpkin", sizeText: "per lb", price: 0.59, soldBy: .lb, category: "Pumpkin"))!
+        XCTAssertGreaterThanOrEqual(score("pumpkin", perLb), Match.relevant)
+        // The comparison passes the size through: the can never becomes a store's best pumpkin.
+        let best = Compare.bestPerStore(query: "pumpkin", results: ["walmart": [can], "pricerite": [ProductFactory.make(ProductInput(storeId: "pricerite", id: "p", name: "Pumpkin", sizeText: "1 ea", price: 0.88, category: "Pumpkin"))!]])
+        XCTAssertEqual(Set(best.stores.keys), ["pricerite"])
+    }
+
     func testOtherPerPoundProduceKeepsItsEachEstimate() {
         let bananas = ProductFactory.make(ProductInput(storeId: "kroger", id: "b", name: "Bananas", sizeText: "1 each", price: 0.59, soldBy: .lb, estEach: 0.2))!
         XCTAssertEqual(bananas.unitPrice(.count)?.perBase, 0.2)

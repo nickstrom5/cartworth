@@ -60,7 +60,7 @@ enum Compare {
 
     static func score(query: String, _ items: [Product], include: [String] = [], exclude: [String] = []) -> [Scored] {
         items.map { p in
-            Scored(product: p, score: Match.relevance(query: query, name: p.name, brand: p.brand, category: p.category, rank: p.rank, total: p.total, include: include, exclude: exclude))
+            Scored(product: p, score: Match.relevance(query: query, name: p.name, brand: p.brand, category: p.category, rank: p.rank, total: p.total, include: include, exclude: exclude, dim: p.dim, base: p.base, soldBy: p.soldBy))
         }
     }
 

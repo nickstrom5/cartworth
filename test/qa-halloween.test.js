@@ -160,3 +160,55 @@ test('control: other per-lb produce keeps its each estimate', () => {
   const onion = item('kroger', 'Yellow Onion', '1 each', 1.0, { soldBy: 'lb' });
   assert.equal(onion.unit.count.perBase, 0.5);
 });
+
+// ---------------------------------------------------------------------------
+// The rerun of 21 Oct, with the fixes above in place.
+// ---------------------------------------------------------------------------
+
+// DEFECT 5: Walmart's chain-wide "Poppin Pumpkin Snaps", 1 ea $2.47, was the best pumpkin in CO
+// (80218), FL (33135), LA (70115) and TX (75206). It is a snack or a toy, not a pumpkin.
+test('DEFECT 5: Poppin Pumpkin Snaps are not a pumpkin', () => {
+  rejects('pumpkin', 'Poppin Pumpkin Snaps');
+});
+
+// DEFECT 6: Walmart's "Great Value Pumpkin", 15 oz $1.00, was Philadelphia's (19147) best pumpkin.
+// It is a can of pumpkin puree, and nothing in its name says so: its 15 oz net weight does. On its
+// own, "pumpkin" is a pumpkin to carve; Thanksgiving's "pumpkin puree" still finds the can.
+test('DEFECT 6: a 15 oz can of Great Value Pumpkin is not a pumpkin to carve', () => {
+  const can = item('walmart', 'Great Value Pumpkin', '15 oz', 1.0);
+  assert.ok(relevance('pumpkin', can) < RELEVANT, `scored ${relevance('pumpkin', can).toFixed(3)}`);
+  assert.ok(relevance('pumpkin puree', item('walmart', 'Great Value 100% Pure Pumpkin', '15 oz', 1.0)) >= RELEVANT);
+  const { stores } = bestPerStore('pumpkin', {
+    walmart: [can],
+    pricerite: [item('pricerite', 'Pumpkin', '1 ea', 0.88, { category: 'Pumpkin' })],
+  });
+  assert.deepEqual(Object.keys(stores), ['pricerite']);
+});
+
+test('control: a whole pumpkin with a weight still answers "pumpkin"', () => {
+  // Star Market's medium pumpkin, priced by the pound and sized by the pound (MA, correct in the rerun).
+  const medium = item('starmarket', 'Orange Pumpkin Medium - Weight Between 10-15 Lb', '10 lb', 6.99, { category: 'Pumpkin' });
+  assert.ok(relevance('pumpkin', medium) >= RELEVANT, `scored ${relevance('pumpkin', medium).toFixed(3)}`);
+  const perLb = item('albertsons', 'Pumpkin', 'per lb', 0.59, { soldBy: 'lb', category: 'Pumpkin' });
+  assert.ok(relevance('pumpkin', perLb) >= RELEVANT);
+});
+
+// DEFECT 7: Fred Meyer's "HD Designs® Harvest Caramel Apple Scented Wax Melts", 1 ea $2.29, was
+// Seattle's (98103) best caramel apples.
+test('DEFECT 7: scented wax melts are not caramel apples', () => {
+  rejects('caramel apples', 'HD Designs® Harvest Caramel Apple Scented Wax Melts');
+});
+
+// DEFECT 8: Fresh Thyme's "Tiger Striped Pumpkin", 1 ea $1.09, was Columbus's (43214) best pumpkin:
+// the same small decorative pumpkin as Trader Joe's "Lil' Tiger Stripe Pumpkin", without the "Lil'".
+test('DEFECT 8: Tiger Striped Pumpkin is a decorative pumpkin', () => {
+  rejects('pumpkin', 'Tiger Striped Pumpkin');
+  rejects('pumpkin', 'Mini Tiger Pumpkins');
+});
+
+test('control: the rerun\'s right answers stay right', () => {
+  matches('halloween candy', "Child's Play Individually Wrapped Assorted Halloween Candy");
+  matches('caramel apples', 'Caramel Apples');
+  matches('apple cider', "Nature's Nectar Honeycrisp Apple Cider");
+  matches('pumpkin', 'Pumpkin', 'Pumpkin');
+});
