@@ -15,7 +15,9 @@ cd "$(dirname "$0")/../ios"
 XCODE="${XCODE:-/Applications/Xcode 1.app}"
 export DEVELOPER_DIR="$XCODE/Contents/Developer"
 [ -d "$DEVELOPER_DIR" ] || { echo "no Xcode at $XCODE (set XCODE=...)"; exit 1; }
-version=$(xcodebuild -version | head -1); build=$(xcodebuild -version | tail -1)
+# Read the whole answer first: `xcodebuild -version | head -1` lets head exit early, xcodebuild
+# dies of SIGPIPE, and pipefail ends the script silently with 141 before anything is printed.
+xv=$(xcodebuild -version); version=${xv%%$'\n'*}; build=${xv##*$'\n'}
 echo "Using $version ($build) from $XCODE"
 [[ "$XCODE" == *[Bb]eta* ]] && { echo "$XCODE is a beta Xcode: use the release one"; exit 1; }
 
