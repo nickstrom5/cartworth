@@ -128,9 +128,9 @@ Save as `~/Library/LaunchAgents/com.basket.sampler.plist`, then
     <string>/usr/bin/env</string>
     <string>node</string>
     <string>--disable-warning=ExperimentalWarning</string>
-    <string>/Users/YOU/Developer/claudecode/basket/scripts/sampler/run.js</string>
+    <string>/path/to/cartworth/scripts/sampler/run.js</string>
   </array>
-  <key>WorkingDirectory</key><string>/Users/YOU/Developer/claudecode/basket</string>
+  <key>WorkingDirectory</key><string>/path/to/cartworth</string>
   <key>EnvironmentVariables</key>
   <dict><key>BASKET_DATA_DIR</key><string>/tmp/basket-sampler</string></dict>
   <!-- Sundays at 02:00 -->

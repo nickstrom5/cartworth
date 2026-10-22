@@ -281,7 +281,7 @@ Depends on items 1, 5, 6 and 8.
 ### The Xcode Organizer path (recommended for a first submission)
 
 ```
-cd /Users/nicksoderstrom/Developer/claudecode/basket/ios
+cd ios
 xcodegen generate
 open Cartworth.xcodeproj
 ```
@@ -300,7 +300,7 @@ Use this path the first time. It surfaces signing and validation problems in a r
 ### The command-line path
 
 ```
-cd /Users/nicksoderstrom/Developer/claudecode/basket/ios
+cd ios
 xcodegen generate
 
 xcodebuild -project Cartworth.xcodeproj \

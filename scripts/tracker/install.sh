@@ -11,18 +11,11 @@ LABEL="app.cartworth.tracker"
 SRC="$REPO/ops/launchd/$LABEL.plist"
 DST="$HOME/Library/LaunchAgents/$LABEL.plist"
 
-plutil -lint "$SRC"
-if ! grep -q "<string>$REPO/scripts/tracker/run-daily.sh</string>" "$SRC"; then
-  echo "install: $SRC runs a script outside $REPO. Edit its ProgramArguments (and the log/data paths) first." >&2
-  exit 1
-fi
-if ! grep -q "<string>$HOME/" "$SRC"; then
-  echo "install: $SRC was written for a different home folder than $HOME. Edit its paths first." >&2
-  exit 1
-fi
 mkdir -p "$HOME/Library/Logs/Cartworth" "$HOME/Library/Application Support/Cartworth/tracker" "$HOME/Library/LaunchAgents"
 chmod +x "$REPO/scripts/tracker/run-daily.sh"
-cp "$SRC" "$DST"
+# The plist in the repo is a template: __REPO__ and __HOME__ become this checkout and this user.
+sed -e "s#__REPO__#$REPO#g" -e "s#__HOME__#$HOME#g" "$SRC" > "$DST"
+plutil -lint "$DST"
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$DST"
 launchctl print "gui/$(id -u)/$LABEL" | grep -E "state|path|program|last exit" || true

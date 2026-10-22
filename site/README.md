@@ -10,7 +10,7 @@ To look at it locally, serve the folder rather than opening the files directly, 
 cross-page links are root-relative (`/`, `/#pricing`) so that they are correct once deployed:
 
 ```sh
-cd /Users/nicksoderstrom/Developer/claudecode/basket/site && python3 -m http.server 8080
+cd site && python3 -m http.server 8080
 # then open http://localhost:8080/
 ```
 
@@ -54,7 +54,7 @@ Placeholders render as an obvious amber monospace chip, so nothing slips through
 before you deploy:
 
 ```sh
-grep -rn "\[OWNER:" /Users/nicksoderstrom/Developer/claudecode/basket/site
+grep -rn "\[OWNER:" site
 ```
 
 That grep must return nothing before the site goes live.

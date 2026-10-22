@@ -2,9 +2,7 @@
 
 Every foreground/background pair the Sprout system defines, in light and dark, measured with the
 WCAG 2.x relative-luminance formula. Nothing here was eyeballed: the table is generated from
-`tokens.css` by `contrast.mjs` (kept in the session scratchpad at
-`/private/tmp/claude-501/-Users-nicksoderstrom-Developer-claudecode/5eef7220-fae0-4c59-bb5b-8a9173e2aaf1/scratchpad/sprout/contrast.mjs`;
-copy it into `basket/scripts/` to keep it). The script resolves the role aliases (for example
+`tokens.css` by a `contrast.mjs` script (not checked in). The script resolves the role aliases (for example
 `--sp-price-best` is `--sp-accent`) for each theme and rounds ratios **down** to two places, so a
 printed 4.50 is never really 4.499.
 

@@ -1,8 +1,0 @@
-
-== 19147 Philadelphia: 19 priced stores (wholefoods, sprouts, walmart, aldi, traderjoes, groceryoutlet, foodlion, acme, shoprite, bjs, hmart, wegmans, samsclub, pricerite, freshmarket, weis, redners, costco, giant); unresolved: none
-19147 halloween candy $4.06/lb     shoprite [online] "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows" 8 oz $2.03 | Less than the next-best store, {store} (shelf price)
-19147 pumpkin         $0.88/ct     pricerite [online] "Pumpkin" 1 ea $0.88 | Less than the next-best store, {store} (shelf price)
-19147 apple cider     $5.98/gal    weis [online] "Weis Apple Cider" 64 fl oz $2.99 | {amount}/{unit} (9%) less than the next-best store, {store} (both online prices)
-19147 caramel apples  $2.74/lb     foodlion [shelf] "Lucky Leaf Caramel Apple Fruit Filling" 21 oz $3.59 | About the same as {store} (estimated price), so no saving is claimed
-
-wrote 4 answers to /Users/nicksoderstrom/cartworth/ops/coverage/halloween-run/PA-halloween.json
