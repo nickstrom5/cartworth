@@ -4,11 +4,11 @@ The tracker on the Mac writes CSV files into your Google Drive folder
 **My Drive › Cartworth › price-tracker › incoming**. A small script inside a Google Sheet picks
 them up every hour and adds the rows. You set that Sheet up once; after that it runs by itself.
 
-Do this signed in as **nickstrom5@gmail.com**, in a desktop browser.
+Do this in a desktop browser, signed in to the same Google account as Google Drive for desktop on the Mac.
 
 ## 1. Make the Sheet (1 minute)
 
-1. Go to <https://sheets.new> (opens a new blank Google Sheet in nickstrom5's Drive).
+1. Go to <https://sheets.new> (opens a new blank Google Sheet in your Drive).
 2. Click the title **Untitled spreadsheet** (top left) and type **Cartworth price tracker**. Press Enter.
 3. Optional, tidy: **File › Move**, pick **My Drive › Cartworth › price-tracker**, click **Move**.
    (If that folder does not exist yet, skip this. The script creates it in step 3.)
@@ -28,7 +28,7 @@ Do this signed in as **nickstrom5@gmail.com**, in a desktop browser.
 1. In the toolbar, the function drop-down next to **Debug** — choose **`setup`**.
 2. Click **Run**.
 3. A box says **Authorization required** → click **Review permissions**.
-4. Choose **nickstrom5@gmail.com**.
+4. Choose that same Google account.
 5. You will see **"Google hasn't verified this app"**. That is normal for a script you wrote
    yourself and nobody else uses. Click **Advanced** (small, bottom left), then
    **Go to Cartworth importer (unsafe)**.
@@ -64,7 +64,7 @@ imports straight away instead of waiting for the hour.
 - to see one right now, run a one-term capture on the Mac (about 3 minutes, ~135 polite requests):
 
   ```sh
-  cd ~/Developer/claudecode/basket
+  cd /path/to/cartworth
   node --disable-warning=ExperimentalWarning scripts/tracker/capture.js --zips 60618 --terms butter
   ```
 

@@ -27,9 +27,16 @@ export function defaultDataDir(home = os.homedir()) {
   return path.join(home, 'Library', 'Application Support', 'Cartworth', 'tracker');
 }
 
-/** The Google Drive for desktop mount for the owner's account ("My Drive" inside it). */
-export function defaultDriveRoot(home = os.homedir()) {
-  return path.join(home, 'Library', 'CloudStorage', 'GoogleDrive-nickstrom5@gmail.com', 'My Drive');
+/**
+ * The Google Drive for desktop mount ("My Drive" inside it). CARTWORTH_DRIVE_ROOT overrides it;
+ * otherwise it is the first GoogleDrive-<account> folder in ~/Library/CloudStorage.
+ */
+export function defaultDriveRoot(home = os.homedir(), env = process.env) {
+  if (env.CARTWORTH_DRIVE_ROOT) return env.CARTWORTH_DRIVE_ROOT;
+  const cloud = path.join(home, 'Library', 'CloudStorage');
+  let mounts = [];
+  try { mounts = fs.readdirSync(cloud).filter((d) => d.startsWith('GoogleDrive-')).sort(); } catch {}
+  return path.join(cloud, mounts[0] || 'GoogleDrive', 'My Drive');
 }
 
 /** Where the tracker's files go inside My Drive. The Apps Script importer looks for exactly this path. */

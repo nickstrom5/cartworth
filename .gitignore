@@ -13,3 +13,6 @@ ios/build/
 
 # Local state from `wrangler dev` / `wrangler deploy --dry-run`
 .wrangler/
+
+# Output of ops/coverage/holiday-matrix.mjs runs (logs carry local paths)
+ops/coverage/*-run/

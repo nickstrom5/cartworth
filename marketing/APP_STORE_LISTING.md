@@ -2,7 +2,7 @@
 
 Everything here is meant to be copied into App Store Connect as-is. Character counts were measured on the exact strings below.
 
-Facts in this document were read from the shipping source at `/Users/nicksoderstrom/Developer/claudecode/basket/ios`. Three corrections to the brief this was written from, because each one changes what you may claim on the product page:
+Facts in this document were read from the shipping source in `ios/`. Three corrections to the brief this was written from, because each one changes what you may claim on the product page:
 
 1. **The deployment target is iOS 17.0**, not iOS 26 (`ios/project.yml`, `deploymentTarget.iOS: "17.0"`). Apple Intelligence recipe parsing via FoundationModels is gated behind `@available(iOS 26.0, *)` and only runs when `SystemLanguageModel.default.isAvailable`; on everything else the app falls back to its own on-device parser. So "on-device" is true everywhere, "Apple Intelligence" is not. The listing below says "on your device" and never names Apple Intelligence.
 2. **There is no Kroger API integration.** Kroger and the whole Kroger family (Ralphs, Fred Meyer, King Soopers, Fry's, Smith's, QFC, Dillons, Harris Teeter, Mariano's, Pick 'n Save, Metro Market, Food 4 Less, City Market) resolve through Instacart-powered storefronts in `ios/App/Sources/RetailerCatalog.swift`. Do not tell App Review you use an official Kroger API.
