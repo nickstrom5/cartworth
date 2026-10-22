@@ -387,7 +387,7 @@ enum ProductFactory {
         var unit: [String: UnitPrice] = [:]
         if soldByLb {
             unit[Dim.weight.rawValue] = UnitPrice(perBase: price / 16, est: false)
-            if let e = f.estEach, e > 0 { unit[Dim.count.rawValue] = UnitPrice(perBase: e, est: true) }
+            if let e = f.estEach, e > 0, !Units.pieceWeightVaries(name) { unit[Dim.count.rawValue] = UnitPrice(perBase: e, est: true) }
         } else if let s = size, let b = s.base, b > 0, price > 0 {
             unit[s.dim.rawValue] = UnitPrice(perBase: price / b, est: s.range)
         }

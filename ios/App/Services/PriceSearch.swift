@@ -51,7 +51,8 @@ enum PriceSearch {
             // the watch list consistent with one another during a capture.
             let items = QAShot.hideSponsored ? r.value.items.filter { !$0.sponsored } : r.value.items
             return StoreResult(retailerId: chain.id, status: items.isEmpty ? .empty : .ok, items: items, location: r.value.location,
-                               message: r.value.message, cached: wasFresh && !fresh, stale: r.staleError.map { friendly($0) }, ms: ms)
+                               message: r.value.message, cached: wasFresh && !fresh, stale: r.staleError.map { friendly($0) },
+                               savedAt: r.storedAt, ms: ms)
         } catch {
             return StoreResult(retailerId: chain.id, status: .error(friendly(error)), items: [], location: nil, message: nil, ms: Int(Date().timeIntervalSince(started) * 1000))
         }
@@ -96,7 +97,9 @@ enum PriceSearch {
         var out: [(Deal, Double)] = []
         for h in hits {
             guard let chain = RetailerCatalog.chain(forMerchant: h.merchant), chainIds.contains(chain.id) else { continue }
-            let d = FlippSource.deal(item: h.item, detail: h.detail, retailerId: chain.id, merchant: h.merchant, now: now)
+            // A search result without its multiplier yields to the item's own detail when it is on hand.
+            let stored = h.detail.partial == true ? await FlippSource.shared.storedDetails(h.item.flyerId)[h.item.id] : nil
+            let d = FlippSource.deal(item: h.item, detail: stored ?? h.detail, retailerId: chain.id, merchant: h.merchant, now: now)
             if let to = d.validTo, to < now { continue }
             // Next week's circular is not "in this week's ads" (and is a Pro feature on its own tab).
             if let from = d.validFrom, from > now { continue }

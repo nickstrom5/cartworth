@@ -762,6 +762,11 @@ label.field .hint {
   background: var(--warn-bg);
   color: var(--warn-ink);
 }
+/* A price from a store's saved copy (the store did not answer just now): its age, in the warning ink. */
+.saved-note {
+  color: var(--warn-ink);
+  font-weight: 600;
+}
 .badge-bad {
   background: var(--bad-bg);
   color: var(--bad-ink);

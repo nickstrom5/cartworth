@@ -1,0 +1,18 @@
+
+== 55408 Minneapolis: 11 priced stores (aldi, lundsbyerlys, wholefoods, traderjoes, hyvee, cub, kowalskis, freshthyme, costco, samsclub, walmart); unresolved: none
+55408 whole turkey    $0.84/lb     walmart [national] "Jennie-O Frozen Prime Young Turkey" per lb $0.84 | Less than the next-best store, {store} (online price)
+55408 stuffing        $2.67/lb     walmart [national] "Great Value Cornbread Stuffing Mix" 6 oz $1.00 | Less than the next-best store, {store} (shelf price)
+55408 cranberry sauce $1.82/lb     aldi [shelf] "Sweet Harvest Jellied Cranberry Sauce" 14 oz $1.59 | {amount}/{unit} (11%) less than the next-best store, {store}
+55408 sweet potatoes  $2.54/lb     wholefoods [shelf] "Organic Japanese Sweet Potato" per lb $2.54 | {amount}/{unit} (36%) less than the next-best store, {store}
+55408 russet potatoes $0.45/lb     aldi [shelf] "Russet Potatoes" 10 lb $4.49 | {amount}/{unit} (59%) less than the next-best store, {store}
+55408 green beans     $0.53/lb     aldi [shelf] "Happy Harvest Cut Green Beans" 15 oz $0.50 | {amount}/{unit} (68%) less than the next-best store, {store}
+55408 dinner rolls    $3.97/lb     aldi [shelf] "Specially Selected Brioche Rolls - 12 Pack" 16.9 oz $4.19
+55408 butter          $2.89/lb     aldi [shelf] "Countryside Creamery Sweet Cream Butter - 4 Sticks" 16 oz $2.89 | {amount}/{unit} (3%) less than the next-best store, {store}
+55408 heavy cream     $18.36/gal   aldi [shelf] "Friendly Farms Heavy Whipping Cream" 32 fl oz $4.59 | {amount}/{unit} (54%) less than the next-best store, {store}
+55408 pumpkin puree   $2.12/lb     wholefoods [shelf] "Pumpkin Puree" 15 oz $1.99
+55408 pie crust       $0.97/ct     aldi [shelf] "Bake House Creations Pie Crusts - 2 Count" 2 ct $1.95 | {amount}/{unit} (76%) less than the next-best store, {store}
+55408 celery          $1.99/lb     aldi [shelf] "Celery, each" 1 lb $1.99 | {amount}/{unit} (70%) less than the next-best store, {store}
+55408 onions          $0.80/lb     aldi [shelf] "Fresh Yellow Onions" 3 lb $2.39 | {amount}/{unit} (47%) less than the next-best store, {store}
+55408 chicken broth   $4.77/gal    aldi [shelf] "Chef's Cupboard Chicken Broth" 48 fl oz $1.79 | {amount}/{unit} (36%) less than the next-best store, {store}
+
+wrote 14 answers to /Users/nicksoderstrom/cartworth/ops/coverage/thanksgiving-run/MN-thanksgiving.json

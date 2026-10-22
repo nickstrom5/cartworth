@@ -222,7 +222,7 @@ struct DealsView: View {
                 .padding(.bottom, 24)
             }
             .navigationTitle("Deals")
-            .searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search deals")
+            .drawerSearch(text: $text, prompt: "Search deals")
             .refreshable { await load(fresh: true) }
             .task { if model.deals[week] == nil { await load() } }
             .onChange(of: text) { _, _ in limit = 40 }

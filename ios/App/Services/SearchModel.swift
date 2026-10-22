@@ -56,7 +56,7 @@ final class SearchModel {
                 for chain in chains where chain.source.hasPrices {
                     group.addTask {
                         let r = await PriceSearch.search(chain: chain, query: q, place: place, limit: limit, fresh: fresh)
-                        let stats = r.items.isEmpty ? [:] : await HistoryStore.shared.statsThenRecord(r.items)
+                        let stats = r.items.isEmpty ? [:] : await HistoryStore.shared.statsThenRecord(r.items, record: r.stale == nil)
                         await MainActor.run {
                             guard let self, self.query == q else { return }
                             self.results[chain.id] = r

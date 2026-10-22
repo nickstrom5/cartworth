@@ -53,12 +53,14 @@ export async function optimize(rawItems, ctx, { fresh = false } = {}) {
     const results = await Promise.all(stores.map((s) => searchStore(s, q, ctx, { fresh })));
     const byStore = {};
     const errors = {};
+    const savedAt = {};
     for (const r of results) {
-      byStore[r.storeId] = withHistory(r.items || []);
+      byStore[r.storeId] = withHistory(r.items || [], { record: !r.stale });
+      if (r.stale) savedAt[r.storeId] = r.savedAt ?? 0; // 0: saved, age unknown
       if (r.status === 'error') errors[r.storeId] = r.error;
       else if (r.status === 'busy') errors[r.storeId] = r.message; // not asked (src/guard.js): say so, not "no match"
     }
-    return { ...priceItem(it, byStore, stores, ctx), errors };
+    return { ...priceItem(it, byStore, stores, ctx, savedAt), errors };
   });
 
   const plans = plan(priced, stores);
@@ -69,7 +71,7 @@ export async function optimize(rawItems, ctx, { fresh = false } = {}) {
  * Cost one list item at every store, from the results those stores returned for it. Pure, so the
  * arithmetic that ends up in a trip total can be tested against captured results.
  */
-export function priceItem(it, byStore, stores, ctx = {}) {
+export function priceItem(it, byStore, stores, ctx = {}, savedAt = {}) {
   const q = searchTextFor(it.text);
   // Score against the words the shopper is shopping for, not the words plus their size. Scored
   // on the raw text, "chicken broth 32 fl oz" made 'fl' the head noun and matched nothing at
@@ -86,6 +88,9 @@ export function priceItem(it, byStore, stores, ctx = {}) {
       cost: ref ? round2(b.unit.perBase * ref.base * it.qty) : null,
       est: b.unit.est,
       product: { key: p.key, name: p.name, brand: p.brand, size: p.size, price: b.unit.member ? p.memberPrice : p.price, soldBy: p.soldBy, url: p.url, image: p.image, onSale: p.onSale, promo: p.promo, priceBasis: p.priceBasis },
+      // Set when this store did not answer and its saved prices were used: when they were fetched
+      // (0 when that is unknown), so the plan can say "saved 5 hours ago" beside the price.
+      ...(storeId in savedAt ? { savedAt: savedAt[storeId] } : {}),
     };
   }
   if (it.pinned && stores.includes(it.pinned.storeId)) {

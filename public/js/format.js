@@ -59,6 +59,15 @@ export function ago(t) {
   return rtf ? rtf.format(-d, 'day') : `${d}d ago`;
 }
 
+/**
+ * The note beside a price that came from a store's saved copy because the store did not answer
+ * just now (`savedAt` set by the server: when the store answered, or 0 when that is unknown).
+ */
+export function savedNote(x) {
+  if (!x || !('savedAt' in x) || x.savedAt == null) return null;
+  return x.savedAt ? `saved ${ago(x.savedAt)}` : 'saved price';
+}
+
 export function shortDate(t) {
   if (!t) return '';
   const d = new Date(t);

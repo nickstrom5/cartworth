@@ -148,6 +148,11 @@ export async function searchItems(query, zip) {
           original: i.original_price != null ? +i.original_price : null,
           current: i.current_price != null ? +i.current_price : null,
           description: null,
+          // Search results often leave out the multiplier: Fresh Thyme's "10 for $10.00" Chobani
+          // (item 1045842565) comes back as price 10 with no pre_price_text. Without it, nothing
+          // here says whether the number is for one item or several, so the item's own detail
+          // still has to be read before the price is shown as one item's.
+          partial: !i.pre_price_text,
         },
         externalCategory: [i._L1, i._L2].filter(Boolean).join(' / '),
       }));
@@ -159,7 +164,8 @@ export async function searchItems(query, zip) {
 const num = (v) => (v == null || v === '' || Number.isNaN(+v) ? null : +v);
 
 export function toDeal(raw, storeId, merchant, now = Date.now()) {
-  const det = raw.detail || storedDetail(raw.id) || null;
+  const det = (raw.detail?.partial && storedDetail(raw.id)) || raw.detail || storedDetail(raw.id) || null;
+  const enriched = !!det && !det.partial;
   let price = num(det?.current) ?? num(raw.price);
   const pre = (det?.pre || '').trim();
   const post = (det?.post || '').trim();
@@ -196,7 +202,7 @@ export function toDeal(raw, storeId, merchant, now = Date.now()) {
       endsInDays: to ? Math.max(0, Math.ceil((to - now) / 86400000)) : null,
       week: from && from > now ? 'next' : 'current',
       category: categorize(raw.name, det?.description || '', raw.externalCategory || ''),
-      enriched: !!det, coupon: true,
+      enriched, coupon: true,
     };
   }
 
@@ -214,13 +220,20 @@ export function toDeal(raw, storeId, merchant, now = Date.now()) {
     const m = disclaimer.match(/(?:without coupon|reg(?:ular)?\.?(?: price)?)\s*\$?\s*(\d+(?:\.\d{2})?)/i);
     if (m) regular = +m[1];
   }
+  // On a multi-buy, Flipp's original_price is sometimes one unit's regular price and sometimes the
+  // whole bundle's: "10 for $10.00" Chobani has original 18.90, ten cups at $1.89. A "regular price"
+  // above what the whole bundle costs on sale is read as the bundle's, so it is divided down to one
+  // unit; compared with $1.00 each it was 95% off, where the ad's "save up to $8.90" is 47%.
+  if (regular && qty > 1 && price != null && regular > price) regular = Math.round((regular / qty) * 100) / 100;
   let pctOff = null;
   if (regular && each && regular > each) pctOff = Math.round((1 - each / regular) * 100);
   else if (det?.percentOff) pctOff = Math.round(det.percentOff);
   else if (raw.discount && raw.discount > 0 && raw.discount < 95) pctOff = Math.round(raw.discount);
 
   const dealText = `${pre} ${story} ${disclaimer}`.trim();
-  const deal = parseDeal(dealText, each);
+  // A bare "10 for" is read against the price it is given, which for that form is the TOTAL
+  // (see parseDeal); given one unit's $1.00 it made the deal ten for $1.00.
+  const deal = parseDeal(dealText, qty > 1 && !story && !disclaimer ? price : each);
   if (deal?.kind === 'bogo' || deal?.kind === 'bxgy') pctOff = pctOff ?? deal.pct;
   // Only the ad text is consulted, never the product name: "gluten free", "fragrance free" and
   // Walmart's "Free Assembly" clothing line all live in names and none of them is a freebie.
@@ -275,7 +288,7 @@ export function toDeal(raw, storeId, merchant, now = Date.now()) {
     endsInDays: to ? Math.max(0, Math.ceil((to - now) / 86400000)) : null,
     week,
     category: categorize(raw.name, description || '', raw.externalCategory || ''),
-    enriched: !!det,
+    enriched,
   };
 }
 

@@ -25,6 +25,8 @@ const SYNONYMS = {
   // One word for one product: Libby's "100% Pure Pumpkin" is pumpkin puree, and Thanksgiving's
   // "pumpkin puree" missed it, and ALDI's, by name (the Thanksgiving run, Dallas).
   puree: ['pure'],
+  // Nestle Toll House sells chocolate chips as "Morsels"; "chocolate chips" missed the best-known bag.
+  morsel: ['chip'], morsels: ['chip'],
 };
 
 // Words that turn a product into something else when they FOLLOW the searched noun:
@@ -109,6 +111,14 @@ const TRAPS = new Set([
   // is correctly priced at $99.86/lb and has nothing to do with the price of a pumpkin pie, but it
   // scored as one in every ZIP and then tripped the plausibility guard on a price that was right.
   'spice', 'vinaigrette',
+  // Christmas and Hanukkah look-alikes: a ham glaze packet is not a ham, cream cheese frosting is not
+  // cream cheese, and "Sardines in Vegetable Oil" is not vegetable oil (tuna was already a trap).
+  'glaze', 'frosting', 'icing', 'sardine', 'anchovy', 'mackerel', 'herring',
+  // A can of pie filling and a bag of marshmallows named after what they taste of or look like:
+  // "Lucky Leaf Caramel Apple Fruit Filling" (Meijer, Food Lion) answered "caramel apples", and
+  // "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows" (Rouses, ShopRite) "halloween candy"
+  // (the Halloween run).
+  'filling', 'marshmallow',
 ]);
 
 /**
@@ -125,7 +135,7 @@ const TRAPS = new Set([
  * Debbie's Christmas Tree Cakes are food), 'decorations' (cake decorations are baking aisle) or
  * 'stocking' (a candy-filled stocking is candy).
  */
-const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?)\b/i;
+const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?|gift bags?|battery[- ]operated|books?|wax melts?|scented)\b/i;
 
 /**
  * Qualifiers that turn a trap noun back into an ordinary description of the searched product.
@@ -143,7 +153,8 @@ const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|fa
 const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['sprinkle']), spray: new Set(['ocean']), cocktail: new Set(['juice']), concentrate: new Set(['from']), squash: new Set(['zucchini', 'yellow', 'summer', 'butternut', 'acorn']) };
 /** The mirror image: a trap noun forgiven when the word right AFTER it names what it is. "King
  * Oyster Mushrooms" are mushrooms, so 'oyster' must not bury them in a mushroom search. */
-const BENIGN_BEFORE = { oyster: new Set(['mushroom']) };
+// Bread flour is flour: 'bread' is a trap so that "banana bread" is not bananas.
+const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour']) };
 
 // Plant bases in front of the noun make a different product: "almond milk", "coconut milk", "oat creamer".
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
@@ -187,7 +198,7 @@ const QUERY_ALLOWS = Object.fromEntries(Object.entries({
   watermelon: ['mini', 'seedless', 'personal'], bar: ['oat', 'honey'], bacon: ['smoked', 'hardwood', 'pork'],
 }).map(([k, v]) => [k, new Set(v)]));
 // Products that normally come in flavours, where a flavour word is the variety, not a different food.
-const FLAVOR_OK_HEADS = new Set(['bar', 'chip', 'cereal', 'candy', 'soda', 'bread', 'ham', 'meat', 'cracker', 'cookie', 'sauce', 'bean', 'granola']);
+const FLAVOR_OK_HEADS = new Set(['bar', 'chip', 'cereal', 'candy', 'soda', 'bread', 'ham', 'meat', 'cracker', 'cookie', 'sauce', 'bean', 'granola', 'applesauce']);
 
 // Compound names that are a different product from the query word inside them. HEAD: the query
 // word is the modifier ("peanut butter cups" are candy, "celery salt" a seasoning); fires when the
@@ -197,12 +208,16 @@ const FLAVOR_OK_HEADS = new Set(['bar', 'chip', 'cereal', 'candy', 'soda', 'brea
 const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn tortilla', 'flour tortilla', 'celery salt', 'celery seed',
   'onion salt', 'garlic salt', 'yogurt raisin', 'yogurt covered', 'yogurt pretzel', 'wine glass', 'glass set', 'champagne flute',
   'sugar free', 'charcoal toothpaste', 'chocolate milk',
+  // BJ's "Wellsley Farms 12 Inch Pumpkin Pie" answered "pumpkin" (the Halloween run). "Pie Pumpkin" is a pumpkin.
+  'pumpkin pie',
   // Celery root (celeriac) is another vegetable: Food Bazaar's "Celery Root (Knob)" answered "celery" (Thanksgiving, NYC).
   'celery root'];
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
   'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
   // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
-  'green onion', 'spring onion'];
+  'green onion', 'spring onion',
+  // Fruit and nut butters, and margarine that says so: apple butter is not butter.
+  'apple butter', 'pumpkin butter', 'shea butter', 'cocoa butter', 'not butter'];
 // Tokenised with the matcher's own tokens() ("tortillas" stays "tortillas"), on first use: tokens()
 // depends on constants declared further down this file.
 let compounds = null;
@@ -321,7 +336,18 @@ const WANTS_SUPPLEMENT_RE = /\b(?:tablets?|caplets?|capsules?|softgels?|suppleme
 const PROCESSED_FORM_RE = /\bin (?:light |heavy )?(?:syrup|juice)\b|\b(?:canned|diced|crushed|stewed|sun[- ]?dried|freeze[- ]?dried|dried|dehydrated|pureed?|frozen)\b/;
 const LUNCH_NAME_RE = /\b(?:deli|sliced|lunchmeat|lunch meat|cold cuts?)\b/;
 const LUNCH_CAT_RE = /\b(?:deli|lunch ?meats?|lunchmeat|cold cuts?)\b/;
-const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|crafts?|disposable|cutlery|utensils?|tableware|herbal tea|pet (?:food|treats|supplies)|dog|cat)\b/;
+const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|decor|gift bags?|crafts?|disposable|cutlery|utensils?|tableware|herbal tea|pet (?:food|treats|supplies)|dog|cat)\b/;
+// "pumpkin" on its own is a pumpkin to carve. Mini and ornamental pumpkins are table decorations at
+// a dollar or two, and priced per pumpkin they beat every carving pumpkin: Trader Joe's "Lil' Tiger
+// Stripe Pumpkin" was the best pumpkin in four states, Rouses' "Licensed LSU Tigers Pumpkin" (8 ct)
+// in New Orleans, and a pail and a bucket scored 0.85 (the Halloween run). Asking for them finds them.
+// The rerun (21 Oct) added Fresh Thyme's "Tiger Striped Pumpkin", the same one without the "Lil'",
+// and Walmart's chain-wide "Poppin Pumpkin Snaps", the best pumpkin in four states.
+const DECORATIVE_PUMPKIN_RE = /\b(?:mini|miniature|ornamental|decorative|decor|jack be little|wee b(?:ee)? little|tigers?|licensed|pails?|buckets?|snaps?|poppin)\b/;
+// A whole pumpkin weighs pounds. A pumpkin sold by the piece with a net weight under 2 lb is a can or
+// a pouch: Walmart's "Great Value Pumpkin", 15 oz, was Philadelphia's best pumpkin (the rerun), and
+// nothing in its name says it is puree.
+const CANNED_PUMPKIN_MAX_OZ = 32;
 const WATER_DRINK_RE = /\b(?:sparkling|mineral|spring|flavou?red|still|infused) water\b|\bseltzer\b|\bla croix\b/i;
 const WANTS_WATER_RE = /\bwater\b|\bseltzer\b|\bla croix\b/i;
 
@@ -494,6 +520,8 @@ export function relevance(query, product, opts = {}) {
     if (catTok.has('juice') || catTok.has('juices') || catTok.has('pressed')) { if (!qset.has('juice')) mult *= 0.3; }
   }
   // "Garden Sweet Russet Potato" answered "sweet potatoes": another potato entirely.
+  if (head === 'pumpkin' && DECORATIVE_PUMPKIN_RE.test(nameNorm) && !DECORATIVE_PUMPKIN_RE.test(normalize(query))) mult *= 0.2;
+  if (head === 'pumpkin' && product.soldBy !== 'lb' && product.dim === 'weight' && product.base > 0 && product.base < CANNED_PUMPKIN_MAX_OZ) mult *= 0.2;
   if (/\bsweet potato/.test(normalize(query)) && /\b(?:russet|yukon|red potato|gold potato|white potato)/.test(nameNorm)) mult *= 0.2;
   if (FRESH_VEG_MEAT_RE.test(head || '')) {
     const m = SHELF_FORM_RE.exec(nameNorm);

@@ -61,7 +61,7 @@ struct SearchView: View {
             .scrollDismissesKeyboard(.immediately)
             .navigationTitle(model.query.isEmpty ? "Cartworth" : model.query)
             .navigationBarTitleDisplayMode(model.query.isEmpty ? .large : .inline)
-            .searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search any food item")
+            .drawerSearch(text: $text, prompt: "Search any food item")
             .searchSuggestions {
                 if !text.isEmpty {
                     ForEach(suggestions, id: \.self) { s in
@@ -81,6 +81,7 @@ struct SearchView: View {
                     ToolbarItem(placement: .topBarLeading) {
                         Button { start(model.query, fresh: true) } label: { Image(systemName: "arrow.clockwise") }
                             .disabled(model.isRunning)
+                            .accessibilityLabel("Check every store again")
                     }
                 }
             }
@@ -492,7 +493,18 @@ struct StoreStatusStrip: View {
                     Text("\(r.items.count)").foregroundStyle(.secondary)
                     if r.stale != nil {
                         Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange)
-                            .accessibilityLabel("saved prices; the store did not answer just now")
+                            .accessibilityHidden(true)
+                        if let saved = r.savedAt {
+                            // Re-drawn every minute, so the age keeps up while results stay on screen.
+                            TimelineView(.periodic(from: .now, by: 60)) { _ in
+                                Text(saved, format: .relative(presentation: .named, unitsStyle: .abbreviated))
+                                    .foregroundStyle(Color.warnInk)
+                                    .accessibilityLabel("saved prices from \(saved.formatted(.relative(presentation: .named))); the store did not answer just now")
+                            }
+                        } else {
+                            Text("saved").foregroundStyle(Color.warnInk)
+                                .accessibilityLabel("saved prices; the store did not answer just now")
+                        }
                     }
                 }
             }

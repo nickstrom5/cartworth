@@ -1,0 +1,8 @@
+
+== 43214 Columbus: 14 priced stores (groceryoutlet, aldi, wholefoods, traderjoes, kroger, gianteagle, marcs, freshthyme, saveolot, samsclub, meijer, costco, bjs, walmart); unresolved: none
+43214 halloween candy $4.98/lb     gianteagle [online] "SOUR PATCH KIDS Zombie Orange & Purple Soft & Chewy Halloween Candy" 3.5 oz $1.09 | Less than the next-best store, {store} (shelf price)
+43214 pumpkin         $0.99/ct     gianteagle [online] "Mini Pumpkin" 1 ea $0.99 | Less than the next-best store, {store} (shelf price)
+43214 apple cider     $6.79/gal    marcs [online] "BLOSSOM GROVE Apple Cider" 128 fl oz $6.79 | Less than the next-best store, {store} (shelf price)
+43214 caramel apples  $3.04/lb     meijer [online] "Lucky Leaf Caramel Apple Fruit Filling" 21 oz $3.99 | About the same as {store} (estimated price), so no saving is claimed
+
+wrote 4 answers to /Users/nicksoderstrom/cartworth/ops/coverage/halloween-run/OH-halloween.json

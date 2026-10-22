@@ -544,7 +544,22 @@ const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|sa
 
 export function produceWeightLb(name) {
   const n = String(name || '').toLowerCase();
-  if (NOT_ONE_PIECE_RE.test(n)) return null;
+  if (NOT_ONE_PIECE_RE.test(n) || pieceWeightVaries(n)) return null;
   for (const [re, lb] of PRODUCE_LB) if (re.test(n)) return lb;
   return null;
+}
+
+/**
+ * Produce whose pieces differ too much in weight for any "each" price to be worked out from a price
+ * per pound. A pumpkin weighs anything from a quarter pound to twenty-five, and the retailers'
+ * own "each (est.)" figures show it: in the Halloween run Grocery Outlet's $0.99/lb "Small White
+ * Pumpkin" came to $0.26 each (a quarter pound) and was Seattle's best pumpkin, Key Food's "Pumpkin"
+ * came to 10 lb, and Star Market's "Orange Pumpkin Small/Mini - Weight Between 4-5 Lb" to 1.5 lb,
+ * against its own label, which the orange's 0.45 lb in PRODUCE_LB then priced at $0.90 a pumpkin. Sold
+ * by the pound, these keep their per-pound price and no per-piece one.
+ */
+const PIECE_WEIGHT_VARIES_RE = /\bpumpkins?\b/;
+
+export function pieceWeightVaries(name) {
+  return PIECE_WEIGHT_VARIES_RE.test(String(name || '').toLowerCase());
 }

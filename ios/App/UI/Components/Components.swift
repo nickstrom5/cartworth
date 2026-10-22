@@ -40,6 +40,19 @@ extension Color {
     init(hex: UInt32) {
         self.init(.sRGB, red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255, blue: Double(hex & 0xFF) / 255, opacity: 1)
     }
+
+    /// Text in a warning or error colour. System orange is 2.2:1 on white and system red 3.6:1,
+    /// under the 4.5:1 small text needs; these are the `Badge` inks (7.0:1 and 6.5:1 on white,
+    /// 10.8:1 and 7.5:1 on Dark Mode's grouped background), and follow Dark Mode by themselves.
+    static let warnInk = dynamic(light: 0x7A5100, dark: 0xF2C95C)
+    static let badInk = dynamic(light: 0xB3261E, dark: 0xFF8A80)
+
+    private static func dynamic(light: UInt32, dark: UInt32) -> Color {
+        Color(UIColor { trait in
+            let v = trait.userInterfaceStyle == .dark ? dark : light
+            return UIColor(red: CGFloat((v >> 16) & 0xFF) / 255, green: CGFloat((v >> 8) & 0xFF) / 255, blue: CGFloat(v & 0xFF) / 255, alpha: 1)
+        })
+    }
 }
 
 struct StoreDot: View {
@@ -173,6 +186,27 @@ extension Color {
     })
 }
 
+/// The age of a price taken from a store's saved copy because the store did not answer just now
+/// ("saved 5 hr. ago"). Re-drawn every minute so it keeps up. Port of savedNote in public/js/format.js.
+struct SavedNote: View {
+    var date: Date
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { _ in
+            Group {
+                if date > Date(timeIntervalSince1970: 0) {
+                    Text("saved ") + Text(date, format: .relative(presentation: .named, unitsStyle: .abbreviated))
+                } else {
+                    Text("saved price")
+                }
+            }
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(Color.warnInk)
+            .accessibilityElement(children: .combine)
+            .accessibilityHint("The store did not answer just now, so this is the last price Cartworth saved for it")
+        }
+    }
+}
+
 struct Badge: View {
     enum Kind { case neutral, sale, good, warn, info, outline }
     let text: String
@@ -223,7 +257,7 @@ struct Badge: View {
         case .neutral, .outline: return .secondary
         case .sale: return Color(hex: dark ? 0xFF9A6B : 0xB23A0C)
         case .good: return Color(hex: dark ? 0x6FD08C : 0x146B14)
-        case .warn: return Color(hex: dark ? 0xF2C95C : 0x7A5100)
+        case .warn: return .warnInk
         case .info: return Color(hex: dark ? 0x7DB4FF : 0x1C5CAB)
         }
     }
@@ -1061,5 +1095,71 @@ extension View {
     /// See `ReadablePage`. Apply to a tab's root `NavigationStack`.
     func readablePage(_ max: CGFloat, background: Color? = nil) -> some View {
         modifier(ReadablePage(max: max, background: background))
+    }
+}
+
+/// A search field in the navigation bar drawer that gives the tab bar back once it loses focus.
+///
+/// On an iPad (regular width, iPadOS 18 and later) the tab bar sits at the top of the screen,
+/// and a presented search takes that space: the tabs and the toolbar go, and there is no Cancel
+/// button. Submitting or hiding the keyboard left search presented for as long as the field held
+/// text, so the only way back to Deals, List, Tracking or Settings was to clear the query and
+/// then hide the keyboard. Found during App Store capture on 2026-10-20 (iPad Pro 13", iOS 27.0).
+/// The text, and so the results or the deals filter, stay; only the presentation ends. On a phone the tab bar is at the
+/// bottom and search keeps its Cancel button, so nothing changes there.
+struct DrawerSearch: ViewModifier {
+    @Binding var text: String
+    let prompt: String
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @State private var presented = false
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.modifier(FocusAware(text: $text, presented: $presented, prompt: prompt, wide: sizeClass == .regular))
+        } else {
+            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
+        }
+    }
+
+    @available(iOS 18.0, *)
+    private struct FocusAware: ViewModifier {
+        @Binding var text: String
+        @Binding var presented: Bool
+        let prompt: String
+        let wide: Bool
+        @FocusState private var focused: Bool
+
+        func body(content: Content) -> some View {
+            content
+                .searchable(text: $text, isPresented: $presented, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
+                .searchFocused($focused)
+                .onChange(of: focused) { _, now in
+                    guard !now, wide, presented else { return }
+                    let kept = text
+                    presented = false
+                    // Ending the presentation empties the field the way Cancel does: on the Search
+                    // tab through the binding, on the Deals tab without telling it (the grid stayed
+                    // filtered under a blank field). Once the dismissal has finished, the query is
+                    // set again so the field and the binding agree. Set while it is still
+                    // animating, the field stays blank.
+                    guard !kept.isEmpty else { return }
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(700))
+                        guard !focused, !presented, text.isEmpty || text == kept else { return }
+                        if text == kept {
+                            text = ""
+                            try? await Task.sleep(for: .milliseconds(50))
+                        }
+                        text = kept
+                    }
+                }
+        }
+    }
+}
+
+extension View {
+    /// `.searchable` in the navigation bar drawer, always shown. See `DrawerSearch`.
+    func drawerSearch(text: Binding<String>, prompt: String) -> some View {
+        modifier(DrawerSearch(text: text, prompt: prompt))
     }
 }

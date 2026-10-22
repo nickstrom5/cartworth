@@ -77,6 +77,8 @@ struct WatchResult: Codable, Hashable {
         var url: URL?
         var imageURL: URL?
         var priceBasis: PriceBasis
+        /// Set when the store did not answer and its saved copy was used: when it was fetched.
+        var savedAt: Date? = nil
     }
     var dim: String?
     var stores: [String: StoreBest]

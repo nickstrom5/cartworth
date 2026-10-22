@@ -32,7 +32,7 @@ struct SettingsView: View {
                     Picker("Search radius", selection: Binding(get: { app.radiusMiles }, set: { app.radiusMiles = $0; Task { await app.loadDirectory(fresh: true) } })) {
                         ForEach([5.0, 10, 15, 25, 40], id: \.self) { r in Text("\(Int(r)) miles").tag(r) }
                     }
-                    if let e = error { Text(e).font(.footnote).foregroundStyle(.red) }
+                    if let e = error { Text(e).font(.footnote).foregroundStyle(Color.badInk) }
                 } header: {
                     Text("Where you shop")
                 }

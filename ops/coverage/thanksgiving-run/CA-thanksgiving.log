@@ -1,0 +1,18 @@
+
+== 90019 Los Angeles: 23 priced stores (sprouts, traderjoes, wholefoods, elsuper, groceryoutlet, gelsons, aldi, walmart, smartfinal, ralphs, superiorgrocers, hmart, vons, erewhon, albertsons, pavilions, northgate, seafoodcity, vallarta, 99ranch, costco, samsclub, staterbros); unresolved: none
+90019 whole turkey    $2.99/lb     pavilions [online] "Butterball Premium All Natural Frozen Whole Turkey (12-16 lbs.)" per lb $2.99 | {amount}/{unit} (50%) less than the next-best store, {store} (both online prices)
+90019 stuffing        $2.59/lb     walmart [shelf] "Great Value Cornbread Stuffing Mix" 6 oz $0.97 | {amount}/{unit} (30%) less than the next-best store, {store}
+90019 cranberry sauce $1.64/lb     smartfinal [online] "Ocean Spray Jellied Cranberry Sauce #10 Can" 117 oz $11.99 | Less than the next-best store, {store} (shelf price)
+90019 sweet potatoes  $0.85/lb     hmart [online] "Pulmuone Foods Sweet Potato Bungeo Pang" 12.7 lb $10.79 | {amount}/{unit} (2%) less than the next-best store, {store} (both online prices)
+90019 russet potatoes $0.28/lb     aldi [shelf] "Russet Potatoes" 10 lb $2.84 | {amount}/{unit} (16%) less than the next-best store, {store}
+90019 green beans     $0.53/lb     aldi [shelf] "Happy Harvest Cut Green Beans" 15 oz $0.50 | {amount}/{unit} (3%) less than the next-best store, {store}
+90019 dinner rolls    $0.12/ct     superiorgrocers [online] "Dinner Rolls" 36 ct $4.39 | Less than the next-best store, {store} (shelf price)
+90019 butter          $2.89/lb     aldi [shelf] "Countryside Creamery Sweet Cream Butter - 4 Sticks" 16 oz $2.89 | About the same as {store} (online price), so no saving is claimed
+90019 heavy cream     $15.16/gal   elsuper [shelf] "First Street Whipping Cream, Heavy, 36% Butterfat" 32 fl oz $3.79 | About the same as {store} (online price), so no saving is claimed
+90019 pumpkin puree   $1.60/lb     samsclub [online] "Libby's Pumpkin Pure Pumpkin" 5.44 lb $8.72 | {amount}/{unit} (3%) less than the next-best store, {store} (both online prices)
+90019 pie crust       $3.27/lb     traderjoes [shelf] "Pie Crusts" 22 oz $4.49 | {amount}/{unit} (17%) less than the next-best store, {store}
+90019 celery          $0.79/ct     elsuper [shelf] "Celery" 1 ea $0.79
+90019 onions          $0.50/lb     elsuper [shelf] "Yellow Onion" per lb $0.50
+90019 chicken broth   $3.96/gal    groceryoutlet [shelf] "Swanson's Unsalted Chicken Broth" 32 fl oz $0.99 | {amount}/{unit} (17%) less than the next-best store, {store}
+
+wrote 14 answers to /Users/nicksoderstrom/cartworth/ops/coverage/thanksgiving-run/CA-thanksgiving.json

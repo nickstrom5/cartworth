@@ -381,7 +381,7 @@ I am not going to tell you this is fine, because I do not know that it is. What 
 
 - [x] Add internal testers (your own team members, no review required). Group `Owner` (automatic distribution on) with the owner's account; build 1 is in it, and the owner is Invited (2 Oct 2026)
 - [ ] Install on at least one real iPhone and run the full flow on real data
-- [ ] If you want external testers: fill in the Beta App Description, a feedback email, and submit for Beta App Review
+- [ ] If you want external testers: fill in the Beta App Description, a feedback email, and submit for Beta App Review. Every field is ready in `TESTFLIGHT.md`; build 4 is the one to send
 
 **Why it matters even though it is not a blocker.** The simulator does not exercise real network conditions, real Core Location behavior, real background task scheduling, or the real App Store purchase sheet. `BGAppRefreshTask` in particular only behaves realistically on a device over time, and the app schedules it with `earliestBeginDate` six hours out.
 

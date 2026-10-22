@@ -341,7 +341,7 @@ route('GET', '/api/search', async (req, url, res) => {
       return;
     }
     const r = await search.searchStore(id, q, ctx, { fresh: ctx.fresh });
-    if (r.items?.length) r.items = search.withHistory(r.items);
+    if (r.items?.length) r.items = search.withHistory(r.items, { record: !r.stale });
     emit('store', r);
   });
   const ads = search.searchAds(q, ctx).then((d) => emit('ads', { deals: d })).catch((err) => emit('ads', { deals: [], error: err.message }));

@@ -5,7 +5,7 @@ import { Icon } from '../icons.js';
 import { Sparkline, LineChart, DataTable } from '../charts.js';
 import { useStore, toast } from '../store.js';
 import { addWatch, refreshWatch, refreshAllWatches, updateWatch, removeWatch, runSearch, addToList } from '../actions.js';
-import { money2, unitPrice, unitPriceStep, unitLabel, ago, plural, BASIS_LABEL, BASIS_BADGE, BASIS_TITLE, linkDestination } from '../format.js';
+import { money2, unitPrice, unitPriceStep, unitLabel, ago, plural, savedNote, BASIS_LABEL, BASIS_BADGE, BASIS_TITLE, linkDestination } from '../format.js';
 import { DISPLAY_UNITS, displayUnitsFor } from '/shared/units.js';
 
 const SUGGESTED = ['milk 1 gal', 'eggs', 'bananas', 'chicken breast', 'ground beef', 'butter', 'coffee', 'bread'];
@@ -179,6 +179,7 @@ function WatchCard({ w }) {
                 ${s.onSale && html` · <span style=${{ color: 'var(--deal-ink)', fontWeight: 600 }}>sale${s.regularPrice ? ` (reg ${money2(s.regularPrice)})` : ''}</span>`}
                 ${s.promo && html` · <span style=${{ color: 'var(--deal-ink)' }}>${s.promo}</span>`}
                 ${s.priceBasis && ` \u00b7 ${BASIS_LABEL[s.priceBasis] || 'online price'}`}
+                ${savedNote(s) && html` \u00b7 <span class="saved-note" title="The store did not answer just now, so this is the last price Cartworth saved for it">${savedNote(s)}</span>`}
               </div>
             </td>
             <td class="r"><b>${du ? unitPrice(s.unitPerBase, du).text : ''}</b>${s.est ? html`<span class="muted"> est.</span>` : ''}</td>

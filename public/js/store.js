@@ -201,9 +201,14 @@ function alertFor(w) {
   const best = w.result?.best;
   if (!best) return null;
   const factor = DISPLAY_UNITS[w.displayUnit]?.factor;
+  // The best price may be a store's saved copy (the store did not answer this time): say so, and
+  // never call it the lowest price seen, because it is not a new reading.
+  const saved = w.result.stores?.[best.storeId]?.savedAt;
+  const savedTail = saved == null ? '' : ` (a saved price${saved ? ` from ${new Date(saved).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}; the store did not answer just now)`;
   if (w.target != null && factor && best.unitPerBase * factor <= w.target + 1e-9) {
-    return { kind: 'target', storeId: best.storeId, message: `At or below your target at ${best.storeName}` };
+    return { kind: 'target', storeId: best.storeId, message: `At or below your target at ${best.storeName}${savedTail}` };
   }
+  if (saved != null) return null;
   // "Lowest seen" only means something once there is something to compare against, and that means
   // several separate checks — not several stores checked once. Each check writes one point per
   // store, so count distinct check times, not points.

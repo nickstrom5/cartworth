@@ -68,6 +68,8 @@ enum DealParser {
     private static let bogoRx = Rx("\\bbogo\\b|buy one,? get one free|b1g1")
     private static let bxgyPctRx = Rx("buy\\s*(\\d+)\\s*,?\\s*get\\s*(\\d+)\\s*(\\d+)%\\s*off")
     private static let multiRx = Rx("(?:buy\\s*)?(\\d+)\\s*(?:/|for)\\s*\\$\\s*(\\d+(?:\\.\\d+)?)")
+    /// A bare multiplier, "10 for", read against `basePrice` as the TOTAL. Mirrors shared/deals.js.
+    private static let bareMultiRx = Rx("^\\s*(\\d+)\\s*/?\\s*for\\s*$")
     private static let pctRx = Rx("(\\d+(?:\\.\\d+)?)\\s*%\\s*off")
     /// Circular coupon form: "$2 OFF (2)", "75¢ OFF (1)". The parenthesised number is how many you
     /// must buy, never part of the discount.
@@ -105,6 +107,12 @@ enum DealParser {
         } else if let m = multiRx.match(lower) {
             if let q = Int(m[1] ?? ""), let total = Double(m[2] ?? ""), q > 1, q <= 20 {
                 d.kind = .multi; d.qty = q; d.total = total; d.each = (total / Double(q) * 100).rounded() / 100
+            }
+        } else if let base = basePrice, base > 0, let m = bareMultiRx.match(lower) {
+            // Circulars put the multiplier in the pre-price text and the TOTAL in the price field:
+            // pre "10 for" with a price of 10 is ten for $10.00.
+            if let q = Int(m[1] ?? ""), q > 1, q <= 20 {
+                d.kind = .multi; d.qty = q; d.total = base; d.each = (base / Double(q) * 100).rounded() / 100
             }
         } else if let m = pctRx.match(lower), let p = Double(m[1] ?? "") {
             d.kind = .pct; d.pct = p

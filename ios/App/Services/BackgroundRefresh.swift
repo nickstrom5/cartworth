@@ -40,7 +40,9 @@ enum BackgroundRefresh {
             let pts = (try? ctx.fetch(FetchDescriptor<WatchPoint>(predicate: #Predicate { $0.watchId == wid }))) ?? []
             let st = WatchService.status(w, points: pts)
             let recentlyAlerted = (w.lastAlertAt ?? .distantPast) > Date().addingTimeInterval(-20 * 3600)
-            if (st.atTarget || st.lowest), !recentlyAlerted, let best = st.best, let du = st.du, let storeId = w.result?.bestStoreId {
+            // Never notify from a saved price: the store did not answer, so nothing new was seen.
+            let fromSaved = w.result.flatMap { r in r.bestStoreId.flatMap { r.stores[$0]?.savedAt } } != nil
+            if (st.atTarget || st.lowest), !fromSaved, !recentlyAlerted, let best = st.best, let du = st.du, let storeId = w.result?.bestStoreId {
                 let store = RetailerCatalog.byId[storeId]?.short ?? "a store near you"
                 let title = st.atTarget ? "\(w.label) hit your target" : "\(w.label): lowest price yet"
                 // Say where the price came from, as every screen does: "at Jewel" alone reads as the shelf.

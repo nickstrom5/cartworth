@@ -12,12 +12,14 @@ enum WatchService {
         let q = Compare.searchText(w.query)
         var byStore: [String: [Product]] = [:]
         var errors: [String: String] = [:]
+        var saved: [String: Date] = [:]
         await withTaskGroup(of: StoreResult.self) { group in
             for c in chains { group.addTask { await PriceSearch.search(chain: c, query: q, place: place, limit: app.resultsPerStore, fresh: fresh) } }
             for await r in group {
                 if case .error(let m) = r.status { errors[r.retailerId] = m }
                 byStore[r.retailerId] = r.items
-                if !r.items.isEmpty { _ = await HistoryStore.shared.statsThenRecord(r.items) }
+                if r.stale != nil { saved[r.retailerId] = r.savedAt ?? .distantPast }
+                if !r.items.isEmpty { _ = await HistoryStore.shared.statsThenRecord(r.items, record: r.stale == nil) }
             }
         }
         let best = Compare.bestPerStore(query: w.query, results: byStore, dim: w.dim.flatMap(Dim.init(rawValue:)), include: w.include, exclude: w.exclude, prefs: app.prefs)
@@ -27,8 +29,11 @@ enum WatchService {
         for (storeId, b) in best.stores {
             let p = b.product
             stores[storeId] = .init(key: p.key, name: p.name, size: p.size, price: b.member ? (p.memberPrice ?? p.price) : p.price, regularPrice: p.regularPrice,
-                                    onSale: p.onSale, promo: p.promo, unitPerBase: b.perBase, est: b.est, soldBy: p.soldBy, url: p.url, imageURL: p.imageURL, priceBasis: p.priceBasis)
-            context.insert(WatchPoint(watchId: w.id, storeId: storeId, name: p.name, price: stores[storeId]!.price, unitPerBase: b.perBase, onSale: p.onSale, at: now))
+                                    onSale: p.onSale, promo: p.promo, unitPerBase: b.perBase, est: b.est, soldBy: p.soldBy, url: p.url, imageURL: p.imageURL, priceBasis: p.priceBasis,
+                                    savedAt: saved[storeId])
+            // A saved copy is not a new reading: a point dated now would put a days-old price on
+            // today in the trend, and a drop it never saw could alert. Port of src/watch.js.
+            if saved[storeId] == nil { context.insert(WatchPoint(watchId: w.id, storeId: storeId, name: p.name, price: stores[storeId]!.price, unitPerBase: b.perBase, onSale: p.onSale, at: now)) }
             if overall == nil || b.perBase < overall!.1 { overall = (storeId, b.perBase) }
         }
         if w.dim == nil { w.dim = best.dim?.rawValue }
@@ -48,7 +53,8 @@ enum WatchService {
         let value = b.unitPerBase * du.factor
         let atTarget = w.target.map { value <= $0 + 1e-9 } ?? false
         let low = points.map(\.unitPerBase).min()
-        let lowest = points.count > 3 && low != nil && b.unitPerBase <= low! + 1e-9
+        // A saved price (the store did not answer) is never "lowest seen": it is not a new reading.
+        let lowest = b.savedAt == nil && points.count > 3 && low != nil && b.unitPerBase <= low! + 1e-9
         return (value, du, atTarget, lowest)
     }
 }
@@ -107,13 +113,17 @@ enum TripPlanner {
                     let text = e.text, qty = e.qty, id = e.id, pinned = e.pinned
                     group.addTask {
                         let q = Compare.searchText(text)
-                        let byStore = await withTaskGroup(of: StoreResult.self) { g2 in
+                        let (byStore, saved) = await withTaskGroup(of: StoreResult.self) { g2 in
                             for c in chains { g2.addTask { await PriceSearch.search(chain: c, query: q, place: place, limit: 36, fresh: fresh) } }
                             var found: [String: [Product]] = [:]
-                            for await r in g2 { found[r.retailerId] = r.items }
-                            return found
+                            var savedAt: [String: Date] = [:]
+                            for await r in g2 {
+                                found[r.retailerId] = r.items
+                                if r.stale != nil { savedAt[r.retailerId] = r.savedAt ?? .distantPast }
+                            }
+                            return (found, savedAt)
                         }
-                        return await MainActor.run { priceOne(id: id, text: text, qty: qty, pinned: pinned, byStore: byStore, storeIds: storeIds, prefs: app.prefs) }
+                        return await MainActor.run { priceOne(id: id, text: text, qty: qty, pinned: pinned, byStore: byStore, storeIds: storeIds, prefs: app.prefs, saved: saved) }
                     }
                 }
                 for await p in group { priced.append(p) }
@@ -125,7 +135,7 @@ enum TripPlanner {
         return plan(priced, stores: storeIds)
     }
 
-    static func priceOne(id: UUID, text: String, qty: Int, pinned: PinnedProduct?, byStore: [String: [Product]], storeIds: [String], prefs: PricePrefs) -> PricedItem {
+    static func priceOne(id: UUID, text: String, qty: Int, pinned: PinnedProduct?, byStore: [String: [Product]], storeIds: [String], prefs: PricePrefs, saved: [String: Date] = [:]) -> PricedItem {
         let best = Compare.bestPerStore(query: text, results: byStore, prefs: prefs)
         var perStore: [String: ItemCost] = [:]
         var refBase: Double?
@@ -136,7 +146,7 @@ enum TripPlanner {
             for (sid, b) in best.stores {
                 let p = b.product
                 perStore[sid] = ItemCost(cost: (b.perBase * ref.base * Double(qty) * 100).rounded() / 100, est: b.est, pinned: false,
-                                         product: .init(key: p.key, name: p.name, size: p.size, price: b.member ? (p.memberPrice ?? p.price) : p.price, regularPrice: p.regularPrice, onSale: p.onSale, promo: p.promo, unitPerBase: b.perBase, est: b.est, soldBy: p.soldBy, url: p.url, imageURL: p.imageURL, priceBasis: p.priceBasis))
+                                         product: .init(key: p.key, name: p.name, size: p.size, price: b.member ? (p.memberPrice ?? p.price) : p.price, regularPrice: p.regularPrice, onSale: p.onSale, promo: p.promo, unitPerBase: b.perBase, est: b.est, soldBy: p.soldBy, url: p.url, imageURL: p.imageURL, priceBasis: p.priceBasis, savedAt: saved[sid]))
             }
         }
         if let pin = pinned, storeIds.contains(pin.storeId) {

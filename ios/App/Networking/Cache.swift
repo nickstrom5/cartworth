@@ -29,6 +29,8 @@ actor Cache {
         /// Set when the value is an expired copy served because the source failed
         var staleError: Error?
         var fromCache: Bool
+        /// When a stale copy was fetched from the source ("saved 5 hr ago"); nil for a fresh value
+        var storedAt: Date? = nil
     }
 
     func value<T: Codable>(_ key: String, ttl: TimeInterval, fresh: Bool = false, maxStale: TimeInterval = 7 * 86400, fetch: @escaping @Sendable () async throws -> T) async throws -> Result<T> {
@@ -53,7 +55,7 @@ actor Cache {
             inflight[key] = nil
             if error is CancellationError { throw error }
             if let e = entry(key), e.expires > Date().addingTimeInterval(-maxStale), let v = try? decoder.decode(T.self, from: e.payload) {
-                return Result(value: v, staleError: error, fromCache: true)
+                return Result(value: v, staleError: error, fromCache: true, storedAt: e.stored)
             }
             throw error
         }

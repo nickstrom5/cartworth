@@ -1949,6 +1949,7 @@ final class HolidayMatrixTests: XCTestCase {
     func testSpiralHam() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "spiral ham", name: "Smithfield Spiral Sliced Honey Ham"), Match.relevant, "Smithfield Spiral Sliced Honey Ham")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "spiral ham", name: "HoneyBaked Spiral Ham Half"), Match.relevant, "HoneyBaked Spiral Ham Half")
+        XCTAssertLessThan(Match.relevance(query: "spiral ham", name: "Smithfield Spiral Ham Glaze Packet"), Match.relevant, "Smithfield Spiral Ham Glaze Packet")
     }
     func testEggs() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "eggs", name: "Eggland's Best Large Eggs 12 ct"), Match.relevant, "Eggland's Best Large Eggs 12 ct")
@@ -2135,13 +2136,36 @@ final class HolidayMatrixTests: XCTestCase {
     func testHalloweenCandy() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "halloween candy", name: "Hershey's Halloween Candy Assortment Snack Size"), Match.relevant, "Hershey's Halloween Candy Assortment Snack Size")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "halloween candy", name: "Mars Halloween Candy Variety Pack"), Match.relevant, "Mars Halloween Candy Variety Pack")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "halloween candy", name: "Mars & Chocolate Halloween Candy Variety Bulk"), Match.relevant, "Mars & Chocolate Halloween Candy Variety Bulk")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "halloween candy", name: "Child's Play Individually Wrapped Assorted Halloween Candy"), Match.relevant, "Child's Play Individually Wrapped Assorted Halloween Candy")
+        XCTAssertLessThan(Match.relevance(query: "halloween candy", name: "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows"), Match.relevant, "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows")
     }
     func testPumpkin() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pie Pumpkin"), Match.relevant, "Pie Pumpkin")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Carving Pumpkin Large"), Match.relevant, "Carving Pumpkin Large")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pumpkin"), Match.relevant, "Pumpkin")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Jumbo Pumpkin"), Match.relevant, "Jumbo Pumpkin")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Halloween Pumpkins"), Match.relevant, "Halloween Pumpkins")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Rent's Due Ranch Local Organic |Jack-O-Lantern Pumpkins"), Match.relevant, "Rent's Due Ranch Local Organic |Jack-O-Lantern Pumpkins")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Heirloom Pumpkins, Each, Assorted Colors"), Match.relevant, "Heirloom Pumpkins, Each, Assorted Colors")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Sugar Pie Pumpkin"), Match.relevant, "Sugar Pie Pumpkin")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Orange Pumpkin Medium - Weight Between 10-15 Lb"), Match.relevant, "Orange Pumpkin Medium - Weight Between 10-15 Lb")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Libby's Pumpkin Pie Mix"), Match.relevant, "Libby's Pumpkin Pie Mix")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Spice Coffee Creamer"), Match.relevant, "Pumpkin Spice Coffee Creamer")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Seeds"), Match.relevant, "Pumpkin Seeds")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Licensed LSU Tigers Pumpkin"), Match.relevant, "Licensed LSU Tigers Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Lil' Tiger Stripe Pumpkin"), Match.relevant, "Lil' Tiger Stripe Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Mini Pumpkin"), Match.relevant, "Mini Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Wee B Little Mini Orange Pumpkin"), Match.relevant, "Wee B Little Mini Orange Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "PUMPKIN JACK BE LITTLE"), Match.relevant, "PUMPKIN JACK BE LITTLE")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Lolita Ornamental Pumpkin"), Match.relevant, "Lolita Ornamental Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Kercher's Sunrise Orchards Fall Pumpkin Decor"), Match.relevant, "Kercher's Sunrise Orchards Fall Pumpkin Decor")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Meijer Corporate Seasonal Hot Pink Halloween Pumpkin Pail"), Match.relevant, "Meijer Corporate Seasonal Hot Pink Halloween Pumpkin Pail")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "SYLVANIA LED Battery-Operated Ghost Pumpkin Bat"), Match.relevant, "SYLVANIA LED Battery-Operated Ghost Pumpkin Bat")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Ten Little Pumpkins Book"), Match.relevant, "Ten Little Pumpkins Book")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Wellsley Farms 12 Inch Pumpkin Pie"), Match.relevant, "Wellsley Farms 12 Inch Pumpkin Pie")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Poppin Pumpkin Snaps"), Match.relevant, "Poppin Pumpkin Snaps")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Tiger Striped Pumpkin"), Match.relevant, "Tiger Striped Pumpkin")
     }
     func testAppleCider() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "apple cider", name: "Martinelli's Apple Cider"), Match.relevant, "Martinelli's Apple Cider")
@@ -2152,6 +2176,10 @@ final class HolidayMatrixTests: XCTestCase {
     func testCaramelApples() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Caramel Apples 4 ct"), Match.relevant, "Caramel Apples 4 ct")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Gourmet Caramel Apples 2 ct"), Match.relevant, "Gourmet Caramel Apples 2 ct")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Tastee Caramel Apples"), Match.relevant, "Tastee Caramel Apples")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Affy Tapple Plain Caramel Apples"), Match.relevant, "Affy Tapple Plain Caramel Apples")
+        XCTAssertLessThan(Match.relevance(query: "caramel apples", name: "Lucky Leaf Caramel Apple Fruit Filling"), Match.relevant, "Lucky Leaf Caramel Apple Fruit Filling")
+        XCTAssertLessThan(Match.relevance(query: "caramel apples", name: "HD Designs® Harvest Caramel Apple Scented Wax Melts"), Match.relevant, "HD Designs® Harvest Caramel Apple Scented Wax Melts")
     }
     func testWholeTurkey() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "whole turkey", name: "Butterball Whole Turkey Frozen 12-16 lb"), Match.relevant, "Butterball Whole Turkey Frozen 12-16 lb")
@@ -2189,6 +2217,8 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertLessThan(Match.relevance(query: "butter", name: "Jif Creamy Peanut Butter"), Match.relevant, "Jif Creamy Peanut Butter")
         XCTAssertLessThan(Match.relevance(query: "butter", name: "Butter Popcorn Orville"), Match.relevant, "Butter Popcorn Orville")
         XCTAssertLessThan(Match.relevance(query: "butter", name: "Country Crock Spread"), Match.relevant, "Country Crock Spread")
+        XCTAssertLessThan(Match.relevance(query: "butter", name: "Musselman's Apple Butter"), Match.relevant, "Musselman's Apple Butter")
+        XCTAssertLessThan(Match.relevance(query: "butter", name: "Trader Joe's Speculoos Cookie Butter"), Match.relevant, "Trader Joe's Speculoos Cookie Butter")
     }
     func testHeavyCream() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "heavy cream", name: "Horizon Organic Heavy Whipping Cream"), Match.relevant, "Horizon Organic Heavy Whipping Cream")
@@ -2241,6 +2271,7 @@ final class HolidayMatrixTests: XCTestCase {
     func testFlour() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "flour", name: "Gold Medal All Purpose Flour 5 lb"), Match.relevant, "Gold Medal All Purpose Flour 5 lb")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "flour", name: "King Arthur Unbleached All-Purpose Flour"), Match.relevant, "King Arthur Unbleached All-Purpose Flour")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "flour", name: "King Arthur Unbleached Bread Flour 5 lb"), Match.relevant, "King Arthur Unbleached Bread Flour 5 lb")
         XCTAssertLessThan(Match.relevance(query: "flour", name: "Flour Tortillas Mission"), Match.relevant, "Flour Tortillas Mission")
     }
     func testSugar() {
@@ -2252,6 +2283,7 @@ final class HolidayMatrixTests: XCTestCase {
     func testChocolateChips() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "chocolate chips", name: "Nestle Toll House Semi-Sweet Chocolate Chips"), Match.relevant, "Nestle Toll House Semi-Sweet Chocolate Chips")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "chocolate chips", name: "Ghirardelli Semi-Sweet Chocolate Chips"), Match.relevant, "Ghirardelli Semi-Sweet Chocolate Chips")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "chocolate chips", name: "Nestle Toll House Semi-Sweet Chocolate Morsels 12 oz"), Match.relevant, "Nestle Toll House Semi-Sweet Chocolate Morsels 12 oz")
         XCTAssertLessThan(Match.relevance(query: "chocolate chips", name: "Chips Ahoy Chocolate Chip Cookies"), Match.relevant, "Chips Ahoy Chocolate Chip Cookies")
     }
     func testEggnog() {
@@ -2261,14 +2293,17 @@ final class HolidayMatrixTests: XCTestCase {
     func testCreamCheese() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "cream cheese", name: "Philadelphia Original Cream Cheese Brick"), Match.relevant, "Philadelphia Original Cream Cheese Brick")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "cream cheese", name: "Great Value Cream Cheese 8 oz"), Match.relevant, "Great Value Cream Cheese 8 oz")
+        XCTAssertLessThan(Match.relevance(query: "cream cheese", name: "Pillsbury Cream Cheese Frosting"), Match.relevant, "Pillsbury Cream Cheese Frosting")
     }
     func testVegetableOil() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "vegetable oil", name: "Crisco Pure Vegetable Oil 48 fl oz"), Match.relevant, "Crisco Pure Vegetable Oil 48 fl oz")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "vegetable oil", name: "Wesson Vegetable Oil"), Match.relevant, "Wesson Vegetable Oil")
+        XCTAssertLessThan(Match.relevance(query: "vegetable oil", name: "Season Brand Sardines in Vegetable Oil"), Match.relevant, "Season Brand Sardines in Vegetable Oil")
     }
     func testApplesauce() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "applesauce", name: "Mott's Original Applesauce"), Match.relevant, "Mott's Original Applesauce")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "applesauce", name: "Musselman's Unsweetened Applesauce"), Match.relevant, "Musselman's Unsweetened Applesauce")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "applesauce", name: "Musselman's Cinnamon Applesauce"), Match.relevant, "Musselman's Cinnamon Applesauce")
     }
     func testBrisket() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "brisket", name: "Beef Brisket Flat Cut"), Match.relevant, "Beef Brisket Flat Cut")
@@ -2345,3 +2380,74 @@ final class HolidayMatrixTests: XCTestCase {
     }
 }
 // END GENERATED HOLIDAY MATRIX
+
+/// Multi-buy weekly-ad terms, found during App Store screenshot capture on 2026-10-20: Fresh Thyme
+/// ZIP 60618, Flipp item 1045842565 Chobani is "10 for $10.00". The search result has price 10 and
+/// no pre_price_text; the item's detail has pre "10 for" and original_price 18.9 (ten at $1.89).
+/// Same values as test/qa-multibuy-terms.test.js.
+final class FlippMultiBuyTermsTests: XCTestCase {
+    private let item = FlippSource.FlyerItem(id: 1045842565, flyerId: 7001, name: "Chobani Greek, Less Sugar, No Sugar or Flip Yogurt", brand: "",
+                                             price: "10", discount: nil, image: nil, validFrom: nil, validTo: nil)
+    private func itemDetail(pre: String? = "10 for", story: String? = nil, original: Double? = 18.9, current: Double? = 10) -> FlippSource.Detail {
+        FlippSource.Detail(description: "4.5-5.3 oz", pre: pre, priceText: nil, post: nil, story: story, original: original, current: current,
+                           disclaimer: nil, dollarsOff: nil, percentOff: nil, externalCategory: nil)
+    }
+
+    /// DEFECT: compared with $18.90 for all ten, one cup at $1.00 read as 95% off.
+    func testBundleRegularPriceIsReadPerUnit() {
+        let d = FlippSource.deal(item: item, detail: itemDetail(), retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertEqual(d.priceText, "10 for $10.00")
+        XCTAssertEqual(d.qty, 10)
+        XCTAssertEqual(d.each, 1)
+        XCTAssertEqual(d.regular, 1.89)
+        XCTAssertEqual(d.pctOff, 47)
+    }
+
+    /// DEFECT: the ad's "save up to $8.90" and the percent off tell the same story.
+    func testSaveUpToAgreesWithPercentOff() {
+        let d = FlippSource.deal(item: item, detail: itemDetail(story: "SAVE UP TO $8.90"), retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertEqual(d.pctOff, 47)
+        XCTAssertEqual(((d.regular ?? 0) - (d.each ?? 0)) * Double(d.qty), 8.9, accuracy: 0.005)
+    }
+
+    /// DEFECT: a bare "10 for" made the terms ten for $1.00.
+    func testBareMultiplierIsReadAgainstTheTotal() {
+        let d = FlippSource.deal(item: item, detail: itemDetail(), retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertEqual(d.terms?.kind, .multi)
+        XCTAssertEqual(d.terms?.total, 10)
+        XCTAssertEqual(d.terms?.each, 1)
+    }
+
+    /// DEFECT: a search hit without its multiplier counted as enriched, so the deal screen showed
+    /// "$10.00" as one cup's price and never fetched the terms.
+    func testSearchHitWithoutMultiplierIsPending() {
+        var search = itemDetail(pre: nil)
+        search.description = nil
+        search.partial = true
+        let d = FlippSource.deal(item: item, detail: search, retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertFalse(d.enriched)
+        XCTAssertTrue(d.termsPending)
+    }
+
+    /// DEFECT: a deal shown before enrichment (qty 1, "$10.00") is rebuilt from the item's detail
+    /// when the deal screen reads it.
+    func testUnenrichedDealIsRebuiltFromItsDetail() {
+        let before = FlippSource.deal(item: item, detail: nil, retailerId: "freshthyme", merchant: "Fresh Thyme")
+        XCTAssertTrue(before.termsPending)
+        XCTAssertEqual(before.qty, 1)
+        let after = FlippSource.deal(before, detail: itemDetail())
+        XCTAssertFalse(after.termsPending)
+        XCTAssertEqual(after.priceText, "10 for $10.00")
+        XCTAssertEqual(after.each, 1)
+        XCTAssertEqual(after.pctOff, 47)
+        XCTAssertEqual(after.id, before.id)
+    }
+
+    /// control: a unit regular price below the bundle total is left alone.
+    func testUnitRegularPriceIsLeftAlone() {
+        let d = FlippSource.deal(item: item, detail: itemDetail(pre: "2 for", original: 3.49, current: 5), retailerId: "jewel", merchant: "Jewel-Osco")
+        XCTAssertEqual(d.regular, 3.49)
+        XCTAssertEqual(d.each, 2.5)
+        XCTAssertEqual(d.pctOff, 28)
+    }
+}
