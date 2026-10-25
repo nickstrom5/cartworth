@@ -2150,6 +2150,7 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Heirloom Pumpkins, Each, Assorted Colors"), Match.relevant, "Heirloom Pumpkins, Each, Assorted Colors")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Sugar Pie Pumpkin"), Match.relevant, "Sugar Pie Pumpkin")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Orange Pumpkin Medium - Weight Between 10-15 Lb"), Match.relevant, "Orange Pumpkin Medium - Weight Between 10-15 Lb")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Large Carving Pumpkin"), Match.relevant, "Large Carving Pumpkin")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Libby's Pumpkin Pie Mix"), Match.relevant, "Libby's Pumpkin Pie Mix")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Spice Coffee Creamer"), Match.relevant, "Pumpkin Spice Coffee Creamer")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Seeds"), Match.relevant, "Pumpkin Seeds")
@@ -2166,6 +2167,15 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Wellsley Farms 12 Inch Pumpkin Pie"), Match.relevant, "Wellsley Farms 12 Inch Pumpkin Pie")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Poppin Pumpkin Snaps"), Match.relevant, "Poppin Pumpkin Snaps")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Tiger Striped Pumpkin"), Match.relevant, "Tiger Striped Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Kirkton House Pumpkins Vinyl Tablecloth - 52\" X 70\""), Match.relevant, "Kirkton House Pumpkins Vinyl Tablecloth - 52\" X 70\"")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Klein International Glow Fun Pumpkin Eye Mask"), Match.relevant, "Klein International Glow Fun Pumpkin Eye Mask")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "The Halloween Collection Pumpkin Ice Mold"), Match.relevant, "The Halloween Collection Pumpkin Ice Mold")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Bendon Pumpkins Halloween Scratch Art"), Match.relevant, "Bendon Pumpkins Halloween Scratch Art")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Crofton Pumpkin Silicone Baking Pans"), Match.relevant, "Crofton Pumpkin Silicone Baking Pans")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Masters 3 in 1 Light"), Match.relevant, "Pumpkin Masters 3 in 1 Light")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "PPI Spooky Pumpkin Balloon"), Match.relevant, "PPI Spooky Pumpkin Balloon")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Klein International Glow Pumpkin Wand"), Match.relevant, "Klein International Glow Pumpkin Wand")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Porter 6pk"), Match.relevant, "Pumpkin Porter 6pk")
     }
     func testAppleCider() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "apple cider", name: "Martinelli's Apple Cider"), Match.relevant, "Martinelli's Apple Cider")
@@ -2449,5 +2459,87 @@ final class FlippMultiBuyTermsTests: XCTestCase {
         XCTAssertEqual(d.regular, 3.49)
         XCTAssertEqual(d.each, 2.5)
         XCTAssertEqual(d.pctOff, 28)
+    }
+}
+
+/// The third Halloween QA pass (ops/coverage/halloween-qa-2026-10-24.md), bugs 1, 2 and 4, held to
+/// the same cases as test/qa-halloween-round3.test.js. Bug 3 is the deals card's wording, which that
+/// file checks in ios/App/UI/Deals/DealsView.swift.
+final class HalloweenRound3Tests: XCTestCase {
+    private func make(_ store: String, _ name: String, _ size: String, _ price: Double, soldBy: SoldBy = .each, estEach: Double? = nil, category: String? = "Pumpkin") -> Product {
+        ProductFactory.make(ProductInput(storeId: store, id: "\(store)-\(name)", name: name, sizeText: size, price: price, soldBy: soldBy, estEach: estEach, category: category))!
+    }
+
+    /// DEFECT 1: ALDI's vinyl tablecloth and Fry's eye mask were the best pumpkins in Phoenix.
+    func testNonFoodIsNotAPumpkinWithItsSizeAndAisle() {
+        let cloth = make("aldi", "Kirkton House Pumpkins Vinyl Tablecloth - 52\" X 70\"", "1 ea", 3.39, category: "Seasonal")
+        let mask = make("frys", "Klein International Glow Fun Pumpkin Eye Mask", "3 ct", 4.99, category: nil)
+        for p in [cloth, mask] {
+            XCTAssertLessThan(Compare.score(query: "pumpkin", [p])[0].score, Match.relevant, p.name)
+        }
+        let (_, stores) = Compare.bestPerStore(query: "pumpkin", results: ["aldi": [cloth], "frys": [mask, make("frys", "Large Carving Pumpkin", "1 ea", 5.99)]])
+        XCTAssertEqual(Array(stores.keys), ["frys"])
+        XCTAssertEqual(stores["frys"]?.product.name, "Large Carving Pumpkin")
+    }
+
+    func testTheNonFoodTrapIsGeneralAndAskingFindsIt() {
+        XCTAssertLessThan(Match.relevance(query: "caramel apples", name: "Caramel Apple Silicone Candy Mold"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "candy corn", name: "Candy Corn Costume"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "apple cider", name: "Apple Cider Scented Wax Melts"), Match.relevant)
+        for (q, n) in [("cake pans", "Wilton Cake Pans"), ("candles", "Birthday Candles"), ("light cream", "Light Cream"), ("tuna", "Light Tuna in Water"),
+                       ("pan de muerto", "Pan de Muerto"), ("halloween candy", "Halloween Candy Wands")] {
+            XCTAssertGreaterThanOrEqual(Match.relevance(query: q, name: n), Match.relevant, "\(q) | \(n)")
+        }
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pumpkin Cinderella", category: "Produce"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pumpkin Howden", soldBy: .lb), Match.relevant)
+    }
+
+    /// DEFECT 2: Fry's "Pumpkin", 13 lb at $7.99, is one pumpkin at $7.99; per-lb pumpkins are named.
+    func testWeighedWholePumpkinIsOnePumpkin() {
+        let frys = make("frys", "Pumpkin", "13 lb", 7.99)
+        XCTAssertEqual(frys.unitPrice(.count)?.perBase, 7.99)
+        XCTAssertEqual(frys.unitPrice(.count)?.est, false)
+        XCTAssertGreaterThanOrEqual(Compare.score(query: "pumpkin", [frys])[0].score, Match.relevant)
+        XCTAssertNil(make("walmart", "Great Value Pumpkin", "15 oz", 1.0, category: nil).unitPrice(.count))
+        XCTAssertNil(make("x", "Pumpkin Seeds", "2 lb", 9.99, category: nil).unitPrice(.count))
+    }
+
+    func testPerLbPumpkinsAreNamedNotRanked() {
+        let items = [
+            make("bashas", "Pumpkin", "1 each", 0.44, soldBy: .lb),
+            make("elsuper", "Pumpkin", "1 each", 0.33, soldBy: .lb, estEach: 0.66),
+            make("frys", "Pumpkin", "13 lb", 7.99),
+            make("sprouts", "Lolita Pumpkin", "1 ea", 2.19),
+            make("walmart", "Large Carving Pumpkin", "1 ea", 4.97),
+        ]
+        let scored = Compare.score(query: "pumpkin", items)
+        let dim = Compare.dominantDim(scored.filter { $0.score >= Match.relevant }.map(\.product))
+        XCTAssertEqual(dim, .count)
+        let aside = Compare.perLbAside(scored.map { ($0.product, $0.score) }, dim: dim)
+        XCTAssertEqual(aside.map(\.storeId), ["elsuper", "bashas"])
+        XCTAssertEqual(aside.map(\.perLb), [0.33, 0.44])
+        for a in aside { XCTAssertNil(a.product.unitPrice(.count), "no invented per-pumpkin price") }
+        XCTAssertTrue(Compare.perLbAside(scored.map { ($0.product, $0.score) }, dim: .weight).isEmpty)
+        let line = Compare.perLbLine(aside, unitLabel: "each", storeName: { $0 == "elsuper" ? "El Super" : "Bashas'" })
+        XCTAssertEqual(line, "Sold by the lb, so not ranked per each: El Super $0.33/lb, Bashas' $0.44/lb. Listed below.")
+    }
+
+    /// DEFECT 4: Halloween stays featured on Nov 1, with the after-Halloween line.
+    func testHalloweenIsFeaturedTheDayAfter() {
+        let cal = Calendar(identifier: .gregorian)
+        func at(_ y: Int, _ m: Int, _ d: Int, _ h: Int = 12) -> Date { cal.date(from: DateComponents(year: y, month: m, day: d, hour: h, minute: 30))! }
+        for h in [0, 12, 23] {
+            let first = Seasonal.featured(from: at(2026, 11, 1, h)).first
+            XCTAssertEqual(first?.name, "Halloween", "Nov 1 \(h):30")
+            XCTAssertEqual(first?.whenText, "was yesterday")
+            XCTAssertEqual(first?.blurb, Seasonal.dayAfter["halloween"])
+        }
+        XCTAssertEqual(Seasonal.featured(from: at(2026, 11, 1)).map(\.name), ["Halloween", "Diwali"])
+        let oct31 = Seasonal.featured(from: at(2026, 10, 31)).first
+        XCTAssertEqual(oct31?.name, "Halloween")
+        XCTAssertEqual(oct31?.dayAfter, false)
+        XCTAssertFalse(Seasonal.featured(from: at(2026, 11, 2, 0)).contains { $0.name == "Halloween" })
+        XCTAssertFalse(Seasonal.featured(from: at(2027, 1, 2)).contains { $0.name == "New Year’s" })
+        XCTAssertFalse(Seasonal.featured(from: at(2026, 12, 26)).contains { $0.name == "Christmas" })
     }
 }

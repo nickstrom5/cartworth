@@ -135,7 +135,16 @@ const TRAPS = new Set([
  * Debbie's Christmas Tree Cakes are food), 'decorations' (cake decorations are baking aisle) or
  * 'stocking' (a candy-filled stocking is candy).
  */
-const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?|gift bags?|battery[- ]operated|books?|wax melts?|scented)\b/i;
+const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|pajamas|sweater|scrub|dolls?|gift bags?|battery[- ]operated|books?|scented)\b/i;
+
+// Party goods, kitchen tools and costume pieces named after a food or a holiday. Unlike
+// NON_GROCERY_RE these are things a shopper may well search for, so asking for one finds it. The
+// third Halloween run (24 Oct) found them answering "pumpkin": a vinyl tablecloth, an eye mask, an
+// ice mold, scratch art, silicone baking pans, a carving light, a balloon and a glow wand. Only
+// compound or unambiguous words: 'pan' alone is pan dulce, 'light' alone is light cream and light
+// tuna, 'kit' alone is a salad kit, 'wand' alone is a candy wand. Candles and wax melts moved here
+// from NON_GROCERY_RE so that a search for birthday candles finds them.
+const NON_FOOD_RE = /\b(?:(?:eye |face |sheet |sleep )?masks?|(?:ice |candy |chocolate |silicone |cake |cookie )?molds?|moulds?|tablecloths?|table ?covers?|balloons?|(?:glow|magic|bubble|wizard|witch|fairy|pumpkin|light-?up) wands?|glow sticks?|scratch art|coloring (?:books?|pages)|stickers?|costumes?|carving (?:kits?|tools?|sets?)|craft kits?|(?:baking|cake|muffin|loaf|sheet|roasting|bundt|pie|springform|cupcake) pans?|bakeware|silicone|\d+ in 1 lights?|flashlights?|night ?lights?|tea lights?|wax melts?|candles?)\b/;
 
 /**
  * Qualifiers that turn a trap noun back into an ordinary description of the searched product.
@@ -340,10 +349,29 @@ const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pai
 // "pumpkin" on its own is a pumpkin to carve. Mini and ornamental pumpkins are table decorations at
 // a dollar or two, and priced per pumpkin they beat every carving pumpkin: Trader Joe's "Lil' Tiger
 // Stripe Pumpkin" was the best pumpkin in four states, Rouses' "Licensed LSU Tigers Pumpkin" (8 ct)
-// in New Orleans, and a pail and a bucket scored 0.85 (the Halloween run). Asking for them finds them.
-// The rerun (21 Oct) added Fresh Thyme's "Tiger Striped Pumpkin", the same one without the "Lil'",
-// and Walmart's chain-wide "Poppin Pumpkin Snaps", the best pumpkin in four states.
-const DECORATIVE_PUMPKIN_RE = /\b(?:mini|miniature|ornamental|decorative|decor|jack be little|wee b(?:ee)? little|tigers?|licensed|pails?|buckets?|snaps?|poppin)\b/;
+// in New Orleans (the Halloween run). Asking for them finds them. The rerun (21 Oct) added Fresh
+// Thyme's "Tiger Striped Pumpkin", the same one without the "Lil'". These ARE produce, filed under
+// Pumpkin, so the whole-pumpkin rule below cannot tell them apart: this one is about size.
+const DECORATIVE_PUMPKIN_RE = /\b(?:mini|miniature|ornamental|decorative|decor|jack be little|wee b(?:ee)? little|tigers?|licensed)\b/;
+// ...and it is a pumpkin, not a thing shaped like one. Each round added the last round's impostors
+// to a blocklist (pails, buckets, Walmart's "Poppin Pumpkin Snaps"), and the third (24 Oct) found a
+// new set: ALDI's "Kirkton House Pumpkins Vinyl Tablecloth" was Phoenix's cheapest pumpkin, Fry's
+// "Klein International Glow Fun Pumpkin Eye Mask" and ALDI's "The Halloween Collection Pumpkin Ice
+// Mold" were the best pumpkin in Phoenix and Minneapolis. So a pumpkin search now asks for evidence
+// of a whole pumpkin instead: sold by the pound, filed in a produce aisle, weighing pounds, or named
+// as one, with "pumpkin" the last thing the name is about and only size, colour and count words
+// after it ("Orange Pumpkin Medium - Weight Between 10-15 Lb", "Heirloom Pumpkins, Each, Assorted
+// Colors"). A tablecloth, a mask or a porter names something else after the pumpkin.
+const PRODUCE_CATEGORY_RE = /\b(?:produce|vegetables?|veggies|fruits?|pumpkins?|squash|gourds?)\b/;
+const PUMPKIN_TRAIL = new Set(['each', 'ea', 'ct', 'count', 'lb', 'pound', 'oz', 'size', 'assorted', 'color', 'colour', 'variety', 'large', 'medium', 'small', 'jumbo', 'extra', 'giant', 'big', 'orange', 'white', 'green', 'red', 'bin', 'weight', 'between', 'approx', 'approximately', 'avg', 'average', 'organic', 'fresh', 'local', 'carving', 'heirloom', 'halloween', 'whole', 'per', 'x', 'to', 'and', 'or', 'pumpkin']);
+const WHOLE_PUMPKIN_MIN_OZ = 32;
+function wholePumpkin(product, words) {
+  if (product.soldBy === 'lb') return true;
+  if (PRODUCE_CATEGORY_RE.test(normalize(product.category || ''))) return true;
+  if (product.dim === 'weight' && product.base >= WHOLE_PUMPKIN_MIN_OZ) return true;
+  const at = words.lastIndexOf('pumpkin');
+  return at >= 0 && words.slice(at + 1).every((w) => PUMPKIN_TRAIL.has(w) || /^\d+(?:\.\d+)?(?:lb|oz|ct)?$/.test(w));
+}
 // A whole pumpkin weighs pounds. A pumpkin sold by the piece with a net weight under 2 lb is a can or
 // a pouch: Walmart's "Great Value Pumpkin", 15 oz, was Philadelphia's best pumpkin (the rerun), and
 // nothing in its name says it is puree.
@@ -521,6 +549,7 @@ export function relevance(query, product, opts = {}) {
   }
   // "Garden Sweet Russet Potato" answered "sweet potatoes": another potato entirely.
   if (head === 'pumpkin' && DECORATIVE_PUMPKIN_RE.test(nameNorm) && !DECORATIVE_PUMPKIN_RE.test(normalize(query))) mult *= 0.2;
+  if (head === 'pumpkin' && !wholePumpkin(product, words)) mult *= 0.2;
   if (head === 'pumpkin' && product.soldBy !== 'lb' && product.dim === 'weight' && product.base > 0 && product.base < CANNED_PUMPKIN_MAX_OZ) mult *= 0.2;
   if (/\bsweet potato/.test(normalize(query)) && /\b(?:russet|yukon|red potato|gold potato|white potato)/.test(nameNorm)) mult *= 0.2;
   if (FRESH_VEG_MEAT_RE.test(head || '')) {
@@ -535,6 +564,7 @@ export function relevance(query, product, opts = {}) {
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the
   // position rules deliberately look past "in"/"with" phrases, which is where the giveaway sits.
   if (NON_GROCERY_RE.test(nameNorm)) mult *= 0.15;
+  else if (NON_FOOD_RE.test(nameNorm) && !NON_FOOD_RE.test(normalize(query))) mult *= 0.15;
   // The retailer's own aisle says it is not food: "Solaray Passion Flower" (Herbal Supplements) and "Hello Hobby
   // Satin Flowers" (Party Decorations) answered "flowers", Luden's watermelon drops (Cough Suppressants)
   // "watermelon", "Apple Sticks" (Toothpicks) "apples" (the state x holiday audit).

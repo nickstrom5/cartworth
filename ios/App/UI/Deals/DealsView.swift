@@ -376,9 +376,11 @@ struct DealCard: View {
                 if deal.terms?.kind == .bogo, !deal.priceText.isEmpty {
                     Text("single item price").font(.caption2).foregroundStyle(.secondary)
                 }
+                // Terms are fetched when the deal is opened (DealDetailView), not for the card, so
+                // the card says to open it. Same words as DealCard in public/js/views/sales.js.
                 if deal.termsPending {
-                    Text("checking ad terms…").font(.caption2).foregroundStyle(.secondary)
-                        .accessibilityLabel("Ad terms not loaded yet; this price may be for more than one, or per pound")
+                    Text("open for ad terms").font(.caption2).foregroundStyle(.secondary)
+                        .accessibilityLabel("Open for the ad's terms; this price may be for more than one, or per pound")
                 }
                 if deal.qty > 1, let each = deal.each {
                     Text("\(Money.full(each)) each").font(.caption).foregroundStyle(.secondary)

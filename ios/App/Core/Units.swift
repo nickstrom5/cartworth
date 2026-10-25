@@ -552,6 +552,18 @@ enum Units {
     private static let pieceWeightVariesRx = Rx("\\bpumpkins?\\b")
     static func pieceWeightVaries(_ name: String) -> Bool { pieceWeightVariesRx.test(name.lowercased()) }
 
+    /// One whole pumpkin at a fixed price with its weight stated (Fry's "Pumpkin", 13 lb, $7.99, the
+    /// third Halloween run): that price buys one pumpkin, so it is a real per-pumpkin price. Two
+    /// pounds or more, one piece, not seeds, a pack or a pie. Port of weighedWholePumpkin in
+    /// shared/units.js.
+    private static let notAWholePumpkinRx = Rx("\\b(?:seeds?|pepitas|spice|latte|bread|butter|ale|beer|porter)\\b")
+    static let wholePumpkinMinOz = 32.0
+    static func weighedWholePumpkin(_ name: String, _ size: ParsedSize?) -> Bool {
+        guard let s = size, !s.perWeight, s.dim == .weight, s.count <= 1, let b = s.base, b >= wholePumpkinMinOz else { return false }
+        let n = name.lowercased()
+        return pieceWeightVaries(n) && !notProduceRx.test(n) && !notAWholePumpkinRx.test(n)
+    }
+
     static func produceWeightLb(_ name: String) -> Double? {
         let n = name.lowercased()
         if notProduceRx.test(n) || pieceWeightVaries(n) { return nil }

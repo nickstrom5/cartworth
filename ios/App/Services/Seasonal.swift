@@ -11,9 +11,11 @@ struct Occasion: Identifiable, Hashable {
     var keywords: [String]
     /// Starter shopping list
     var list: [String]
+    /// Featured the day after it, with `Seasonal.dayAfter`'s line as the blurb (Halloween: Nov 1).
+    var dayAfter = false
 
-    /// "is today", "is tomorrow", "in 9 days" ("in 1 days" before).
-    var whenText: String { daysAway == 0 ? "is today" : daysAway == 1 ? "is tomorrow" : "in \(daysAway) days" }
+    /// "is today", "is tomorrow", "in 9 days" ("in 1 days" before); "was yesterday" the day after.
+    var whenText: String { dayAfter ? "was yesterday" : daysAway == 0 ? "is today" : daysAway == 1 ? "is tomorrow" : "in \(daysAway) days" }
 
     var daysAway: Int { max(0, Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: Date()), to: Calendar.current.startOfDay(for: date)).day ?? 0) }
 }
@@ -141,8 +143,31 @@ enum Seasonal {
     /// The occasions to feature: the soonest two in the window. One card was not enough when two
     /// holidays share a season: in 2027 Hanukkah begins Dec 24, and the single "next occasion" card
     /// showed Hanukkah instead of Christmas for the whole three weeks before Christmas.
+    ///
+    /// An occasion in `dayAfter` stays one more day: Halloween's card says candy is "50% off on
+    /// Nov 1" and it vanished at midnight on 31 Oct (the third Halloween QA pass).
     static func featured(from now: Date = Date(), within days: Int = 21) -> [Occasion] {
-        Array(upcoming(from: now, within: days).prefix(2))
+        let y = cal.component(.year, from: now)
+        let yesterday = cal.date(byAdding: .day, value: -1, to: cal.startOfDay(for: now))!
+        let after: [Occasion] = (occasions(year: y - 1) + occasions(year: y)).compactMap { o in
+            guard cal.isDate(o.date, inSameDayAs: yesterday), let line = dayAfter[baseId(o.id)] else { return nil }
+            var o = o
+            o.blurb = line
+            o.dayAfter = true
+            return o
+        }
+        return Array((after + upcoming(from: now, within: days)).prefix(2))
+    }
+
+    /// The line an occasion shows the day after it, in place of its blurb. Same words as DAY_AFTER
+    /// in shared/seasonal.js.
+    static let dayAfter: [String: String] = [
+        "halloween": "Candy is often 50% off today — check the weekly ads.",
+    ]
+
+    private static func baseId(_ id: String) -> String {
+        guard let dash = id.lastIndex(of: "-") else { return id }
+        return String(id[..<dash])
     }
 
     struct Season: Hashable {

@@ -712,14 +712,28 @@ export function daysAway(date, now = new Date()) {
   return Math.round((date - a) / 86400000);
 }
 
-export const whenText = (n) => (n === 0 ? 'is today' : n === 1 ? 'is tomorrow' : `in ${n} days`);
+export const whenText = (n) => (n === -1 ? 'was yesterday' : n === 0 ? 'is today' : n === 1 ? 'is tomorrow' : `in ${n} days`);
+
+/**
+ * Occasions whose best deal is the day after. Halloween's card says candy is "50% off on Nov 1",
+ * and it vanished at midnight on 31 Oct, the day before that was true (the third Halloween QA pass).
+ * Such an occasion stays featured one more day with this line in place of its blurb. Kept apart from
+ * OCCASIONS, which is generated from the phone's list; ios/App/Services/Seasonal.swift `dayAfter`
+ * holds the same words (test/qa-seasonal.test.js).
+ */
+export const DAY_AFTER = {
+  halloween: 'Candy is often 50% off today — check the weekly ads.',
+};
+
+const baseId = (o) => o.id.replace(/-\d{4}$/, '');
 
 /** The occasions to feature: the soonest two within `days` (two, because Hanukkah 2027 begins Dec 24). */
 export function featured(now = new Date(), days = 21) {
   const y = now.getFullYear();
-  return [...occasions(y), ...occasions(y + 1)]
+  return [...occasions(y - 1), ...occasions(y), ...occasions(y + 1)]
     .map((o) => ({ ...o, daysAway: daysAway(o.date, now) }))
-    .filter((o) => o.daysAway >= 0 && o.daysAway <= days)
+    .filter((o) => (o.daysAway >= 0 && o.daysAway <= days) || (o.daysAway === -1 && DAY_AFTER[baseId(o)]))
+    .map((o) => (o.daysAway === -1 ? { ...o, blurb: DAY_AFTER[baseId(o)], dayAfter: true } : o))
     .sort((a, b) => a.date - b.date)
     .slice(0, 2);
 }

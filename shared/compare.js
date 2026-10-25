@@ -319,6 +319,29 @@ export function excludedCheaper(query, resultsByStore, best, { include = [], exc
   return out;
 }
 
+/**
+ * Real matches sold by the pound that the headline's dimension cannot rank, one per store, cheapest
+ * pound first. The headline must say they exist.
+ *
+ * Phoenix's cheapest pumpkins in the third Halloween run were Bashas' at 44¢/lb and El Super's at
+ * 33¢/lb, and the per-each "Best price" was a $2.19 small pumpkin. A per-lb pumpkin has no honest
+ * price per pumpkin (pieceWeightVaries in shared/units.js: the retailers' own estimates ran from a
+ * quarter pound to ten), so instead of inventing one the card says these are listed separately and
+ * at what price. Produce with a typical piece weight (bananas, onions) has an estimated per-each
+ * price and is ranked, so it never appears here. Returns [{ storeId, item, perLb }].
+ */
+export function perLbAside(items, dim, { prefs = {}, answerFloor = RELEVANT } = {}) {
+  if (!dim || dim === 'weight') return [];
+  const best = {};
+  for (const p of items || []) {
+    if (p.soldBy !== 'lb' || p.unit?.[dim] || p.implausible || !(p.score >= answerFloor)) continue;
+    const perLb = priceFor(p, prefs);
+    if (!(perLb > 0)) continue;
+    if (!best[p.storeId] || perLb < best[p.storeId].perLb) best[p.storeId] = { storeId: p.storeId, item: p, perLb };
+  }
+  return Object.values(best).sort((a, b) => a.perLb - b.perLb || (a.storeId < b.storeId ? -1 : 1));
+}
+
 // ---------- price bases and the savings line ----------
 
 /**
