@@ -205,3 +205,87 @@ test('DEFECT 4: the phone has the same after-Halloween line', () => {
   const table = Object.fromEntries([...m[1].matchAll(/"([a-z]+)": "([^"]+)"/g)].map((x) => [x[1], x[2]]));
   assert.deepEqual(table, DAY_AFTER);
 });
+
+// ---------------------------------------------------------------------------
+// The live holiday-matrix run on the fixes above (26 Oct, 22 of 51 states). The first whole-pumpkin
+// rule read word order ("pumpkin" last, then only size words), so names that END in "Pumpkin" got
+// through and a variety after "Pumpkin," did not.
+// ---------------------------------------------------------------------------
+
+// DEFECT 5: ALDI [shelf] "Kirkton House Fall Napkins, Pumpkin", 1 ea $2.49, was the BEST pumpkin in
+// AL 35209, AR 72205, AZ 85016, DC 20009, FL 33135, GA 30308, IA 50310, LA 70115 and ME 04102.
+test('DEFECT 5: Kirkton House Fall Napkins, Pumpkin are not a pumpkin', () => {
+  rejects('pumpkin', 'Kirkton House Fall Napkins, Pumpkin');
+  rejects('pumpkin', 'Kirkton House Fall Napkins, Pumpkin', { category: 'Paper Goods' });
+  rejects('pumpkin', 'Kirkton House Fall Napkins, Pumpkin', { category: 'Party Supplies' });
+  const napkins = item('aldi', 'Kirkton House Fall Napkins, Pumpkin', '1 ea', 2.49);
+  assert.ok(relevance('pumpkin', napkins) < RELEVANT, `scored ${relevance('pumpkin', napkins).toFixed(3)}`);
+  // Napkins are trapped for every food search, and found when asked for.
+  rejects('halloween candy', 'Halloween Candy Corn Napkins');
+  matches('napkins', 'Kirkton House Fall Napkins');
+});
+
+// DEFECT 6: Martin's [online] "BGL Pumpkin RSN", 1 ea $1.39 (MD 21218), a pumpkin raisin bagel.
+test('DEFECT 6: BGL Pumpkin RSN (a bagel) is not a pumpkin', () => {
+  rejects('pumpkin', 'BGL Pumpkin RSN');
+  rejects('pumpkin', 'BGL Pumpkin RSN', { category: 'Bakery' });
+  assert.ok(relevance('pumpkin', item('martins', 'BGL Pumpkin RSN', '1 ea', 1.39)) < RELEVANT);
+});
+
+// DEFECT 7: the rule behind 5 and 6. Word order is not evidence: a pumpkin's name may put the variety
+// after it ("Pumpkin, Casper"), and an impostor's may end in "Pumpkin". A bakery, party-goods or
+// paper-goods aisle is evidence against, even for a plain name.
+test('DEFECT 7: whole-pumpkin names do not depend on word order', () => {
+  for (const n of ['Pumpkin, Casper', 'Pumpkin, Sparkler', 'Pumpkin Cinderella', 'Pie Pumpkins', 'Heirloom Pumpkin']) matches('pumpkin', n);
+  for (const n of ['Fall Napkins, Pumpkin', 'Spice Muffin Pumpkin', 'Cookie Dough Pumpkin']) rejects('pumpkin', n);
+  rejects('pumpkin', 'Pumpkin', { category: 'Bakery' });
+  rejects('pumpkin', 'Pumpkin', { category: 'Party Supplies' });
+  matches('pumpkin', 'Pumpkin', { category: 'Produce' });
+  matches('pumpkin', 'Pumpkin', { category: 'Seasonal Produce' });
+});
+
+test('control: the rerun\'s correct pumpkins stay', () => {
+  const picks = {
+    walmart: [item('walmart', 'Pie Pumpkin', '1 ea', 2.48)],
+    sprouts: [item('sprouts', 'Pie Pumpkin', '1 ea', 1.99, { category: 'Pumpkins' })],
+    foodlion: [item('foodlion', 'Sugar Pie Pumpkin', '1 ea', 2.5)],
+    stopandshop: [item('stopandshop', 'Sugar Pie Pumpkin', '1 ea', 2.99)],
+    publix: [item('publix', 'Pie Pumpkins', '1 ea', 3.0)],
+    vallarta: [item('vallarta', 'Pumpkin, Casper', '1 ea', 6.99)],
+    ctown: [item('ctown', 'Pumpkin', '1 ea', 0.59)],
+  };
+  const { stores } = bestPerStore('pumpkin', picks);
+  assert.deepEqual(Object.keys(stores).sort(), Object.keys(picks).sort());
+});
+
+// DEFECT 8: Walmart [national] "Tootsie Pops Assorted Caramel Apple Pops Variety Pack", 13.64 oz
+// $4.48, was the best caramel apples in AK 99503 and HI 96814. Caramel apple is the flavour.
+test('DEFECT 8: caramel apple pops, candy, coffee and lip balm are not caramel apples', () => {
+  rejects('caramel apples', 'Tootsie Pops Assorted Caramel Apple Pops Variety Pack');
+  assert.ok(relevance('caramel apples', item('walmart', 'Tootsie Pops Assorted Caramel Apple Pops Variety Pack', '13.64 oz', 4.48)) < RELEVANT);
+  for (const n of ['Caramel Apple Lollipops', 'Kraft Caramel Apple Candy Chews', 'Green Mountain Caramel Apple Coffee K-Cup Pods', 'Caramel Apple Lip Balm', 'Caramel Apple Flavored Creamer']) rejects('caramel apples', n);
+  // The same for the other dishes that are also flavours.
+  rejects('pumpkin pie', 'Pumpkin Pie Pop-Tarts');
+  rejects('pumpkin pie', 'Pumpkin Pie Flavored Coffee');
+});
+
+test('control: real caramel apples and candy apples stay, and asking for the pops finds them', () => {
+  const { stores } = bestPerStore('caramel apples', {
+    aldi: [item('aldi', 'Caramel Apples', '3 ct', 2.99)],
+    kingsoopers: [item('kingsoopers', 'Daffy Farms Red Caramel Apple', '16 oz', 3.99)],
+    walmart: [item('walmart', 'Tootsie Pops Assorted Caramel Apple Pops Variety Pack', '13.64 oz', 4.48)],
+  });
+  assert.deepEqual(Object.keys(stores).sort(), ['aldi', 'kingsoopers']);
+  matches('caramel apples', 'Kroger Caramel Apples with Peanuts');
+  matches('candy apples', 'Candy Apples');
+  matches('caramel apple pops', 'Tootsie Pops Assorted Caramel Apple Pops Variety Pack');
+  matches('pumpkin pie', 'Wellsley Farms 12 Inch Pumpkin Pie', { category: 'Pumpkin Pie' });
+});
+
+// Not a defect, on purpose: Albertsons [online est] "Mallow Fireside Caramel Apples", 12 ct $13.99
+// (ID 83702). Nothing in the name says it is not a caramel apple: "Mallow" may be a brand or a
+// marshmallow treat, and $1.17 an apple is in range for real ones. Without the listing's own
+// description this matcher cannot tell, so it stays a match until someone checks the product.
+test('control: Mallow Fireside Caramel Apples are left as a match (cannot tell from the name)', () => {
+  matches('caramel apples', 'Mallow Fireside Caramel Apples');
+});

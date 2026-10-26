@@ -2151,6 +2151,10 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Sugar Pie Pumpkin"), Match.relevant, "Sugar Pie Pumpkin")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Orange Pumpkin Medium - Weight Between 10-15 Lb"), Match.relevant, "Orange Pumpkin Medium - Weight Between 10-15 Lb")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Large Carving Pumpkin"), Match.relevant, "Large Carving Pumpkin")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pumpkin, Casper"), Match.relevant, "Pumpkin, Casper")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pumpkin, Sparkler"), Match.relevant, "Pumpkin, Sparkler")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Pie Pumpkins"), Match.relevant, "Pie Pumpkins")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pumpkin", name: "Heirloom Pumpkin"), Match.relevant, "Heirloom Pumpkin")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Libby's Pumpkin Pie Mix"), Match.relevant, "Libby's Pumpkin Pie Mix")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Spice Coffee Creamer"), Match.relevant, "Pumpkin Spice Coffee Creamer")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Seeds"), Match.relevant, "Pumpkin Seeds")
@@ -2176,6 +2180,8 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "PPI Spooky Pumpkin Balloon"), Match.relevant, "PPI Spooky Pumpkin Balloon")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Klein International Glow Pumpkin Wand"), Match.relevant, "Klein International Glow Pumpkin Wand")
         XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Pumpkin Porter 6pk"), Match.relevant, "Pumpkin Porter 6pk")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "Kirkton House Fall Napkins, Pumpkin"), Match.relevant, "Kirkton House Fall Napkins, Pumpkin")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin", name: "BGL Pumpkin RSN"), Match.relevant, "BGL Pumpkin RSN")
     }
     func testAppleCider() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "apple cider", name: "Martinelli's Apple Cider"), Match.relevant, "Martinelli's Apple Cider")
@@ -2188,8 +2194,11 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Gourmet Caramel Apples 2 ct"), Match.relevant, "Gourmet Caramel Apples 2 ct")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Tastee Caramel Apples"), Match.relevant, "Tastee Caramel Apples")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Affy Tapple Plain Caramel Apples"), Match.relevant, "Affy Tapple Plain Caramel Apples")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Caramel Apples"), Match.relevant, "Caramel Apples")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "caramel apples", name: "Daffy Farms Red Caramel Apple"), Match.relevant, "Daffy Farms Red Caramel Apple")
         XCTAssertLessThan(Match.relevance(query: "caramel apples", name: "Lucky Leaf Caramel Apple Fruit Filling"), Match.relevant, "Lucky Leaf Caramel Apple Fruit Filling")
         XCTAssertLessThan(Match.relevance(query: "caramel apples", name: "HD Designs® Harvest Caramel Apple Scented Wax Melts"), Match.relevant, "HD Designs® Harvest Caramel Apple Scented Wax Melts")
+        XCTAssertLessThan(Match.relevance(query: "caramel apples", name: "Tootsie Pops Assorted Caramel Apple Pops Variety Pack"), Match.relevant, "Tootsie Pops Assorted Caramel Apple Pops Variety Pack")
     }
     func testWholeTurkey() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "whole turkey", name: "Butterball Whole Turkey Frozen 12-16 lb"), Match.relevant, "Butterball Whole Turkey Frozen 12-16 lb")
@@ -2541,5 +2550,42 @@ final class HalloweenRound3Tests: XCTestCase {
         XCTAssertFalse(Seasonal.featured(from: at(2026, 11, 2, 0)).contains { $0.name == "Halloween" })
         XCTAssertFalse(Seasonal.featured(from: at(2027, 1, 2)).contains { $0.name == "New Year’s" })
         XCTAssertFalse(Seasonal.featured(from: at(2026, 12, 26)).contains { $0.name == "Christmas" })
+    }
+}
+
+/// The live rerun on the round-3 fixes (26 Oct): the whole-pumpkin rule must not read word order,
+/// and a caramel apple flavour is not a caramel apple. Same cases as test/qa-halloween-round3.test.js.
+final class HalloweenLiveRerunTests: XCTestCase {
+    private func score(_ q: String, _ name: String, category: String? = nil, soldBy: SoldBy = .each) -> Double {
+        Match.relevance(query: q, name: name, category: category, soldBy: soldBy)
+    }
+
+    func testNapkinsAndBagelsAreNotPumpkins() {
+        for (n, c) in [("Kirkton House Fall Napkins, Pumpkin", nil), ("Kirkton House Fall Napkins, Pumpkin", "Paper Goods"), ("Kirkton House Fall Napkins, Pumpkin", "Party Supplies"),
+                       ("BGL Pumpkin RSN", nil), ("BGL Pumpkin RSN", "Bakery"), ("Pumpkin", "Bakery"), ("Pumpkin", "Party Supplies"), ("Spice Muffin Pumpkin", nil)] as [(String, String?)] {
+            XCTAssertLessThan(score("pumpkin", n, category: c), Match.relevant, "\(n) [\(c ?? "-")]")
+        }
+        XCTAssertLessThan(score("halloween candy", "Halloween Candy Corn Napkins"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("napkins", "Kirkton House Fall Napkins"), Match.relevant)
+    }
+
+    func testPumpkinNamesInAnyOrder() {
+        for (n, c) in [("Pumpkin, Casper", nil), ("Pumpkin, Sparkler", nil), ("Pumpkin Cinderella", nil), ("Pie Pumpkins", nil), ("Heirloom Pumpkin", nil),
+                       ("Pumpkin", "Produce"), ("Pumpkin", "Seasonal Produce"), ("Sugar Pie Pumpkin", nil), ("Rent's Due Ranch Local Organic |Jack-O-Lantern Pumpkins", nil)] as [(String, String?)] {
+            XCTAssertGreaterThanOrEqual(score("pumpkin", n, category: c), Match.relevant, "\(n) [\(c ?? "-")]")
+        }
+        XCTAssertGreaterThanOrEqual(score("mini pumpkins", "Wee B Little Mini Orange Pumpkin"), Match.relevant)
+    }
+
+    func testCaramelAppleFlavourIsNotCaramelApples() {
+        for n in ["Tootsie Pops Assorted Caramel Apple Pops Variety Pack", "Caramel Apple Lollipops", "Kraft Caramel Apple Candy Chews",
+                  "Green Mountain Caramel Apple Coffee K-Cup Pods", "Caramel Apple Lip Balm", "Caramel Apple Flavored Creamer"] {
+            XCTAssertLessThan(score("caramel apples", n), Match.relevant, n)
+        }
+        XCTAssertLessThan(score("pumpkin pie", "Pumpkin Pie Pop-Tarts"), Match.relevant)
+        for (q, n) in [("caramel apples", "Caramel Apples"), ("caramel apples", "Daffy Farms Red Caramel Apple"), ("caramel apples", "Kroger Caramel Apples with Peanuts"),
+                       ("caramel apples", "Mallow Fireside Caramel Apples"), ("candy apples", "Candy Apples"), ("caramel apple pops", "Tootsie Pops Assorted Caramel Apple Pops Variety Pack")] {
+            XCTAssertGreaterThanOrEqual(score(q, n), Match.relevant, "\(q) | \(n)")
+        }
     }
 }
