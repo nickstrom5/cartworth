@@ -563,3 +563,20 @@ const PIECE_WEIGHT_VARIES_RE = /\bpumpkins?\b/;
 export function pieceWeightVaries(name) {
   return PIECE_WEIGHT_VARIES_RE.test(String(name || '').toLowerCase());
 }
+
+/**
+ * One whole pumpkin at a fixed price, with its weight stated: Fry's "Pumpkin", 13 lb, $7.99 (the
+ * third Halloween run, Phoenix). The $7.99 is what one pumpkin costs at the register, so it is a
+ * real price per pumpkin, not an estimate, and it competes with the pumpkins sold "1 ea". Without it
+ * the row had only a per-pound price and lost the per-each headline to a $2.19 small pumpkin. Two
+ * pounds or more (a can is 15 oz, see CANNED_PUMPKIN_MAX_OZ in shared/match.js), one piece, and
+ * nothing in the name that makes it seeds, a pack or a pie.
+ */
+const NOT_A_WHOLE_PUMPKIN_RE = /\b(?:seeds?|pepitas|spice|latte|bread|butter|ale|beer|porter)\b/;
+export const WHOLE_PUMPKIN_MIN_OZ = 32;
+
+export function weighedWholePumpkin(name, size) {
+  const n = String(name || '').toLowerCase();
+  if (!size || size.perWeight || size.dim !== 'weight' || (size.count || 1) > 1 || !(size.base >= WHOLE_PUMPKIN_MIN_OZ)) return false;
+  return pieceWeightVaries(n) && !NOT_ONE_PIECE_RE.test(n) && !NOT_A_WHOLE_PUMPKIN_RE.test(n);
+}

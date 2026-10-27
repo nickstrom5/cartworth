@@ -228,6 +228,37 @@ enum Compare {
         return (d, out)
     }
 
+    /// Real matches sold by the pound that the headline's dimension cannot rank, one per store,
+    /// cheapest pound first: Bashas' pumpkin at 44c/lb and El Super's at 33c/lb lost the per-each
+    /// headline to a $2.19 small pumpkin (the third Halloween run). A per-lb pumpkin has no honest
+    /// per-pumpkin price, so the card names these instead of inventing one. Port of `perLbAside` in
+    /// shared/compare.js.
+    struct PerLbAside: Hashable {
+        var storeId: String
+        var product: Product
+        var perLb: Double
+    }
+
+    /// The card's line: "Sold by the lb, so not ranked per each: El Super $0.33/lb, Bashas' $0.44/lb.
+    /// Listed below." Same words as perLbLine in public/js/views/compare.js.
+    static func perLbLine(_ perLb: [PerLbAside], unitLabel: String, storeName: (String) -> String) -> String {
+        let named = perLb.prefix(3).map { "\(storeName($0.storeId)) \(String(format: "$%.2f", $0.perLb))/lb" }.joined(separator: ", ")
+        let more = perLb.count > 3 ? " and \(perLb.count - 3) more" : ""
+        return "Sold by the lb, so not ranked per \(unitLabel): \(named)\(more). Listed below."
+    }
+
+    static func perLbAside(_ rows: [(product: Product, score: Double)], dim: Dim?, prefs: PricePrefs = PricePrefs(), answerFloor: Double = Match.relevant) -> [PerLbAside] {
+        guard let d = dim, d != .weight else { return [] }
+        var best: [String: PerLbAside] = [:]
+        for (p, score) in rows {
+            if p.soldBy != .lb || p.unitPrice(d) != nil || p.implausible != nil || !(score >= answerFloor) { continue }
+            let perLb = effectivePrice(p, prefs)
+            if !(perLb > 0) { continue }
+            if best[p.storeId] == nil || perLb < best[p.storeId]!.perLb { best[p.storeId] = PerLbAside(storeId: p.storeId, product: p, perLb: perLb) }
+        }
+        return best.values.sorted { $0.perLb != $1.perLb ? $0.perLb < $1.perLb : $0.storeId < $1.storeId }
+    }
+
     /// A store's cheapest item that the unit comparison had to leave out, when it is cheaper at the
     /// register than the item shown as that store's best, or when the store has no comparable item
     /// at all (`hasBest` false). Jewel's pound of Lucerne, stated "4 each" at $4.99, was dropped

@@ -1,5 +1,5 @@
 // Build the normalized product shape every adapter returns.
-import { parseSize, sizeFromName, coerceLiquid, unitPrices, formatSize, produceWeightLb, pieceWeightVaries } from '../shared/units.js';
+import { parseSize, sizeFromName, coerceLiquid, unitPrices, formatSize, produceWeightLb, pieceWeightVaries, weighedWholePumpkin } from '../shared/units.js';
 
 export function money(s) {
   if (s == null) return null;
@@ -458,6 +458,9 @@ export function makeProduct(f) {
     if (soldByLb && !up.count) up.count = { perBase: effective * pieceLb, est: true };
     else if (!soldByLb && size?.dim === 'count' && size.base > 0 && !up.weight) up.weight = { perBase: effective / size.base / (pieceLb * 16), est: true };
   }
+  // A whole pumpkin at a fixed price with its weight stated is one pumpkin at that price
+  // (weighedWholePumpkin). A per-lb pumpkin still gets no per-pumpkin price: see pieceWeightVaries.
+  if (!soldByLb && !up.count && effective > 0 && weighedWholePumpkin(name, size)) up.count = { perBase: effective, est: false };
   // A roll of foil, wrap or parchment states its length or area ("18\"W x 500'L", "75 sq ft"), and
   // a per-EACH price then compares a 500 ft roll with a 25 sq ft one as if they were the same
   // thing: Costco's $55.97 Kirkland roll was set against ALDI's 75 ft roll at $3.95, "per each".

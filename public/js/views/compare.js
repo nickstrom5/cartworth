@@ -6,7 +6,7 @@ import { BestBars } from '../charts.js';
 import { useStore, pref, setPref, openModal, getState } from '../store.js';
 import { runSearch, addWatch, addToList, go } from '../actions.js';
 import { money, money2, unitPrice, unitLabel, ago, shortDate, endsLabel, plural, shortPromo, BASIS_LABEL, BASIS_TITLE, BASIS_BADGE, linkDestination } from '../format.js';
-import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim, tieBreak, standings } from '/shared/compare.js';
+import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim, tieBreak, standings, perLbAside } from '/shared/compare.js';
 import { refineChips, RELEVANT } from '/shared/match.js';
 import { displayUnitsFor, DISPLAY_UNITS } from '/shared/units.js';
 import { ProductDetail } from './product.js';
@@ -256,6 +256,8 @@ function Results({ search, settings }) {
       if (!best[p.storeId] || p.cmp < best[p.storeId].cmp || (p.cmp === best[p.storeId].cmp && tieBreak(p, best[p.storeId]) < 0)) best[p.storeId] = p;
     }
     const bestRows = Object.values(best).sort((a, b) => a.cmp - b.cmp || tieBreak(a, b));
+    // Per-lb real matches the per-each headline cannot rank (a pumpkin by the pound): named, not hidden.
+    const perLb = perLbAside(rows, dim, { prefs, answerFloor });
     const cmpSort = {
       unit: (a, b) => (a.cmp ?? Infinity) - (b.cmp ?? Infinity) || b.score - a.score,
       price: (a, b) => (effPrice(a, prefs) ?? Infinity) - (effPrice(b, prefs) ?? Infinity),
@@ -270,7 +272,7 @@ function Results({ search, settings }) {
       organic: relevant.filter((p) => /organic/i.test(p.name)).length,
       storeBrand: relevant.filter((p) => p.tags?.includes('storeBrand')).length,
     };
-    return { rows, dim, dims, displayUnit, bestRows, chips, hiddenCount, relevantCount: relevant.length, total: scored.length, counts };
+    return { rows, dim, dims, displayUnit, bestRows, perLb, chips, hiddenCount, relevantCount: relevant.length, total: scored.length, counts };
   }, [results, search.q, strict, sort, dimOverride, unitOverride, include, exclude, flags, hidden, settings?.prime, settings?.cardPrices]);
 
   const { rows, dim, dims, displayUnit, bestRows } = model;
@@ -436,6 +438,7 @@ function Results({ search, settings }) {
               </div>
               <div class="hero-sub"><a href="#" onClick=${(e) => { e.preventDefault(); openProduct(winner, displayUnit); }}>${winner.name}</a>${winner.size ? ` · ${winner.size}` : ''} · ${money2(effPrice(winner, prefs))}${winner.soldBy === 'lb' ? '/lb' : ''}</div>
               ${bestRows[1] && savingsLine(winner, bestRows[1], displayUnit) && html`<div class="muted small">${savingsLine(winner, bestRows[1], displayUnit)}</div>`}
+              ${model.perLb.length > 0 && html`<div class="muted small" data-testid="per-lb-aside">${perLbLine(model.perLb, displayUnit)}</div>`}
               ${loading && html`<div class="muted small">${pendingStores} more ${pendingStores === 1 ? 'store is' : 'stores are'} still answering; this can change.</div>`}
             </div>`
           : loading
@@ -465,6 +468,14 @@ function Results({ search, settings }) {
       </div>
     </div>
   </div>`;
+}
+
+// "Sold by the lb, so not ranked per each: El Super $0.33/lb, Bashas' $0.44/lb. Listed below." The
+// rows are in the list; this says why the headline does not count them (perLbAside).
+export function perLbLine(perLb, displayUnit) {
+  const named = perLb.slice(0, 3).map((a) => `${storeInfo(a.storeId).short} ${money2(a.perLb)}/lb`).join(', ');
+  const more = perLb.length > 3 ? ` and ${perLb.length - 3} more` : '';
+  return `Sold by the lb, so not ranked per ${unitLabel(displayUnit)}: ${named}${more}. Listed below.`;
 }
 
 function storeOrder(id) {

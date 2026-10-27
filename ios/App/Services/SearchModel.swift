@@ -150,6 +150,8 @@ struct CompareOutput {
     var dims: [Dim] = []
     var unit: DisplayUnit?
     var bestPerStore: [ComparedRow] = []
+    /// Per-lb real matches the headline cannot rank; the card names them (`Compare.perLbAside`).
+    var perLb: [Compare.PerLbAside] = []
     var chips: [Match.RefineChip] = []
     var total = 0
     var hiddenWeak = 0
@@ -213,6 +215,7 @@ enum Comparer {
             $0.perBase! != $1.perBase! ? $0.perBase! < $1.perBase!
                 : Compare.tieBreak($0.product.priceBasis, $0.est, $1.product.priceBasis, $1.est) ?? ($0.product.storeId < $1.product.storeId)
         }
+        out.perLb = Compare.perLbAside(rows.map { ($0.product, $0.score) }, dim: dim, prefs: prefs, answerFloor: answerFloor)
         switch o.sort {
         case .unit: rows.sort { ($0.perBase ?? .infinity, -$0.score) < ($1.perBase ?? .infinity, -$1.score) }
         case .price: rows.sort { Compare.effectivePrice($0.product, prefs) < Compare.effectivePrice($1.product, prefs) }
