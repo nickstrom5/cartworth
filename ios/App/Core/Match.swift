@@ -116,7 +116,11 @@ enum Match {
     private static let aLaRx = Rx("\\ba la\\b")
     private static let supplementRx = Rx("\\b(?:tablets?|caplets?|softgels?|vegcaps?|veggie caps|lozenges?|chewables?)\\b")
     private static let wantsSupplementRx = Rx("\\b(?:tablets?|caplets?|capsules?|softgels?|supplements?|vitamins?|pectin|lozenges?|chewable|mg|mcg)\\b")
-    private static let nonGroceryRx = Rx("\\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|candles?|pajamas|sweater|scrub|dolls?|gift bags?|battery[- ]operated|books?|wax melts?|scented)\\b")
+    /// Party goods, kitchen tools and costume pieces a shopper may search for, so asking for one
+    /// finds it: a tablecloth, an eye mask, an ice mold, baking pans, a carving light (the third
+    /// Halloween run). Port of NON_FOOD_RE in shared/match.js.
+    private static let nonFoodRx = Rx("\\b(?:(?:eye |face |sheet |sleep )?masks?|(?:ice |candy |chocolate |silicone |cake |cookie )?molds?|moulds?|tablecloths?|table ?covers?|table runners?|placemats?|napkins?|paper (?:plates?|cups?|bowls?|towels?)|(?:dessert|dinner|party|luncheon|beverage|cocktail) plates?|stencils?|balloons?|(?:glow|magic|bubble|wizard|witch|fairy|pumpkin|light-?up) wands?|glow sticks?|scratch art|coloring (?:books?|pages)|stickers?|costumes?|carving (?:kits?|tools?|sets?)|craft kits?|(?:baking|cake|muffin|loaf|sheet|roasting|bundt|pie|springform|cupcake) pans?|bakeware|silicone|\\d+ in 1 lights?|flashlights?|night ?lights?|tea lights?|wax melts?|candles?)\\b")
+    private static let nonGroceryRx = Rx("\\b(?:satin flowers?|silk flowers?|artificial flowers?|faux|hardcover|paperback|board book|audiobook|dvd|blu-?ray|vinyl record|jigsaw|puzzle|stainless steel|tumbler|cookbook|gift card|apparel|t-shirt|lawn|light-?up|led lights?|string lights|inflatable|ornaments?|wreaths?|garland|tree topper|gift wrap|wrapping paper|nativity|figurines?|pajamas|sweater|scrub|dolls?|gift bags?|battery[- ]operated|books?|scented)\\b")
 
     /// Imitation markers: a product that says it merely tastes like the thing is not the thing.
     /// Flavoured waters named after the drink they taste of ("Spiced Cider Sparkling Water" is not
@@ -209,15 +213,48 @@ enum Match {
     private static let champagneGrapesRx = Rx("\\bchampagne grapes?\\b")
     private static let grapeRx = Rx("\\bgrape")
     /// Ports of NON_FOOD_CATEGORY_RE, LUNCH_*_RE, PRODUCE_HEAD_RE, PRODUCE_WORD_RE (the state x holiday audit).
-    private static let nonFoodCategoryRx = Rx("\\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|decor|gift bags?|crafts?|disposable|cutlery|utensils?|tableware|herbal tea|pet (?:food|treats|supplies)|dog|cat)\\b")
+    private static let nonFoodCategoryRx = Rx("\\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|decor|gift bags?|crafts?|disposable|cutlery|utensils?|tableware|paper (?:goods|products)|napkins?|herbal tea|pet (?:food|treats|supplies)|dog|cat)\\b")
     private static let lunchNameRx = Rx("\\b(?:deli|sliced|lunchmeat|lunch meat|cold cuts?)\\b")
     private static let lunchCatRx = Rx("\\b(?:deli|lunch ?meats?|lunchmeat|cold cuts?)\\b")
     private static let produceHeadRx = Rx("^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|parsley|basil|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|garlic|ginger|scallion|avocado)$")
     private static let produceWordRx = Rx("^(?:onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$")
-    /// "pumpkin" alone is a pumpkin to carve, not a mini or ornamental one, a licensed novelty or a
-    /// pail (the Halloween run), nor "Tiger Striped Pumpkin" or "Poppin Pumpkin Snaps" (the rerun).
-    /// Port of DECORATIVE_PUMPKIN_RE.
-    private static let decorativePumpkinRx = Rx("\\b(?:mini|miniature|ornamental|decorative|decor|jack be little|wee b(?:ee)? little|tigers?|licensed|pails?|buckets?|snaps?|poppin)\\b")
+    /// "pumpkin" alone is a pumpkin to carve, not a mini or ornamental one or a licensed novelty
+    /// (the Halloween run), nor "Tiger Striped Pumpkin" (the rerun). These are produce filed under
+    /// Pumpkin, so this rule is about size. Port of DECORATIVE_PUMPKIN_RE.
+    private static let decorativePumpkinRx = Rx("\\b(?:mini|miniature|ornamental|decorative|decor|jack be little|wee b(?:ee)? little|tigers?|licensed)\\b")
+    /// ...and a pumpkin, not a thing shaped like one: sold by the pound, in a produce aisle,
+    /// weighing pounds, or named as one. Not by word order: the first version accepted names that
+    /// END in "Pumpkin", and the live rerun (26 Oct) found ALDI's "Kirkton House Fall Napkins,
+    /// Pumpkin" best in nine states and Martin's "BGL Pumpkin RSN" (a bagel) in Baltimore, while
+    /// "Pumpkin, Casper" failed. A whole-pumpkin name is only pumpkin words, or carries a mark only a
+    /// whole pumpkin has (Jack-O-Lantern, Heirloom, Carving, a variety). A party, paper-goods or
+    /// bakery aisle is evidence against. Ports of the same names in shared/match.js.
+    private static let produceCategoryRx = Rx("\\b(?:produce|vegetables?|veggies|fruits?|pumpkins?|squash|gourds?)\\b")
+    private static let notProduceCategoryRx = Rx("\\b(?:party|paper|napkins?|tableware|disposables?|bakery|breads?|baked|pastr(?:y|ies)|bagels?|donuts?|muffins?|decor|decorations?|crafts?|candy|snacks?|beer|wine|spirits|coffee|beverages?|home|kitchen|frozen|canned)\\b")
+    private static let produceAisleRx = Rx("\\b(?:produce|vegetables?|veggies)\\b")
+    private static let pumpkinVarieties: [String] = ["casper", "sparkler", "cinderella", "fairytale", "jarrahdale", "howden", "lumina", "knucklehead", "lolita", "connecticut", "galeux", "eysines", "porcelain", "warty", "goblin", "kabocha", "cushaw", "rouge", "vif", "etampes", "musque", "provence", "valenciano", "peanut"]
+    private static let pumpkinMarks: Set<String> = Set(["lantern", "heirloom", "carving"] + pumpkinVarieties)
+    private static let pumpkinWords: Set<String> = Set(["pumpkin", "pie", "sugar", "jack", "o", "each", "ea", "ct", "count", "lb", "pound", "oz", "size", "assorted", "color", "colour", "variety", "large", "medium", "small", "jumbo", "extra", "giant", "big", "max", "field", "orange", "white", "green", "red", "blue", "gray", "grey", "tan", "bin", "weight", "between", "approx", "approximately", "avg", "average", "organic", "fresh", "local", "locally", "grown", "regular", "whole", "halloween", "fall", "autumn", "harvest", "per", "x", "to", "and", "or", "mini", "miniature", "wee", "b", "bee", "little", "lil", "ornamental", "baby", "boo", "tiger", "stripe", "striped"] + Array(pumpkinMarks))
+    private static let pumpkinNumberRx = Rx("^\\d+(?:\\.\\d+)?(?:lb|oz|ct)?$")
+    private static let wholePumpkinMinOz = 32.0
+    private static func wholePumpkinName(_ words: [String]) -> Bool {
+        guard words.contains("pumpkin") else { return false }
+        if words.contains(where: { pumpkinMarks.contains($0) }) { return true }
+        return words.allSatisfy { pumpkinWords.contains($0) || pumpkinNumberRx.test($0) }
+    }
+    private static func wholePumpkin(words: [String], category: String?, dim: Dim?, base: Double?, soldBy: SoldBy) -> Bool {
+        let cat = normalize(category ?? "")
+        if notProduceCategoryRx.test(cat) && !produceAisleRx.test(cat) { return false }
+        if soldBy == .lb { return true }
+        if produceCategoryRx.test(cat) { return true }
+        if dim == .weight, let b = base, b >= wholePumpkinMinOz { return true }
+        return wholePumpkinName(words)
+    }
+    /// A dish named as a flavour: "Tootsie Pops Assorted Caramel Apple Pops Variety Pack" was the
+    /// best caramel apples in Anchorage and Honolulu (the live rerun). Ports of FLAVOUR_DISH_RE and
+    /// FLAVOUR_FORM_RE.
+    private static let flavourDishRx = Rx("\\b(?:caramel|candy|candied) apples?\\b|\\b(?:pumpkin|apple|pecan|sweet potato) pies?\\b")
+    private static let flavourFormRx = Rx("\\b(?:pops?|lollipops?|suckers?|hard candy|candies|taffy|chews?|gum|jelly beans?|gumm(?:y|ies)|scented|scents?|fragrance|coffee|creamer|k-?cups?|pods|lip balm|balm|lotion|soap|syrup|soda|latte|tea bags?|flavou?r(?:ed|s)?|variety pack)\\b")
     /// A pumpkin sold by the piece with a net weight under 2 lb is a can: Walmart's "Great Value
     /// Pumpkin", 15 oz (the rerun). Port of CANNED_PUMPKIN_MAX_OZ.
     private static let cannedPumpkinMaxOz = 32.0
@@ -452,6 +489,8 @@ enum Match {
             if (catTok.contains("juice") || catTok.contains("juices") || catTok.contains("pressed")) && !qset.contains("juice") { mult *= 0.3 }
         }
         if head == "pumpkin" && decorativePumpkinRx.test(nameNorm) && !decorativePumpkinRx.test(normalize(query)) { mult *= 0.2 }
+        if head == "pumpkin" && !wholePumpkin(words: words, category: category, dim: dim, base: base, soldBy: soldBy) { mult *= 0.2 }
+        if flavourDishRx.test(normalize(query)) && flavourFormRx.test(nameNorm) && !flavourFormRx.test(normalize(query)) { mult *= 0.2 }
         if head == "pumpkin" && soldBy != .lb && dim == .weight, let b = base, b > 0, b < cannedPumpkinMaxOz { mult *= 0.2 }
         if sweetPotatoRx.test(normalize(query)) && otherPotatoRx.test(nameNorm) { mult *= 0.2 }
         if freshVegMeatRx.test(head) {
@@ -465,6 +504,7 @@ enum Match {
         // the position rules deliberately look past "in"/"with" phrases, which is where the
         // giveaway sits.
         if nonGroceryRx.test(nameNorm) { mult *= 0.15 }
+        else if nonFoodRx.test(nameNorm) && !nonFoodRx.test(normalize(query)) { mult *= 0.15 }
         // The retailer's aisle says it is not food (supplements, cough drops, toothpicks, decorations).
         if nonFoodCategoryRx.test(normalize(category ?? "")) && !nonFoodCategoryRx.test(normalize(query)) { mult *= 0.15 }
         if supplementRx.test(nameNorm) && !wantsSupplementRx.test(normalize(query)) { mult *= 0.15 }

@@ -237,7 +237,7 @@ struct SearchView: View {
     @ViewBuilder
     private var resultsAside: some View {
         if let best = output.bestPerStore.first, let unit = output.unit {
-            HeroBestCard(row: best, unit: unit, runnerUp: output.bestPerStore.dropFirst().first, prefs: app.prefs) {
+            HeroBestCard(row: best, unit: unit, runnerUp: output.bestPerStore.dropFirst().first, prefs: app.prefs, perLb: output.perLb) {
                 detail = best.product
             }
         }
@@ -542,6 +542,7 @@ struct HeroBestCard: View {
     let unit: DisplayUnit
     var runnerUp: ComparedRow?
     var prefs: PricePrefs
+    var perLb: [Compare.PerLbAside] = []
     var onTap: () -> Void
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -612,6 +613,11 @@ struct HeroBestCard: View {
                     .font(.footnote).foregroundStyle(.secondary).unbreakablePrice()
                 if let line = savingsLine {
                     Text(line).font(.caption).foregroundStyle(.tertiary)
+                }
+                if !perLb.isEmpty {
+                    Text(Compare.perLbLine(perLb, unitLabel: unit.label, storeName: { RetailerCatalog.byId[$0]?.short ?? $0 }))
+                        .font(.caption).foregroundStyle(.secondary)
+                        .accessibilityIdentifier("perLbAside")
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

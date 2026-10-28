@@ -251,6 +251,11 @@ function badges(d) {
  * its qualifier: a "2/$7" deal arrives as $7.00 and "$3.99/lb" as $3.99. 14% of the Chicago deals
  * enriched in the Christmas run were multi-buys, so until the terms arrive the number is labelled,
  * sorted after the rest, and never read as one item's price.
+ *
+ * The terms are fetched when the deal is opened, not for the cards, so a card's label says to open
+ * it. It said "checking ad terms…" and "· terms loading", which on the compare screen stayed up for
+ * minutes with nothing loading (the third Halloween QA pass, 24 Oct). The detail view, which does
+ * fetch, keeps its own "checking" line.
  */
 export const termsPending = (d) => d.source === 'flipp' && !d.enriched && d.price != null;
 const PENDING_TITLE = "Flipp hasn't sent this deal's full terms yet. The price may be for more than one (\"2 for\") or per pound. Open the deal to check.";
@@ -266,7 +271,7 @@ export function DealCard({ d }) {
     </div>
     <div class="deal-body">
       <div class="deal-price">${priceMain || html`<span class="muted small">See ad</span>`}</div>
-      ${termsPending(d) && html`<div class="small muted" title=${PENDING_TITLE}>checking ad terms…</div>`}
+      ${termsPending(d) && html`<div class="small muted" title=${PENDING_TITLE}>open for ad terms</div>`}
       ${d.qty > 1 && d.each != null && html`<div class="small ink2">${money2(d.each)} each</div>`}
       ${(d.regular || d.regularText) && html`<div class="small muted">${d.regular ? `Reg. ${money2(d.regular)}` : regularLine(d.regularText)}</div>`}
       ${d.memberText && html`<div class="small" style=${{ color: 'var(--info-ink)', fontWeight: 600 }}>${d.memberText}</div>`}
@@ -291,7 +296,7 @@ export function DealCardMini({ deal: d }) {
   return html`<div class="ad-card" role="button" tabindex="0" style=${{ cursor: 'pointer' }} onClick=${() => openDeal(d)} onKeyDown=${(e) => e.key === 'Enter' && openDeal(d)}>
     <${DealImage} src=${d.image} fallback=${html`<div class="pimg ph" style=${{ width: 56, height: 56 }}><${Icon} name="tag" size=${18} /></div>`} />
     <div style=${{ minWidth: 0, display: 'grid', gap: 2 }}>
-      <div class="ad-price">${d.priceText || d.story || 'See ad'}${termsPending(d) ? html` <span class="muted small" title=${PENDING_TITLE}>· terms loading</span>` : ''}</div>
+      <div class="ad-price">${d.priceText || d.story || 'See ad'}${termsPending(d) ? html` <span class="muted small" title=${PENDING_TITLE}>· open for terms</span>` : ''}</div>
       <div class="small" style=${{ fontWeight: 600, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>${d.name}</div>
       <div class="row wrap" style=${{ gap: 5 }}>
         <${StoreTag} id=${d.storeId} />

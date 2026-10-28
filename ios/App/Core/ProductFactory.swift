@@ -399,6 +399,11 @@ enum ProductFactory {
                 unit[Dim.weight.rawValue] = UnitPrice(perBase: price / b / (pieceLb * 16), est: true)
             }
         }
+        // A whole pumpkin at a fixed price with its weight stated is one pumpkin at that price
+        // (Units.weighedWholePumpkin). A per-lb pumpkin still gets none. Mirrors src/normalize.js.
+        if !soldByLb, unit[Dim.count.rawValue] == nil, price > 0, Units.weighedWholePumpkin(name, size) {
+            unit[Dim.count.rawValue] = UnitPrice(perBase: price, est: false)
+        }
         // A stated length or area: no per-each price (see lengthOrAreaRx). A size conflict: no unit
         // price at all, in either reading — the package price stays. Mirrors src/normalize.js.
         if !soldByLb, unit[Dim.count.rawValue] != nil, size == nil || size?.dim == .count, lengthOrAreaRx.test("\(name) \(f.sizeText ?? "")") {

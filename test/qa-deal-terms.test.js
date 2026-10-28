@@ -15,15 +15,15 @@ const text = (v) => (v == null || v === false ? '' : typeof v === 'string' || ty
 
 const deal = (extra = {}) => ({ id: 'flipp-1', source: 'flipp', flippId: 1, storeId: 'marianos', name: "Kellogg's Cereal", price: 7, qty: 1, each: 7, priceText: '$7.00', enriched: false, validTo: null, ...extra });
 
-test('DEFECT: an un-enriched Flipp price says its terms are still loading', () => {
+test('DEFECT: an un-enriched Flipp price says to open it for its terms', () => {
   assert.equal(termsPending(deal()), true);
-  assert.match(text(DealCard({ d: deal() })), /checking ad terms/);
+  assert.match(text(DealCard({ d: deal() })), /open for ad terms/);
 });
 
 test('control: an enriched multi-buy, a Whole Foods sale and a price-less story are not marked', () => {
   const enriched = deal({ enriched: true, qty: 2, each: 3.5, priceText: '2 for $7.00' });
   assert.equal(termsPending(enriched), false);
-  assert.doesNotMatch(text(DealCard({ d: enriched })), /checking ad terms/);
+  assert.doesNotMatch(text(DealCard({ d: enriched })), /open for ad terms/);
   assert.equal(termsPending(deal({ source: 'wholefoods' })), false);
   assert.equal(termsPending(deal({ price: null, priceText: 'BOGO' })), false);
 });
