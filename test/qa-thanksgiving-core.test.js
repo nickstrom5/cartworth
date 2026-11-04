@@ -299,3 +299,10 @@ test('DEFECT 13 (Salt Lake City, Portland, partial): Whole Foods deli turkey by 
   matches('turkey', 'Honeysuckle White Frozen Whole Turkey', { category: 'Frozen Whole Turkey' });
   matches('turkey', 'Jennie-O Frozen Prime Young Turkey', { soldBy: 'lb', category: 'Frozen Whole Turkey' });
 });
+
+test('DEFECT 14 (Anchorage, partial): a turkey brine is a seasoning', () => {
+  rejects('fresh turkey', 'Rodelle Gourmet Turkey Brine, 25 oz', { category: 'Other Seasoning Mixes' });
+  rejects('turkey', 'Williams Sonoma Turkey Brining Blend');
+  matches('turkey brine', 'Rodelle Gourmet Turkey Brine, 25 oz');
+  matches('fresh turkey', 'Jennie-O Oven Ready Whole Turkey', { category: 'Whole Turkey' });
+});

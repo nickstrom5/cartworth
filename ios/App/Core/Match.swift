@@ -102,7 +102,8 @@ enum Match {
         // Marshmallows" "halloween candy" (the Halloween run). Mirrors shared/match.js.
         "filling", "marshmallow",
         // ALDI's "Chef's Cupboard Turkey Stuffing" answered "fresh turkey" (the Thanksgiving core list). Mirrors shared/match.js.
-        "stuffing",
+        // Costco's "Rodelle Gourmet Turkey Brine" answered Anchorage's "fresh turkey". Mirrors shared/match.js.
+        "stuffing", "brine", "brining",
     ]
 
     /// Whole-name markers for things that are not groceries at all.

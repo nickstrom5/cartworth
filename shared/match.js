@@ -121,7 +121,8 @@ const TRAPS = new Set([
   'filling', 'marshmallow',
   // ALDI's "Chef's Cupboard Turkey Stuffing" answered "fresh turkey" in Charlotte (the Thanksgiving
   // core list). A search for stuffing still finds it: a trap is skipped when the shopper typed it.
-  'stuffing',
+  // Costco's "Rodelle Gourmet Turkey Brine", 25 oz of seasoning, answered Anchorage's "fresh turkey".
+  'stuffing', 'brine', 'brining',
 ]);
 
 /**

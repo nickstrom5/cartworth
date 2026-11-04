@@ -2792,3 +2792,11 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey", name: "Honeysuckle White Frozen Whole Turkey", category: "Frozen Whole Turkey"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 14 (Anchorage, partial): Costco's turkey brine answered "fresh turkey".
+    func testATurkeyBrineIsASeasoning() {
+        XCTAssertLessThan(Match.relevance(query: "fresh turkey", name: "Rodelle Gourmet Turkey Brine, 25 oz", category: "Other Seasoning Mixes"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey brine", name: "Rodelle Gourmet Turkey Brine, 25 oz"), Match.relevant)
+    }
+}
