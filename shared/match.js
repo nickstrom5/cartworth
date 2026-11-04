@@ -150,7 +150,7 @@ const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|fa
 // from the live rerun (26 Oct): ALDI's "Kirkton House Fall Napkins, Pumpkin" was the best pumpkin in
 // nine states. Thanksgiving's (3 Nov) are the table and the roasting pan: a turkey centerpiece, a
 // gravy boat, a pie crust shield, a baster, turkey-size oven bags and a roasting rack.
-const NON_FOOD_RE = /\b(?:(?:eye |face |sheet |sleep )?masks?|(?:ice |candy |chocolate |silicone |cake |cookie )?molds?|moulds?|tablecloths?|table ?covers?|table runners?|placemats?|napkins?|paper (?:plates?|cups?|bowls?|towels?)|(?:dessert|dinner|party|luncheon|beverage|cocktail) plates?|stencils?|balloons?|(?:glow|magic|bubble|wizard|witch|fairy|pumpkin|light-?up) wands?|glow sticks?|scratch art|coloring (?:books?|pages)|stickers?|costumes?|carving (?:kits?|tools?|sets?)|craft kits?|(?:baking|cake|muffin|loaf|sheet|roasting|bundt|pie|springform|cupcake) pans?|bakeware|silicone|\d+ in 1 lights?|flashlights?|night ?lights?|tea lights?|wax melts?|candles?|centerpieces?|gravy boats?|gravy separators?|basters?|pie (?:crust )?shields?|(?:roasting|roaster|turkey) racks?|roaster pans?|foil roasters?|oven bags?|turkey lifters?|(?:meat |oven )?thermometers?|cookie cutters?|(?:dish|kitchen|hand|tea) towels?|plush)\b/;
+const NON_FOOD_RE = /\b(?:(?:eye |face |sheet |sleep )?masks?|(?:ice |candy |chocolate |silicone |cake |cookie )?molds?|moulds?|tablecloths?|table ?covers?|table runners?|placemats?|napkins?|paper (?:plates?|cups?|bowls?|towels?)|(?:dessert|dinner|party|luncheon|beverage|cocktail) plates?|stencils?|balloons?|(?:glow|magic|bubble|wizard|witch|fairy|pumpkin|light-?up) wands?|glow sticks?|scratch art|coloring (?:books?|pages)|stickers?|costumes?|carving (?:kits?|tools?|sets?)|craft kits?|(?:baking|cake|muffin|loaf|sheet|roasting|bundt|pie|springform|cupcake) pans?|bakeware|silicone|\d+ in 1 lights?|flashlights?|night ?lights?|tea lights?|wax melts?|candles?|centerpieces?|gravy boats?|gravy separators?|basters?|pie (?:crust )?shields?|(?:roasting|roaster|turkey) racks?|roaster pans?|foil roasters?|oven (?:[a-z]+ )?bags?|turkey lifters?|(?:meat |oven )?thermometers?|cookie cutters?|(?:dish|kitchen|hand|tea) towels?|plush)\b/;
 
 /**
  * Qualifiers that turn a trap noun back into an ordinary description of the searched product.
@@ -176,7 +176,9 @@ const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour'])
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
 
 // Prepared/processed forms are still the product but rarely what a price-checker wants.
-const MILD = new Set(['frozen', 'dried', 'liquid', 'breaded', 'stuffed', 'rotisserie', 'cooked', 'grilled', 'fried', 'marinated', 'seasoned', 'smoked', 'glazed', 'sweetened', 'mini', 'snack', 'kids']);
+const MILD = new Set(['frozen', 'dried', 'liquid', 'breaded', 'stuffed', 'rotisserie', 'cooked', 'grilled', 'fried', 'marinated', 'seasoned', 'smoked', 'glazed', 'sweetened', 'mini', 'snack', 'kids',
+  // Trader Joe's "Candied Pecans", 5 oz at $15.97/lb, answered Dallas's "pecans" (the Thanksgiving core list).
+  'candied']);
 
 // How the food is kept, not what it is. Only these are forgiven when the retailer's own category
 // is exactly what was searched (see catCoversQuery). 'dried' is deliberately NOT here: dried
@@ -361,7 +363,7 @@ const WANTS_SUPPLEMENT_RE = /\b(?:tablets?|caplets?|capsules?|softgels?|suppleme
 const PROCESSED_FORM_RE = /\bin (?:light |heavy )?(?:syrup|juice)\b|\b(?:canned|diced|crushed|stewed|sun[- ]?dried|freeze[- ]?dried|dried|dehydrated|pureed?|frozen)\b/;
 const LUNCH_NAME_RE = /\b(?:deli|sliced|lunchmeat|lunch meat|cold cuts?)\b/;
 const LUNCH_CAT_RE = /\b(?:deli|lunch ?meats?|lunchmeat|cold cuts?)\b/;
-const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|decor|gift bags?|crafts?|disposable|cutlery|utensils?|tableware|paper (?:goods|products)|napkins?|herbal tea|pet (?:food|treats|supplies)|dog|cat)\b/;
+const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|decor|gift bags?|crafts?|disposable|cutlery|utensils?|tableware|paper (?:goods|products)|napkins?|herbal tea|pet (?:food|treats|supplies)|dog|cat|cooking bags?|oven bags?)\b/;
 // "pumpkin" on its own is a pumpkin to carve. Mini and ornamental pumpkins are table decorations at
 // a dollar or two, and priced per pumpkin they beat every carving pumpkin: Trader Joe's "Lil' Tiger
 // Stripe Pumpkin" was the best pumpkin in four states, Rouses' "Licensed LSU Tigers Pumpkin" (8 ct)
@@ -654,6 +656,9 @@ export function relevance(query, product, opts = {}) {
   { const grade = (s) => (/\bheavy\b/.test(s) ? 'heavy' : /\blight\b/.test(s) ? 'light' : null);
     const want = grade(normalize(query));
     if (head === 'cream' && want && grade(nameNorm) && grade(nameNorm) !== want) mult *= 0.2; }
+  // Whipped cream is not heavy cream: Trader Joe's "Sweetened Whipped Heavy Cream", a 13 oz can, answered
+  // Dallas's heavy cream. Heavy WHIPPING cream is heavy cream.
+  if (head === 'cream' && /\bwhipped\b/.test(nameNorm) && !/\bwhipped\b/.test(normalize(query))) mult *= 0.2;
   if (/\bfresh\b/.test(normalize(query)) && !FROZEN_RE.test(normalize(query)) && (FROZEN_RE.test(nameNorm) || FROZEN_RE.test(normalize(product.category || '')))) mult *= 0.3;
   if (/\bsweet potato/.test(normalize(query)) && /\b(?:russet|yukon|red potato|gold potato|white potato)/.test(nameNorm)) mult *= 0.2;
   if (FRESH_VEG_MEAT_RE.test(head || '')) {

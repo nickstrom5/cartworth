@@ -262,3 +262,21 @@ test('DEFECT 11: the aisle names the part, and Chinese celery is not celery', ()
   matches('chinese celery', 'Chinese Celery');
   matches('celery', 'Dole Celery', { category: 'Celery' });
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 12 (Dallas, partial): ALDI's "Boulder Oven Turkey Bag 2ct" (Oven Cooking Bags) was the only
+// answer to "fresh turkey"; Trader Joe's "Sweetened Whipped Heavy Cream" (13 fl oz, an aerosol)
+// answered "heavy cream"; its "Candied Pecans" (5 oz, $15.97/lb) answered "pecans".
+// ---------------------------------------------------------------------------
+test('DEFECT 12: an oven bag, whipped cream and candied pecans', () => {
+  rejects('fresh turkey', 'Boulder Oven Turkey Bag 2ct', { category: 'Oven Cooking Bags' });
+  rejects('turkey', 'Boulder Oven Turkey Bag 2ct');
+  rejects('heavy cream', 'Sweetened Whipped Heavy Cream', { category: 'Milk & Cream' });
+  rejects('pecans', 'Candied Pecans', { category: 'Nuts, Dried Fruits, Seeds' });
+  matches('heavy cream', 'Organic Heavy Cream');
+  matches('heavy cream', 'Heavy Whipping Cream');
+  matches('whipped cream', 'Whipped Heavy Cream');
+  matches('candied pecans', 'Candied Pecans');
+  matches('pecans', 'Southern Grove Chopped Pecans', { category: 'Pecans' });
+  matches('pecans', 'Pecan Halves');
+});

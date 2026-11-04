@@ -2756,3 +2756,17 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "chinese celery", name: "Chinese Celery"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 12 (Dallas, partial): an oven bag answered "fresh turkey", whipped cream "heavy cream", candied pecans "pecans".
+    func testOvenBagWhippedCreamAndCandiedPecans() {
+        XCTAssertLessThan(Match.relevance(query: "fresh turkey", name: "Boulder Oven Turkey Bag 2ct", category: "Oven Cooking Bags"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "turkey", name: "Boulder Oven Turkey Bag 2ct"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "heavy cream", name: "Sweetened Whipped Heavy Cream", category: "Milk & Cream"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "pecans", name: "Candied Pecans", category: "Nuts, Dried Fruits, Seeds"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "heavy cream", name: "Heavy Whipping Cream"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "whipped cream", name: "Whipped Heavy Cream"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "candied pecans", name: "Candied Pecans"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pecans", name: "Pecan Halves"), Match.relevant)
+    }
+}
