@@ -450,6 +450,8 @@ function otherTurkeyPart(query, nameNorm, category) {
 // "Shady Brook Farms Frozen Whole Turkey", $0.84/lb, was Newark's best fresh turkey, where a fresh bird
 // costs $2-3 (the Thanksgiving core list, 3 Nov).
 const FROZEN_RE = /\bfrozen\b/;
+const NUT_HEAD_RE = /^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$/;
+const SNACK_NUT_RE = /\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\b/;
 const PIES_AISLE_RE = /^(?!.*\b(?:crusts?|dough|shells?)\b).*\bpies\b/;
 // A dish named as a flavour. "Pumpkin pie spice" is kept out of "pumpkin pie" by the 'spice' trap;
 // the same is true of a caramel apple: Walmart's "Tootsie Pops Assorted Caramel Apple Pops Variety
@@ -656,6 +658,9 @@ export function relevance(query, product, opts = {}) {
   { const grade = (s) => (/\bheavy\b/.test(s) ? 'heavy' : /\blight\b/.test(s) ? 'light' : null);
     const want = grade(normalize(query));
     if (head === 'cream' && want && grade(nameNorm) && grade(nameNorm) !== want) mult *= 0.2; }
+  // Snack nuts are not baking nuts: Trader Joe's "Sweet & Spicy Pecans" and "Candied Pecans", 5 oz at
+  // $15.97/lb, answered "pecans" in Salt Lake City and Dallas (the Thanksgiving core list).
+  if (NUT_HEAD_RE.test(head || '') && SNACK_NUT_RE.test(nameNorm) && !SNACK_NUT_RE.test(normalize(query))) mult *= 0.3;
   // Whipped cream is not heavy cream: Trader Joe's "Sweetened Whipped Heavy Cream", a 13 oz can, answered
   // Dallas's heavy cream. Heavy WHIPPING cream is heavy cream.
   if (head === 'cream' && /\bwhipped\b/.test(nameNorm) && !/\bwhipped\b/.test(normalize(query))) mult *= 0.2;

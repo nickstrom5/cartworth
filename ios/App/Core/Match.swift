@@ -307,6 +307,8 @@ enum Match {
     private static let preparedAisleRx = Rx("\\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides)\\b")
     private static let heavyRx = Rx("\\bheavy\\b")
     private static let lightRx = Rx("\\blight\\b")
+    private static let nutHeadRx = Rx("^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$")
+    private static let snackNutRx = Rx("\\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\\b")
     private static let whippedRx = Rx("\\bwhipped\\b")
     private static let freshRx = Rx("\\bfresh\\b")
     /// A pie that boasts of its crust is a pie: Mrs. Smith's "Original Flaky Crust Dutch Apple Pie" was
@@ -562,6 +564,8 @@ enum Match {
         // Cream is sold by fat: "Wellsley Farms Light Cream" in Heavy Creams was Newark's best heavy cream. Port of shared/match.js.
         let creamGrade = { (s: String) -> String? in heavyRx.test(s) ? "heavy" : lightRx.test(s) ? "light" : nil }
         if head == "cream", let want = creamGrade(normalize(query)), let got = creamGrade(nameNorm), got != want { mult *= 0.2 }
+        // Snack nuts are not baking nuts ("Sweet & Spicy Pecans", "Candied Pecans"; the Thanksgiving core list). Port of shared/match.js.
+        if nutHeadRx.test(head) && snackNutRx.test(nameNorm) && !snackNutRx.test(normalize(query)) { mult *= 0.3 }
         // Whipped cream is not heavy cream ("Sweetened Whipped Heavy Cream", Dallas). Port of shared/match.js.
         if head == "cream" && whippedRx.test(nameNorm) && !whippedRx.test(normalize(query)) { mult *= 0.2 }
         if freshRx.test(normalize(query)) && !frozenRx.test(normalize(query)) && (frozenRx.test(nameNorm) || frozenRx.test(normalize(category ?? ""))) { mult *= 0.3 }

@@ -2770,3 +2770,14 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pecans", name: "Pecan Halves"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 12 (Salt Lake City, partial): "Sweet & Spicy Pecans" answered "pecans".
+    func testSnackPecansAreNotBakingPecans() {
+        XCTAssertLessThan(Match.relevance(query: "pecans", name: "Sweet & Spicy Pecans", category: "Nuts, Dried Fruits, Seeds"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "walnuts", name: "Candied Walnuts"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pecans", name: "Diamond Pecan Halves", category: "Pecans"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "honey roasted peanuts", name: "Planters Honey Roasted Peanuts"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "peanut butter", name: "Jif Creamy Peanut Butter"), Match.relevant)
+    }
+}

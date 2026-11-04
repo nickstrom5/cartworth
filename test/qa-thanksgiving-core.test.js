@@ -280,3 +280,13 @@ test('DEFECT 12: an oven bag, whipped cream and candied pecans', () => {
   matches('pecans', 'Southern Grove Chopped Pecans', { category: 'Pecans' });
   matches('pecans', 'Pecan Halves');
 });
+
+test('DEFECT 12 (Salt Lake City, partial): snack pecans are not baking pecans', () => {
+  rejects('pecans', 'Sweet & Spicy Pecans', { category: 'Nuts, Dried Fruits, Seeds' });
+  rejects('pecans', 'Honey Glazed Pecans');
+  rejects('walnuts', 'Candied Walnuts');
+  matches('pecans', 'Diamond Pecan Halves', { category: 'Pecans' });
+  matches('walnuts', 'Chopped Walnuts');
+  matches('honey roasted peanuts', 'Planters Honey Roasted Peanuts');
+  matches('peanut butter', 'Jif Creamy Peanut Butter');
+});
