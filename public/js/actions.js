@@ -130,6 +130,9 @@ export function buildStores(dir = null, settings = null) {
         distance: found?.distance ?? null,
         address: found?.address ?? null,
         hasAds: found ? found.hasAds : !!(store.ads && store.ads.length),
+        // Its price lookup timed out on this build, so 'adsOnly' here means "no answer yet", not "this
+        // chain publishes no prices" (the Thanksgiving QA: Kroger, Publix and Walmart in Atlanta).
+        unresolved: !!dir?.unresolved?.includes(id),
         canUseKroger: store.alt?.type === 'kroger',
         zipOverride: s.overrides?.[id]?.zip || null,
       };

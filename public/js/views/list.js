@@ -109,12 +109,12 @@ function ListRow({ it, onUpdate, onRemove, plan }) {
       ${!it.pinned && cheapest && html`<div class="muted small row wrap" style=${{ gap: 5 }}>cheapest: <${StoreTag} id=${p.cheapest} /> <span class="nw">${money2(cheapest.cost)}</span>${costedAmount(p, cheapest) && html` <span class="nw">for ${costedAmount(p, cheapest)}</span>`}</div>`}
     </div>
     <div class="qty no-print">
-      <button type="button" onClick=${() => it.qty > 1 && onUpdate(it, { qty: it.qty - 1 })} aria-label="Fewer"><${Icon} name="minus" size=${12} /></button>
+      <button type="button" onClick=${() => it.qty > 1 && onUpdate(it, { qty: it.qty - 1 })} aria-label=${`One fewer ${it.text}`}><${Icon} name="minus" size=${12} /></button>
       <span>${it.qty}</span>
-      <button type="button" onClick=${() => onUpdate(it, { qty: it.qty + 1 })} aria-label="More"><${Icon} name="plus" size=${12} /></button>
+      <button type="button" onClick=${() => onUpdate(it, { qty: it.qty + 1 })} aria-label=${`One more ${it.text}`}><${Icon} name="plus" size=${12} /></button>
     </div>
-    <button class="btn btn-ghost btn-icon btn-sm no-print" title="Compare prices" aria-label="Compare prices" onClick=${() => runSearch(it.pinned ? it.pinned.name : it.text)}><${Icon} name="search" size=${14} /></button>
-    <button class="btn btn-ghost btn-icon btn-sm btn-danger no-print" title="Remove" aria-label="Remove" onClick=${() => onRemove(it)}><${Icon} name="x" size=${14} /></button>
+    <button class="btn btn-ghost btn-icon btn-sm no-print" title="Compare prices" aria-label=${`Compare prices for ${it.text}`} onClick=${() => runSearch(it.pinned ? it.pinned.name : it.text)}><${Icon} name="search" size=${14} /></button>
+    <button class="btn btn-ghost btn-icon btn-sm btn-danger no-print" title="Remove" aria-label=${`Remove ${it.text}`} onClick=${() => onRemove(it)}><${Icon} name="x" size=${14} /></button>
   </div>`;
 }
 

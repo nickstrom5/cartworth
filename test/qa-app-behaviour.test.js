@@ -640,6 +640,70 @@ test('DEFECT (nationwide audit): lookups that timed out are named, and "Check ag
   }
 });
 
+// DEFECT (Thanksgiving QA, Atlanta 30308): 16 chains timed out, and the ones with a circular came
+// back ad-only. Onboarding listed Kroger, Publix and Walmart under "Weekly ad only … These stores
+// don't publish prices we can read", and Settings printed "Weekly ad only — Walmart labels these
+// 'no markups'". A chain that did not answer has not been shown to publish no prices.
+test('DEFECT (Thanksgiving QA): a chain that timed out is not called "weekly ad only"', { skip: SKIP }, async () => {
+  const dir = { ...fx.directory, zip: '30308', city: 'Atlanta', state: 'GA', otherMerchants: [], maxMiles: 25,
+    chains: [
+      { id: 'aldi', name: 'ALDI', short: 'ALDI', status: 'shelf', hasAds: true, distance: 4.3, address: '1 A St' },
+      { id: 'kroger', name: 'Kroger', short: 'Kroger', status: 'adsOnly', hasAds: true, distance: null, address: null },
+      { id: 'target', name: 'Target', short: 'Target', status: 'adsOnly', hasAds: true, distance: null, address: null },
+    ],
+    suggested: ['aldi'], unresolved: ['kroger', 'publix'] };
+  try {
+    await onboardWith(() => dir, '30308');
+    await page.waitFor(`/didn’t answer in time/.test(document.querySelector('.onboard')?.innerText || '')`, { what: 'the short-list notice' });
+    const text = await page.eval(`document.querySelector('.onboard').innerText`);
+    assert.match(text, /Weekly ad only: Target\./, 'a chain that answered with only a circular is still listed');
+    assert.doesNotMatch(text, /Weekly ad only:[^.]*Kroger/, 'a chain that did not answer is not "weekly ad only"');
+    assert.match(text, /found 1 store it can price and 1 more with a weekly ad/);
+    await openApp(page, srv.origin, { storage: seedStorage({ zip: '30308', stores: ['aldi'] }), hash: '#/settings' });
+    await page.waitFor(`/Didn’t answer just now/i.test(document.body.innerText)`, { what: 'the Settings group for chains that did not answer' });
+    const row = await page.eval(`[...document.querySelectorAll('.srow')].find((r) => /^Kroger/.test(r.innerText.trim()))?.innerText || ''`);
+    assert.match(row, /No answer yet/);
+    assert.doesNotMatch(row, /Weekly ad only/);
+    assert.doesNotMatch(await page.eval(`document.body.innerText`), /Mariano’s exact prices/, 'the Mariano’s keys card is not shown in Atlanta');
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
+// DEFECT (Thanksgiving QA, 375px): with a 20-item Thanksgiving list the item names were squeezed to
+// about 60px ("cranberr", "sweet potatoe"), and the row buttons were all read as "More", "Fewer",
+// "Remove". On Sales the filters stacked above the deals put the first deal ~1,700px down.
+test('DEFECT (Thanksgiving QA): at phone width list names have the row, buttons name their item, and deals come before filters', { skip: SKIP }, async () => {
+  const LIST = ['cranberry sauce', 'sweet potatoes', 'russet potatoes'].map((text, i) => ({ id: `t${i}`, text, qty: 1, pinned: null, done: false, addedAt: Date.now() }));
+  await page.viewport(375, 812);
+  await openApp(page, srv.origin, { storage: seedStorage({ zip: fx.zip, stores: fx.stores, list: LIST }), hash: '#/list' });
+  await page.waitFor(`document.querySelectorAll('.litem').length === 3`, { what: 'the list rows' });
+  const widths = await page.eval(`[...document.querySelectorAll('.litem .ltext')].map((e) => Math.round(e.getBoundingClientRect().width))`);
+  assert.ok(widths.every((w) => w > 250), `item names get most of the row: ${widths}`);
+  const labels = await page.eval(`[...document.querySelectorAll('.litem button')].map((b) => b.getAttribute('aria-label'))`);
+  assert.ok(labels.includes('One more cranberry sauce') && labels.includes('Remove sweet potatoes') && labels.includes('Compare prices for russet potatoes'), `labels: ${labels}`);
+  assert.ok(!labels.includes('More') && !labels.includes('Remove'), 'no bare, item-less labels');
+
+  const deals = [{ id: 'd1', source: 'flipp', flippId: 1, storeId: fx.stores[0], name: 'Whole Turkey', price: 0.99, perLb: true, priceText: '$0.99/lb', enriched: true, category: 'Meat & Seafood', week: 'current' }];
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/deals': { week: 'current', deals, flyers: [], errors: [] } }) });
+  try {
+    await openApp(page, srv.origin, { storage: STORAGE(), hash: '#/sales' });
+    await page.waitFor(`!!document.querySelector('.deal')`, { what: 'a deal card' });
+    // Measured from the toggle, not the top: the holiday cards above it depend on the date.
+    const [gap, filtersShown] = await page.eval(`[Math.round(document.querySelector('.deal').getBoundingClientRect().top - document.querySelector('.filters-toggle').getBoundingClientRect().bottom), getComputedStyle(document.querySelector('.filters')).display !== 'none']`);
+    assert.ok(!filtersShown && gap < 200, `first deal ${gap}px below the Filters button, filters shown: ${filtersShown}`);
+    await page.eval(`document.querySelector('.filters-toggle').click()`);
+    await page.waitFor(`getComputedStyle(document.querySelector('.filters')).display !== 'none'`, { what: 'the filters to open' });
+    assert.equal(await page.eval(`document.querySelector('.filters-toggle').getAttribute('aria-expanded')`), 'true');
+    await page.viewport(1280, 900);
+    assert.equal(await page.eval(`getComputedStyle(document.querySelector('.filters-toggle')).display`), 'none', 'no toggle on a wide screen');
+  } finally {
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
 
 // DEFECT (launch review, live journey): the first look at a new ZIP takes up to a minute, and the
 // ZIP form waited for all of it on a silent spinner. A failed lookup then left the store step on

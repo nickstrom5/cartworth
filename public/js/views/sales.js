@@ -44,6 +44,10 @@ export function SalesView() {
   const [groceryOnly, setGroceryOnly] = useState(pref('groceryOnly', true));
   const [limit, setLimit] = useState(60);
   const [progress, setProgress] = useState(null);
+  // Below 900px the filters stack above the deals. Open, they put the first deal about 1,700px down
+  // a phone screen (the Thanksgiving QA, 375px), so there they start folded behind one button.
+  // Wider screens show them as a sidebar whatever this says (app.css .filters-toggle).
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const load = async (fresh = false) => {
     setLoading(true);
@@ -158,7 +162,14 @@ export function SalesView() {
     ${!data && loading && html`<div class="card card-pad row"><${Spinner} /> Loading weekly ads…</div>`}
     ${data &&
     html`<div class="deals-layout">
-      <aside class="card filters">
+      <button type="button" class="btn filters-toggle" aria-expanded=${filtersOpen ? 'true' : 'false'} aria-controls="deal-filters" onClick=${() => setFiltersOpen(!filtersOpen)}>
+        <${Icon} name="filter" size=${14} /> ${filtersOpen ? 'Hide filters' : 'Filters'}
+        ${(() => {
+          const on = [store && storeInfo(store).short, cat, type !== 'all' && 'deal type'].filter(Boolean);
+          return on.length ? html`<span class="muted small"> · ${on.join(', ')}</span>` : '';
+        })()}
+      </button>
+      <aside class=${`card filters${filtersOpen ? '' : ' filters-folded'}`} id="deal-filters" aria-label="Deal filters">
         <div>
           <h2>Store</h2>
           <button class="fopt" aria-pressed=${!store ? 'true' : 'false'} onClick=${() => setStore(null)}>All stores <span class="n">${Object.values(model.storeCounts).reduce((a, b) => a + b, 0)}</span></button>
