@@ -178,6 +178,10 @@ struct SettingsView: View {
 
     /// The ZIP field, its Update button and the use-my-location button. Side by side normally;
     /// stacked when the type size is large enough that one line would clip the ZIP.
+    ///
+    /// Borderless, because a Form row with more than one default-style button runs *every*
+    /// button on a tap anywhere in the row: tapping Update also ran "Use my location", which asked
+    /// for location permission and, once granted, could replace the ZIP just typed.
     @ViewBuilder
     private func zipRow(stacked: Bool) -> some View {
         let field = TextField("ZIP code", text: $zip)
@@ -195,6 +199,7 @@ struct SettingsView: View {
                 }
                 .disabled(busy)
             }
+            .buttonStyle(.borderless)
         } else {
             HStack {
                 field
@@ -206,6 +211,7 @@ struct SettingsView: View {
                 .disabled(busy)
                 .accessibilityLabel("Use my location")
             }
+            .buttonStyle(.borderless)
         }
     }
 

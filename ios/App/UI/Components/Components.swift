@@ -134,12 +134,18 @@ struct WordFlow: Layout {
         return s.sizeThatFits(ProposedViewSize(width: limit, height: nil))
     }
 
+    /// How far a line may run over before it breaks. A parent that measured this name at its ideal
+    /// one-line width hands the same width back to place it, less rounding: "Whole Foods Market"
+    /// was offered a hair under its own width in the BEST PRICE card, broke before "Market", and
+    /// drew that second line over the product name in a row only one line tall.
+    private let overrun: CGFloat = 0.5
+
     private func lines(_ subviews: Subviews, width: CGFloat) -> [[(Int, CGSize)]] {
         var out: [[(Int, CGSize)]] = [[]]
         var x: CGFloat = 0
         for (i, s) in subviews.enumerated() {
             let size = measure(s, limit: width)
-            if x > 0, x + spacing + size.width > width {
+            if x > 0, x + spacing + size.width > width + overrun {
                 out.append([])
                 x = 0
             }

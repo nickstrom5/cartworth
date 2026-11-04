@@ -14,6 +14,10 @@ struct ListsView: View {
     @State private var planning = false
     @State private var showRecipe = false
     @State private var paywall: PaywallReason?
+    /// Return adds the item and keeps the keyboard up: a holiday list is typed one item after
+    /// another, and the field used to lose focus, so the next item typed went nowhere. Return
+    /// on an empty field, or dragging the list, puts the keyboard away.
+    @FocusState private var adding: Bool
 
     /// Identifies the presentation as well as naming it. With `.sheet(isPresented:)` and a
     /// separate reason string, SwiftUI presented the sheet with the *previous* reason — tapping
@@ -32,7 +36,13 @@ struct ListsView: View {
                 Section {
                     HStack {
                         TextField("Add item — milk 1 gal, eggs 18 ct…", text: $newItem)
-                            .onSubmit(add)
+                            .focused($adding)
+                            .submitLabel(.next)
+                            .onSubmit {
+                                let typed = !newItem.trimmingCharacters(in: .whitespaces).isEmpty
+                                add()
+                                adding = typed
+                            }
                         Button(action: add) { Image(systemName: "plus.circle.fill") }
                             .disabled(newItem.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
@@ -94,6 +104,7 @@ struct ListsView: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Shopping list")
             .toolbar {
                 if !entries.isEmpty {
