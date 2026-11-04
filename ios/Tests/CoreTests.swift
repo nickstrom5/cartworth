@@ -2600,6 +2600,120 @@ final class HalloweenLiveRerunTests: XCTestCase {
     }
 }
 
+/// Thanksgiving food styles (ops/coverage/thanksgiving-food-styles-2026-11-03.md): dietary searches,
+/// the vegan analogue of an animal food, brand searches and regional names. Same cases as
+/// test/qa-thanksgiving-food-styles.test.js.
+final class ThanksgivingFoodStylesTests: XCTestCase {
+    private func score(_ q: String, _ name: String, brand: String? = nil, category: String? = nil) -> Double {
+        Match.relevance(query: q, name: name, brand: brand, category: category)
+    }
+    private func matches(_ q: String, _ name: String, brand: String? = nil, category: String? = nil, line: UInt = #line) {
+        XCTAssertGreaterThanOrEqual(score(q, name, brand: brand, category: category), Match.relevant, "\(q) | \(name)", line: line)
+    }
+    private func rejects(_ q: String, _ name: String, brand: String? = nil, category: String? = nil, line: UInt = #line) {
+        XCTAssertLessThan(score(q, name, brand: brand, category: category), Match.relevant, "\(q) | \(name)", line: line)
+    }
+
+    func testVeganSearchFindsPlantBasedAndDairyFreeLabels() {
+        matches("vegan butter", "Country Crock Plant Butter with Olive Oil", category: "Butter & Margarine")
+        matches("vegan butter", "Miyoko's Creamery Plant Milk Butter Vegan")
+        matches("vegan butter", "Country Crock Dairy Free Butter Sticks")
+        matches("plant based roast", "Tofurky Plant-Based Roast & Gravy")
+        matches("vegan roast", "Field Roast Celebration Roast")
+        matches("tofurky", "Tofurky Plant-Based Roast & Gravy")
+        matches("vegetarian gravy", "Imagine Vegan Gravy")
+    }
+
+    func testVeganSearchStillRefusesAnimalFoodAndLookAlikes() {
+        rejects("vegan butter", "Land O Lakes Salted Butter", category: "Butter")
+        rejects("vegan butter", "Vegan Butter Cookies")
+        rejects("vegan butter", "Justin's Vegan Almond Butter")
+        rejects("vegan butter", "Vegan Coconut Butter")
+        rejects("vegan gravy", "McCormick Turkey Gravy Mix", category: "Gravy")
+        rejects("vegan gravy", "Dairy Free Turkey Gravy")
+        rejects("vegan cheese", "Kraft Cheddar Cheese", category: "Cheese")
+        rejects("vegetarian stuffing", "Stove Top Stuffing Chicken", category: "Stuffing")
+        rejects("plant based roast", "Beef Chuck Roast", category: "Roast")
+        rejects("plant based roast", "Field Roast Plant-Based Slices, Creamy Original", brand: "Field Roast", category: "Cheese Alternatives")
+        rejects("plant based roast", "Classic Smoked Plant Based Frankfurter", brand: "Field Roast")
+        matches("plant based roast", "Field Roast Celebration Roast", brand: "Field Roast")
+        matches("plant based roast", "Hazelnut Cranberry Plant Based Roast")
+        matches("plant based roast", "Tofurky Stuffed Veggie Roast", brand: "Tofurky")
+        matches("field roast", "Field Roast Plant-Based Slices, Creamy Original", brand: "Field Roast")
+        rejects("oysters", "King Oyster Mushroom", category: "Mushrooms")
+        matches("oyster mushrooms", "King Oyster Mushroom")
+    }
+
+    func testPlainAnimalFoodIsNotItsVeganAnalogue() {
+        rejects("turkey", "Field Roast Celebration Roast Vegan", category: "Turkey")
+        rejects("turkey", "Tofurky Plant-Based Roast", category: "Turkey")
+        rejects("butter", "Miyoko's Vegan Butter", category: "Butter")
+        rejects("butter", "Country Crock Plant Butter", category: "Butter")
+        rejects("ham", "Tofurky Plant-Based Deli Slices Hickory Smoked Ham Style")
+        matches("baked beans", "Bush's Vegetarian Baked Beans")
+        matches("stuffing", "Vegan Herb Stuffing Mix", category: "Stuffing")
+        matches("gravy", "Imagine Vegan Gravy", category: "Gravy")
+    }
+
+    func testGlutenFreeIsOneClaim() {
+        rejects("gluten free stuffing", "Stove Top Fat Free Stuffing", category: "Stuffing")
+        rejects("gluten free pie crust", "Pillsbury Pie Crust Sugar Free")
+        matches("gluten free stuffing", "Aleia's Gluten-Free Stuffing")
+        matches("gluten free pie crust", "Wholly Gluten Free Pie Shells")
+        XCTAssertEqual(Match.tokens("Gluten-Free Plant-Based Non-Dairy"), ["glutenfree", "plant", "dairyfree"])
+        rejects("halal turkey", "Butterball Whole Turkey", category: "Whole Turkey")
+        rejects("kosher turkey", "Butterball Whole Turkey", category: "Whole Turkey")
+        rejects("kosher turkey", "Morton Kosher Salt")
+        matches("halal turkey", "Crescent Foods Halal Whole Turkey")
+        matches("kosher turkey", "Empire Kosher Whole Turkey")
+    }
+
+    func testWholeBrandSearch() {
+        matches("kerrygold", "Pure Irish Butter", brand: "Kerrygold")
+        rejects("milk", "Milk-Bone Original Dog Treats", brand: "Milk-Bone")
+    }
+
+    func testRegionalNames() {
+        for (q, n) in [("cornbread dressing", "Stove Top Cornbread Stuffing Mix"), ("chitterlings", "Aunt Bessie's Chitlins"), ("chitterlings", "Pork Chitterlings"),
+                       ("prime rib", "Beef Rib Roast Bone-In"), ("pernil", "Pork Shoulder Picnic Bone-In"), ("japchae noodles", "Ottogi Sweet Potato Glass Noodles"),
+                       ("canned yams", "Bruce's Cut Sweet Potatoes in Syrup"), ("canned yams", "Princella Cut Yams in Light Syrup"), ("mac and cheese", "Kraft Macaroni & Cheese Dinner"),
+                       ("tres leches", "Tres Leches Cake"), ("andouille", "Aidells Cajun Style Andouille Sausage"), ("tamales", "Pork Tamales"),
+                       ("sweet potatoes", "Garnet Yams"), ("tamales", "Frozen Pork Tamales"), ("italian dressing", "Ken's Italian Dressing"), ("tamale masa", "Coarse-Ground Tamale Masa"), ("ribs", "Pork Spare Ribs")] {
+            matches(q, n)
+        }
+        for (q, n) in [("prime rib", "Prime Rib Seasoning"), ("stuffing", "Ken's Italian Dressing"), ("sweet potatoes", "Chinese Yam"), ("sweet potatoes", "Mountain Yam (Nagaimo)"),
+                       ("oysters", "Oyster Crackers"), ("oysters", "Oyster Sauce"), ("smoked turkey wings", "Smoked Turkey Necks"),
+                       ("tamales", "Traditional Prepared Tamale Masa"), ("prime rib", "Boneless Choice Beef Chuck Cross Rib Roast"),
+                       ("prime rib", "Archer Full Size Beef Sticks with Prime Rib"), ("ribs", "Beef Ribeye Steak"), ("oysters", "Tobagi Oyster Kimchi"),
+                       ("wild rice", "Great Value Ready-to-Heat 90-Second Long Grain & Wild Rice"), ("wild rice", "Long Grain Brown & Wild Rice"),
+                       ("wild rice", "RiceSelect Premium Royal Blend Whole Grain With Wild Rice")] {
+            rejects(q, n)
+        }
+        rejects("prime rib", "Boneless Pork Rib Roast", category: "Pork Roasts")
+        matches("prime rib", "Beef Ribeye Roast", category: "Ribeye Roasts")
+        matches("prime rib", "Beef Standing Rib Roast")
+        matches("wild rice", "Lundberg Family Farms Organic Wild Rice", category: "Wild Rice")
+        matches("wild rice blend", "Lundberg Wild Blend Rice")
+        rejects("wild rice", "Nature's Wild Sweet Rice", category: "Rice")
+        matches("lumpia wrappers", "Pamana Frozen Lumpia Wrapper", category: "Frozen Dumpling and Wonton Wraps")
+        matches("flan", "Goya Coconut Flan", category: "Flan")
+        matches("flan", "El Exquisito Sabor Vanilla Flan", category: "Flan")
+        matches("tres leches", "8\" Strawberry Tres Leches Cake", category: "Standard Frosted Cakes")
+        matches("spiral ham", "Smithfield Red Spiral Sliced Glazed Ham", category: "Ham Roast")
+        matches("spiral ham", "Fully Cooked Spiral Sliced Uncured Half Ham")
+        matches("andouille", "Holmes Smokehouse Pecan Smoked Andouille Sausage", category: "Andouille Sausage")
+        matches("canned yams", "Best Choice CUT SWEET POTATOES 40 OZ", category: "Other Canned Vegetables")
+        rejects("pecans", "Pecan Smoked Bacon")
+        rejects("rolls", "Cinnamon Rolls")
+        rejects("tamales", "HOT TAMALES 4.25OZ TROPICAL HEAT BOX", category: "Chewy Candy")
+        rejects("tamales", "HOT TAMALES 4.25OZ TROPICAL HEAT BOX")
+        matches("tamales", "Old Style Hot Tamales", category: "Prepared Tamales")
+        matches("tamales", "Mickey Brown's Hot Tamale", category: "Frozen Tamales")
+        matches("hot tamales candy", "HOT TAMALES Fierce Cinnamon Chewy Candies", category: "Chewy Candy")
+        matches("long grain and wild rice", "Great Value Ready-to-Heat 90-Second Long Grain & Wild Rice")
+    }
+}
+
 /// The Thanksgiving core dinner list (ops/coverage/thanksgiving-core-qa-2026-11-03.md). Mirrors
 /// test/qa-thanksgiving-core.test.js; the name-only cases are also in the generated HolidayMatrixTests.
 final class ThanksgivingCoreTests: XCTestCase {

@@ -27,7 +27,30 @@ const SYNONYMS = {
   puree: ['pure'],
   // Nestle Toll House sells chocolate chips as "Morsels"; "chocolate chips" missed the best-known bag.
   morsel: ['chip'], morsels: ['chip'],
+  // Kraft sells "Macaroni & Cheese"; shoppers type "mac and cheese" (the Thanksgiving food styles run).
+  mac: ['macaroni'],
 };
+
+// Phrases rewritten before tokenising, on both sides, so one product has one spelling. From the
+// Thanksgiving food styles run (3 Nov):
+// - Dietary labels are one claim each. Split, "gluten free stuffing" took half its credit from
+//   "Fat Free" and "Sugar Free", and "vegan butter" could never match "Plant-Based Butter".
+// - Regional names for the same product: Southern "cornbread dressing" is stuffing, "chitlins" are
+//   chitterlings, "prime rib" is sold as a rib roast, pernil is a pork shoulder, japchae is made
+//   with glass noodles, and US "yams" are sweet potatoes (not the mountain, purple or Chinese yam).
+const PHRASES = [
+  [/\bgluten[- ]free\b/g, 'glutenfree'],
+  [/\b(?:dairy|milk)[- ]free\b|\bnon[- ]?dairy\b/g, 'dairyfree'],
+  [/\bmeat[- ]?free\b|\bmeatless\b/g, 'meatless'],
+  [/\bplant[- ]based\b/g, 'plant'],
+  [/\b(cornbread|oyster|sausage|southern|turkey) dressing\b/g, '$1 stuffing'],
+  [/\bchitlins?\b/g, 'chitterlings'],
+  // Beef, said outright: BJ's "Boneless Pork Rib Roast" was Atlanta's prime rib.
+  [/\bprime rib\b/g, 'beef rib roast'],
+  [/\bpernil\b/g, 'pork shoulder'],
+  [/\b(?:japchae|jap chae|dangmyeon|dang myun)\b/g, 'glass noodles'],
+  [/(?<!\b(?:mountain|purple|chinese|japanese|white|african|true|ube) )\byams?\b/g, 'sweet potatoes'],
+];
 
 // Words that turn a product into something else when they FOLLOW the searched noun:
 // "milk" -> "milk chocolate", "banana" -> "banana bread", "chicken" -> "chicken broth", "egg" -> "egg noodles".
@@ -119,6 +142,11 @@ const TRAPS = new Set([
   // "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows" (Rouses, ShopRite) "halloween candy"
   // (the Halloween run).
   'filling', 'marshmallow',
+  // Dough for the dish: El Super's "Traditional Prepared Tamale Masa" answered "tamales" in El Paso
+  // (the Thanksgiving food styles run). Asking for masa finds it.
+  'masa',
+  // H Mart's "Tobagi Oyster Kimchi" answered "oysters" in Atlanta.
+  'kimchi',
   // ALDI's "Chef's Cupboard Turkey Stuffing" answered "fresh turkey" in Charlotte (the Thanksgiving
   // core list). A search for stuffing still finds it: a trap is skipped when the shopper typed it.
   // Costco's "Rodelle Gourmet Turkey Brine", 25 oz of seasoning, answered Anchorage's "fresh turkey".
@@ -170,8 +198,9 @@ const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['spr
 /** The mirror image: a trap noun forgiven when the word right AFTER it names what it is. "King
  * Oyster Mushrooms" are mushrooms, so 'oyster' must not bury them in a mushroom search. */
 // Bread flour is flour: 'bread' is a trap so that "banana bread" is not bananas.
+// "Pecan Smoked Andouille" is smoked over pecan wood (Rouses, New Orleans).
 // PET is a brand of evaporated milk, not pet food (the Thanksgiving core list).
-const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour']), pet: new Set(['evaporated']) };
+const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour']), pecan: new Set(['smoked', 'wood']), pet: new Set(['evaporated']) };
 
 // Plant bases in front of the noun make a different product: "almond milk", "coconut milk", "oat creamer".
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
@@ -207,20 +236,30 @@ const QUERY_ALLOWS = Object.fromEntries(Object.entries({
   wine: ALCOHOL_WORDS, prosecco: ALCOHOL_WORDS, champagne: ALCOHOL_WORDS,
   // Beef only for steak and brisket: "Pork Brisket Sparerib Strip" won Hanukkah brisket and "Pork Shoulder
   // Steak" Valentine's steak (the state x holiday audit), a different animal at a different price.
-  steak: BEEF_CUT, ribeye: BEEF_CUT, brisket: BEEF_CUT, rib: ANIMALS, chop: ANIMALS, roast: ANIMALS, tenderloin: ANIMALS,
+  steak: BEEF_CUT, ribeye: BEEF_CUT, brisket: BEEF_CUT, rib: ANIMALS, chop: ANIMALS, roast: [...ANIMALS, 'stuffed'], tenderloin: ANIMALS,
   sirloin: ANIMALS, wing: ANIMALS, dog: [...ANIMALS, 'frank'], frank: ANIMALS, brat: [...ANIMALS, 'beer'], sausage: ANIMALS,
-  turkey: ['frozen'], ham: ['honey', 'spiral', 'smoked', 'pork'],
+  turkey: ['frozen'], ham: ['honey', 'spiral', 'smoked', 'pork', 'glazed', 'cooked'],
   bun: ['hot', 'dog', 'hamburger', 'seed', 'sesame'], croissant: ['butter', 'mini'], flower: ['bouquet', 'cut', 'mixed'],
   pumpkin: ['pie', 'carving'], stuffing: ['mix', 'turkey', 'chicken', 'cornbread', 'herb', 'seasoned'],
-  candy: ['snack', 'halloween', 'chocolate', 'assortment'], wrapper: ['wrap', 'round'], chip: ['potato', 'tortilla', 'kettle'],
+  candy: ['snack', 'halloween', 'chocolate', 'assortment'], wrapper: ['wrap', 'round', 'frozen'], chip: ['potato', 'tortilla', 'kettle'],
   tortilla: ['taco', 'soft'], tortillas: ['taco', 'soft'], chocolate: ['bar', 'dark'], pea: ['dry', 'dried'], peas: ['dry', 'dried'], filling: ['mix'],
   watermelon: ['mini', 'seedless', 'personal'], bar: ['oat', 'honey'], bacon: ['smoked', 'hardwood', 'pork'],
+  // The Thanksgiving food styles run: chitterlings and andouille are pork (andouille is a sausage),
+  // tamales come pork, chicken or cheese, tres leches is a cake, flan is caramel custard, a boxed
+  // mac and cheese is a "Dinner", and japchae's glass noodles are made from sweet potato starch.
+  chitterling: ['pork', 'frozen', 'cleaned'], andouille: ['sausage', 'pork', 'chicken', 'smoked', 'cajun'],
+  // Lumpia wrappers, tamales and pie crusts are sold frozen: Seafood City's "Pamana Frozen Lumpia
+  // Wrapper" was refused in Houston.
+  tamale: ['pork', 'chicken', 'beef', 'cheese', 'bean', 'sweet', 'red', 'green', 'frozen'], crust: ['frozen', 'pastry'], lech: ['cake'], flan: ['caramel'],
+  macaroni: ['dinner'], glass: ['sweet', 'potato', 'starch'],
   // Turkey gravy is gravy, a condensed soup is the soup (Campbell's Cream of Mushroom is sold condensed;
   // 'condensed' is a plant-base word for milk) and a pie crust is pastry. The Thanksgiving core list.
-  gravy: ['turkey', 'chicken', 'beef', 'pork'], soup: ['condensed'], crust: ['pastry'],
+  gravy: ['turkey', 'chicken', 'beef', 'pork'], soup: ['condensed'],
 }).map(([k, v]) => [k, new Set(v)]));
 // Products that normally come in flavours, where a flavour word is the variety, not a different food.
-const FLAVOR_OK_HEADS = new Set(['bar', 'chip', 'cereal', 'candy', 'soda', 'bread', 'ham', 'meat', 'cracker', 'cookie', 'sauce', 'bean', 'granola', 'applesauce']);
+// A holiday roast is named for its flavour: Whole Foods' "Hazelnut Cranberry Plant Based Roast"; so are
+// flan and tres leches ("Goya Coconut Flan", "Strawberry Tres Leches Cake").
+const FLAVOR_OK_HEADS = new Set(['roast', 'flan', 'lech', 'bar', 'chip', 'cereal', 'candy', 'soda', 'bread', 'ham', 'meat', 'cracker', 'cookie', 'sauce', 'bean', 'granola', 'applesauce']);
 
 // Compound names that are a different product from the query word inside them. HEAD: the query
 // word is the modifier ("peanut butter cups" are candy, "celery salt" a seasoning); fires when the
@@ -234,6 +273,11 @@ const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn to
   'pumpkin pie',
   // Celery root (celeriac) is another vegetable: Food Bazaar's "Celery Root (Knob)" answered "celery" (Thanksgiving, NYC).
   'celery root',
+  // King oyster mushrooms are mushrooms: 99 Ranch's answered "oysters" in Houston (the Thanksgiving food styles run).
+  'oyster mushroom',
+  // Snack sticks: "Archer Beef Sticks with Prime Rib" (Meat Jerky) answered "prime rib" in Atlanta.
+  'beef stick', 'meat stick',
+
   // Brown Turkey is a fig: Key Food's "Organic Heirloom Brown Turkey Fig Tree", 8 oz of figs, answered
   // Newark's "fresh turkey" (the Thanksgiving core list rerun).
   'turkey fig'];
@@ -244,7 +288,13 @@ const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury
   // Chinese celery is a leaf vegetable of its own: Woodman's answered Milwaukee's "celery" with it.
   'chinese celery',
   // Fruit and nut butters, and margarine that says so: apple butter is not butter.
-  'apple butter', 'pumpkin butter', 'shea butter', 'cocoa butter', 'not butter'];
+  'apple butter', 'pumpkin butter', 'shea butter', 'cocoa butter', 'not butter',
+  // Nut and seed butters. A plant base is no longer a penalty for a vegan search, so "vegan butter"
+  // needs these said outright (the Thanksgiving food styles run).
+  'almond butter', 'cashew butter', 'coconut butter', 'sunflower butter', 'seed butter', 'cookie butter',
+  // A chuck cross rib roast is shoulder, not the rib: Albertsons' "Boneless Choice Beef Chuck Cross Rib
+  // Roast" was El Paso's prime rib (the Thanksgiving food styles run).
+  'cross rib'];
 // Tokenised with the matcher's own tokens() ("tortillas" stays "tortillas"), on first use: tokens()
 // depends on constants declared further down this file.
 let compounds = null;
@@ -318,7 +368,8 @@ export function singular(w) {
 
 export function tokens(s) {
   const out = [];
-  for (const raw of normalize(s).split(' ')) {
+  const text = PHRASES.reduce((t, [re, to]) => t.replace(re, to), normalize(s));
+  for (const raw of text.split(' ')) {
     if (!raw) continue;
     if (SYNONYMS[raw]) { out.push(...SYNONYMS[raw]); continue; }
     for (const part of raw.split('-')) if (part) out.push(singular(part.replace(/\.$/, '')));
@@ -327,9 +378,10 @@ export function tokens(s) {
 }
 
 // Product words that imply another word ("ground chuck" is ground beef).
-const IMPLIES = { champagne: ['sparkling', 'wine'], prosecco: ['sparkling', 'wine'], cava: ['sparkling', 'wine'], frank: 'dog', chuck: 'beef', sirloin: 'beef', brisket: 'beef', ribeye: 'beef', kcup: 'coffee', 'k-cup': 'coffee', espresso: 'coffee', cage: 'egg', clementine: 'mandarin', cutie: 'mandarin', tp: 'toilet',
+const IMPLIES = { champagne: ['sparkling', 'wine'], prosecco: ['sparkling', 'wine'], cava: ['sparkling', 'wine'], frank: 'dog', chuck: 'beef', sirloin: 'beef', brisket: 'beef', ribeye: ['beef', 'rib'], kcup: 'coffee', 'k-cup': 'coffee', espresso: 'coffee', cage: 'egg', clementine: 'mandarin', cutie: 'mandarin', tp: 'toilet',
   // Stuffing is sold as a mix whether or not the bag says so (Pepperidge Farm's "Herb Seasoned Classic
-  // Stuffing"), and a pie shell is a pie crust (Marie Callender's "Deep Dish Pie Shells"). Thanksgiving.
+  // Stuffing"), and a pie shell is a pie crust (Marie Callender's "Deep Dish Pie Shells", and the Thanksgiving
+  // food styles run's "Wholly Gluten Free Pie Shells"). Thanksgiving.
   stuffing: 'mix', shell: 'crust' };
 
 function productTokens(s) {
@@ -488,6 +540,36 @@ const IMITATION_RE = /\btastes?\s+like\b|\bimitation\b|\b(?:butter|cheese|milk|m
 // "Tastes Like Butter Margarine" is exactly what they asked for.
 const IMITATION_CATEGORY_RE = /\bmargarine|spreads?|substitutes?|alternatives?|non-?dairy|plant[- ]?based|vegan\b/i;
 
+// Dietary claims, as tokens() spells them (see PHRASES). A shopper's diet word is a requirement: the
+// Thanksgiving food styles run found "vegan butter" unanswerable because the labels say "Plant
+// Butter", "Plant-Based" or "Dairy Free" instead. Each claim is met by the stricter ones: a vegan
+// product is vegetarian, a plant-based one is vegan. Dairy-free meets "vegan" only for a dairy food:
+// a dairy-free gravy can still be made with turkey stock.
+const DIET_MEETS = {
+  vegan: ['vegan', 'plant'], plant: ['plant', 'vegan'], dairyfree: ['dairyfree', 'vegan', 'plant'],
+  vegetarian: ['vegetarian', 'vegan', 'plant', 'meatless', 'veggie'], meatless: ['meatless', 'vegan', 'plant', 'vegetarian', 'veggie'],
+};
+// What a vegan roast or butter comes with, said on its label: "Plant Butter with Olive Oil",
+// "Plant-Based Roast & Gravy". Forgiven only for a diet search; "Chicken with Rice Soup" is still soup.
+const DIET_COMPANIONS = new Set(['oil', 'gravy', 'stuffing']);
+const DAIRY_HEADS = new Set(['butter', 'cheese', 'milk', 'cream', 'creamer', 'yogurt', 'topping', 'whip']);
+// Vegan makers whose names may not say so: Tofurky's roast is filed under Turkey. MorningStar Farms,
+// Boca and Quorn are vegetarian, not always vegan.
+const VEGAN_BRAND_RE = /\b(?:tofurky|gardein|beyond meat|impossible foods|field roast|lightlife|daring|miyoko s|violife|daiya|earth balance|follow your heart|so delicious|oatly)\b/;
+const VEGETARIAN_BRAND_RE = /\b(?:morningstar farms|boca|quorn)\b/;
+const DIET_NAME_RE = /\b(?:vegan|plant|meatless|vegetarian|dairyfree|tofu|seitan|tempeh|veggie (?:burger|roast|sausage|crumbles?))\b/;
+// Foods with an animal at their heart. A plain "turkey" or "butter" is not answered by its vegan
+// analogue: "Field Roast Celebration Roast Vegan", filed under Turkey, scored 0.88 for "turkey".
+const ANIMAL_HEADS = new Set([...DAIRY_HEADS, 'egg', 'turkey', 'ham', 'chicken', 'beef', 'pork', 'sausage', 'bacon', 'roast', 'meat', 'burger', 'steak', 'mayonnaise', 'mayo', 'wing', 'breast', 'nugget', 'frank', 'dog', 'jerky', 'shrimp', 'fish', 'salmon', 'tuna']);
+// A canned food says so in its liquid, not always in the word: "Princella Cut Yams in Light Syrup".
+// Wild rice is the grain itself (manoomin), not a blend with it: "Great Value Ready-to-Heat 90-Second
+// Long Grain & Wild Rice" was the best wild rice in five of seven ZIPs. Asking for the blend finds it.
+const WILD_RICE_BLEND_RE = /\b(?:long grain|brown|white|jasmine|basmati|grain)(?: rice)? and wild rice\b|\bwild rice (?:blend|medley|mix|pilaf|soup)\b|\bwild (?:and|blend)\b|\bwith wild rice\b|\bblend\b|\bmedley\b/;
+// Hot Tamales are cinnamon candy: Kroger's "HOT TAMALES 4.25OZ TROPICAL HEAT BOX" (Chewy Candy) was
+// Atlanta's tamales. Rouses' Delta-style "Old Style Hot Tamales" are tamales, and in a tamale aisle.
+const CANDY_AISLE_RE = /\b(?:cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies)|chewy)\b/;
+const CANNED_NAME_RE = /\bin (?:light |heavy |extra light )?syrup\b|\bcanned\b/;
+
 export function relevance(query, product, opts = {}) {
   const qt = queryTokens(query);
   if (!qt.length) return 0.5;
@@ -496,9 +578,27 @@ export function relevance(query, product, opts = {}) {
   // Shoppers say "lunch meat"; labels say "Deli Fresh", "Sliced", "Lunchmeat", and aisles "Deli Meat". Omaha's
   // "turkey lunch meat" found nothing in the state x holiday audit.
   if (LUNCH_NAME_RE.test(normalize(product.name || '')) || LUNCH_CAT_RE.test(normalize(product.category || ''))) { nameTok.add('lunch'); nameTok.add('meat'); }
-  const selfTok = new Set(productTokens(product.name || ''));
+  // The product's own words, after the brand when the name repeats it: in "Field Roast Plant-Based
+  // Slices" (brand Field Roast) the 'roast' is the maker's (the Thanksgiving food styles run).
+  const brandNorm = normalize(product.brand || '');
+  const ownName = brandNorm && normalize(product.name || '').startsWith(`${brandNorm} `) ? normalize(product.name).slice(brandNorm.length + 1) : product.name || '';
+  const selfTok = new Set(productTokens(ownName));
   const brandTok = new Set(productTokens(product.brand || ''));
   const catTok = new Set(tokens(product.category || ''));
+  if (CANNED_NAME_RE.test(nameNorm) || catTok.has('canned')) nameTok.add('canned');
+  // The diet a product claims, from its name or its maker, read in the matcher's own spelling.
+  const dietText = tokens(`${product.brand || ''} ${product.name || ''}`).join(' ');
+  const veganBrand = VEGAN_BRAND_RE.test(nameNorm);
+  const vegetarianBrand = veganBrand || VEGETARIAN_BRAND_RE.test(nameNorm);
+  const dietProduct = vegetarianBrand || DIET_NAME_RE.test(dietText);
+  const qDiet = qt.filter((t) => DIET_MEETS[t]);
+  const qDietNorm = normalize(query);
+  const wantsDiet = qDiet.length > 0 || VEGAN_BRAND_RE.test(qDietNorm) || VEGETARIAN_BRAND_RE.test(qDietNorm);
+  for (const t of qDiet) {
+    const byBrand = t === 'vegetarian' || t === 'meatless' ? vegetarianBrand : veganBrand;
+    const dairyFreeVegan = t === 'vegan' && DAIRY_HEADS.has(qt[qt.length - 1]) && nameTok.has('dairyfree');
+    if (byBrand || dairyFreeVegan || DIET_MEETS[t].some((w) => nameTok.has(w))) nameTok.add(t);
+  }
   const wantsPumpkinCan = qt.includes('pumpkin') && qt.some((w) => PUMPKIN_CAN_WORDS.includes(w));
   if (wantsPumpkinCan && nameTok.has('pumpkin') && cannedPumpkin(product, nameTok, catTok)) for (const w of PUMPKIN_CAN_WORDS) nameTok.add(w);
 
@@ -544,8 +644,14 @@ export function relevance(query, product, opts = {}) {
   // the query word back through `n.startsWith(t)` at 0.7 instead of 1.
   const hitTok = [...nameTok].filter((n) => !(fromBrandOnly(n) && generic(n)));
 
+  // A search for a whole brand ("tofurky", "kerrygold") is answered by what that brand makes; a word
+  // of a brand is not ("Milk-Bone" dog treats are not "milk").
+  const wholeBrand = brandTok.size > 0 && qt.every((t) => brandTok.has(t) && !generic(t)) && [...brandTok].every((t) => qt.includes(t));
   let hits = 0;
   for (const t of qt) {
+    // The head noun from the brand alone is not the product: "Field Roast" makes slices and
+    // frankfurters, and both answered "plant based roast" (the Thanksgiving food styles run).
+    if (t === qt[qt.length - 1] && qt.length > 1 && !wholeBrand && fromBrandOnly(t) && !catTok.has(t)) continue;
     if (nameTok.has(t) && !(fromBrandOnly(t) && generic(t))) hits += 1;
     else if (catTok.has(t)) hits += catCoversQuery ? 1 : 0.6;
     else if (t.length >= 5 && hitTok.some((n) => n.startsWith(t) || (n.length >= 5 && t.startsWith(n)))) hits += 0.7;
@@ -570,7 +676,9 @@ export function relevance(query, product, opts = {}) {
     if (before.some((w) => w === 'with' || w === 'made' || w === 'from' || w === 'in') && words.slice(0, headIdx).some((w) => TRAPS.has(w) && !qset.has(w))) mult *= 0.3;
   }
   const allowed = new Set(qt.flatMap((q) => [...(QUERY_ALLOWS[q] || [])]));
-  if (headIdx >= 0) {
+  // ...whatever the product's own words: Tofurky's "Plant-Based Roast & Gravy" scored 0.08 for "tofurky".
+  const brandQuery = wholeBrand || (VEGAN_BRAND_RE.test(qDietNorm) && VEGAN_BRAND_RE.test(nameNorm));
+  if (brandQuery) { /* the name describes the brand's product */ } else if (headIdx >= 0) {
     let strong = 0;
     // Look on BOTH sides of the head noun. A trap word before it is just as disqualifying as one
     // after: "peanut butter" is not butter and "cream cheese" is not cheese, but scoring only the
@@ -579,6 +687,7 @@ export function relevance(query, product, opts = {}) {
       if (i === headIdx) continue;
       const w = words[i];
       if (qset.has(w) || SOFT.has(w) || allowed.has(w)) continue;
+      if (wantsDiet && (ALT_BASE.has(w) || DIET_MEETS[w] || DIET_COMPANIONS.has(w))) continue; // "Plant Butter" is the vegan butter
       if (words[i - 1] === 'in' || words[i - 1] === 'with' || words[i - 2] === 'in') continue; // "tuna in oil", "with sauce"
       if (BENIGN_AFTER[w]?.has(words[i - 1])) continue; // "sweet cream butter" is plain butter
       if (BENIGN_BEFORE[w]?.has(words[i + 1])) continue; // "oyster mushrooms" are mushrooms
@@ -589,7 +698,7 @@ export function relevance(query, product, opts = {}) {
     let flavor = 0;
     for (let i = 0; i < words.length; i++) {
       const w = words[i];
-      if (qset.has(w) || allowed.has(w)) continue;
+      if (qset.has(w) || allowed.has(w) || (wantsDiet && ALT_BASE.has(w))) continue;
       // Position-independent: "Frozen Orange Juice" and "Orange Juice Frozen" are the same
       // product and must score the same. Anchoring these to the head noun meant word order alone
       // changed the score by a factor of two.
@@ -608,6 +717,8 @@ export function relevance(query, product, opts = {}) {
     for (const w of new Set(words)) if (TRAPS.has(w) && !qset.has(w) && !allowed.has(w)) traps += 1;
     mult *= Math.pow(0.6, Math.min(traps, 3));
   }
+  // A vegan analogue of an animal food answers a search for it only when the shopper asked for one.
+  if (dietProduct && !wantsDiet && ANIMAL_HEADS.has(head)) mult *= 0.3;
   // "Tastes Like Butter" is margarine. Only penalize when the shopper did not ask for it.
   const wantsImitation = IMITATION_RE.test(normalize(query)) || IMITATION_CATEGORY_RE.test(normalize(query));
   if (IMITATION_RE.test(nameNorm) && !wantsImitation) mult *= 0.3;
@@ -704,6 +815,10 @@ export function relevance(query, product, opts = {}) {
   }
   if (/\bjuice\b/.test(normalize(query)) && JUICE_IMPOSTOR_RE.test(nameNorm) && !WANTS_JUICE_DRINK_RE.test(normalize(query))) mult *= 0.3;
   if (BABY_PRODUCT_RE.test(nameNorm) && !WANTS_BABY_RE.test(normalize(query))) mult *= 0.2;
+  if (head === 'tamale' && (CANDY_AISLE_RE.test(normalize(product.category || '')) || /\b(?:candy|candies|box)\b/.test(nameNorm)) && !CANDY_AISLE_RE.test(normalize(query))) mult *= 0.2;
+  // ...and the two words together: H Mart's "Nature's Wild Sweet Rice" is glutinous rice (Brooklyn).
+  if (/\bwild rice\b/.test(normalize(query)) && !/\bwild rice\b/.test(nameNorm) && !/\b(?:blend|medley|mix|long grain)\b/.test(normalize(query))) mult *= 0.3;
+  if (/\bwild rice\b/.test(normalize(query)) && WILD_RICE_BLEND_RE.test(nameNorm) && !WILD_RICE_BLEND_RE.test(normalize(query)) && !/\b(?:blend|medley|mix|long grain)\b/.test(normalize(query))) mult *= 0.3;
   // Books, cookware and apparel that happen to name a food. Applied to the whole name because the
   // position rules deliberately look past "in"/"with" phrases, which is where the giveaway sits.
   if (NON_GROCERY_RE.test(nameNorm)) mult *= 0.15;
