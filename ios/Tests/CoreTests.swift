@@ -2855,3 +2855,15 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey seasoning", name: "McCormick Turkey Seasoning", category: "Spices & Seasonings"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 19 (Charlotte): Ingles' "Fresh Hen & Turkey", 1 ea at $3.59, was the "fresh turkey" headline at $3.59 a bird.
+    func testAWholeTurkeyEachWithNoWeightGetsNoPricePerBird() {
+        let ingles = make("ingles", "Fresh Hen & Turkey", "1 ea", 3.59, category: "Whole Turkey")
+        XCTAssertNil(ingles.unitPrice(.count))
+        XCTAssertNotNil(make("x", "Butterball Whole Turkey", "12 lb", 15.99, category: "Whole Turkey").unitPrice(.weight))
+        XCTAssertNotNil(make("x", "Turkey Necks", "1 ea", 3.99, category: "Whole Turkey").unitPrice(.count))
+        let (_, stores) = Compare.bestPerStore(query: "fresh turkey", results: ["ingles": [ingles]])
+        XCTAssertTrue(stores.isEmpty)
+    }
+}

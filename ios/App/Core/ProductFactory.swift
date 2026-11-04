@@ -263,6 +263,14 @@ enum ProductFactory {
     /// a per-EACH price then compares a 500 ft roll with a 25 sq ft one. Mirrors LENGTH_OR_AREA_RE.
     private static let lengthOrAreaRx = Rx("\\d+(?:\\.\\d+)?\\s*(?:sq\\.?\\s*ft\\.?|sqft|square\\s+f(?:ee|oo)t|ft\\.?|feet|foot|yds?\\.?|yards?)(?![a-z])|\\d+(?:\\.\\d+)?\\s*['\\u2019]\\s*L\\b")
 
+    private static let wholeBirdCatRx = Rx("\\bwhole turkeys?\\b")
+    private static let wholeBirdNameRx = Rx("\\b(?:whole|young|hen|tom)\\b.*\\bturkey\\b|\\bturkey\\b.*\\b(?:whole|young|hen|tom)\\b")
+    private static let birdPartRx = Rx("\\b(?:breasts?|ground|wings?|legs?|drumsticks?|thighs?|necks?|deli|sliced|bacon|sausages?|burgers?)\\b")
+    private static let turkeyWordRx = Rx("\\bturkey\\b")
+    static func wholeBirdEach(_ name: String, _ category: String?) -> Bool {
+        guard turkeyWordRx.test(name), !birdPartRx.test(name) else { return false }
+        return wholeBirdCatRx.test(category ?? "") || wholeBirdNameRx.test(name)
+    }
     private static let rollGoodsRx = Rx("\\b(?:alumin(?:i)?um foil|foil|plastic wrap|cling wrap|wax(?:ed)? paper|parchment(?: paper)?|freezer paper|butcher paper)\\b")
     private static let notARollRx = Rx("\\b(?:pans?|trays?|roasters?|containers?|lids?|liners?|bags?|sheets?|cups?|plates?|tins?|dish(?:es)?|board|foilware|racks?|burners?|tape|ducts?)\\b")
 
@@ -403,6 +411,11 @@ enum ProductFactory {
         // (Units.weighedWholePumpkin). A per-lb pumpkin still gets none. Mirrors src/normalize.js.
         if !soldByLb, unit[Dim.count.rawValue] == nil, price > 0, Units.weighedWholePumpkin(name, size) {
             unit[Dim.count.rawValue] = UnitPrice(perBase: price, est: false)
+        }
+        // A whole turkey sold "each" with no weight has no price per bird: Ingles' "Fresh Hen & Turkey",
+        // 1 ea at $3.59, was Charlotte's best "fresh turkey" (the Thanksgiving core list). Mirrors wholeBirdEach in src/normalize.js.
+        if !soldByLb, unit[Dim.count.rawValue] != nil, size == nil || (size?.dim == .count && size?.base == 1), wholeBirdEach(name, f.category) {
+            unit[Dim.count.rawValue] = nil
         }
         // A stated length or area: no per-each price (see lengthOrAreaRx). A size conflict: no unit
         // price at all, in either reading — the package price stays. Mirrors src/normalize.js.

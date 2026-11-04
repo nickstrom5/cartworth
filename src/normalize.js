@@ -286,6 +286,16 @@ function countOnlyConflict(size, chosen, textSize, nameSize) {
  */
 const BUTTER_CATEGORY_RE = /^(?:salted|unsalted) butter$/i;
 const NOT_JUST_STICKS_RE = /\b(?:half|pack|packs|pk|twin|family|value|bulk|case|foil|block|roll|tub|bar|brick|whipped|spread|pats?|minis?|cups?)\b|\d\s*-?\s*(?:ct|count|pk|pack)\b/i;
+// A whole bird by its aisle or its name (not a breast, a part or a dish: see TURKEY_PART_RE in
+// shared/match.js). Used to refuse a per-bird price for a turkey sold "1 ea" with no weight.
+const WHOLE_BIRD_CAT_RE = /\bwhole turkeys?\b/i;
+const WHOLE_BIRD_NAME_RE = /\b(?:whole|young|hen|tom)\b.*\bturkey\b|\bturkey\b.*\b(?:whole|young|hen|tom)\b/i;
+const BIRD_PART_RE = /\b(?:breasts?|ground|wings?|legs?|drumsticks?|thighs?|necks?|deli|sliced|bacon|sausages?|burgers?)\b/i;
+export function wholeBirdEach(name, category) {
+  if (!/\bturkey\b/i.test(name || '') || BIRD_PART_RE.test(name || '')) return false;
+  return WHOLE_BIRD_CAT_RE.test(category || '') || WHOLE_BIRD_NAME_RE.test(name || '');
+}
+
 export function butterSticks(size, { name = '', category = '', url = '' } = {}) {
   if (!size || size.dim !== 'count' || size.perWeight || !BUTTER_CATEGORY_RE.test(String(category || '').trim())) return null;
   const n = size.base;
@@ -467,6 +477,10 @@ export function makeProduct(f) {
   // Neither price is wrong; the comparison is. Until there is an area dimension (see the owner
   // question in the round-2 report), such a row keeps its package price and loses its per-each
   // price, so it is listed but never compared by the roll.
+  // A whole turkey sold "each" with no weight has no price per bird we can stand behind: Ingles'
+  // "Fresh Hen & Turkey", 1 ea at $3.59 in Whole Turkey, was Charlotte's best "fresh turkey" at
+  // $3.59 a bird, a per-pound price (the Thanksgiving core list). It is listed, not ranked per bird.
+  if (!soldByLb && up.count && (size?.dim === 'count' || !size) && (size?.base ?? 1) === 1 && wholeBirdEach(name, f.category)) delete up.count;
   if (!soldByLb && up.count && (size?.dim === 'count' || !size) && LENGTH_OR_AREA_RE.test(`${name} ${f.sizeText || ''}`)) delete up.count;
   // ...and so does a roll that does not say how long it is. "Signature SELECT Aluminum Foil, 1 ea"
   // at $2.99 and ALDI's "Boulder Heavy Duty Aluminum Foil, 1 ea" at $3.95 are two rolls of unknown

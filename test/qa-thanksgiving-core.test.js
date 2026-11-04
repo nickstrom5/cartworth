@@ -380,3 +380,20 @@ test('DEFECT 17 (Virginia Beach, partial): an herb blend for turkey is not a tur
   matches('turkey seasoning', 'McCormick Turkey Seasoning', { category: 'Spices & Seasonings' });
   matches('fresh turkey', 'Wegmans Fresh Young Turkey, 10-14 lb.', { category: 'Whole Turkey' });
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 19 (Charlotte, complete): Ingles' "Fresh Hen & Turkey", 1 ea at $3.59 in Whole Turkey, was
+// the "fresh turkey" headline at $3.59 a bird: a per-pound price on a bird sold "each" with no weight.
+// ---------------------------------------------------------------------------
+test('DEFECT 19: a whole turkey "1 ea" with no weight gets no price per bird', () => {
+  const ingles = item('ingles', 'Fresh Hen & Turkey', '1 ea', 3.59, { category: 'Whole Turkey' });
+  assert.equal(ingles.unit.count, undefined);
+  assert.equal(relevance('fresh turkey', ingles) >= RELEVANT, true, 'still listed as a match');
+  assert.deepEqual(best('fresh turkey', { ingles: [ingles] }), {});
+  // A bird with its weight stated is priced by weight; a per-lb bird by the pound; breasts and parts
+  // sold each keep their price.
+  assert.ok(item('x', 'Butterball Whole Turkey', '12 lb', 15.99, { category: 'Whole Turkey' }).unit.weight);
+  assert.ok(item('x', 'Wegmans Fresh Young Turkey', 'per lb', 2.99, { soldBy: 'lb', category: 'Whole Turkey' }).unit.weight);
+  assert.ok(item('x', 'Turkey Necks', '1 ea', 3.99, { category: 'Whole Turkey' }).unit.count);
+  assert.ok(item('x', 'Turkey Cookie Cutter', '1 ea', 2.99).unit.count);
+});
