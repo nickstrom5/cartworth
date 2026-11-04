@@ -119,6 +119,9 @@ const TRAPS = new Set([
   // "Jet-Puffed Candy Corn Shaped Halloween Fall Marshmallows" (Rouses, ShopRite) "halloween candy"
   // (the Halloween run).
   'filling', 'marshmallow',
+  // ALDI's "Chef's Cupboard Turkey Stuffing" answered "fresh turkey" in Charlotte (the Thanksgiving
+  // core list). A search for stuffing still finds it: a trap is skipped when the shopper typed it.
+  'stuffing',
 ]);
 
 /**
@@ -421,16 +424,17 @@ function cannedPumpkin(product, nameTok, catTok) {
 // in Newark they answered "turkey" (Walmart's ground turkey, Food Bazaar's "TURKEY WING CUT UP"),
 // "frozen turkey" (ALDI's "Kirkwood Ground Turkey") and "fresh turkey" (Food Bazaar's "Turkey
 // Neck"), and deli turkey answered "turkey breast" (ACME's "Herb Roasted Turkey Breast" in Deli
-// Turkey). The Thanksgiving core list, 3 Nov. Read before any "with ..." tail, so a bird "with Neck
+// Turkey), as did 6 oz packs of "Organic Oven Roasted Turkey Breast" in Charlotte (Trader Joe's,
+// Whole Foods). The Thanksgiving core list, 3 Nov. Read before any "with ..." tail, so a bird "with Neck
 // and Giblets" is still a bird; a deli aisle counts as the word.
-const TURKEY_PART_RE = /\b(?:ground|breasts?|tenderloins?|cutlets?|deli|sliced|lunch ?meat|lunchmeat|bacon|sausages?|kielbasa|burgers?|patt(?:y|ies)|meatballs?|legs?|drumsticks?|wings?|thighs?|necks?|gizzards?|giblets?|franks?|hot ?dogs?|pastrami|salami|pepperoni|ham|bologna|jerky|sticks?|strips?|chili|tails?|backs?|links?|pot pies?)\b/g;
+const TURKEY_PART_RE = /\b(?:ground|breasts?|tenderloins?|cutlets?|deli|sliced|lunch ?meat|lunchmeat|bacon|sausages?|kielbasa|burgers?|patt(?:y|ies)|meatballs?|legs?|drumsticks?|wings?|thighs?|necks?|gizzards?|giblets?|franks?|hot ?dogs?|pastrami|salami|pepperoni|ham|bologna|jerky|sticks?|strips?|chili|tails?|backs?|links?|pot pies?|shaved|(?:ultra )?thin|oven roasted)\b/g;
 const turkeyPartStem = (w) => w.replace(/ /g, '').replace(/(?:ies|s)$/, (m) => (m === 'ies' ? 'y' : ''));
 function otherTurkeyPart(query, nameNorm, category) {
   const want = new Set((normalize(query).match(TURKEY_PART_RE) || []).map(turkeyPartStem));
   const parts = (nameNorm.replace(/\bwith\b.*$/, '').match(TURKEY_PART_RE) || []).map(turkeyPartStem);
   if (LUNCH_CAT_RE.test(normalize(category || ''))) parts.push('deli');
   // Deli turkey is mostly sliced breast: "turkey lunch meat" is answered by "Turkey Breast Lunch Meat".
-  const deli = ['deli', 'sliced', 'lunchmeat'];
+  const deli = ['deli', 'sliced', 'lunchmeat', 'shaved', 'thin', 'ultrathin', 'ovenroasted'];
   const deliOk = deli.some((d) => want.has(d)) ? new Set([...deli, 'breast']) : new Set();
   return parts.some((w) => !want.has(w) && !deliOk.has(w));
 }
@@ -618,11 +622,13 @@ export function relevance(query, product, opts = {}) {
     const others = words.filter((w) => !qset.has(w) && PRODUCE_WORD_RE.test(w) && !qt.some((q) => q.startsWith(w) || w.startsWith(q)));
     if (others.length) mult *= 0.3;
     if (catTok.has('juice') || catTok.has('juices') || catTok.has('pressed')) { if (!qset.has('juice')) mult *= 0.3; }
-    // ...and a meal or dessert aisle is a dish: Pulmuone's "Sweet Potato Bungeo Pang", a frozen
-    // filled pastry in Frozen Asian Meals, was among Newark's best sweet potatoes at 99 Ranch and
-    // H Mart (the Thanksgiving core list).
-    if (PREPARED_AISLE_RE.test(normalize(product.category || '')) && !PREPARED_AISLE_RE.test(normalize(query))) mult *= 0.3;
   }
+  // ...and a meal or dessert aisle is a dish: Pulmuone's "Sweet Potato Bungeo Pang", a frozen filled
+  // pastry in Frozen Asian Meals, was among Newark's best sweet potatoes at 99 Ranch and H Mart, and
+  // Trader Joe's "Garlic Shiitake Green Beans" (Entrées & Sides) answered Charlotte's green beans
+  // (the Thanksgiving core list).
+  if ((FRESH_FRUIT_RE.test(head || '') || PRODUCE_HEAD_RE.test(head || '') || hasPhrase(qt, ['green', 'bean']))
+    && PREPARED_AISLE_RE.test(normalize(product.category || '')) && !PREPARED_AISLE_RE.test(normalize(query))) mult *= 0.3;
   // "Garden Sweet Russet Potato" answered "sweet potatoes": another potato entirely.
   const wholePumpkinQuery = head === 'pumpkin' && !wantsPumpkinCan;
   if (wholePumpkinQuery && DECORATIVE_PUMPKIN_RE.test(nameNorm) && !DECORATIVE_PUMPKIN_RE.test(normalize(query))) mult *= 0.2;
@@ -637,6 +643,11 @@ export function relevance(query, product, opts = {}) {
   // in Frozen Pies, was the best "pie crust" at Stop & Shop, Weis, ACME and Kings (Newark, the
   // Thanksgiving core list).
   if (head === 'crust' && (words.lastIndexOf('pie') > Math.max(...['crust', 'shell', 'dough'].map((w) => words.lastIndexOf(w))) || PIES_AISLE_RE.test(normalize(product.category || '')))) mult *= 0.2;
+  // Cream is sold by fat: BJ's "Wellsley Farms Light Cream" and Stew Leonard's "Byrne Dairy Ultra
+  // Pasteurized Light Cream", both filed under Heavy Creams, were Newark's two best "heavy cream".
+  { const grade = (s) => (/\bheavy\b/.test(s) ? 'heavy' : /\blight\b/.test(s) ? 'light' : null);
+    const want = grade(normalize(query));
+    if (head === 'cream' && want && grade(nameNorm) && grade(nameNorm) !== want) mult *= 0.2; }
   if (/\bfresh\b/.test(normalize(query)) && !FROZEN_RE.test(normalize(query)) && (FROZEN_RE.test(nameNorm) || FROZEN_RE.test(normalize(product.category || '')))) mult *= 0.3;
   if (/\bsweet potato/.test(normalize(query)) && /\b(?:russet|yukon|red potato|gold potato|white potato)/.test(nameNorm)) mult *= 0.2;
   if (FRESH_VEG_MEAT_RE.test(head || '')) {

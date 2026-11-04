@@ -2716,3 +2716,32 @@ final class ThanksgivingCoreTests: XCTestCase {
         matches("celery", "Celery Hearts", category: "Fresh Vegetables")
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 9: light cream in Heavy Creams was Newark's best heavy cream; a canned "One-Pie Pumpkin" answered "pumpkin pie".
+    func testCreamOfAnotherFatIsNotHeavyCream() {
+        XCTAssertLessThan(Match.relevance(query: "heavy cream", name: "Wellsley Farms Light Cream", category: "Heavy Creams"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "light cream", name: "Heavy Whipping Cream"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "heavy cream", name: "Friendly Farms Heavy Whipping Cream", category: "Heavy Whipping Cream"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "light cream", name: "Wellsley Farms Light Cream"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "pumpkin pie", name: "One-Pie Pumpkin", category: "Canned Pumpkin"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "pumpkin pie", name: "Organic Sugar Pie Pumpkin", category: "Pumpkin", soldBy: .lb), Match.relevant)
+    }
+}
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 10 (Charlotte, partial): turkey stuffing answered "fresh turkey"; sliced oven-roasted breast "turkey breast"; a prepared side "green beans".
+    func testStuffingSlicedBreastAndPreparedSides() {
+        for q in ["turkey", "fresh turkey", "whole turkey"] {
+            XCTAssertLessThan(Match.relevance(query: q, name: "Chef's Cupboard Turkey Stuffing", category: "Boxed Stuffing"), Match.relevant, q)
+        }
+        XCTAssertLessThan(Match.relevance(query: "turkey breast", name: "Organic Oven Roasted Turkey Breast", category: "Chicken & Turkey"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "turkey breast", name: "Ultra Thin Oven Roasted Turkey Breast"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "green beans", name: "Garlic Shiitake Green Beans", category: "Entrées & Sides"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "stuffing", name: "Chef's Cupboard Turkey Stuffing", category: "Boxed Stuffing"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey lunch meat", name: "Hillshire Farm Ultra Thin Honey Roasted Turkey Lunch Meat"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "oven roasted turkey breast", name: "Organic Oven Roasted Turkey Breast", category: "Chicken & Turkey"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "green beans", name: "Happy Harvest Cut Green Beans", category: "Canned Green Beans"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "baked beans", name: "Bush's Original Baked Beans", category: "Canned Beans & Sides"), Match.relevant)
+    }
+}

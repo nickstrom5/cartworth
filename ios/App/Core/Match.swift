@@ -101,6 +101,8 @@ enum Match {
         // Filling" answered "caramel apples", "Jet-Puffed Candy Corn Shaped Halloween Fall
         // Marshmallows" "halloween candy" (the Halloween run). Mirrors shared/match.js.
         "filling", "marshmallow",
+        // ALDI's "Chef's Cupboard Turkey Stuffing" answered "fresh turkey" (the Thanksgiving core list). Mirrors shared/match.js.
+        "stuffing",
     ]
 
     /// Whole-name markers for things that are not groceries at all.
@@ -275,7 +277,7 @@ enum Match {
     /// A turkey search names the part it wants; "turkey" with none named is the bird. Ground turkey, a
     /// wing, deli slices and necks answered "turkey", "frozen turkey" and "fresh turkey" in Newark, and
     /// deli turkey "turkey breast" (the Thanksgiving core list). Ports of TURKEY_PART_RE and otherTurkeyPart().
-    private static let turkeyPartRx = Rx("\\b(?:ground|breasts?|tenderloins?|cutlets?|deli|sliced|lunch ?meat|lunchmeat|bacon|sausages?|kielbasa|burgers?|patt(?:y|ies)|meatballs?|legs?|drumsticks?|wings?|thighs?|necks?|gizzards?|giblets?|franks?|hot ?dogs?|pastrami|salami|pepperoni|ham|bologna|jerky|sticks?|strips?|chili|tails?|backs?|links?|pot pies?)\\b")
+    private static let turkeyPartRx = Rx("\\b(?:ground|breasts?|tenderloins?|cutlets?|deli|sliced|lunch ?meat|lunchmeat|bacon|sausages?|kielbasa|burgers?|patt(?:y|ies)|meatballs?|legs?|drumsticks?|wings?|thighs?|necks?|gizzards?|giblets?|franks?|hot ?dogs?|pastrami|salami|pepperoni|ham|bologna|jerky|sticks?|strips?|chili|tails?|backs?|links?|pot pies?|shaved|(?:ultra )?thin|oven roasted)\\b")
     private static let withTailRx = try! NSRegularExpression(pattern: "\\bwith\\b.*$")
     private static func turkeyPartStem(_ w: String) -> String {
         let v = w.replacingOccurrences(of: " ", with: "")
@@ -288,7 +290,7 @@ enum Match {
         var parts = turkeyPartRx.matches(head).compactMap { $0.first ?? nil }.map(turkeyPartStem)
         if lunchCatRx.test(normalize(category ?? "")) { parts.append("deli") }
         // Deli turkey is mostly sliced breast: "turkey lunch meat" is answered by "Turkey Breast Lunch Meat".
-        let deli = ["deli", "sliced", "lunchmeat"]
+        let deli = ["deli", "sliced", "lunchmeat", "shaved", "thin", "ultrathin", "ovenroasted"]
         let deliOk: Set<String> = deli.contains(where: { want.contains($0) }) ? Set(deli + ["breast"]) : []
         return parts.contains { !want.contains($0) && !deliOk.contains($0) }
     }
@@ -297,6 +299,8 @@ enum Match {
     private static let frozenRx = Rx("\\bfrozen\\b")
     /// Port of PREPARED_AISLE_RE.
     private static let preparedAisleRx = Rx("\\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides)\\b")
+    private static let heavyRx = Rx("\\bheavy\\b")
+    private static let lightRx = Rx("\\blight\\b")
     private static let freshRx = Rx("\\bfresh\\b")
     /// A pie that boasts of its crust is a pie: Mrs. Smith's "Original Flaky Crust Dutch Apple Pie" was
     /// the best "pie crust" at four Newark stores (the Thanksgiving core list). Port of PIES_AISLE_RE.
@@ -534,9 +538,11 @@ enum Match {
             let others = words.filter { w in !qset.contains(w) && produceWordRx.test(w) && !qt.contains(where: { $0.hasPrefix(w) || w.hasPrefix($0) }) }
             if !others.isEmpty { mult *= 0.3 }
             if (catTok.contains("juice") || catTok.contains("juices") || catTok.contains("pressed")) && !qset.contains("juice") { mult *= 0.3 }
-            // ...and a meal or dessert aisle is a dish ("Sweet Potato Bungeo Pang" in Frozen Asian Meals; the Thanksgiving core list).
-            if preparedAisleRx.test(normalize(category ?? "")) && !preparedAisleRx.test(normalize(query)) { mult *= 0.3 }
         }
+        // ...and a meal or dessert aisle is a dish ("Sweet Potato Bungeo Pang" in Frozen Asian Meals, Trader Joe's
+        // "Garlic Shiitake Green Beans" in Entrées & Sides; the Thanksgiving core list). Port of shared/match.js.
+        if (freshFruitRx.test(head) || produceHeadRx.test(head) || hasPhrase(qt, ["green", "bean"]))
+            && preparedAisleRx.test(normalize(category ?? "")) && !preparedAisleRx.test(normalize(query)) { mult *= 0.3 }
         let wholePumpkinQuery = head == "pumpkin" && !wantsPumpkinCan
         if wholePumpkinQuery && decorativePumpkinRx.test(nameNorm) && !decorativePumpkinRx.test(normalize(query)) { mult *= 0.2 }
         if wholePumpkinQuery && !wholePumpkin(words: words, category: category, dim: dim, base: base, soldBy: soldBy) { mult *= 0.2 }
@@ -546,6 +552,9 @@ enum Match {
         if hasPhrase(qt, ["pumpkin", "pie"]) && (soldBy == .lb || (hasPhrase(words, ["pie", "pumpkin"]) && !hasPhrase(words, ["pumpkin", "pie"]))) { mult *= 0.2 }
         if qt.contains("turkey") && otherTurkeyPart(query: query, nameNorm: nameNorm, category: category) { mult *= 0.2 }
         if head == "crust" && ((words.lastIndex(of: "pie") ?? -1) > (["crust", "shell", "dough"].compactMap { words.lastIndex(of: $0) }.max() ?? -1) || piesAisleRx.test(normalize(category ?? ""))) { mult *= 0.2 }
+        // Cream is sold by fat: "Wellsley Farms Light Cream" in Heavy Creams was Newark's best heavy cream. Port of shared/match.js.
+        let creamGrade = { (s: String) -> String? in heavyRx.test(s) ? "heavy" : lightRx.test(s) ? "light" : nil }
+        if head == "cream", let want = creamGrade(normalize(query)), let got = creamGrade(nameNorm), got != want { mult *= 0.2 }
         if freshRx.test(normalize(query)) && !frozenRx.test(normalize(query)) && (frozenRx.test(nameNorm) || frozenRx.test(normalize(category ?? ""))) { mult *= 0.3 }
         if sweetPotatoRx.test(normalize(query)) && otherPotatoRx.test(nameNorm) { mult *= 0.2 }
         if freshVegMeatRx.test(head) {

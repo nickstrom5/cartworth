@@ -344,7 +344,8 @@ final class PricingRound2Tests: XCTestCase {
         // Same week: Primo Taglio turkey breast $11.99/lb on Jewel's Instacart, $9.99 on Jewel's shelf.
         let results: [String: [Product]] = [
             "woodmans": [item("woodmans", "Primo Taglio Turkey Breast", "per lb", 10.09, soldBy: .lb)],
-            "jewel": [item("jewel", "Primo Taglio Oven Roasted Turkey Breast", "per lb", 11.99, soldBy: .lb, basis: .online)],
+            // "Oven Roasted" marks deli turkey, which no longer answers "turkey breast" (the Thanksgiving core list).
+            "jewel": [item("jewel", "Primo Taglio Turkey Breast", "per lb", 11.99, soldBy: .lb, basis: .online)],
         ]
         let r = Compare.bestPerStore(query: "turkey breast", results: results)
         XCTAssertEqual(Compare.standings(r.stores).map { "\($0.storeId):\($0.verdict)" }, ["woodmans:best", "jewel:close"])

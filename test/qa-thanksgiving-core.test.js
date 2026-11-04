@@ -207,3 +207,42 @@ test('DEFECT 8: a meal or dessert aisle does not answer a produce search', () =>
   matches('green beans', 'Frozen Cut Green Beans', { category: 'Frozen Green Beans' });
   matches('celery', 'Celery Hearts', { category: 'Fresh Vegetables' });
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 9: light cream answered "heavy cream". BJ's "Wellsley Farms Light Cream" ($14.36/gal) and
+// Stew Leonard's "Byrne Dairy Ultra Pasteurized Light Cream", both filed under Heavy Creams, were
+// Newark's two best heavy cream, ahead of ALDI's heavy whipping cream at $17.40/gal. And a canned
+// "One-Pie Pumpkin" and Fresh Market's per-lb "Organic Sugar Pie Pumpkin" answered "pumpkin pie".
+// ---------------------------------------------------------------------------
+test('DEFECT 9: cream of another fat is not heavy cream', () => {
+  rejects('heavy cream', 'Wellsley Farms Light Cream', { category: 'Heavy Creams' });
+  rejects('heavy cream', 'Byrne Dairy Ultra Pasteurized Light Cream', { category: 'Heavy Creams' });
+  rejects('light cream', 'Heavy Whipping Cream');
+  matches('heavy cream', 'Friendly Farms Heavy Whipping Cream', { category: 'Heavy Whipping Cream' });
+  matches('heavy cream', 'Great Value Whipping Cream, Heavy', { category: 'Heavy Whipping Cream' });
+  matches('light cream', 'Wellsley Farms Light Cream');
+  rejects('pumpkin pie', 'One-Pie Pumpkin', { category: 'Canned Pumpkin' });
+  rejects('pumpkin pie', 'Organic Sugar Pie Pumpkin', { soldBy: 'lb', category: 'Pumpkin' });
+  matches('pumpkin pie', "Member's Mark Pumpkin Pie", { category: 'Pumpkin Pie' });
+});
+
+// ---------------------------------------------------------------------------
+// DEFECT 10 (Charlotte, partial: only ALDI, Whole Foods and Trader Joe's answered before Instacart's
+// 429): ALDI's "Chef's Cupboard Turkey Stuffing" was the best "fresh turkey"; 6 oz packs of sliced
+// "Organic Oven Roasted Turkey Breast" (Trader Joe's) and "Ultra Thin Oven Roasted Turkey Breast"
+// (Whole Foods) answered "turkey breast"; Trader Joe's "Garlic Shiitake Green Beans", in Entrées &
+// Sides, answered "green beans".
+// ---------------------------------------------------------------------------
+test('DEFECT 10: stuffing, sliced roast breast and a prepared side are not what was asked for', () => {
+  for (const q of ['turkey', 'fresh turkey', 'whole turkey']) rejects(q, "Chef's Cupboard Turkey Stuffing", { category: 'Boxed Stuffing' });
+  rejects('turkey breast', 'Organic Oven Roasted Turkey Breast', { category: 'Chicken & Turkey' });
+  rejects('turkey breast', 'Ultra Thin Oven Roasted Turkey Breast');
+  rejects('green beans', 'Garlic Shiitake Green Beans', { category: 'Entrées & Sides' });
+  matches('stuffing', "Chef's Cupboard Turkey Stuffing", { category: 'Boxed Stuffing' });
+  matches('stuffing mix', "Chef's Cupboard Turkey Stuffing", { category: 'Boxed Stuffing' });
+  matches('turkey lunch meat', 'Hillshire Farm Ultra Thin Honey Roasted Turkey Lunch Meat');
+  matches('oven roasted turkey breast', 'Organic Oven Roasted Turkey Breast', { category: 'Chicken & Turkey' });
+  matches('turkey breast', 'Butterball Boneless Turkey Breast Roast', { category: 'Frozen Turkey Breast' });
+  matches('green beans', 'Happy Harvest Cut Green Beans', { category: 'Canned Green Beans' });
+  matches('baked beans', "Bush's Original Baked Beans", { category: 'Canned Beans & Sides' });
+});
