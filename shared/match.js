@@ -147,6 +147,10 @@ const TRAPS = new Set([
   'masa',
   // H Mart's "Tobagi Oyster Kimchi" answered "oysters" in Atlanta.
   'kimchi',
+  // ALDI's "Chef's Cupboard Turkey Stuffing" answered "fresh turkey" in Charlotte (the Thanksgiving
+  // core list). A search for stuffing still finds it: a trap is skipped when the shopper typed it.
+  // Costco's "Rodelle Gourmet Turkey Brine", 25 oz of seasoning, answered Anchorage's "fresh turkey".
+  'stuffing', 'brine', 'brining',
 ]);
 
 /**
@@ -173,8 +177,9 @@ const NON_GROCERY_RE = /\b(?:satin flowers?|silk flowers?|artificial flowers?|fa
 // tuna, 'kit' alone is a salad kit, 'wand' alone is a candy wand. Candles and wax melts moved here
 // from NON_GROCERY_RE so that a search for birthday candles finds them. Napkins and paper plates
 // from the live rerun (26 Oct): ALDI's "Kirkton House Fall Napkins, Pumpkin" was the best pumpkin in
-// nine states.
-const NON_FOOD_RE = /\b(?:(?:eye |face |sheet |sleep )?masks?|(?:ice |candy |chocolate |silicone |cake |cookie )?molds?|moulds?|tablecloths?|table ?covers?|table runners?|placemats?|napkins?|paper (?:plates?|cups?|bowls?|towels?)|(?:dessert|dinner|party|luncheon|beverage|cocktail) plates?|stencils?|balloons?|(?:glow|magic|bubble|wizard|witch|fairy|pumpkin|light-?up) wands?|glow sticks?|scratch art|coloring (?:books?|pages)|stickers?|costumes?|carving (?:kits?|tools?|sets?)|craft kits?|(?:baking|cake|muffin|loaf|sheet|roasting|bundt|pie|springform|cupcake) pans?|bakeware|silicone|\d+ in 1 lights?|flashlights?|night ?lights?|tea lights?|wax melts?|candles?)\b/;
+// nine states. Thanksgiving's (3 Nov) are the table and the roasting pan: a turkey centerpiece, a
+// gravy boat, a pie crust shield, a baster, turkey-size oven bags and a roasting rack.
+const NON_FOOD_RE = /\b(?:(?:eye |face |sheet |sleep )?masks?|(?:ice |candy |chocolate |silicone |cake |cookie )?molds?|moulds?|tablecloths?|table ?covers?|table runners?|placemats?|napkins?|paper (?:plates?|cups?|bowls?|towels?)|(?:dessert|dinner|party|luncheon|beverage|cocktail) plates?|stencils?|balloons?|(?:glow|magic|bubble|wizard|witch|fairy|pumpkin|light-?up) wands?|glow sticks?|scratch art|coloring (?:books?|pages)|stickers?|costumes?|carving (?:kits?|tools?|sets?)|craft kits?|(?:baking|cake|muffin|loaf|sheet|roasting|bundt|pie|springform|cupcake) pans?|bakeware|silicone|\d+ in 1 lights?|flashlights?|night ?lights?|tea lights?|wax melts?|candles?|centerpieces?|gravy boats?|gravy separators?|basters?|pie (?:crust )?shields?|(?:roasting|roaster|turkey) racks?|roaster pans?|foil roasters?|oven (?:[a-z]+ )?bags?|turkey lifters?|(?:meat |oven )?thermometers?|cookie cutters?|(?:dish|kitchen|hand|tea) towels?|plush)\b/;
 
 /**
  * Qualifiers that turn a trap noun back into an ordinary description of the searched product.
@@ -194,13 +199,16 @@ const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['spr
  * Oyster Mushrooms" are mushrooms, so 'oyster' must not bury them in a mushroom search. */
 // Bread flour is flour: 'bread' is a trap so that "banana bread" is not bananas.
 // "Pecan Smoked Andouille" is smoked over pecan wood (Rouses, New Orleans).
-const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour']), pecan: new Set(['smoked', 'wood']) };
+// PET is a brand of evaporated milk, not pet food (the Thanksgiving core list).
+const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour']), pecan: new Set(['smoked', 'wood']), pet: new Set(['evaporated']) };
 
 // Plant bases in front of the noun make a different product: "almond milk", "coconut milk", "oat creamer".
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
 
 // Prepared/processed forms are still the product but rarely what a price-checker wants.
-const MILD = new Set(['frozen', 'dried', 'liquid', 'breaded', 'stuffed', 'rotisserie', 'cooked', 'grilled', 'fried', 'marinated', 'seasoned', 'smoked', 'glazed', 'sweetened', 'mini', 'snack', 'kids']);
+const MILD = new Set(['frozen', 'dried', 'liquid', 'breaded', 'stuffed', 'rotisserie', 'cooked', 'grilled', 'fried', 'marinated', 'seasoned', 'smoked', 'glazed', 'sweetened', 'mini', 'snack', 'kids',
+  // Trader Joe's "Candied Pecans", 5 oz at $15.97/lb, answered Dallas's "pecans" (the Thanksgiving core list).
+  'candied']);
 
 // How the food is kept, not what it is. Only these are forgiven when the retailer's own category
 // is exactly what was searched (see catCoversQuery). 'dried' is deliberately NOT here: dried
@@ -242,8 +250,11 @@ const QUERY_ALLOWS = Object.fromEntries(Object.entries({
   chitterling: ['pork', 'frozen', 'cleaned'], andouille: ['sausage', 'pork', 'chicken', 'smoked', 'cajun'],
   // Lumpia wrappers, tamales and pie crusts are sold frozen: Seafood City's "Pamana Frozen Lumpia
   // Wrapper" was refused in Houston.
-  tamale: ['pork', 'chicken', 'beef', 'cheese', 'bean', 'sweet', 'red', 'green', 'frozen'], crust: ['frozen'], lech: ['cake'], flan: ['caramel'],
+  tamale: ['pork', 'chicken', 'beef', 'cheese', 'bean', 'sweet', 'red', 'green', 'frozen'], crust: ['frozen', 'pastry'], lech: ['cake'], flan: ['caramel'],
   macaroni: ['dinner'], glass: ['sweet', 'potato', 'starch'],
+  // Turkey gravy is gravy, a condensed soup is the soup (Campbell's Cream of Mushroom is sold condensed;
+  // 'condensed' is a plant-base word for milk) and a pie crust is pastry. The Thanksgiving core list.
+  gravy: ['turkey', 'chicken', 'beef', 'pork'], soup: ['condensed'],
 }).map(([k, v]) => [k, new Set(v)]));
 // Products that normally come in flavours, where a flavour word is the variety, not a different food.
 // A holiday roast is named for its flavour: Whole Foods' "Hazelnut Cranberry Plant Based Roast"; so are
@@ -265,11 +276,17 @@ const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn to
   // King oyster mushrooms are mushrooms: 99 Ranch's answered "oysters" in Houston (the Thanksgiving food styles run).
   'oyster mushroom',
   // Snack sticks: "Archer Beef Sticks with Prime Rib" (Meat Jerky) answered "prime rib" in Atlanta.
-  'beef stick', 'meat stick'];
+  'beef stick', 'meat stick',
+
+  // Brown Turkey is a fig: Key Food's "Organic Heirloom Brown Turkey Fig Tree", 8 oz of figs, answered
+  // Newark's "fresh turkey" (the Thanksgiving core list rerun).
+  'turkey fig'];
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
   'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
   // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
   'green onion', 'spring onion',
+  // Chinese celery is a leaf vegetable of its own: Woodman's answered Milwaukee's "celery" with it.
+  'chinese celery',
   // Fruit and nut butters, and margarine that says so: apple butter is not butter.
   'apple butter', 'pumpkin butter', 'shea butter', 'cocoa butter', 'not butter',
   // Nut and seed butters. A plant base is no longer a penalty for a vegan search, so "vegan butter"
@@ -299,7 +316,11 @@ const CUTS = new Set(['wing', 'drumstick', 'thigh', 'breast', 'leg', 'tenderloin
 // Heads of fresh-produce searches (fruit is FRESH_FRUIT_RE), and the produce words that make a mix. Not
 // words that also name a variety of something else: cherry/grape/pear tomatoes, orange/banana peppers.
 const PRODUCE_HEAD_RE = /^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|parsley|basil|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|garlic|ginger|scallion|avocado)$/;
-const PRODUCE_WORD_RE = /^(?:onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$/;
+// "Prepared Potatoes" held H Mart's "HAITAI Baked Sweet Potato" 5 ct (the Newark rerun); prepared produce
+// (cut celery, diced onions) is still the produce.
+const PREPARED_AISLE_RE = /\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides|prepared (?!produce|vegetables?|veggies|fruits?))\b/;
+// Shallots: Albertsons' and Vons' "Onions Shallots" answered Las Vegas's onions (the Thanksgiving core list).
+const PRODUCE_WORD_RE = /^(?:shallot|leek|onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$/;
 const FRESH_VEG_MEAT_RE = /^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$/;
 const SHELF_FORM_RE = /\b(?:canned|dehydrated|freeze[- ]?dried)\b/;
 
@@ -357,9 +378,11 @@ export function tokens(s) {
 }
 
 // Product words that imply another word ("ground chuck" is ground beef).
-const IMPLIES = { champagne: ['sparkling', 'wine'], prosecco: ['sparkling', 'wine'], cava: ['sparkling', 'wine'], frank: 'dog', chuck: 'beef', sirloin: 'beef', brisket: 'beef', ribeye: ['beef', 'rib'], kcup: 'coffee', 'k-cup': 'coffee',
-  // "Wholly Gluten Free Pie Shells" are pie crusts (the Thanksgiving food styles run).
-  shell: 'crust', espresso: 'coffee', cage: 'egg', clementine: 'mandarin', cutie: 'mandarin', tp: 'toilet' };
+const IMPLIES = { champagne: ['sparkling', 'wine'], prosecco: ['sparkling', 'wine'], cava: ['sparkling', 'wine'], frank: 'dog', chuck: 'beef', sirloin: 'beef', brisket: 'beef', ribeye: ['beef', 'rib'], kcup: 'coffee', 'k-cup': 'coffee', espresso: 'coffee', cage: 'egg', clementine: 'mandarin', cutie: 'mandarin', tp: 'toilet',
+  // Stuffing is sold as a mix whether or not the bag says so (Pepperidge Farm's "Herb Seasoned Classic
+  // Stuffing"), and a pie shell is a pie crust (Marie Callender's "Deep Dish Pie Shells", and the Thanksgiving
+  // food styles run's "Wholly Gluten Free Pie Shells"). Thanksgiving.
+  stuffing: 'mix', shell: 'crust' };
 
 function productTokens(s) {
   const t = tokens(s);
@@ -399,7 +422,7 @@ const WANTS_SUPPLEMENT_RE = /\b(?:tablets?|caplets?|capsules?|softgels?|suppleme
 const PROCESSED_FORM_RE = /\bin (?:light |heavy )?(?:syrup|juice)\b|\b(?:canned|diced|crushed|stewed|sun[- ]?dried|freeze[- ]?dried|dried|dehydrated|pureed?|frozen)\b/;
 const LUNCH_NAME_RE = /\b(?:deli|sliced|lunchmeat|lunch meat|cold cuts?)\b/;
 const LUNCH_CAT_RE = /\b(?:deli|lunch ?meats?|lunchmeat|cold cuts?)\b/;
-const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|decor|gift bags?|crafts?|disposable|cutlery|utensils?|tableware|paper (?:goods|products)|napkins?|herbal tea|pet (?:food|treats|supplies)|dog|cat)\b/;
+const NON_FOOD_CATEGORY_RE = /\b(?:supplements?|vitamins?|cough|cold and flu|pain relief|first aid|toothpicks?|party (?:supplies|decorations)|decorations?|decor|gift bags?|crafts?|disposable|cutlery|utensils?|tableware|paper (?:goods|products)|napkins?|herbal tea|pet (?:food|treats|supplies)|dog|cat|cooking bags?|oven bags?)\b/;
 // "pumpkin" on its own is a pumpkin to carve. Mini and ornamental pumpkins are table decorations at
 // a dollar or two, and priced per pumpkin they beat every carving pumpkin: Trader Joe's "Lil' Tiger
 // Stripe Pumpkin" was the best pumpkin in four states, Rouses' "Licensed LSU Tigers Pumpkin" (8 ct)
@@ -448,6 +471,53 @@ function wholePumpkin(product, words) {
 // a pouch: Walmart's "Great Value Pumpkin", 15 oz, was Philadelphia's best pumpkin (the rerun), and
 // nothing in its name says it is puree.
 const CANNED_PUMPKIN_MAX_OZ = 32;
+// The form words of a pumpkin search that asks for the can: "canned pumpkin", "pumpkin puree" (puree
+// reads as 'pure'). Neither is a pumpkin to carve, so the whole-pumpkin rules above stay out of it,
+// and a can answers both whatever its label says: Libby's "100% Pure Pumpkin" scored 0.06 against
+// "canned pumpkin", every can did, and Walmart's "Great Value Pumpkin" (15 oz) missed "pumpkin
+// puree" (the Thanksgiving core list, 3 Nov).
+const PUMPKIN_CAN_WORDS = ['canned', 'pure'];
+function cannedPumpkin(product, nameTok, catTok) {
+  if (product.soldBy === 'lb') return false;
+  if (['canned', 'can', 'pure'].some((w) => nameTok.has(w)) || catTok.has('canned')) return true;
+  return product.dim === 'weight' && product.base > 0 && product.base < CANNED_PUMPKIN_MAX_OZ;
+}
+// A turkey search names the part it wants, and "turkey" with none named is the bird. Ground turkey,
+// a wing, deli slices, bacon and a pack of necks are other purchases at other prices per pound, and
+// in Newark they answered "turkey" (Walmart's ground turkey, Food Bazaar's "TURKEY WING CUT UP"),
+// "frozen turkey" (ALDI's "Kirkwood Ground Turkey") and "fresh turkey" (Food Bazaar's "Turkey
+// Neck"), and deli turkey answered "turkey breast" (ACME's "Herb Roasted Turkey Breast" in Deli
+// Turkey), as did 6 oz packs of "Organic Oven Roasted Turkey Breast" in Charlotte (Trader Joe's,
+// Whole Foods), and Whole Foods' deli by the pound, which has no aisle: "No Salt Turkey" ($13.99/lb)
+// was Salt Lake City's only "turkey", "Peppered Turkey" and "In House Herb Turkey Breast" answered in
+// Portland. The Thanksgiving core list, 3 Nov. Read before any "with ..." tail, so a bird "with Neck
+// and Giblets" is still a bird; a deli aisle counts as the word.
+const TURKEY_PART_RE = /\b(?:ground|breasts?|tenderloins?|cutlets?|deli|sliced|lunch ?meat|lunchmeat|bacon|sausages?|kielbasa|burgers?|patt(?:y|ies)|meatballs?|legs?|drumsticks?|wings?|thighs?|necks?|gizzards?|giblets?|franks?|hot ?dogs?|pastrami|salami|pepperoni|ham|bologna|jerky|sticks?|strips?|chili|tails?|backs?|links?|pot pies?|shaved|(?:ultra )?thin|oven roasted|peppered|no salt|in house|herb|mesquite|cajun)\b/g;
+const turkeyPartStem = (w) => w.replace(/ /g, '').replace(/(?:ies|s)$/, (m) => (m === 'ies' ? 'y' : ''));
+function otherTurkeyPart(query, nameNorm, category) {
+  const want = new Set((normalize(query).match(TURKEY_PART_RE) || []).map(turkeyPartStem));
+  const parts = (nameNorm.replace(/\bwith\b.*$/, '').match(TURKEY_PART_RE) || []).map(turkeyPartStem);
+  if (LUNCH_CAT_RE.test(normalize(category || ''))) parts.push('deli');
+  // The aisle names the part when the name does not: Piggly Wiggly's "Butterball Natural Roast Gold
+  // Turkey", $6.49/lb in Turkey Breast, answered "fresh turkey" in Milwaukee. Not an aisle that also
+  // holds whole birds ("Whole Turkeys & Breasts").
+  if (!/\bwhole\b/.test(normalize(category || ''))) parts.push(...(normalize(category || '').match(TURKEY_PART_RE) || []).map(turkeyPartStem));
+  // Deli turkey is mostly sliced breast: "turkey lunch meat" is answered by "Turkey Breast Lunch Meat".
+  const deli = ['deli', 'sliced', 'lunchmeat', 'shaved', 'thin', 'ultrathin', 'ovenroasted', 'peppered', 'nosalt', 'inhouse', 'herb', 'mesquite', 'cajun'];
+  const deliOk = deli.some((d) => want.has(d)) ? new Set([...deli, 'breast']) : new Set();
+  return parts.some((w) => !want.has(w) && !deliOk.has(w));
+}
+// "fresh" is a stop word ("fresh milk" is milk), but "fresh turkey" is not a frozen one: Walmart's
+// "Shady Brook Farms Frozen Whole Turkey", $0.84/lb, was Newark's best fresh turkey, where a fresh bird
+// costs $2-3 (the Thanksgiving core list, 3 Nov).
+const FROZEN_RE = /\bfrozen\b/;
+const TURKEY_DISH_AISLE_RE = /\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?|seasonings?|spices?|herbs?)\b/;
+const PASTRY_CUP_RE = /\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\b/;
+const NUT_DISH_AISLE_RE = /\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|candy)\b/;
+const IN_SHELL_RE = /\bin[- ]?(?:the )?shells?\b/;
+const NUT_HEAD_RE = /^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$/;
+const SNACK_NUT_RE = /\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\b/;
+const PIES_AISLE_RE = /^(?!.*\b(?:crusts?|dough|shells?)\b).*\bpies\b/;
 // A dish named as a flavour. "Pumpkin pie spice" is kept out of "pumpkin pie" by the 'spice' trap;
 // the same is true of a caramel apple: Walmart's "Tootsie Pops Assorted Caramel Apple Pops Variety
 // Pack", 13.64 oz, was the best caramel apples in Anchorage and Honolulu (the live rerun, 26 Oct).
@@ -529,6 +599,8 @@ export function relevance(query, product, opts = {}) {
     const dairyFreeVegan = t === 'vegan' && DAIRY_HEADS.has(qt[qt.length - 1]) && nameTok.has('dairyfree');
     if (byBrand || dairyFreeVegan || DIET_MEETS[t].some((w) => nameTok.has(w))) nameTok.add(t);
   }
+  const wantsPumpkinCan = qt.includes('pumpkin') && qt.some((w) => PUMPKIN_CAN_WORDS.includes(w));
+  if (wantsPumpkinCan && nameTok.has('pumpkin') && cannedPumpkin(product, nameTok, catTok)) for (const w of PUMPKIN_CAN_WORDS) nameTok.add(w);
 
   // A word that appears ONLY in the brand counts as a match when it identifies the product
   // ("Kerrygold" for a kerrygold search) but NOT when it is a generic grocery qualifier, because
@@ -685,11 +757,54 @@ export function relevance(query, product, opts = {}) {
     if (others.length) mult *= 0.3;
     if (catTok.has('juice') || catTok.has('juices') || catTok.has('pressed')) { if (!qset.has('juice')) mult *= 0.3; }
   }
+  // ...and a meal or dessert aisle is a dish: Pulmuone's "Sweet Potato Bungeo Pang", a frozen filled
+  // pastry in Frozen Asian Meals, was among Newark's best sweet potatoes at 99 Ranch and H Mart, and
+  // Trader Joe's "Garlic Shiitake Green Beans" (Entrées & Sides) answered Charlotte's green beans
+  // (the Thanksgiving core list).
+  if ((FRESH_FRUIT_RE.test(head || '') || PRODUCE_HEAD_RE.test(head || '') || hasPhrase(qt, ['green', 'bean']))
+    && PREPARED_AISLE_RE.test(normalize(product.category || '')) && !PREPARED_AISLE_RE.test(normalize(query))) mult *= 0.3;
+  // A frozen vegetable is not the fresh one (frozen green beans are a fair "green beans"; frozen onions
+  // are not "onions"): Walmart's "Great Value Pearl Onions", 12 ct in Frozen Onions, was Honolulu's
+  // best onions at an estimated $0.33/lb, its weight guessed as twelve full-size onions.
+  if (PRODUCE_HEAD_RE.test(head || '') && !FROZEN_RE.test(normalize(query)) && (FROZEN_RE.test(nameNorm) || FROZEN_RE.test(normalize(product.category || '')))) mult *= 0.3;
   // "Garden Sweet Russet Potato" answered "sweet potatoes": another potato entirely.
-  if (head === 'pumpkin' && DECORATIVE_PUMPKIN_RE.test(nameNorm) && !DECORATIVE_PUMPKIN_RE.test(normalize(query))) mult *= 0.2;
-  if (head === 'pumpkin' && !wholePumpkin(product, words)) mult *= 0.2;
+  const wholePumpkinQuery = head === 'pumpkin' && !wantsPumpkinCan;
+  if (wholePumpkinQuery && DECORATIVE_PUMPKIN_RE.test(nameNorm) && !DECORATIVE_PUMPKIN_RE.test(normalize(query))) mult *= 0.2;
+  if (wholePumpkinQuery && !wholePumpkin(product, words)) mult *= 0.2;
   if (FLAVOUR_DISH_RE.test(normalize(query)) && FLAVOUR_FORM_RE.test(nameNorm) && !FLAVOUR_FORM_RE.test(normalize(query))) mult *= 0.2;
-  if (head === 'pumpkin' && product.soldBy !== 'lb' && product.dim === 'weight' && product.base > 0 && product.base < CANNED_PUMPKIN_MAX_OZ) mult *= 0.2;
+  if (wholePumpkinQuery && product.soldBy !== 'lb' && product.dim === 'weight' && product.base > 0 && product.base < CANNED_PUMPKIN_MAX_OZ) mult *= 0.2;
+  // A pie pumpkin is the produce, not the pie: Jewel's "Pumpkin Pie", sold per lb, was Chicago's best
+  // "pumpkin pie" (Halloween QA, 24 Oct), and a "Pie Pumpkin" scored 0.80 against it.
+  if (hasPhrase(qt, ['pumpkin', 'pie']) && (product.soldBy === 'lb' || (hasPhrase(words, ['pie', 'pumpkin']) && !hasPhrase(words, ['pumpkin', 'pie'])))) mult *= 0.2;
+  if (qt.includes('turkey') && otherTurkeyPart(query, nameNorm, product.category)) mult *= 0.2;
+  // ...nor a dish made of it: The Fresh Market's "The Turkey Trot (Half Panini)" and Sprouts' "Turkey
+  // Carnitas" (Prepared Turkey) were Greenville's only "fresh turkey", and BJ's "Infinite Herbs Turkey
+  // Blend" (3 oz, Other Seasoning Mixes) answered it in Virginia Beach (the Thanksgiving core list).
+  if (qt.includes('turkey') && TURKEY_DISH_AISLE_RE.test(normalize(product.category || '')) && !TURKEY_DISH_AISLE_RE.test(normalize(query))) mult *= 0.2;
+  // A pie that boasts of its crust is a pie: "Mrs. Smith's Original Flaky Crust Dutch Apple Pie", 37 oz
+  // in Frozen Pies, was the best "pie crust" at Stop & Shop, Weis, ACME and Kings (Newark, the
+  // Thanksgiving core list).
+  // ...nor are phyllo cups and tart shells: Albertsons' and Vons' "Signature SELECT Pastry Shells, Mini
+  // Phyllo", 15 ct in Frozen Pie Crusts, was Las Vegas's best pie crust at $0.40 a shell.
+  if (head === 'crust' && PASTRY_CUP_RE.test(nameNorm) && !PASTRY_CUP_RE.test(normalize(query))) mult *= 0.2;
+  if (head === 'crust' && (words.lastIndexOf('pie') > Math.max(...['crust', 'shell', 'dough'].map((w) => words.lastIndexOf(w))) || PIES_AISLE_RE.test(normalize(product.category || '')))) mult *= 0.2;
+  // Cream is sold by fat: BJ's "Wellsley Farms Light Cream" and Stew Leonard's "Byrne Dairy Ultra
+  // Pasteurized Light Cream", both filed under Heavy Creams, were Newark's two best "heavy cream".
+  { const grade = (s) => (/\bheavy\b/.test(s) ? 'heavy' : /\blight\b/.test(s) ? 'light' : null);
+    const want = grade(normalize(query));
+    if (head === 'cream' && want && grade(nameNorm) && grade(nameNorm) !== want) mult *= 0.2; }
+  // Snack nuts are not baking nuts: Trader Joe's "Sweet & Spicy Pecans" and "Candied Pecans", 5 oz at
+  // $15.97/lb, answered "pecans" in Salt Lake City and Dallas (the Thanksgiving core list).
+  if (NUT_HEAD_RE.test(head || '') && SNACK_NUT_RE.test(nameNorm) && !SNACK_NUT_RE.test(normalize(query))) mult *= 0.3;
+  // ...and nuts in the shell are weighed with it, about half of what a pound of shelled nuts holds:
+  // Food Lion's "Diamond In Shell Pecans", 16 oz at $8.29, ranked against chopped pecans (Greenville).
+  // ...and a cake made with them is a cake: El Super's "Pecan Brazo Gitano" (Other Cakes), Las Vegas.
+  if (NUT_HEAD_RE.test(head || '') && NUT_DISH_AISLE_RE.test(normalize(product.category || '')) && !NUT_DISH_AISLE_RE.test(normalize(query))) mult *= 0.2;
+  if (NUT_HEAD_RE.test(head || '') && IN_SHELL_RE.test(nameNorm) && !IN_SHELL_RE.test(normalize(query))) mult *= 0.3;
+  // Whipped cream is not heavy cream: Trader Joe's "Sweetened Whipped Heavy Cream", a 13 oz can, answered
+  // Dallas's heavy cream. Heavy WHIPPING cream is heavy cream.
+  if (head === 'cream' && /\bwhipped\b/.test(nameNorm) && !/\bwhipped\b/.test(normalize(query))) mult *= 0.2;
+  if (/\bfresh\b/.test(normalize(query)) && !FROZEN_RE.test(normalize(query)) && (FROZEN_RE.test(nameNorm) || FROZEN_RE.test(normalize(product.category || '')))) mult *= 0.3;
   if (/\bsweet potato/.test(normalize(query)) && /\b(?:russet|yukon|red potato|gold potato|white potato)/.test(nameNorm)) mult *= 0.2;
   if (FRESH_VEG_MEAT_RE.test(head || '')) {
     const m = SHELF_FORM_RE.exec(nameNorm);

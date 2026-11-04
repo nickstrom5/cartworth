@@ -1,0 +1,135 @@
+# Thanksgiving QA: web app UX and marketing site, 3 Nov 2026
+
+Code: `main` at 44b00a1, the build deployed to app.cartworth.app today. Thanksgiving is Thursday
+26 Nov 2026. One of five Thanksgiving QA passes; this one covers the web app's UX and cartworth.app.
+The matcher, deals, turkey pricing, seasonal card logic and the iOS app belong to the other passes,
+so issues there are reported below rather than fixed.
+
+What ran:
+- The live web app in the built-in browser at 375 px (phone), 768 px (tablet) and desktop width.
+- Onboarding in three ZIPs: Atlanta 30308, Austin 78704, Seattle 98103.
+- The Thanksgiving card, seen by moving the page clock to 19 Nov (it appears from 5 Nov, 21 days
+  out: `featured()` in `shared/seasonal.js`).
+- A 20-item Thanksgiving list (the card's 14, plus turkey gravy, fresh cranberries, brown sugar 2 lb,
+  mini marshmallows, eggs 12 ct, apple cider 1 gal) and the trip planner, in Atlanta.
+- Search ("cranberry sauce"), Sales, Watchlist and Settings; console errors on every screen.
+- cartworth.app: every page and internal link, response codes, headers, the sitemap, robots.txt,
+  meta and Open Graph tags (`scripts/check-seo.js`), the 375 px layout, and every claim on the
+  landing page checked against the code.
+- Fixes verified locally: `public/` served from this branch with `/api` forwarded to the live
+  server (no retailer calls from this Mac), and the site folder served statically.
+
+The web app has no paywall: Pro and its paywall exist only in the iPhone app (the iOS pass).
+"How prices work" on the web is the "How Cartworth compares" card on Compare and the footnote in
+Settings, both read and both accurate.
+
+## Fixed in this branch
+
+1. **Stores that timed out were called "weekly ad only".** Atlanta's first build left 16 chains
+   unanswered. The ones with a circular came back ad-only, and onboarding said "Weekly ad only:
+   Costco, … Kroger, Publix, Sam's Club, Sprouts, Target, Walmart. These stores don't publish
+   prices we can read". Settings listed them the same way, with notes that contradicted it
+   ("Weekly ad only — Walmart labels these 'no markups', so they track the shelf price"). Rebuilt
+   later that afternoon the same ZIP priced 9 stores, Kroger and Publix among them. A chain in
+   `directory.unresolved` is now counted in the "didn't answer" notice, not in "Weekly ad only", and
+   Settings groups such chains under "Didn't answer just now" with "No answer yet".
+   (`public/js/actions.js` `buildStores`, `views/onboarding.js`, `views/settings.js`)
+2. **"Check again" gave no feedback when nothing changed.** It now says "Still no answer from
+   them. Stores are often busy for a few minutes; try again shortly."
+3. **List item names were clipped at phone width.** With 44 px touch targets the name column was
+   about 60 px: "cranberr sauce", "sweet potatoe", "mini marshm", and after planning
+   "cheapest: Whole F…". Below 520 px the name now takes the row and the controls sit under it.
+   (`public/app.css`)
+4. **The list's row buttons had no item in their names.** Screen readers heard "Fewer", "More",
+   "Compare prices", "Remove" twenty times. They are now "One more cranberry sauce", "Remove sweet
+   potatoes" and so on (the iPhone app already did this). The holiday cards' "Add all to my list"
+   now reads "Add all Thanksgiving items to my list", since two cards can be on screen at once.
+5. **Sales put two screens of filters before the first deal** on phones and tablets (first deal
+   ~1,720 px down at 375 px). Below 900 px the filters fold behind a "Filters" button that names
+   the active filters; the desktop sidebar is unchanged.
+6. **A toast covered the bottom tab bar** on phones for its whole life ("Added 14 Thanksgiving items
+   to your list | View list" sat on Compare, Sales, Watchlist, List, Settings). It now sits above it.
+7. **The "Mariano's exact prices" card showed in every ZIP.** In Atlanta, Austin and Seattle it
+   told people to make Kroger developer keys for a store that isn't there. It now shows only where
+   Mariano's is one of the stores near you, or when keys are already saved (so they can be removed).
+8. "1 chain within 25 miles publish prices" is now "publishes" (Settings, two places).
+
+Site:
+
+9. **The comparison table said the website has no seasonal or holiday lists.** It has had them since
+   the occasion cards shipped (`views/occasions.js`, on Compare and Sales). Row now "Seasonal and
+   holiday shopping lists: Yes / Yes".
+10. **The monthly plan card didn't mention Family Sharing**, though all three products are
+    family-shareable (`Products.storekit`) and the terms say so. Added.
+11. **The inner pages' header button** ("Open the free web app") had no short phone label, unlike
+    the homepage; at 375 px it nearly met the brand. Support, privacy, terms and the guides now use
+    the homepage's "Open web app" swap.
+12. **New: a Thanksgiving guide and homepage section.** `/guides/thanksgiving-dinner-prices`,
+    generated by `site/tools/make-guides.py` like the other guides, plus a dated card under the
+    homepage hero linking to it. It quotes no prices and no savings: it covers pricing the whole
+    list rather than the turkey, adding sizes ("whole turkey 14 lb"), turkey-deal conditions, the
+    unit-price traps on a holiday list, next week's ads and thawing time (USDA guidance), and links
+    each of the card's 14 items straight to a search in the web app. It says the iPhone app is "on
+    its way", not available. Added to the sitemap and the guides index. **Take the homepage card
+    out after 26 Nov** (marked in `site/index.html`); the guide can stay.
+
+Tests: two new browser tests in `test/qa-app-behaviour.test.js` (a timed-out chain is not called
+ad-only, in onboarding or Settings; phone-width list names, item-named buttons, folded Sales
+filters). `scripts/check-seo.js`: 0 blocking, 0 warnings.
+
+## For the owner (not code)
+
+- **Cloudflare is injecting its Web Analytics beacon into cartworth.app.** Every page logs "Loading
+  the script 'https://static.cloudflareinsights.com/beacon.min.js/…' violates the following Content
+  Security Policy directive". The CSP blocks it, so nothing is collected, but the privacy policy
+  says the site loads no analytics, and the injection is a console error on every page. Turn off
+  Web Analytics' automatic injection for cartworth.app in the Cloudflare dashboard's Web Analytics
+  settings. Not fixable in the repo.
+
+## For the other passes
+
+Matcher and turkey pricing (seen in the Atlanta 20-item trip plan, 3 Nov):
+- **"whole turkey" is priced as 1 lb.** The plan read "whole turkey (1 lb, a typical size)" and
+  costed ALDI's Butterball at $1.27, so the one-store total of $30.02 for 20 items was really missing
+  a 12–16 lb bird. The typical size for a per-lb whole turkey should be a bird's weight, or the
+  plan should say "per lb" and leave it out of the total. The new guide tells people to write
+  "whole turkey 14 lb", which does work.
+- "sweet potatoes" had a typical size of 10 oz; "onions" 10.6 oz. Both are usually bought by the
+  bag or pound.
+- "dinner rolls": ALDI "L'oven Fresh Yeast Dinner Rolls 13 oz" at $0.29. Looks like a unit or
+  sale-price misread; worth checking.
+- "celery" at Whole Foods was $6.98 for 1 lb, against $0.95 at ALDI: probably a per-each listing
+  (or organic hearts) scaled to a pound.
+- "Pillsbury Pillsbury Pie Crust Dough": the brand is repeated in the product name.
+
+Deals:
+- ALDI's ad dated Nov 4 – Nov 10 is under "This week" on 3 Nov, the day before it starts.
+- With "Hide non-grocery" on, ALDI's "Disney Licensed Kids' 8-Piece Baking Set" ($19.99) and a
+  Disney pancake pan are listed as deals.
+
+Directory:
+- In Austin, ALDI 17.2 mi away is one of the eight stores switched on by default, while nearer
+  online-priced stores are not (the Halloween pass's item 5, again).
+- After changing ZIP twice (Austin to Seattle), onboarding said "The 9 below are switched on", one
+  more than the default of eight.
+
+Seasonal:
+- The Thanksgiving card first appears on 5 Nov (21 days out). The blurb "Turkey is often free or
+  under $1/lb with a purchase" is a pricing claim on a card; the site deliberately makes none. Worth
+  a second look by whoever owns `shared/seasonal.js`.
+
+## Checked and fine
+
+- Onboarding: Austin found 11 priced stores plus Walmart chain-wide in about a minute; Seattle 13
+  plus Walmart; Atlanta 3 (16 timeouts), then 9 on the rebuild. No console errors on any screen.
+- No sideways scroll at 375 px on any app screen or site page.
+- Trip planner: 20 items priced in about 44 s; one store, two stores and cherry-pick totals, the
+  "where to buy what" breakdown and the every-store table all rendered at 375 px; costs state their
+  amount.
+- Search: "cranberry sauce" in Atlanta, 6 matches from 3 stores, each labelled shelf, with a
+  sensible best price.
+- Watchlist empty state, Settings, the site's 404 page (real 404), `/app/` redirect, the
+  extensionless `/privacy`, `/terms`, `/support`, the security headers, robots.txt and the sitemap.
+- Site claims checked against code: 3 searches a day and 1 watch free (`Entitlements.swift`), 60
+  web watches (`public/js/store.js`), $3.99 / $19.99 / $29.99, iOS 17, "Coming to the App Store"
+  (`APP_STORE_URL` is empty), "iPhone app on the way".

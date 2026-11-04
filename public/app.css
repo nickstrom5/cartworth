@@ -424,6 +424,11 @@ main {
   main {
     padding: 14px 12px calc(66px + env(safe-area-inset-bottom));
   }
+  /* A toast sat on top of the bottom tab bar, hiding it for the four seconds after "Add all to my
+     list" (the Thanksgiving QA). Lift it clear of the bar. */
+  .toasts {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
 
   /* On a phone the sections move to a bottom bar. Squeezed into the header they ended up inside a
      150px horizontal scroller, which hid Watchlist, List and Settings entirely. */
@@ -1345,6 +1350,18 @@ label.field .hint {
   .deals-layout {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* Two classes: .filters below sets display: grid at the same weight and comes later. */
+  .filters.filters-folded {
+    display: none;
+  }
+}
+.filters-toggle {
+  justify-self: start;
+}
+@media (min-width: 901px) {
+  .filters-toggle {
+    display: none;
+  }
 }
 .filters {
   display: grid;
@@ -1528,6 +1545,25 @@ label.field .hint {
 .ltext {
   flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* On a phone the 44px steppers and row buttons left the item's name about 60px, so "cranberry sauce"
+   was clipped to "cranberr" and the trip plan's "cheapest: Whole F…" too (the Thanksgiving QA,
+   375px). The name keeps the full row; the controls move to a line of their own under it. */
+@media (max-width: 520px) {
+  .litem {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .litem .ltext {
+    flex-basis: calc(100% - 44px);
+  }
+  .litem .qty {
+    margin-left: 34px;
+  }
+  .litem .qty + .btn {
+    margin-left: auto;
+  }
 }
 .qty {
   display: inline-flex;

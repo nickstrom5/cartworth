@@ -311,6 +311,9 @@ From `marketing/APP_STORE_LISTING.md` and `marketing/SOCIAL_MEDIA_BRIEF.md`:
 - **Accessibility**: skip link, one `<h1>` per page, headings in order, real `<table>` markup with
   scope attributes, `<details>` accordions that work without JavaScript, alt text on every image,
   visible focus rings, and `prefers-reduced-motion` respected. If you add anything, keep all of it.
+- **Seasonal content** goes in a guide (`tools/make-guides.py`) plus, at most, one dated card under
+  the hero. The Thanksgiving 2026 card in `index.html` comes out after 26 Nov 2026; its guide,
+  `/guides/thanksgiving-dinner-prices`, quotes no prices and can stay up.
 - **Do not add a font from a font CDN, an analytics snippet or a chat widget** without revisiting
   the privacy policy, which currently states plainly that this site loads none of those. The policy
   is a promise, not a description of a default.

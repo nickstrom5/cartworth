@@ -206,17 +206,19 @@ final class ThanksgivingPriceGuardTests: XCTestCase {
         XCTAssertNil(eggs.sizeConflict)
     }
 
-    // DEFECT 10: the 8x guard suppressed genuine loss-leaders. A "turkey" search is dominated by
+    // DEFECT 10: the 8x guard suppressed genuine loss-leaders. A "turkey" search was dominated by
     // deli and ground turkey, so the live median sat near $10/lb and the old floor landed at
-    // $1.11-$1.29/lb — inside the range a supermarket really sells a Thanksgiving bird for.
+    // $1.11-$1.29/lb — inside the range a supermarket really sells a Thanksgiving bird for. Those no
+    // longer answer "turkey" (the Thanksgiving core list); organic and heritage birds still put the
+    // whole-bird median near $6.50/lb. Mirrors test/qa-thanksgiving-pricing.test.js.
     private func turkeyMarket() -> [String: [Product]] {
         [
-            "a": [item("a", "Deli Turkey Breast", "per lb", 9.49, soldBy: .lb)],
-            "b": [item("b", "Oven Roasted Turkey Breast", "per lb", 9.99, soldBy: .lb)],
-            "c": [item("c", "Ground Turkey", "per lb", 5.99, soldBy: .lb)],
-            "d": [item("d", "Turkey Breast Tenderloin", "per lb", 8.99, soldBy: .lb)],
-            "e": [item("e", "Organic Turkey Breast", "per lb", 11.99, soldBy: .lb)],
-            "f": [item("f", "Turkey Pastrami", "per lb", 12.99, soldBy: .lb)],
+            "a": [item("a", "Organic Whole Turkey", "per lb", 3.99, soldBy: .lb)],
+            "b": [item("b", "Diestel Fresh Whole Turkey", "per lb", 4.99, soldBy: .lb)],
+            "c": [item("c", "Mary's Free Range Turkey", "per lb", 5.99, soldBy: .lb)],
+            "d": [item("d", "Organic Fresh Turkey", "per lb", 6.99, soldBy: .lb)],
+            "e": [item("e", "Pasture Raised Whole Turkey", "per lb", 7.99, soldBy: .lb)],
+            "f": [item("f", "Heritage Turkey", "per lb", 9.99, soldBy: .lb)],
         ]
     }
 

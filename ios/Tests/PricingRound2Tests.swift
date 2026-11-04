@@ -67,12 +67,14 @@ final class PricingRound2Tests: XCTestCase {
     func testACheapPriceTheRetailerStatedSurvives() {
         let results: [String: [Product]] = [
             "tonys": [item("tonys", "Tony's Fresh Market Turkey Drumsticks", "3.43 lb", 3.99)],
-            "a": [item("a", "Deli Turkey Breast", "per lb", 9.49, soldBy: .lb)],
-            "b": [item("b", "Oven Roasted Turkey Breast", "per lb", 9.99, soldBy: .lb)],
-            "c": [item("c", "Turkey Breast Tenderloin", "per lb", 10.49, soldBy: .lb)],
-            "d": [item("d", "Organic Turkey Breast", "per lb", 11.99, soldBy: .lb)],
+            // Drumsticks no longer answer a bare "turkey" (the Thanksgiving core list), so the peers
+            // are drumsticks at the same far-off prices. Mirrors test/qa-pricing-round2.test.js.
+            "a": [item("a", "Organic Turkey Drumsticks", "per lb", 9.49, soldBy: .lb)],
+            "b": [item("b", "Heritage Turkey Drumsticks", "per lb", 9.99, soldBy: .lb)],
+            "c": [item("c", "Pasture Raised Turkey Drumsticks", "per lb", 10.49, soldBy: .lb)],
+            "d": [item("d", "Organic Turkey Drumsticks Family Pack", "per lb", 11.99, soldBy: .lb)],
         ]
-        let r = Compare.bestPerStore(query: "turkey", results: results)
+        let r = Compare.bestPerStore(query: "turkey drumsticks", results: results)
         XCTAssertEqual(ranked(r.stores).first?.0, "tonys")
     }
 
@@ -342,7 +344,8 @@ final class PricingRound2Tests: XCTestCase {
         // Same week: Primo Taglio turkey breast $11.99/lb on Jewel's Instacart, $9.99 on Jewel's shelf.
         let results: [String: [Product]] = [
             "woodmans": [item("woodmans", "Primo Taglio Turkey Breast", "per lb", 10.09, soldBy: .lb)],
-            "jewel": [item("jewel", "Primo Taglio Oven Roasted Turkey Breast", "per lb", 11.99, soldBy: .lb, basis: .online)],
+            // "Oven Roasted" marks deli turkey, which no longer answers "turkey breast" (the Thanksgiving core list).
+            "jewel": [item("jewel", "Primo Taglio Turkey Breast", "per lb", 11.99, soldBy: .lb, basis: .online)],
         ]
         let r = Compare.bestPerStore(query: "turkey breast", results: results)
         XCTAssertEqual(Compare.standings(r.stores).map { "\($0.storeId):\($0.verdict)" }, ["woodmans:best", "jewel:close"])

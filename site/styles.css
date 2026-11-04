@@ -1248,3 +1248,61 @@ table.compare caption {
     align-items: center;
   }
 }
+
+/* ---------- seasonal: the Thanksgiving section and guide (Nov 2026) ---------- */
+
+/* Sits straight under the hero, so it keeps the hero's background and only a bottom pad. */
+.season {
+  padding: 0 0 clamp(40px, 6vw, 72px);
+}
+.season-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px 28px;
+  align-items: center;
+  border-color: var(--border);
+}
+.season-card .h-card {
+  font-size: clamp(19px, 2.4vw, 23px);
+}
+.season-card p:not(.eyebrow) {
+  margin-top: 6px;
+  color: var(--ink-2);
+  max-width: 62ch;
+}
+.season-card .cta-row {
+  margin-top: 0;
+}
+@media (max-width: 760px) {
+  .season-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The guide's item list: each item is a link into the web app, laid out as wrapping pills. */
+.prose ul.item-links {
+  list-style: none;
+  padding-left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.prose ul.item-links li + li {
+  margin-top: 0;
+}
+.item-links a {
+  display: inline-block;
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+}
+.item-links a:hover {
+  border-color: var(--accent);
+}
+.prose .item-links a {
+  text-decoration: none;
+}
