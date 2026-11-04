@@ -2800,3 +2800,16 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey brine", name: "Rodelle Gourmet Turkey Brine, 25 oz"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 15 (Honolulu): frozen pearl onions were the best onions at an estimated $0.33/lb.
+    func testFrozenPearlOnionsAreNotOnions() {
+        XCTAssertLessThan(Match.relevance(query: "onions", name: "Great Value Pearl Onions", category: "Frozen Onions"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "frozen onions", name: "Great Value Pearl Onions", category: "Frozen Onions"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "onions", name: "Red Onion Bag", category: "Red Onions"), Match.relevant)
+        let (_, stores) = Compare.bestPerStore(query: "onions", results: ["walmart": [
+            make("walmart", "Great Value Pearl Onions", "12 ct", 1.98, category: "Frozen Onions"),
+            make("walmart", "Yellow Onions, 3 lb Bag", "3 lb", 2.97, category: "Yellow Onions")]])
+        XCTAssertEqual(stores["walmart"]?.product.name, "Yellow Onions, 3 lb Bag")
+    }
+}

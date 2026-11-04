@@ -642,6 +642,10 @@ export function relevance(query, product, opts = {}) {
   // (the Thanksgiving core list).
   if ((FRESH_FRUIT_RE.test(head || '') || PRODUCE_HEAD_RE.test(head || '') || hasPhrase(qt, ['green', 'bean']))
     && PREPARED_AISLE_RE.test(normalize(product.category || '')) && !PREPARED_AISLE_RE.test(normalize(query))) mult *= 0.3;
+  // A frozen vegetable is not the fresh one (frozen green beans are a fair "green beans"; frozen onions
+  // are not "onions"): Walmart's "Great Value Pearl Onions", 12 ct in Frozen Onions, was Honolulu's
+  // best onions at an estimated $0.33/lb, its weight guessed as twelve full-size onions.
+  if (PRODUCE_HEAD_RE.test(head || '') && !FROZEN_RE.test(normalize(query)) && (FROZEN_RE.test(nameNorm) || FROZEN_RE.test(normalize(product.category || '')))) mult *= 0.3;
   // "Garden Sweet Russet Potato" answered "sweet potatoes": another potato entirely.
   const wholePumpkinQuery = head === 'pumpkin' && !wantsPumpkinCan;
   if (wholePumpkinQuery && DECORATIVE_PUMPKIN_RE.test(nameNorm) && !DECORATIVE_PUMPKIN_RE.test(normalize(query))) mult *= 0.2;

@@ -306,3 +306,19 @@ test('DEFECT 14 (Anchorage, partial): a turkey brine is a seasoning', () => {
   matches('turkey brine', 'Rodelle Gourmet Turkey Brine, 25 oz');
   matches('fresh turkey', 'Jennie-O Oven Ready Whole Turkey', { category: 'Whole Turkey' });
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 15 (Honolulu): Walmart's "Great Value Pearl Onions", 12 ct in Frozen Onions at $1.98, was
+// the best onions at an estimated $0.33/lb: a frozen bag, its weight guessed as twelve onions.
+// ---------------------------------------------------------------------------
+test('DEFECT 15: frozen pearl onions are not onions', () => {
+  rejects('onions', 'Great Value Pearl Onions', { category: 'Frozen Onions' });
+  assert.deepEqual(best('onions', {
+    walmart: [item('walmart', 'Great Value Pearl Onions', '12 ct', 1.98, { category: 'Frozen Onions' }),
+      item('walmart', 'Yellow Onions, 3 lb Bag', '3 lb', 2.97, { category: 'Yellow Onions' })],
+  }), { walmart: 'Yellow Onions, 3 lb Bag' });
+  rejects('celery', 'Frozen Diced Celery');
+  matches('frozen onions', 'Great Value Pearl Onions', { category: 'Frozen Onions' });
+  matches('green beans', 'Frozen Cut Green Beans', { category: 'Frozen Green Beans' });
+  matches('onions', 'Red Onion Bag', { category: 'Red Onions' });
+});

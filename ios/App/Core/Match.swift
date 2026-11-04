@@ -553,6 +553,8 @@ enum Match {
         // "Garlic Shiitake Green Beans" in Entrées & Sides; the Thanksgiving core list). Port of shared/match.js.
         if (freshFruitRx.test(head) || produceHeadRx.test(head) || hasPhrase(qt, ["green", "bean"]))
             && preparedAisleRx.test(normalize(category ?? "")) && !preparedAisleRx.test(normalize(query)) { mult *= 0.3 }
+        // A frozen vegetable is not the fresh one: frozen pearl onions were Honolulu's best onions at an estimated $0.33/lb. Port of shared/match.js.
+        if produceHeadRx.test(head) && !frozenRx.test(normalize(query)) && (frozenRx.test(nameNorm) || frozenRx.test(normalize(category ?? ""))) { mult *= 0.3 }
         let wholePumpkinQuery = head == "pumpkin" && !wantsPumpkinCan
         if wholePumpkinQuery && decorativePumpkinRx.test(nameNorm) && !decorativePumpkinRx.test(normalize(query)) { mult *= 0.2 }
         if wholePumpkinQuery && !wholePumpkin(words: words, category: category, dim: dim, base: base, soldBy: soldBy) { mult *= 0.2 }
