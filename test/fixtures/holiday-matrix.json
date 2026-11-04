@@ -683,14 +683,20 @@
    "Jennie-O Whole Turkey"
   ],
   "reject": [
-   "Turkey Breast Deli Sliced"
+   "Turkey Breast Deli Sliced",
+   "Honeysuckle White Whole Turkey Breast",
+   "Kirkwood Ground Turkey",
+   "TURKEY WING CUT UP",
+   "Turkey Centerpiece",
+   "Reynolds Kitchens Turkey Size Oven Bags"
   ]
  },
  {
   "query": "stuffing",
   "match": [
    "Stove Top Stuffing Mix Turkey",
-   "Pepperidge Farm Herb Seasoned Stuffing"
+   "Pepperidge Farm Herb Seasoned Stuffing",
+   "Pepperidge Farm Herb Seasoned Classic Stuffing"
   ],
   "reject": []
  },
@@ -782,16 +788,21 @@
    "Pumpkin Spice Coffee",
    "Pumpkin Bread Mix",
    "Pumpkin Spice Latte Creamer",
-   "Pumpkin Seeds"
+   "Pumpkin Seeds",
+   "McCormick Pumpkin Pie Spice"
   ]
  },
  {
   "query": "pie crust",
   "match": [
    "Pillsbury Refrigerated Pie Crusts 2 ct",
-   "Keebler Ready Crust Graham Pie Crust"
+   "Keebler Ready Crust Graham Pie Crust",
+   "Marie Callender's Deep Dish Pie Shells"
   ],
-  "reject": []
+  "reject": [
+   "Mrs. Smith's Original Flaky Crust Dutch Apple Pie",
+   "Pie Crust Shield"
+  ]
  },
  {
   "query": "celery",

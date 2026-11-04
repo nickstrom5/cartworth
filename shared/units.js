@@ -538,9 +538,11 @@ const PRODUCE_LB = [
  * A container word is just as disqualifying: a "Yellow Onion Bag" is not one 0.5 lb onion, and
  * pricing it as one published $25.98/lb against a real onion median of $1.75.
  */
+// 'bagged': Natural Grocers' "Produce Onions Cipollini (Bagged)", 1 ea at $0.19, was Dallas's best onions
+// at an estimated $0.38/lb, the bag priced as one onion (the Thanksgiving core list).
 // 'jack'/'cheese': "Pepper Jack Cheese Slices" matched the bell-pepper weight, so ten slices were
 // four pounds of peppers and the pack read $0.60/lb (the state x holiday audit).
-const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\b/;
+const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag(?:ged|s)?|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\b/;
 
 export function produceWeightLb(name) {
   const n = String(name || '').toLowerCase();
@@ -562,6 +564,18 @@ const PIECE_WEIGHT_VARIES_RE = /\bpumpkins?\b/;
 
 export function pieceWeightVaries(name) {
   return PIECE_WEIGHT_VARIES_RE.test(String(name || '').toLowerCase());
+}
+
+/**
+ * Per-lb produce whose retailer "each (est.)" is not one of what the shopper buys: the pumpkins above,
+ * and celery, whose estimate prices one rib. Hannaford's "Celery Stalk" at $3.39/lb came to $0.47
+ * "each" and Weis's at $6.89/lb to $0.62, each the best celery in its ZIP against bunches at $1.50 to
+ * $2.23 (Manchester NH and Newark, the Thanksgiving core list). Sold by the pound, these keep their
+ * per-pound price and no per-piece one.
+ */
+const NO_EACH_ESTIMATE_RE = /\bcelery\b/;
+export function noEachEstimate(name) {
+  return pieceWeightVaries(name) || NO_EACH_ESTIMATE_RE.test(String(name || '').toLowerCase());
 }
 
 /**

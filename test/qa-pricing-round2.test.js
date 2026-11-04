@@ -107,12 +107,14 @@ test('DEFECT P2: a far-too-cheap price built on a size we inferred cannot take t
 test('control: a cheap price whose basis the retailer stated survives (Tony\'s drumsticks at 0.116)', () => {
   const results = {
     tonys: [item('tonys', "Tony's Fresh Market Turkey Drumsticks", '3.43 lb', 3.99)],
-    a: [item('a', 'Deli Turkey Breast', 'per lb', 9.49, { soldBy: 'lb' })],
-    b: [item('b', 'Oven Roasted Turkey Breast', 'per lb', 9.99, { soldBy: 'lb' })],
-    c: [item('c', 'Turkey Breast Tenderloin', 'per lb', 10.49, { soldBy: 'lb' })],
-    d: [item('d', 'Organic Turkey Breast', 'per lb', 11.99, { soldBy: 'lb' })],
+    // Deli breast was the "turkey" market here; drumsticks no longer answer a bare "turkey" (the
+    // Thanksgiving core list, 3 Nov), so the peers are drumsticks at the same far-off prices.
+    a: [item('a', 'Organic Turkey Drumsticks', 'per lb', 9.49, { soldBy: 'lb' })],
+    b: [item('b', 'Heritage Turkey Drumsticks', 'per lb', 9.99, { soldBy: 'lb' })],
+    c: [item('c', 'Pasture Raised Turkey Drumsticks', 'per lb', 10.49, { soldBy: 'lb' })],
+    d: [item('d', 'Organic Turkey Drumsticks Family Pack', 'per lb', 11.99, { soldBy: 'lb' })],
   };
-  const r = bestPerStore('turkey', results);
+  const r = bestPerStore('turkey drumsticks', results);
   assert.equal(results.tonys[0].implausible, undefined);
   assert.equal(ranked(r)[0][0], 'tonys');
 });
@@ -659,7 +661,9 @@ test('control: a unit line that only restates the size, or a price per pound, ch
 test('DEFECT P17b: a store inside Instacart\'s measured markup is "about the same", not beaten', () => {
   const results = {
     woodmans: [item('woodmans', 'Primo Taglio Turkey Breast', 'per lb', 10.09, { soldBy: 'lb' })],
-    jewel: [item('jewel', 'Primo Taglio Oven Roasted Turkey Breast', 'per lb', 11.99, { soldBy: 'lb', priceBasis: 'online' })],
+    // The same product's name at both stores: "Oven Roasted" (Jewel's listing) marks deli turkey, which no
+    // longer answers "turkey breast" (the Thanksgiving core list, 3 Nov).
+    jewel: [item('jewel', 'Primo Taglio Turkey Breast', 'per lb', 11.99, { soldBy: 'lb', priceBasis: 'online' })],
   };
   const r = bestPerStore('turkey breast', results);
   const rows = standings(r.stores);
