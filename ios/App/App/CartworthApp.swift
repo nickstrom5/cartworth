@@ -66,11 +66,6 @@ struct MainTabs: View {
         }
         .environment(search)
         .environment(router)
-        .onChange(of: router.pendingQuery) { _, q in
-            guard let q else { return }
-            router.pendingQuery = nil
-            search.run(q)
-        }
         .onOpenURL { url in
             // cartworth://search?q=milk
             guard url.scheme == "cartworth" else { return }

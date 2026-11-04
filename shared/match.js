@@ -173,6 +173,16 @@ const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['spr
 // PET is a brand of evaporated milk, not pet food (the Thanksgiving core list).
 const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour']), pet: new Set(['evaporated']) };
 
+// Named cheeses, as traps for the dairy searches only. Trader Joe's "Raw Milk Cave Aged Le Gruyère",
+// $19.99/lb and without the word "cheese", scored 0.81 for "milk" and was named on the milk card
+// ("Sold by the lb, so not ranked per gal", the 3 Nov review recording). Not general TRAPS: for most
+// searches a cheese name is a flavour of the product ("White Cheddar Popcorn", "Cheddar Crackers").
+const CHEESE_NAMES = new Set(['gruyere', 'cheddar', 'mozzarella', 'parmesan', 'parmigiano', 'reggiano', 'pecorino', 'asiago', 'brie',
+  'camembert', 'gouda', 'havarti', 'fontina', 'provolone', 'muenster', 'colby', 'monterey', 'swiss', 'emmental', 'emmentaler', 'comte',
+  'jarlsberg', 'manchego', 'feta', 'chevre', 'gorgonzola', 'roquefort', 'stilton', 'mascarpone', 'burrata', 'halloumi', 'paneer',
+  'raclette', 'cotija', 'queso', 'fromage', 'kase', 'cheesecake']);
+const HEAD_TRAPS = { milk: CHEESE_NAMES, cream: CHEESE_NAMES, butter: CHEESE_NAMES };
+
 // Plant bases in front of the noun make a different product: "almond milk", "coconut milk", "oat creamer".
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
 
@@ -582,7 +592,7 @@ export function relevance(query, product, opts = {}) {
       if (words[i - 1] === 'in' || words[i - 1] === 'with' || words[i - 2] === 'in') continue; // "tuna in oil", "with sauce"
       if (BENIGN_AFTER[w]?.has(words[i - 1])) continue; // "sweet cream butter" is plain butter
       if (BENIGN_BEFORE[w]?.has(words[i + 1])) continue; // "oyster mushrooms" are mushrooms
-      if (TRAPS.has(w)) strong += 1;
+      if (TRAPS.has(w) || HEAD_TRAPS[head]?.has(w)) strong += 1;
     }
     let alt = 0;
     let mild = 0;

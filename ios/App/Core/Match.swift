@@ -163,6 +163,15 @@ enum Match {
     /// category is exactly what was searched. 'dried' is deliberately absent: dried cranberries are
     /// a different commodity from fresh ones and sell at a wildly different price per pound.
     private static let storageState: Set<String> = ["frozen", "chilled", "refrigerated"]
+    /// Named cheeses, as traps for the dairy searches only: Trader Joe's "Raw Milk Cave Aged Le
+    /// Gruyère" ($19.99/lb, no word "cheese") scored 0.81 for "milk" and was named on the milk card
+    /// (the 3 Nov review recording). For other searches a cheese name is a flavour ("White Cheddar
+    /// Popcorn"). Port of CHEESE_NAMES / HEAD_TRAPS in shared/match.js.
+    private static let cheeseNames: Set<String> = ["gruyere", "cheddar", "mozzarella", "parmesan", "parmigiano", "reggiano", "pecorino", "asiago", "brie",
+        "camembert", "gouda", "havarti", "fontina", "provolone", "muenster", "colby", "monterey", "swiss", "emmental", "emmentaler", "comte",
+        "jarlsberg", "manchego", "feta", "chevre", "gorgonzola", "roquefort", "stilton", "mascarpone", "burrata", "halloumi", "paneer",
+        "raclette", "cotija", "queso", "fromage", "kase", "cheesecake"]
+    private static let headTraps: [String: Set<String>] = ["milk": cheeseNames, "cream": cheeseNames, "butter": cheeseNames]
     /// Plant bases in front of the noun make a different product ("almond milk").
     private static let altBase: Set<String> = ["almond", "oat", "oatmilk", "soy", "coconut", "cashew", "rice", "hemp", "macadamia", "pea", "plant", "pistachio", "flax", "banana", "evaporated", "condensed", "powdered", "dry", "goat"]
     /// Prepared/processed forms are still the product but rarely what a price-checker wants.
@@ -503,7 +512,7 @@ enum Match {
                 if prev == "in" || prev == "with" || prev2 == "in" { continue } // "tuna in oil", "with sauce"
                 if let ok = benignAfter[w], let p = prev, ok.contains(p) { continue } // "sweet cream butter"
                 if let ok = benignBefore[w], i + 1 < words.count, ok.contains(words[i + 1]) { continue } // "oyster mushrooms"
-                if traps.contains(w) { strong += 1 }
+                if traps.contains(w) || headTraps[head]?.contains(w) == true { strong += 1 }
             }
             var alt = 0, mildN = 0, flavorN = 0
             for w in words {

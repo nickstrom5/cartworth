@@ -82,6 +82,19 @@ final class MatchTests: XCTestCase {
         XCTAssertLessThan(r("whole milk", "Greek Yogurt Honey Made with Whole Milk"), Match.relevant)
     }
 
+    /// The milk card named Trader Joe's "Raw Milk Cave Aged Le Gruyère" at $19.99/lb ("Sold by the
+    /// lb, so not ranked per gal", the 3 Nov review recording). Same cases as qa-match-relevance.
+    func testNamedCheeseIsNotDairy() {
+        XCTAssertLessThan(Match.relevance(query: "milk", name: "Raw Milk Cave Aged Le Gruyère", brand: "Trader Joe’s", category: "Wedges, Wheels, Loaves, Logs"), 0.4)
+        XCTAssertLessThan(r("milk", "Whole Milk Mozzarella"), Match.relevant)
+        XCTAssertLessThan(r("cream", "Cream Havarti"), Match.relevant)
+        XCTAssertLessThan(r("butter", "Butter Gouda Wedge"), Match.relevant)
+        XCTAssertGreaterThan(Match.relevance(query: "milk", name: "Organic Milk A2/A2", brand: "Trader Joe’s", category: "Milk & Cream"), Match.relevant)
+        XCTAssertGreaterThan(r("cheese", "Sharp Cheddar Cheese"), Match.relevant)
+        XCTAssertGreaterThan(r("gruyere", "Raw Milk Cave Aged Le Gruyère"), Match.relevant)
+        XCTAssertGreaterThan(r("popcorn", "White Cheddar Popcorn"), Match.relevant)
+    }
+
     func testEggsBananasChicken() {
         XCTAssertGreaterThan(r("eggs", "Eggland's Best Classic Large White Eggs, 12 count"), Match.relevant)
         XCTAssertLessThan(r("eggs", "Egg Noodles"), Match.relevant)
