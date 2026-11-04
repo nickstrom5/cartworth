@@ -551,6 +551,11 @@ enum Units {
     /// pieceWeightVaries in shared/units.js.
     private static let pieceWeightVariesRx = Rx("\\bpumpkins?\\b")
     static func pieceWeightVaries(_ name: String) -> Bool { pieceWeightVariesRx.test(name.lowercased()) }
+    /// Per-lb produce whose retailer "each (est.)" is not one of what the shopper buys: pumpkins, and
+    /// celery, whose estimate prices one rib (Hannaford's $3.39/lb "Celery Stalk" at $0.47 "each"; the
+    /// Thanksgiving core list). Port of noEachEstimate in shared/units.js.
+    private static let noEachEstimateRx = Rx("\\bcelery\\b")
+    static func noEachEstimate(_ name: String) -> Bool { pieceWeightVaries(name) || noEachEstimateRx.test(name.lowercased()) }
 
     /// One whole pumpkin at a fixed price with its weight stated (Fry's "Pumpkin", 13 lb, $7.99, the
     /// third Halloween run): that price buys one pumpkin, so it is a real per-pumpkin price. Two

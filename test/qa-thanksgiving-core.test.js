@@ -322,3 +322,21 @@ test('DEFECT 15: frozen pearl onions are not onions', () => {
   matches('green beans', 'Frozen Cut Green Beans', { category: 'Frozen Green Beans' });
   matches('onions', 'Red Onion Bag', { category: 'Red Onions' });
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 16 (Manchester NH, Newark): a per-lb "Celery Stalk" was ranked by Instacart's "each (est.)"
+// figure, which prices one rib: Hannaford's at $3.39/lb came to $0.47 each and Weis's at $6.89/lb to
+// $0.62, each the best celery in its ZIP, against bunches at $1.50 to $2.23.
+// ---------------------------------------------------------------------------
+test('DEFECT 16: per-lb celery gets no price per bunch', () => {
+  const stalk = item('hannaford', 'Celery Stalk', '1 each', 3.39, { soldBy: 'lb', estEach: 0.47, category: 'Celery' });
+  assert.equal(stalk.unit.count, undefined);
+  assert.equal(stalk.unit.weight.perBase, 3.39 / 16);
+  const { stores } = bestPerStore('celery', {
+    hannaford: [stalk],
+    pricerite: [item('pricerite', 'Celery', '1 ea', 2.23, { category: 'Celery' })],
+  }, { dim: 'count' });
+  assert.deepEqual(Object.keys(stores), ['pricerite']);
+  // A banana's estimate is one banana and stays.
+  assert.equal(item('kroger', 'Bananas', '1 each', 0.59, { soldBy: 'lb', estEach: 0.2 }).unit.count.perBase, 0.2);
+});

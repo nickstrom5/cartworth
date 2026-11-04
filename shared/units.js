@@ -565,6 +565,18 @@ export function pieceWeightVaries(name) {
 }
 
 /**
+ * Per-lb produce whose retailer "each (est.)" is not one of what the shopper buys: the pumpkins above,
+ * and celery, whose estimate prices one rib. Hannaford's "Celery Stalk" at $3.39/lb came to $0.47
+ * "each" and Weis's at $6.89/lb to $0.62, each the best celery in its ZIP against bunches at $1.50 to
+ * $2.23 (Manchester NH and Newark, the Thanksgiving core list). Sold by the pound, these keep their
+ * per-pound price and no per-piece one.
+ */
+const NO_EACH_ESTIMATE_RE = /\bcelery\b/;
+export function noEachEstimate(name) {
+  return pieceWeightVaries(name) || NO_EACH_ESTIMATE_RE.test(String(name || '').toLowerCase());
+}
+
+/**
  * One whole pumpkin at a fixed price, with its weight stated: Fry's "Pumpkin", 13 lb, $7.99 (the
  * third Halloween run, Phoenix). The $7.99 is what one pumpkin costs at the register, so it is a
  * real price per pumpkin, not an estimate, and it competes with the pumpkins sold "1 ea". Without it

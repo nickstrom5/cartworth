@@ -2813,3 +2813,14 @@ extension ThanksgivingCoreTests {
         XCTAssertEqual(stores["walmart"]?.product.name, "Yellow Onions, 3 lb Bag")
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 16 (Manchester NH, Newark): a per-lb "Celery Stalk" was ranked at one rib's estimate ($0.47 "each").
+    func testPerLbCeleryGetsNoPricePerBunch() {
+        let stalk = ProductFactory.make(ProductInput(storeId: "hannaford", id: "h-celery", name: "Celery Stalk", sizeText: "1 each", price: 3.39, soldBy: .lb, estEach: 0.47, category: "Celery"))!
+        XCTAssertNil(stalk.unitPrice(.count))
+        XCTAssertEqual(stalk.unitPrice(.weight)!.perBase, 3.39 / 16, accuracy: 1e-9)
+        let bananas = ProductFactory.make(ProductInput(storeId: "kroger", id: "k-bananas", name: "Bananas", sizeText: "1 each", price: 0.59, soldBy: .lb, estEach: 0.2))!
+        XCTAssertEqual(bananas.unitPrice(.count)?.perBase, 0.2)
+    }
+}
