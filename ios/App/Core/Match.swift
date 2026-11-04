@@ -203,7 +203,9 @@ enum Match {
         // A pumpkin pie is not a pumpkin (Halloween). Port of shared/match.js.
         "pumpkin pie",
         // Celery root is another vegetable (Thanksgiving, NYC). Port of shared/match.js.
-        "celery root"].map { tokens($0) }
+        "celery root",
+        // Brown Turkey is a fig (Key Food's "Brown Turkey Fig Tree" answered "fresh turkey"). Port of shared/match.js.
+        "turkey fig"].map { tokens($0) }
     private static let modifierCompounds = ["baking soda", "cooking wine", "creme egg", "cadbury egg", "chocolate egg", "plastic egg", "mini egg",
         "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak",
         // Scallions are not onions (Thanksgiving, NYC). Port of shared/match.js.
@@ -306,7 +308,7 @@ enum Match {
     /// Newark's best fresh turkey (the Thanksgiving core list). Port of FROZEN_RE.
     private static let frozenRx = Rx("\\bfrozen\\b")
     /// Port of PREPARED_AISLE_RE.
-    private static let preparedAisleRx = Rx("\\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides)\\b")
+    private static let preparedAisleRx = Rx("\\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides|prepared (?!produce|vegetables?|veggies|fruits?))\\b")
     private static let heavyRx = Rx("\\bheavy\\b")
     private static let lightRx = Rx("\\blight\\b")
     private static let turkeyDishAisleRx = Rx("\\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?|seasonings?|spices?|herbs?)\\b")

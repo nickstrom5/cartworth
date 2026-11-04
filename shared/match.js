@@ -233,7 +233,10 @@ const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn to
   // BJ's "Wellsley Farms 12 Inch Pumpkin Pie" answered "pumpkin" (the Halloween run). "Pie Pumpkin" is a pumpkin.
   'pumpkin pie',
   // Celery root (celeriac) is another vegetable: Food Bazaar's "Celery Root (Knob)" answered "celery" (Thanksgiving, NYC).
-  'celery root'];
+  'celery root',
+  // Brown Turkey is a fig: Key Food's "Organic Heirloom Brown Turkey Fig Tree", 8 oz of figs, answered
+  // Newark's "fresh turkey" (the Thanksgiving core list rerun).
+  'turkey fig'];
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
   'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
   // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
@@ -263,7 +266,9 @@ const CUTS = new Set(['wing', 'drumstick', 'thigh', 'breast', 'leg', 'tenderloin
 // Heads of fresh-produce searches (fruit is FRESH_FRUIT_RE), and the produce words that make a mix. Not
 // words that also name a variety of something else: cherry/grape/pear tomatoes, orange/banana peppers.
 const PRODUCE_HEAD_RE = /^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|parsley|basil|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|garlic|ginger|scallion|avocado)$/;
-const PREPARED_AISLE_RE = /\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides)\b/;
+// "Prepared Potatoes" held H Mart's "HAITAI Baked Sweet Potato" 5 ct (the Newark rerun); prepared produce
+// (cut celery, diced onions) is still the produce.
+const PREPARED_AISLE_RE = /\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides|prepared (?!produce|vegetables?|veggies|fruits?))\b/;
 // Shallots: Albertsons' and Vons' "Onions Shallots" answered Las Vegas's onions (the Thanksgiving core list).
 const PRODUCE_WORD_RE = /^(?:shallot|leek|onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$/;
 const FRESH_VEG_MEAT_RE = /^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$/;

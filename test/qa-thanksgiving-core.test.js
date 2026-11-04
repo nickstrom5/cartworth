@@ -397,3 +397,17 @@ test('DEFECT 19: a whole turkey "1 ea" with no weight gets no price per bird', (
   assert.ok(item('x', 'Turkey Necks', '1 ea', 3.99, { category: 'Whole Turkey' }).unit.count);
   assert.ok(item('x', 'Turkey Cookie Cutter', '1 ea', 2.99).unit.count);
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 20 (Newark rerun, with the fixes above): Key Food's "Organic Heirloom Brown Turkey Fig Tree",
+// 8 oz of figs, answered "fresh turkey" once the turkey wings stopped; H Mart's "HAITAI Baked Sweet
+// Potato" 5 ct, in Prepared Potatoes, took the bungeo-pang's place in "sweet potatoes".
+// ---------------------------------------------------------------------------
+test('DEFECT 20: Brown Turkey figs and baked sweet potatoes from the prepared aisle', () => {
+  rejects('fresh turkey', 'Organic Heirloom Brown Turkey Fig Tree', { category: 'Figs' });
+  rejects('turkey', 'Brown Turkey Figs');
+  matches('brown turkey figs', 'Brown Turkey Figs');
+  rejects('sweet potatoes', 'HAITAI Baked Sweet Potato', { category: 'Prepared Potatoes' });
+  matches('sweet potatoes', 'SWEET POTATO', { category: 'Sweet Potatoes' });
+  matches('celery', 'Celery Sticks', { category: 'Prepared Vegetables' });
+});

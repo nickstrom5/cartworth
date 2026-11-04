@@ -2867,3 +2867,13 @@ extension ThanksgivingCoreTests {
         XCTAssertTrue(stores.isEmpty)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 20 (Newark rerun): Brown Turkey figs answered "fresh turkey"; a prepared baked sweet potato "sweet potatoes".
+    func testBrownTurkeyFigsAndPreparedSweetPotatoes() {
+        XCTAssertLessThan(Match.relevance(query: "fresh turkey", name: "Organic Heirloom Brown Turkey Fig Tree", category: "Figs"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "brown turkey figs", name: "Brown Turkey Figs"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "sweet potatoes", name: "HAITAI Baked Sweet Potato", category: "Prepared Potatoes"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "celery", name: "Celery Sticks", category: "Prepared Vegetables"), Match.relevant)
+    }
+}
