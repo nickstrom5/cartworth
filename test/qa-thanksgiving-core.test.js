@@ -246,3 +246,19 @@ test('DEFECT 10: stuffing, sliced roast breast and a prepared side are not what 
   matches('green beans', 'Happy Harvest Cut Green Beans', { category: 'Canned Green Beans' });
   matches('baked beans', "Bush's Original Baked Beans", { category: 'Canned Beans & Sides' });
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 11 (Milwaukee, partial): Piggly Wiggly's "Butterball Natural Roast Gold Turkey", $6.49/lb
+// in Turkey Breast, answered "fresh turkey": the aisle named the part the name did not. Woodman's
+// "Chinese Celery" (a leaf vegetable of its own) answered "celery".
+// ---------------------------------------------------------------------------
+test('DEFECT 11: the aisle names the part, and Chinese celery is not celery', () => {
+  rejects('fresh turkey', 'Butterball Natural Roast Gold Turkey', { category: 'Turkey Breast' });
+  rejects('turkey', 'Butterball Natural Roast Gold Turkey', { category: 'Frozen Turkey Breast' });
+  matches('turkey breast', 'Butterball Natural Roast Gold Turkey', { category: 'Turkey Breast' });
+  matches('turkey', 'Jennie-O Less Than 14 Pounds Turkey', { category: 'Whole Turkey' });
+  matches('turkey', 'Butterball Frozen Whole Turkey', { category: 'Whole Turkeys & Turkey Breasts' });
+  rejects('celery', 'Chinese Celery', { category: 'Celery' });
+  matches('chinese celery', 'Chinese Celery');
+  matches('celery', 'Dole Celery', { category: 'Celery' });
+});

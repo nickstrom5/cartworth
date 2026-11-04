@@ -235,6 +235,8 @@ const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury
   'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
   // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
   'green onion', 'spring onion',
+  // Chinese celery is a leaf vegetable of its own: Woodman's answered Milwaukee's "celery" with it.
+  'chinese celery',
   // Fruit and nut butters, and margarine that says so: apple butter is not butter.
   'apple butter', 'pumpkin butter', 'shea butter', 'cocoa butter', 'not butter'];
 // Tokenised with the matcher's own tokens() ("tortillas" stays "tortillas"), on first use: tokens()
@@ -433,6 +435,10 @@ function otherTurkeyPart(query, nameNorm, category) {
   const want = new Set((normalize(query).match(TURKEY_PART_RE) || []).map(turkeyPartStem));
   const parts = (nameNorm.replace(/\bwith\b.*$/, '').match(TURKEY_PART_RE) || []).map(turkeyPartStem);
   if (LUNCH_CAT_RE.test(normalize(category || ''))) parts.push('deli');
+  // The aisle names the part when the name does not: Piggly Wiggly's "Butterball Natural Roast Gold
+  // Turkey", $6.49/lb in Turkey Breast, answered "fresh turkey" in Milwaukee. Not an aisle that also
+  // holds whole birds ("Whole Turkeys & Breasts").
+  if (!/\bwhole\b/.test(normalize(category || ''))) parts.push(...(normalize(category || '').match(TURKEY_PART_RE) || []).map(turkeyPartStem));
   // Deli turkey is mostly sliced breast: "turkey lunch meat" is answered by "Turkey Breast Lunch Meat".
   const deli = ['deli', 'sliced', 'lunchmeat', 'shaved', 'thin', 'ultrathin', 'ovenroasted'];
   const deliOk = deli.some((d) => want.has(d)) ? new Set([...deli, 'breast']) : new Set();

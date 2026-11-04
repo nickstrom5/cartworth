@@ -205,6 +205,8 @@ enum Match {
         "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak",
         // Scallions are not onions (Thanksgiving, NYC). Port of shared/match.js.
         "green onion", "spring onion",
+        // Chinese celery is a leaf vegetable of its own (Woodman's, Milwaukee). Port of shared/match.js.
+        "chinese celery",
         // Fruit and nut butters, and margarine that says so. Port of shared/match.js.
         "apple butter", "pumpkin butter", "shea butter", "cocoa butter", "not butter"].map { tokens($0) }
     private static func stem(_ w: String) -> String { w.hasSuffix("s") ? String(w.dropLast()) : w }
@@ -289,6 +291,8 @@ enum Match {
         let head = withTailRx.stringByReplacingMatches(in: nameNorm, range: NSRange(nameNorm.startIndex..., in: nameNorm), withTemplate: "")
         var parts = turkeyPartRx.matches(head).compactMap { $0.first ?? nil }.map(turkeyPartStem)
         if lunchCatRx.test(normalize(category ?? "")) { parts.append("deli") }
+        // The aisle names the part when the name does not ("Butterball Natural Roast Gold Turkey" in Turkey Breast).
+        if !Rx("\\bwhole\\b").test(normalize(category ?? "")) { parts += turkeyPartRx.matches(normalize(category ?? "")).compactMap { $0.first ?? nil }.map(turkeyPartStem) }
         // Deli turkey is mostly sliced breast: "turkey lunch meat" is answered by "Turkey Breast Lunch Meat".
         let deli = ["deli", "sliced", "lunchmeat", "shaved", "thin", "ultrathin", "ovenroasted"]
         let deliOk: Set<String> = deli.contains(where: { want.contains($0) }) ? Set(deli + ["breast"]) : []

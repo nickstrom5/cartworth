@@ -2745,3 +2745,14 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "baked beans", name: "Bush's Original Baked Beans", category: "Canned Beans & Sides"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 11 (Milwaukee, partial): a breast roast filed under Turkey Breast answered "fresh turkey"; Chinese celery answered "celery".
+    func testTheAisleNamesThePartAndChineseCeleryIsNotCelery() {
+        XCTAssertLessThan(Match.relevance(query: "fresh turkey", name: "Butterball Natural Roast Gold Turkey", category: "Turkey Breast"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey breast", name: "Butterball Natural Roast Gold Turkey", category: "Turkey Breast"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey", name: "Jennie-O Less Than 14 Pounds Turkey", category: "Whole Turkey"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "celery", name: "Chinese Celery", category: "Celery"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "chinese celery", name: "Chinese Celery"), Match.relevant)
+    }
+}
