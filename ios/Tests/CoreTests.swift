@@ -2204,10 +2204,16 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "whole turkey", name: "Butterball Whole Turkey Frozen 12-16 lb"), Match.relevant, "Butterball Whole Turkey Frozen 12-16 lb")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "whole turkey", name: "Jennie-O Whole Turkey"), Match.relevant, "Jennie-O Whole Turkey")
         XCTAssertLessThan(Match.relevance(query: "whole turkey", name: "Turkey Breast Deli Sliced"), Match.relevant, "Turkey Breast Deli Sliced")
+        XCTAssertLessThan(Match.relevance(query: "whole turkey", name: "Honeysuckle White Whole Turkey Breast"), Match.relevant, "Honeysuckle White Whole Turkey Breast")
+        XCTAssertLessThan(Match.relevance(query: "whole turkey", name: "Kirkwood Ground Turkey"), Match.relevant, "Kirkwood Ground Turkey")
+        XCTAssertLessThan(Match.relevance(query: "whole turkey", name: "TURKEY WING CUT UP"), Match.relevant, "TURKEY WING CUT UP")
+        XCTAssertLessThan(Match.relevance(query: "whole turkey", name: "Turkey Centerpiece"), Match.relevant, "Turkey Centerpiece")
+        XCTAssertLessThan(Match.relevance(query: "whole turkey", name: "Reynolds Kitchens Turkey Size Oven Bags"), Match.relevant, "Reynolds Kitchens Turkey Size Oven Bags")
     }
     func testStuffing() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "stuffing", name: "Stove Top Stuffing Mix Turkey"), Match.relevant, "Stove Top Stuffing Mix Turkey")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "stuffing", name: "Pepperidge Farm Herb Seasoned Stuffing"), Match.relevant, "Pepperidge Farm Herb Seasoned Stuffing")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "stuffing", name: "Pepperidge Farm Herb Seasoned Classic Stuffing"), Match.relevant, "Pepperidge Farm Herb Seasoned Classic Stuffing")
     }
     func testCranberrySauce() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "cranberry sauce", name: "Ocean Spray Jellied Cranberry Sauce"), Match.relevant, "Ocean Spray Jellied Cranberry Sauce")
@@ -2260,10 +2266,14 @@ final class HolidayMatrixTests: XCTestCase {
         XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Pumpkin Bread Mix"), Match.relevant, "Pumpkin Bread Mix")
         XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Pumpkin Spice Latte Creamer"), Match.relevant, "Pumpkin Spice Latte Creamer")
         XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "Pumpkin Seeds"), Match.relevant, "Pumpkin Seeds")
+        XCTAssertLessThan(Match.relevance(query: "pumpkin puree", name: "McCormick Pumpkin Pie Spice"), Match.relevant, "McCormick Pumpkin Pie Spice")
     }
     func testPieCrust() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pie crust", name: "Pillsbury Refrigerated Pie Crusts 2 ct"), Match.relevant, "Pillsbury Refrigerated Pie Crusts 2 ct")
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pie crust", name: "Keebler Ready Crust Graham Pie Crust"), Match.relevant, "Keebler Ready Crust Graham Pie Crust")
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pie crust", name: "Marie Callender's Deep Dish Pie Shells"), Match.relevant, "Marie Callender's Deep Dish Pie Shells")
+        XCTAssertLessThan(Match.relevance(query: "pie crust", name: "Mrs. Smith's Original Flaky Crust Dutch Apple Pie"), Match.relevant, "Mrs. Smith's Original Flaky Crust Dutch Apple Pie")
+        XCTAssertLessThan(Match.relevance(query: "pie crust", name: "Pie Crust Shield"), Match.relevant, "Pie Crust Shield")
     }
     func testCelery() {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "celery", name: "Celery Stalk"), Match.relevant, "Celery Stalk")
@@ -2587,5 +2597,122 @@ final class HalloweenLiveRerunTests: XCTestCase {
                        ("caramel apples", "Mallow Fireside Caramel Apples"), ("candy apples", "Candy Apples"), ("caramel apple pops", "Tootsie Pops Assorted Caramel Apple Pops Variety Pack")] {
             XCTAssertGreaterThanOrEqual(score(q, n), Match.relevant, "\(q) | \(n)")
         }
+    }
+}
+
+/// The Thanksgiving core dinner list (ops/coverage/thanksgiving-core-qa-2026-11-03.md). Mirrors
+/// test/qa-thanksgiving-core.test.js; the name-only cases are also in the generated HolidayMatrixTests.
+final class ThanksgivingCoreTests: XCTestCase {
+    private func make(_ store: String, _ name: String, _ size: String, _ price: Double, soldBy: SoldBy = .each, category: String? = nil) -> Product {
+        ProductFactory.make(ProductInput(storeId: store, id: "\(store)-\(name)", name: name, sizeText: size, price: price, soldBy: soldBy, category: category))!
+    }
+    private func rejects(_ q: String, _ n: String, category: String? = nil, soldBy: SoldBy = .each, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertLessThan(Match.relevance(query: q, name: n, category: category, soldBy: soldBy), Match.relevant, "\(q) | \(n)", file: file, line: line)
+    }
+    private func matches(_ q: String, _ n: String, category: String? = nil, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: q, name: n, category: category), Match.relevant, "\(q) | \(n)", file: file, line: line)
+    }
+
+    /// DEFECT 1: ground turkey, a wing, necks and deli turkey answered "turkey" in Newark.
+    func testTurkeyWithNoPartNamedIsTheBird() {
+        for q in ["turkey", "whole turkey", "frozen turkey", "fresh turkey"] {
+            for n in ["FESTIVE Ground Turkey with MST Frozen- 1lb, 16 OZ", "Kirkwood Ground Turkey", "TURKEY WING CUT UP", "Turkey Neck", "Jennie-O Turkey Bacon",
+                      "Oscar Mayer Deli Fresh Oven Roasted Turkey Breast", "Hillshire Farm Turkey Kielbasa", "Honeysuckle White Whole Turkey Breast"] { rejects(q, n) }
+        }
+        rejects("turkey breast", "Herb Roasted Turkey Breast", category: "Deli Turkey")
+        rejects("turkey breast", "Turkey Breast Tenderloins")
+        for q in ["turkey", "whole turkey"] {
+            matches(q, "Butterball Frozen Whole Turkey 10-16 lb")
+            matches(q, "Butterball Whole Turkey with Neck and Giblets")
+            matches(q, "10-16 Grade A Turkey", category: "Frozen Whole Turkey")
+        }
+        matches("turkey breast", "Butterball Frozen Turkey Breast")
+        matches("turkey breast", "Butterball Frozen Boneless Turkey Breast Roast with Gravy Packet")
+        matches("ground turkey", "Kirkwood Ground Turkey")
+        matches("turkey wings", "TURKEY WING CUT UP")
+        matches("deli turkey", "Herb Roasted Turkey Breast", category: "Deli Turkey")
+        matches("turkey lunch meat", "Oscar Mayer Deli Fresh Oven Roasted Turkey Breast")
+        let (_, stores) = Compare.bestPerStore(query: "turkey", results: [
+            "walmart": [make("walmart", "FESTIVE Ground Turkey with MST Frozen- 1lb, 16 OZ", "16 oz", 1.98, category: "Other Frozen Turkey"),
+                        make("walmart", "Shady Brook Farms Frozen Whole Turkey", "per lb", 0.97, soldBy: .lb, category: "Frozen Whole Turkey")],
+            "foodbazaar": [make("foodbazaar", "TURKEY WING CUT UP", "per lb", 3.49, soldBy: .lb, category: "Turkey Wing")],
+        ])
+        XCTAssertEqual(Array(stores.keys), ["walmart"])
+        XCTAssertEqual(stores["walmart"]?.product.name, "Shady Brook Farms Frozen Whole Turkey")
+    }
+
+    /// DEFECT 2: a $0.84/lb frozen bird was Newark's best "fresh turkey".
+    func testAFrozenBirdIsNotAFreshTurkey() {
+        rejects("fresh turkey", "Shady Brook Farms Frozen Whole Turkey", category: "Frozen Whole Turkey")
+        rejects("fresh turkey", "Butterball Whole Turkey", category: "Frozen Whole Turkey")
+        rejects("fresh green beans", "Frozen Cut Green Beans")
+        matches("fresh turkey", "Wegmans Fresh Young Turkey, 10-14 lb.", category: "Whole Turkey")
+        matches("frozen turkey", "Shady Brook Farms Frozen Whole Turkey", category: "Frozen Whole Turkey")
+        matches("turkey", "Shady Brook Farms Frozen Whole Turkey", category: "Frozen Whole Turkey")
+    }
+
+    /// DEFECT 3: "canned pumpkin" rejected every can, and a 15 oz can missed "pumpkin puree".
+    func testACanOfPumpkinAnswersCannedPumpkinAndPuree() {
+        for q in ["canned pumpkin", "pumpkin puree"] {
+            matches(q, "Libby's 100% Pure Pumpkin")
+            XCTAssertGreaterThanOrEqual(Compare.score(query: q, [make("walmart", "Great Value Pumpkin", "15 oz", 1.0)])[0].score, Match.relevant, q)
+            rejects(q, "Libby's Easy Pumpkin Pie Mix")
+            rejects(q, "McCormick Pumpkin Pie Spice")
+            rejects(q, "Pumpkin Seeds")
+            XCTAssertLessThan(Compare.score(query: q, [make("x", "Pie Pumpkin", "1 each", 1.29, soldBy: .lb, category: "Produce")])[0].score, Match.relevant, q)
+            XCTAssertLessThan(Compare.score(query: q, [make("x", "Large Carving Pumpkin", "1 ea", 4.99, category: "Pumpkins")])[0].score, Match.relevant, q)
+        }
+        matches("canned pumpkin", "Pumpkin", category: "Canned Vegetables")
+        XCTAssertLessThan(Compare.score(query: "pumpkin", [make("walmart", "Great Value Pumpkin", "15 oz", 1.0)])[0].score, Match.relevant)
+    }
+
+    /// DEFECT 4: condensed soup, turkey gravy, stuffing, pie shells and PET milk scored under the cut.
+    func testThanksgivingStaplesAnswerTheirSearches() {
+        matches("cream of mushroom soup", "Campbell's Condensed Cream of Mushroom Soup")
+        matches("gravy", "Heinz HomeStyle Turkey Gravy")
+        matches("gravy", "Kinder's Roasted Turkey Gravy")
+        matches("stuffing mix", "Pepperidge Farm Herb Seasoned Classic Stuffing")
+        matches("pie crust", "Marie Callender's Deep Dish Pie Shells")
+        matches("evaporated milk", "Pet Evaporated Milk")
+        rejects("cream of mushroom soup", "Campbell's Condensed Cream of Chicken Soup")
+        rejects("milk", "Eagle Brand Sweetened Condensed Milk")
+        rejects("gravy", "Biscuits and Gravy")
+        rejects("turkey", "Butterball Turkey Gravy")
+        rejects("dog food", "Pet Evaporated Milk")
+    }
+
+    /// DEFECT 5: a centerpiece, a gravy boat and a pie crust shield answered food searches.
+    func testTableAndKitchenGoodsAreNotFood() {
+        rejects("turkey", "Turkey Centerpiece")
+        rejects("turkey", "Reynolds Kitchens Turkey Size Oven Bags")
+        rejects("turkey", "Turkey Roasting Rack")
+        rejects("gravy", "Gravy Boat")
+        rejects("pie crust", "Pie Crust Shield")
+        matches("gravy boat", "Gravy Boat")
+    }
+
+    /// DEFECT 6: a pie pumpkin, or anything sold by the pound, is not a pumpkin pie.
+    func testTheProduceIsNotThePie() {
+        rejects("pumpkin pie", "Pie Pumpkin")
+        rejects("pumpkin pie", "Pumpkin Pie", soldBy: .lb)
+        matches("pumpkin pie", "Marie Callender's Pumpkin Pie")
+        matches("pie pumpkin", "Sugar Pie Pumpkin")
+    }
+
+    /// DEFECT 7: Mrs. Smith's "Original Flaky Crust Dutch Apple Pie" was the best pie crust at four Newark stores.
+    func testAPieIsNotAPieCrust() {
+        rejects("pie crust", "Mrs. Smith's Original Flaky Crust Dutch Apple Pie", category: "Frozen Pies")
+        rejects("pie crust", "Mrs. Smith's Original Flaky Crust Apple Pie")
+        rejects("pie crust", "Deep Dish Pumpkin Pie", category: "Frozen Pies")
+        matches("pie crust", "Marie Callender's Pastry Pie Shells", category: "Frozen Pie Crusts")
+        matches("pie crust", "Pillsbury Premade Refrigerated Pie Crusts", category: "Pie Dough")
+    }
+
+    /// DEFECT 8: a frozen pastry in Frozen Asian Meals answered "sweet potatoes" at 99 Ranch and H Mart.
+    func testAMealAisleDoesNotAnswerAProduceSearch() {
+        rejects("sweet potatoes", "Pulmuone Foods Sweet Potato Bungeo Pang", category: "Frozen Asian Meals")
+        rejects("onions", "Onion Rings", category: "Frozen Snacks")
+        matches("sweet potatoes", "Jumbo Sweet Potato (Yam)", category: "Sweet Potatoes")
+        matches("celery", "Celery Hearts", category: "Fresh Vegetables")
     }
 }

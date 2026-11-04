@@ -10,6 +10,7 @@
 //   BASKET_DATA_DIR=<scratch> NODE_USE_ENV_PROXY=1 node ops/coverage/holiday-matrix.mjs --out <dir> [--only TX,CA]
 //   node ops/coverage/holiday-matrix.mjs --plan          # print the assignment and exit
 //   ... --holiday thanksgiving --only TX,CA,IL           # one holiday's list in the chosen states
+//   ... --holiday thanksgiving-core --only NJ,NC,WI      # a QA list below (not an app occasion)
 //
 // The run stops at the first state where any retailer refused us (429), so a refusal is never
 // carried into the next state (ops/coverage/refusals.mjs).
@@ -28,14 +29,27 @@ const OUT = path.resolve(opt('--out', path.join(HERE, 'holiday-matrix')));
 const ONLY = opt('--only', '') ? new Set(opt('--only', '').split(',')) : null;
 const HOLIDAY = opt('--holiday', null);
 
+// QA lists that are not app occasions: the app's own list is short, these hunt for wrong picks.
+// The Thanksgiving core dinner (3 Nov 2026) asks for each form a shopper might type.
+const QA_LISTS = [
+  { id: 'thanksgiving-core', list: [
+    'whole turkey', 'frozen turkey', 'fresh turkey', 'turkey', 'turkey breast', 'stuffing mix',
+    'cranberry sauce', 'jellied cranberry sauce', 'whole berry cranberry sauce', 'canned pumpkin',
+    'pie crust', 'evaporated milk', 'sweet potatoes', 'russet potatoes', 'green beans',
+    'cream of mushroom soup', 'french fried onions', 'dinner rolls', 'butter', 'heavy cream', 'gravy',
+    'celery', 'onions', 'brown sugar', 'marshmallows', 'pecans', 'pumpkin pie',
+  ] },
+];
+const LISTS = [...OCCASIONS, ...QA_LISTS];
+
 // The sweep's metro ZIP for every state and DC.
 const metros = fs.readFileSync(path.join(HERE, 'flipp-2026-09-24.jsonl'), 'utf8').trim().split('\n')
   .map((l) => JSON.parse(l)).filter((r) => String(r.kind).startsWith('metro'))
   .sort((a, b) => a.st.localeCompare(b.st));
 
 export const PLAN = metros.map((m, i) => {
-  const o = HOLIDAY ? OCCASIONS.find((x) => x.id === HOLIDAY) : OCCASIONS[i % OCCASIONS.length];
-  if (!o) throw new Error(`no holiday "${HOLIDAY}": ${OCCASIONS.map((x) => x.id).join(', ')}`);
+  const o = HOLIDAY ? LISTS.find((x) => x.id === HOLIDAY) : OCCASIONS[i % OCCASIONS.length];
+  if (!o) throw new Error(`no holiday "${HOLIDAY}": ${LISTS.map((x) => x.id).join(', ')}`);
   return { state: m.st, zip: m.zip, place: String(m.kind).replace(/^metro \(|\)$/g, ''), holiday: o.id, items: o.list };
 });
 

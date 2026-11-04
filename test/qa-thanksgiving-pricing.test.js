@@ -277,16 +277,18 @@ test('control: punctuation still counts as a word boundary', () => {
 // turkey distribution, a correctly-formed bird was flagged at $0.37, $0.49 and $0.99/lb in all
 // four ZIPs. Every one of the guard's 10 low-side flags in the sweep was a false positive.
 // ---------------------------------------------------------------------------
-// A "turkey" search is dominated by deli and ground turkey, so the median in the live sweep sat
+// A "turkey" search was dominated by deli and ground turkey, so the median in the live sweep sat
 // between $8.87 and $10.30/lb in the four ZIPs — which is what put the old 1/8 suppression floor
-// at $1.11-$1.29/lb, squarely inside the range a supermarket sells a Thanksgiving bird for.
+// at $1.11-$1.29/lb, squarely inside the range a supermarket sells a Thanksgiving bird for. Those
+// no longer answer "turkey" (the Thanksgiving core list, 3 Nov), but organic and heritage birds
+// still put a whole-bird median near $6.50/lb, where the old floor was $0.81.
 const turkeyMarket = () => ({
-  a: [item('a', 'Deli Turkey Breast', 'per lb', 9.49, { soldBy: 'lb' })],
-  b: [item('b', 'Oven Roasted Turkey Breast', 'per lb', 9.99, { soldBy: 'lb' })],
-  c: [item('c', 'Ground Turkey', 'per lb', 5.99, { soldBy: 'lb' })],
-  d: [item('d', 'Turkey Breast Tenderloin', 'per lb', 8.99, { soldBy: 'lb' })],
-  e: [item('e', 'Organic Turkey Breast', 'per lb', 11.99, { soldBy: 'lb' })],
-  f: [item('f', 'Turkey Pastrami', 'per lb', 12.99, { soldBy: 'lb' })],
+  a: [item('a', 'Organic Whole Turkey', 'per lb', 3.99, { soldBy: 'lb' })],
+  b: [item('b', 'Diestel Fresh Whole Turkey', 'per lb', 4.99, { soldBy: 'lb' })],
+  c: [item('c', 'Mary\'s Free Range Turkey', 'per lb', 5.99, { soldBy: 'lb' })],
+  d: [item('d', 'Organic Fresh Turkey', 'per lb', 6.99, { soldBy: 'lb' })],
+  e: [item('e', 'Pasture Raised Whole Turkey', 'per lb', 7.99, { soldBy: 'lb' })],
+  f: [item('f', 'Heritage Turkey', 'per lb', 9.99, { soldBy: 'lb' })],
 });
 
 test('DEFECT 10: a real holiday loss-leader survives the plausibility guard', () => {
