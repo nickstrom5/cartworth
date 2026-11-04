@@ -2781,3 +2781,14 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "peanut butter", name: "Jif Creamy Peanut Butter"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 13 (Salt Lake City, Portland, partial): Whole Foods' deli turkey by the pound answered "turkey".
+    func testDeliTurkeyByThePoundIsNotABird() {
+        XCTAssertLessThan(Match.relevance(query: "turkey", name: "No Salt Turkey", soldBy: .lb), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "turkey", name: "Peppered Turkey", soldBy: .lb), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "turkey breast", name: "In House Herb Turkey Breast", soldBy: .lb), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "deli turkey", name: "Peppered Turkey", category: "Deli Turkey"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey", name: "Honeysuckle White Frozen Whole Turkey", category: "Frozen Whole Turkey"), Match.relevant)
+    }
+}

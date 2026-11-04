@@ -290,3 +290,12 @@ test('DEFECT 12 (Salt Lake City, partial): snack pecans are not baking pecans', 
   matches('honey roasted peanuts', 'Planters Honey Roasted Peanuts');
   matches('peanut butter', 'Jif Creamy Peanut Butter');
 });
+
+test('DEFECT 13 (Salt Lake City, Portland, partial): Whole Foods deli turkey by the pound is not a bird', () => {
+  rejects('turkey', 'No Salt Turkey', { soldBy: 'lb' });
+  rejects('turkey', 'Peppered Turkey', { soldBy: 'lb' });
+  rejects('turkey breast', 'In House Herb Turkey Breast', { soldBy: 'lb' });
+  matches('deli turkey', 'Peppered Turkey', { category: 'Deli Turkey' });
+  matches('turkey', 'Honeysuckle White Frozen Whole Turkey', { category: 'Frozen Whole Turkey' });
+  matches('turkey', 'Jennie-O Frozen Prime Young Turkey', { soldBy: 'lb', category: 'Frozen Whole Turkey' });
+});

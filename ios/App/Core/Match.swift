@@ -281,7 +281,7 @@ enum Match {
     /// A turkey search names the part it wants; "turkey" with none named is the bird. Ground turkey, a
     /// wing, deli slices and necks answered "turkey", "frozen turkey" and "fresh turkey" in Newark, and
     /// deli turkey "turkey breast" (the Thanksgiving core list). Ports of TURKEY_PART_RE and otherTurkeyPart().
-    private static let turkeyPartRx = Rx("\\b(?:ground|breasts?|tenderloins?|cutlets?|deli|sliced|lunch ?meat|lunchmeat|bacon|sausages?|kielbasa|burgers?|patt(?:y|ies)|meatballs?|legs?|drumsticks?|wings?|thighs?|necks?|gizzards?|giblets?|franks?|hot ?dogs?|pastrami|salami|pepperoni|ham|bologna|jerky|sticks?|strips?|chili|tails?|backs?|links?|pot pies?|shaved|(?:ultra )?thin|oven roasted)\\b")
+    private static let turkeyPartRx = Rx("\\b(?:ground|breasts?|tenderloins?|cutlets?|deli|sliced|lunch ?meat|lunchmeat|bacon|sausages?|kielbasa|burgers?|patt(?:y|ies)|meatballs?|legs?|drumsticks?|wings?|thighs?|necks?|gizzards?|giblets?|franks?|hot ?dogs?|pastrami|salami|pepperoni|ham|bologna|jerky|sticks?|strips?|chili|tails?|backs?|links?|pot pies?|shaved|(?:ultra )?thin|oven roasted|peppered|no salt|in house|herb|mesquite|cajun)\\b")
     private static let withTailRx = try! NSRegularExpression(pattern: "\\bwith\\b.*$")
     private static func turkeyPartStem(_ w: String) -> String {
         let v = w.replacingOccurrences(of: " ", with: "")
@@ -296,7 +296,7 @@ enum Match {
         // The aisle names the part when the name does not ("Butterball Natural Roast Gold Turkey" in Turkey Breast).
         if !Rx("\\bwhole\\b").test(normalize(category ?? "")) { parts += turkeyPartRx.matches(normalize(category ?? "")).compactMap { $0.first ?? nil }.map(turkeyPartStem) }
         // Deli turkey is mostly sliced breast: "turkey lunch meat" is answered by "Turkey Breast Lunch Meat".
-        let deli = ["deli", "sliced", "lunchmeat", "shaved", "thin", "ultrathin", "ovenroasted"]
+        let deli = ["deli", "sliced", "lunchmeat", "shaved", "thin", "ultrathin", "ovenroasted", "peppered", "nosalt", "inhouse", "herb", "mesquite", "cajun"]
         let deliOk: Set<String> = deli.contains(where: { want.contains($0) }) ? Set(deli + ["breast"]) : []
         return parts.contains { !want.contains($0) && !deliOk.contains($0) }
     }

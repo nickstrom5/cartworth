@@ -429,9 +429,11 @@ function cannedPumpkin(product, nameTok, catTok) {
 // "frozen turkey" (ALDI's "Kirkwood Ground Turkey") and "fresh turkey" (Food Bazaar's "Turkey
 // Neck"), and deli turkey answered "turkey breast" (ACME's "Herb Roasted Turkey Breast" in Deli
 // Turkey), as did 6 oz packs of "Organic Oven Roasted Turkey Breast" in Charlotte (Trader Joe's,
-// Whole Foods). The Thanksgiving core list, 3 Nov. Read before any "with ..." tail, so a bird "with Neck
+// Whole Foods), and Whole Foods' deli by the pound, which has no aisle: "No Salt Turkey" ($13.99/lb)
+// was Salt Lake City's only "turkey", "Peppered Turkey" and "In House Herb Turkey Breast" answered in
+// Portland. The Thanksgiving core list, 3 Nov. Read before any "with ..." tail, so a bird "with Neck
 // and Giblets" is still a bird; a deli aisle counts as the word.
-const TURKEY_PART_RE = /\b(?:ground|breasts?|tenderloins?|cutlets?|deli|sliced|lunch ?meat|lunchmeat|bacon|sausages?|kielbasa|burgers?|patt(?:y|ies)|meatballs?|legs?|drumsticks?|wings?|thighs?|necks?|gizzards?|giblets?|franks?|hot ?dogs?|pastrami|salami|pepperoni|ham|bologna|jerky|sticks?|strips?|chili|tails?|backs?|links?|pot pies?|shaved|(?:ultra )?thin|oven roasted)\b/g;
+const TURKEY_PART_RE = /\b(?:ground|breasts?|tenderloins?|cutlets?|deli|sliced|lunch ?meat|lunchmeat|bacon|sausages?|kielbasa|burgers?|patt(?:y|ies)|meatballs?|legs?|drumsticks?|wings?|thighs?|necks?|gizzards?|giblets?|franks?|hot ?dogs?|pastrami|salami|pepperoni|ham|bologna|jerky|sticks?|strips?|chili|tails?|backs?|links?|pot pies?|shaved|(?:ultra )?thin|oven roasted|peppered|no salt|in house|herb|mesquite|cajun)\b/g;
 const turkeyPartStem = (w) => w.replace(/ /g, '').replace(/(?:ies|s)$/, (m) => (m === 'ies' ? 'y' : ''));
 function otherTurkeyPart(query, nameNorm, category) {
   const want = new Set((normalize(query).match(TURKEY_PART_RE) || []).map(turkeyPartStem));
@@ -442,7 +444,7 @@ function otherTurkeyPart(query, nameNorm, category) {
   // holds whole birds ("Whole Turkeys & Breasts").
   if (!/\bwhole\b/.test(normalize(category || ''))) parts.push(...(normalize(category || '').match(TURKEY_PART_RE) || []).map(turkeyPartStem));
   // Deli turkey is mostly sliced breast: "turkey lunch meat" is answered by "Turkey Breast Lunch Meat".
-  const deli = ['deli', 'sliced', 'lunchmeat', 'shaved', 'thin', 'ultrathin', 'ovenroasted'];
+  const deli = ['deli', 'sliced', 'lunchmeat', 'shaved', 'thin', 'ultrathin', 'ovenroasted', 'peppered', 'nosalt', 'inhouse', 'herb', 'mesquite', 'cajun'];
   const deliOk = deli.some((d) => want.has(d)) ? new Set([...deli, 'breast']) : new Set();
   return parts.some((w) => !want.has(w) && !deliOk.has(w));
 }
