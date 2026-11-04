@@ -2847,3 +2847,11 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pecans", name: "Private Selection Shelled Pecans", category: "Pecans"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 17 (Virginia Beach, partial): BJ's "Infinite Herbs Turkey Blend" answered "fresh turkey".
+    func testAnHerbBlendForTurkeyIsNotATurkey() {
+        XCTAssertLessThan(Match.relevance(query: "fresh turkey", name: "Infinite Herbs Turkey Blend Rosemary + Sage + Thyme", category: "Other Seasoning Mixes"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey seasoning", name: "McCormick Turkey Seasoning", category: "Spices & Seasonings"), Match.relevant)
+    }
+}

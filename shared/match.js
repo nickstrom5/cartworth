@@ -454,7 +454,7 @@ function otherTurkeyPart(query, nameNorm, category) {
 // "Shady Brook Farms Frozen Whole Turkey", $0.84/lb, was Newark's best fresh turkey, where a fresh bird
 // costs $2-3 (the Thanksgiving core list, 3 Nov).
 const FROZEN_RE = /\bfrozen\b/;
-const TURKEY_DISH_AISLE_RE = /\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?)\b/;
+const TURKEY_DISH_AISLE_RE = /\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?|seasonings?|spices?|herbs?)\b/;
 const PASTRY_CUP_RE = /\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\b/;
 const NUT_DISH_AISLE_RE = /\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|candy)\b/;
 const IN_SHELL_RE = /\bin[- ]?(?:the )?shells?\b/;
@@ -662,7 +662,8 @@ export function relevance(query, product, opts = {}) {
   if (hasPhrase(qt, ['pumpkin', 'pie']) && (product.soldBy === 'lb' || (hasPhrase(words, ['pie', 'pumpkin']) && !hasPhrase(words, ['pumpkin', 'pie'])))) mult *= 0.2;
   if (qt.includes('turkey') && otherTurkeyPart(query, nameNorm, product.category)) mult *= 0.2;
   // ...nor a dish made of it: The Fresh Market's "The Turkey Trot (Half Panini)" and Sprouts' "Turkey
-  // Carnitas" (Prepared Turkey) were Greenville's only "fresh turkey" (the Thanksgiving core list).
+  // Carnitas" (Prepared Turkey) were Greenville's only "fresh turkey", and BJ's "Infinite Herbs Turkey
+  // Blend" (3 oz, Other Seasoning Mixes) answered it in Virginia Beach (the Thanksgiving core list).
   if (qt.includes('turkey') && TURKEY_DISH_AISLE_RE.test(normalize(product.category || '')) && !TURKEY_DISH_AISLE_RE.test(normalize(query))) mult *= 0.2;
   // A pie that boasts of its crust is a pie: "Mrs. Smith's Original Flaky Crust Dutch Apple Pie", 37 oz
   // in Frozen Pies, was the best "pie crust" at Stop & Shop, Weis, ACME and Kings (Newark, the

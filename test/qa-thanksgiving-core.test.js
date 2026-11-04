@@ -374,3 +374,9 @@ test('DEFECT 18: phyllo cups, shallots and a pecan cake', () => {
   rejects('pecans', 'Pecan Brazo Gitano', { category: 'Other Cakes' });
   matches('pecans', 'Private Selection Shelled Pecans', { category: 'Pecans' });
 });
+
+test('DEFECT 17 (Virginia Beach, partial): an herb blend for turkey is not a turkey', () => {
+  rejects('fresh turkey', 'Infinite Herbs Turkey Blend Rosemary + Sage + Thyme', { category: 'Other Seasoning Mixes' });
+  matches('turkey seasoning', 'McCormick Turkey Seasoning', { category: 'Spices & Seasonings' });
+  matches('fresh turkey', 'Wegmans Fresh Young Turkey, 10-14 lb.', { category: 'Whole Turkey' });
+});

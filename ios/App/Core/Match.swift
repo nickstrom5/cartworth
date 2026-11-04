@@ -309,7 +309,7 @@ enum Match {
     private static let preparedAisleRx = Rx("\\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides)\\b")
     private static let heavyRx = Rx("\\bheavy\\b")
     private static let lightRx = Rx("\\blight\\b")
-    private static let turkeyDishAisleRx = Rx("\\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?)\\b")
+    private static let turkeyDishAisleRx = Rx("\\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?|seasonings?|spices?|herbs?)\\b")
     private static let pastryCupRx = Rx("\\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\\b")
     private static let nutDishAisleRx = Rx("\\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|candy)\\b")
     private static let inShellRx = Rx("\\bin[- ]?(?:the )?shells?\\b")
