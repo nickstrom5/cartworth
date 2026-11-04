@@ -538,9 +538,11 @@ const PRODUCE_LB = [
  * A container word is just as disqualifying: a "Yellow Onion Bag" is not one 0.5 lb onion, and
  * pricing it as one published $25.98/lb against a real onion median of $1.75.
  */
+// 'bagged': Natural Grocers' "Produce Onions Cipollini (Bagged)", 1 ea at $0.19, was Dallas's best onions
+// at an estimated $0.38/lb, the bag priced as one onion (the Thanksgiving core list).
 // 'jack'/'cheese': "Pepper Jack Cheese Slices" matched the bell-pepper weight, so ten slices were
 // four pounds of peppers and the pack read $0.60/lb (the state x holiday audit).
-const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\b/;
+const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag(?:ged|s)?|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\b/;
 
 export function produceWeightLb(name) {
   const n = String(name || '').toLowerCase();

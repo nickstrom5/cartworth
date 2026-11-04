@@ -184,6 +184,7 @@ test('DEFECT 7: a pie is not a pie crust', () => {
   rejects('pie crust', "Mrs. Smith's Original Flaky Crust Dutch Apple Pie", { category: 'Frozen Pies' });
   rejects('pie crust', "Mrs. Smith's Original Flaky Crust Apple Pie");
   rejects('pie crust', 'Deep Dish Pumpkin Pie', { category: 'Frozen Pies' });
+  rejects('pie crust', 'Fresh Bake Store Baked Double Crust Lemon Pie');
   matches('pie crust', "Marie Callender's Pastry Pie Shells", { category: 'Frozen Pie Crusts' });
   matches('pie crust', 'Pillsbury Premade Refrigerated Pie Crusts', { category: 'Pie Dough' });
   matches('pie crust', 'Pillsbury Pie Crust Dough', { category: 'Pie Dough' });
@@ -410,4 +411,15 @@ test('DEFECT 20: Brown Turkey figs and baked sweet potatoes from the prepared ai
   rejects('sweet potatoes', 'HAITAI Baked Sweet Potato', { category: 'Prepared Potatoes' });
   matches('sweet potatoes', 'SWEET POTATO', { category: 'Sweet Potatoes' });
   matches('celery', 'Celery Sticks', { category: 'Prepared Vegetables' });
+});
+
+// ---------------------------------------------------------------------------
+// DEFECT 21 (Dallas retry): Natural Grocers' "Produce Onions Cipollini (Bagged)", 1 ea at $0.19, was
+// the best onions at an estimated $0.38/lb: the bag was weighed as one onion. "Bag" was a container
+// word; "Bagged" was not.
+// ---------------------------------------------------------------------------
+test('DEFECT 21: a bagged onion gets no one-onion weight', () => {
+  const bag = item('naturalgrocers', 'Produce Onions Cipollini (Bagged)', '1 ea', 0.19, { category: 'Cipollini Onions' });
+  assert.equal(bag.unit.weight, undefined);
+  assert.ok(item('x', 'Yellow Onion', '1 ea', 0.89).unit.weight, 'one loose onion keeps its estimate');
 });

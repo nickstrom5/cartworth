@@ -543,7 +543,9 @@ enum Units {
     /// Ube Purple Yam" — 7.5 oz of ice cream in total — quoted at $1.66/lb when the honest figure
     /// is $12.78/lb. A container word is just as disqualifying: a "Yellow Onion Bag" is not one
     /// 0.5 lb onion, and pricing it as one published $25.98/lb against a real median of $1.75.
-    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\\b")
+    /// "Bagged" too: "Produce Onions Cipollini (Bagged)", 1 ea at $0.19, was Dallas's best onions at an
+    /// estimated $0.38/lb (the Thanksgiving core list). Mirrors shared/units.js.
+    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag(?:ged|s)?|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\\b")
 
     /// Produce whose pieces differ too much in weight for an "each" price worked out from a price per
     /// pound: a pumpkin weighs a quarter pound to twenty-five. Grocery Outlet's $0.99/lb "Small White

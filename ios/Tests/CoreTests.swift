@@ -2877,3 +2877,11 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "celery", name: "Celery Sticks", category: "Prepared Vegetables"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 21 (Dallas retry): "Produce Onions Cipollini (Bagged)", 1 ea at $0.19, was weighed as one onion.
+    func testABaggedOnionGetsNoOneOnionWeight() {
+        XCTAssertNil(make("naturalgrocers", "Produce Onions Cipollini (Bagged)", "1 ea", 0.19, category: "Cipollini Onions").unitPrice(.weight))
+        XCTAssertNotNil(make("x", "Yellow Onion", "1 ea", 0.89).unitPrice(.weight))
+    }
+}

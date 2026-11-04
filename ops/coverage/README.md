@@ -203,3 +203,12 @@ Not changed, for the next pass: "caramel apples" also scores caramel-apple candi
 Soft Caramels, Tootsie Apple Pops) and Whole Foods' "Caramel Apple Blossom" pastry at 0.8. None of them
 won a store. Variety names for mini pumpkins that do not say so (Hooligan, Munchkin) still
 answer "pumpkin".
+
+## Thanksgiving core list (3-4 Nov 2026)
+
+A 27-item Thanksgiving dinner list (`holiday-matrix.mjs --holiday thanksgiving-core`, each form a
+shopper might type: whole, frozen and fresh turkey, "turkey", canned pumpkin, pie crust, heavy cream...)
+in the metro ZIPs of 13 states: NJ, NH, NC, SC, VA, WI, NE, TX, UT, NV, OR, AK, HI. Instacart refused
+this Mac for about 90 minutes, so UT, OR, AK and VA are partial. Findings and fixes are in
+`thanksgiving-core-qa-2026-11-03.md`; the worst were "canned pumpkin" with no answer at all, ground
+turkey, wings and deli breast answering "turkey", and a whole apple pie as the best "pie crust".
