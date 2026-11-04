@@ -10,6 +10,9 @@ import { basisInfo, isPriceable } from '../format.js';
 export function Onboarding() {
   const [widening, setWidening] = useState(false);
   const [rechecking, setRechecking] = useState(false);
+  // What the last "Check again" got back, so a re-check that found nothing new says so instead of
+  // looking like the button did nothing (the Thanksgiving QA: 16 chains still out in Atlanta).
+  const [recheckNote, setRecheckNote] = useState(null);
   const stores = useStore((s) => s.stores);
   const settings = useStore((s) => s.settings);
   const directory = useStore((s) => s.directory);
@@ -66,7 +69,9 @@ export function Onboarding() {
   // you. In rural ZIPs it is often the only source there is, so dropping it would make Cartworth
   // claim it found nothing when it found four.
   const priced = (stores || []).filter((s) => isPriceable(s.basis));
-  const adsOnly = (stores || []).filter((s) => s.basis === 'adsOnly');
+  // A chain that did not answer comes back as ad-only, but it has not been shown to publish no
+  // prices: it is counted in the "didn't answer" notice, not in "Weekly ad only".
+  const adsOnly = (stores || []).filter((s) => s.basis === 'adsOnly' && !s.unresolved);
   // A chain-wide listing has no store and no distance, so it is not one of the stores "within N
   // miles" (the rule directory.js countsFor states). In rural ZIPs of the nationwide sweep it was
   // often the only price source, and the sentence counted Walmart as a store found within 25 miles.
@@ -102,6 +107,8 @@ export function Onboarding() {
       // switched off stays off, and every store already on stays on.
       const add = (dir?.suggested || []).filter((id) => waiting.has(id) && !before.has(id));
       if (add.length) await saveSettings({ stores: [...before, ...add] }, { quiet: true });
+      const still = dir?.unresolved?.length || 0;
+      setRecheckNote(!dir ? null : still >= waiting.size ? 'Still no answer from them. Stores are often busy for a few minutes; try again shortly.' : null);
     } finally {
       setRechecking(false);
     }
@@ -138,6 +145,7 @@ export function Onboarding() {
         <div style=${{ marginTop: 8 }}>
           <button class="btn btn-sm" onClick=${recheck} disabled=${rechecking}>${rechecking ? 'Checking…' : 'Check again'}</button>
         </div>
+        ${recheckNote && !rechecking && html`<div class="small" role="status" style=${{ marginTop: 6 }}>${recheckNote}</div>`}
       </${Notice}>`}
 
     ${!loading && !priced.length && !canWiden &&

@@ -28,7 +28,7 @@ ICON_LINES = [l for l in SUPPORT.split('\n') if 'rel="icon"' in l or 'apple-touc
 ICONS = '\n'.join(l.replace('href="img/', 'href="/img/') for l in ICON_LINES)
 
 
-def page(path, title, description, h1, eyebrow, lede, body, crumbs, article=None):
+def page(path, title, description, h1, eyebrow, lede, body, crumbs, article=None, note=None, updated=UPDATED):
     url = f'{BASE}/{path}' if path else BASE + '/'  # 'guides/' keeps its slash: the server's canonical form
     graph = [
         {'@type': 'Organization', '@id': f'{BASE}/#organization', 'name': 'Cartworth', 'url': f'{BASE}/'},
@@ -38,13 +38,13 @@ def page(path, title, description, h1, eyebrow, lede, body, crumbs, article=None
     if article:
         graph.append({
             '@type': 'Article', '@id': f'{url}#article', 'headline': h1, 'description': description, 'url': url,
-            'inLanguage': 'en-US', 'datePublished': article, 'dateModified': UPDATED, 'image': f'{BASE}/img/og-cartworth.png',
+            'inLanguage': 'en-US', 'datePublished': article, 'dateModified': updated, 'image': f'{BASE}/img/og-cartworth.png',
             'author': {'@id': f'{BASE}/#organization'}, 'publisher': {'@id': f'{BASE}/#organization'},
             'mainEntityOfPage': url, 'breadcrumb': {'@id': f'{url}#breadcrumb'},
         })
     else:
         graph.append({'@type': 'CollectionPage', '@id': f'{url}#webpage', 'url': url, 'name': title, 'description': description,
-                      'inLanguage': 'en-US', 'dateModified': UPDATED, 'isPartOf': {'@id': f'{BASE}/#website'},
+                      'inLanguage': 'en-US', 'dateModified': updated, 'isPartOf': {'@id': f'{BASE}/#website'},
                       'breadcrumb': {'@id': f'{url}#breadcrumb'}})
     t, d = html.escape(title), html.escape(description)
     return f'''<!doctype html>
@@ -84,7 +84,7 @@ def page(path, title, description, h1, eyebrow, lede, body, crumbs, article=None
 
   <div class="wrap wrap-narrow doc-body prose">
 {body}
-{NOTE if article else ''}
+{(note or NOTE) if article else ''}
   </div>
 </main>
 
@@ -204,7 +204,83 @@ UNIT = dict(
 ''',
 )
 
-GUIDES = [INSTACART, UNIT]
+def app_search(item):
+    """A link that opens the free web app on a search for `item` (/app/ redirects to the app and the
+    browser keeps the #fragment, which is the app's own route)."""
+    return f'<a href="/app/#/compare?q={item.replace(" ", "+")}">{item}</a>'
+
+
+# The Thanksgiving card's own list (shared/seasonal.js, generated from the phone's Seasonal.swift).
+# Copied rather than imported so a matcher change there cannot silently rewrite a published page.
+THANKSGIVING_LIST = ['whole turkey', 'stuffing', 'cranberry sauce', 'sweet potatoes', 'russet potatoes', 'green beans',
+                     'dinner rolls', 'butter', 'heavy cream', 'pumpkin puree', 'pie crust', 'celery', 'onions', 'chicken broth']
+
+# No prices and no savings figures on this page, on purpose: it is a how-to, written before the
+# week's ads exist, and anything it promised would be a guess. Remove it from the homepage after
+# 26 Nov 2026 (index.html, the "season" section); the guide itself can stay up for next year.
+THANKSGIVING = dict(
+    path='guides/thanksgiving-dinner-prices',
+    title='Price your Thanksgiving dinner before you shop | Cartworth',
+    description='How to price a whole Thanksgiving list at the stores near you: add sizes, read the turkey deal’s conditions, avoid unit-price traps, and judge a second stop.',
+    h1='Price your Thanksgiving dinner before you shop',
+    eyebrow='Guide · Thanksgiving 2026',
+    lede='Thanksgiving is Thursday, November 26. The list is long, the turkey ads are loud, and the store with the cheapest bird is not always the cheapest for everything else. Here is how to price the whole list at the stores near you, and which lines to read twice.',
+    article='2026-11-03',
+    updated='2026-11-03',
+    note='''    <p class="doc-meta" style="margin-top: 30px">This page quotes no prices: they change every week, and they vary by store and location. Cartworth shows what each store near you is publishing at the moment you search, and it is a guide, not a guarantee. Cartworth is independent and not affiliated with any retailer.</p>''',
+    body=f'''
+    <h2 id="whole-list" style="margin-top: 26px">Price the whole list, not just the turkey</h2>
+    <p>The turkey gets the headlines, but it is one line on a list of fifteen or twenty. A store with a low turkey price can still be the dearer trip once the potatoes, butter, cream and broth are added up. So price everything at once, at every store near you, and then look at the totals.</p>
+    <p>This is the starter list Cartworth suggests for Thanksgiving. Each item opens a comparison across the stores near your ZIP:</p>
+    <ul class="item-links">
+      {"".join(f"<li>{app_search(i)}</li>" for i in THANKSGIVING_LIST)}
+    </ul>
+    <p>From three weeks before the day, the Compare tab of the <a href="/app/">free web app</a> shows a Thanksgiving card with the same list and an <b>Add all to my list</b> button. Add your own extras (gravy, fresh cranberries, eggs, apple cider), then press <b>Plan my trip</b> on the List tab. Cartworth prices every item at every store you follow and shows the cheapest single store, the best two-store and three-store splits, and what the trip would cost if you bought each item wherever it is cheapest.</p>
+
+    <h2 id="sizes">Add sizes, so the totals mean something</h2>
+    <p>A list item with no size is priced at a typical package size from the results, and the plan says so next to each cost. That is fine for celery. It is not fine for the things you buy a lot of. Write the amount you will actually buy:</p>
+    <ul>
+      <li><b>whole turkey 14 lb</b>. Turkeys are sold by the pound, so without a weight the plan has nothing sensible to multiply.</li>
+      <li><b>russet potatoes 5 lb</b>, <b>chicken broth 32 fl oz</b>, <b>heavy cream 1 pt</b>, <b>butter 1 lb</b>.</li>
+      <li>Use the quantity box for multiples: two cans of cranberry sauce is quantity 2, not a new line.</li>
+    </ul>
+    <p>Cartworth then prices exactly that amount at each store, in the same unit, so a 3 lb bag and a 10 lb bag are compared fairly.</p>
+
+    <h2 id="turkey-deals">Read the turkey deal’s conditions</h2>
+    <p>The lowest turkey prices of the year usually come with strings attached. Before you plan around one, check:</p>
+    <ul>
+      <li><b>A minimum purchase.</b> A low or free turkey is often tied to spending a set amount in the same transaction. If you would not spend that there anyway, the deal costs more than it looks.</li>
+      <li><b>A loyalty card or digital coupon.</b> Some prices need a card, or a coupon clipped in the store’s app before you shop.</li>
+      <li><b>A limit.</b> Usually one bird per household or per transaction.</li>
+      <li><b>Which turkeys it covers.</b> Frozen store brand, a named brand, fresh, or a weight range. The headline price rarely covers all of them.</li>
+    </ul>
+    <p>Cartworth shows these conditions with each weekly-ad deal, on the Sales tab and next to the matching search results, and keeps the price without the coupon visible too.</p>
+
+    <h2 id="traps">The unit-price traps on a Thanksgiving list</h2>
+    <p>The same few labels catch people every year. The <a href="/guides/unit-prices">unit-price guide</a> has all six; these are the ones this list runs into:</p>
+    <ul>
+      <li><b>Dinner rolls</b> listed as “12 ct, 15 oz” are twelve rolls weighing 15 oz in total, not twelve 15 oz packs.</li>
+      <li><b>Broth</b> is sold by fluid ounce, but <b>condensed soup</b> for a casserole is sold by weight. Compare each only with its own kind.</li>
+      <li><b>Potatoes and onions</b> are sold by the bag in one store and by the pound, or each, in the next. Pricing loose produce “each” means assuming a weight, so treat that number as an estimate.</li>
+      <li><b>Pumpkin puree</b> comes in more than one can size. The bigger can is not always the better buy per ounce.</li>
+    </ul>
+
+    <h2 id="when">When to shop</h2>
+    <ul>
+      <li><b>Look at next week’s ad early.</b> Many stores post the next circular a few days before it starts. The web app shows next week’s ads as soon as they appear: Sales, then <b>Next week</b>.</li>
+      <li><b>Leave time to thaw a frozen bird.</b> The USDA’s guidance is about a day in the refrigerator for every 4 to 5 pounds, so a large frozen turkey has to be bought, and moved to the fridge, days before Thursday.</li>
+      <li><b>Re-check before you go.</b> Prices change during the week. Press <b>Fresh prices</b> on the trip plan the day you shop.</li>
+    </ul>
+
+    <h2 id="online">Shelf price or online price</h2>
+    <p>Many stores publish their prices only through a delivery storefront, and those can run above the shelf (<a href="/guides/instacart-vs-in-store-prices">what we measured</a>). Cartworth labels every price as a shelf, online, chain-wide or weekly-ad price, and the trip plan says which columns are online prices. If you are shopping in person, keep that in mind before you add a second stop.</p>
+
+    <h2 id="start">Start with your ZIP</h2>
+    <p><a href="/app/">Open the free web app</a>, enter your ZIP, and add the list. No account, no sign-up. The iPhone app is on its way; everything on this page already works in the browser, free.</p>
+''',
+)
+
+GUIDES = [THANKSGIVING, INSTACART, UNIT]
 
 # The site's rule for any page that shows a grocery price (scripts/check-seo.js): say that it is an example.
 NOTE = '''    <p class="doc-meta" style="margin-top: 30px">Prices on this page are examples measured in September 2026. Prices change, and they vary by store and location. Cartworth is independent and not affiliated with any retailer named here.</p>'''
@@ -215,10 +291,10 @@ def index_page():
         f'''    <h2 id="{g['path'].split('/')[-1]}" style="margin-top: 26px"><a href="/{g['path']}">{g['h1']}</a></h2>
     <p>{g['description']}</p>''' for g in GUIDES)
     return page('guides/', 'Grocery price guides | Cartworth',
-                'Plain guides to grocery prices, built on what Cartworth measured: Instacart against the shelf, and how to compare by unit price without falling for label traps.',
+                'Plain grocery price guides built on what Cartworth measured: Instacart against the shelf, unit-price label traps, and pricing a Thanksgiving list.',
                 'Grocery price guides', 'Guides',
                 'Short, plain guides to reading grocery prices, each built on something Cartworth measured rather than guessed.',
-                items, [('Cartworth', f'{BASE}/'), ('Guides', None)])
+                items, [('Cartworth', f'{BASE}/'), ('Guides', None)], updated=max(g.get('updated', UPDATED) for g in GUIDES))
 
 
 def main():
@@ -229,7 +305,7 @@ def main():
         name = g['path'].split('/')[-1]
         (out / f'{name}.html').write_text(page(g['path'], g['title'], g['description'], g['h1'], g['eyebrow'], g['lede'], g['body'],
                                                [('Cartworth', f'{BASE}/'), ('Guides', f'{BASE}/guides/'), (re.sub(r'\?$', '', g['h1']), None)],
-                                               article=g['article']))
+                                               article=g['article'], note=g.get('note'), updated=g.get('updated', UPDATED)))
         print(f'wrote site/guides/{name}.html')
     print('wrote site/guides/index.html')
 

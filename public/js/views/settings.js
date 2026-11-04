@@ -80,7 +80,11 @@ export function SettingsView() {
   // trustworthy their prices are rather than by a fixed "core" list.
   const sorted = [...stores].sort((a, b) => basisInfo(a.basis).order - basisInfo(b.basis).order || (a.distance ?? 999) - (b.distance ?? 999));
   const priced = sorted.filter((s) => isPriceable(s.basis));
-  const adsOnly = sorted.filter((s) => !isPriceable(s.basis));
+  const adsOnly = sorted.filter((s) => !isPriceable(s.basis) && !s.unresolved);
+  // Chains whose price lookup timed out on this build. They come back as ad-only, but listing them
+  // under "Weekly ad only" beside a note about their prices ("Walmart labels these 'no markups'")
+  // said both things at once (the Thanksgiving QA, Atlanta).
+  const waiting = sorted.filter((s) => !isPriceable(s.basis) && s.unresolved);
 
   // The radius the SERVER applied to the distances, which is the only one worth showing. If the
   // directory has not loaded yet, fall back to the radius we would ask for — the control's value —
@@ -153,7 +157,7 @@ export function SettingsView() {
         ${!settings?.zip
           ? html`<div class="muted small">Save a ZIP above and Cartworth will look for stores within ${radius} miles of it.</div>`
           : html`<${RadiusOutcome} change=${radiusChange} busy=${radiusBusy} wanted=${radius} applied=${appliedRadius}
-              error=${directoryError} priced=${priced.length} adsOnly=${adsOnly.length} />`}
+              error=${directoryError} priced=${priced.length} adsOnly=${adsOnly.length} waiting=${waiting.length} />`}
         <div class="hr"></div>
         <div class="row" style=${{ marginBottom: 6 }}>
           <b style=${{ fontSize: 14 }}>Stores Cartworth checks</b><span class="spacer"></span>
@@ -196,20 +200,22 @@ export function SettingsView() {
       <section class="card card-pad">
         <h2>Stores near you</h2>
         <div class="muted small" style=${{ marginBottom: 6 }}>
-          ${plural(priced.length, 'store')} within ${appliedRadius} miles of ${place?.city || 'you'} publish prices we can read${adsOnly.length ? `, and ${adsOnly.length} more publish a weekly ad` : ''}.
-          Every store you turn on is checked on each search. Change the radius under Your location to look further out.
+          ${plural(priced.length, 'store')} within ${appliedRadius} miles of ${place?.city || 'you'} ${priced.length === 1 ? 'publishes' : 'publish'} prices we can read${adsOnly.length ? `, and ${adsOnly.length} more ${adsOnly.length === 1 ? 'publishes' : 'publish'} a weekly ad` : ''}.${waiting.length ? ` ${plural(waiting.length, 'more store')} didn’t answer just now; Cartworth asks again when you next open it after a few minutes.` : ''} Every store you turn on is checked on each search. Change the radius under Your location to look further out.
         </div>
-        ${[...priced, ...adsOnly].map(
+        ${[...priced, ...adsOnly, ...waiting].map(
           (s, i) => html`${i === priced.length && adsOnly.length > 0 && html`<div class="hero-label" style=${{ margin: '14px 0 4px' }}>Weekly ad only</div>`}
+          ${i === priced.length + adsOnly.length && waiting.length > 0 && html`<div class="hero-label" style=${{ margin: '14px 0 4px' }}>Didn’t answer just now</div>`}
           <div class="srow" key=${s.id}>
             <${StoreDot} id=${s.id} size=${10} />
             <div>
               <div style=${{ fontWeight: 600 }}>${s.name}</div>
               <div class="muted small">
-                <span title=${basisInfo(s.basis).title}>${basisInfo(s.basis).label}</span>
-                ${s.hasAds && isPriceable(s.basis) ? ' + weekly ad' : ''}
+                ${s.unresolved
+                  ? html`<span>No answer yet${s.hasAds ? ' · weekly ad available' : ''}</span>`
+                  : html`<span title=${basisInfo(s.basis).title}>${basisInfo(s.basis).label}</span>
+                ${s.hasAds && isPriceable(s.basis) ? ' + weekly ad' : ''}`}
                 ${s.distance != null ? html` · <span title="Straight-line distance from your ZIP; the drive is longer">${s.distance} mi</span>` : ''}
-                ${noteAfterLabel(s.note, basisInfo(s.basis).label)}
+                ${!s.unresolved && noteAfterLabel(s.note, basisInfo(s.basis).label)}
               </div>
             </div>
             <${Switch} checked=${s.enabled} onChange=${(on) => toggleStore(s.id, on)} label=${`Check ${s.name}`} />
@@ -258,7 +264,7 @@ export function SettingsView() {
         </div>
       </section>
 
-      <${KrogerCard} settings=${settings} />
+      ${(hasKrogerKeys() || stores.some((s) => s.id === 'marianos')) && html`<${KrogerCard} settings=${settings} />`}
 
       <${DataCard} server=${server} recentCount=${(recent || []).length} />
     </div>
@@ -278,7 +284,7 @@ export function SettingsView() {
  * up, and that they are further away — and we say plainly when a narrower radius switched
  * something off.
  */
-function RadiusOutcome({ change, busy, wanted, applied, priced, adsOnly, error }) {
+function RadiusOutcome({ change, busy, wanted, applied, priced, adsOnly, waiting = 0, error }) {
   if (busy) return html`<div class="row muted small" style=${{ marginTop: 6 }}><${Spinner} size=${12} /> Looking for stores within ${wanted} miles…</div>`;
   // The radius on the control and the radius the store list was built with can come apart: the
   // lookup can fail, or simply not have run yet. Say which one the numbers belong to rather than
@@ -290,7 +296,7 @@ function RadiusOutcome({ change, busy, wanted, applied, priced, adsOnly, error }
   if (applied !== wanted) {
     return html`<div class="muted small" style=${{ marginTop: 6 }}>Showing what <b>${applied} miles</b> found — the ${wanted}-mile lookup has not landed yet.</div>`;
   }
-  const found = html`<b>${plural(priced, 'chain')}</b> within ${applied} miles publish prices Cartworth can read${adsOnly ? html`, and ${adsOnly} more publish a weekly ad` : ''}.`;
+  const found = html`<b>${plural(priced, 'chain')}</b> within ${applied} miles ${priced === 1 ? 'publishes' : 'publish'} prices Cartworth can read${adsOnly ? html`, and ${adsOnly} more ${adsOnly === 1 ? 'publishes' : 'publish'} a weekly ad` : ''}.${waiting ? ` ${plural(waiting, 'more chain')} didn’t answer just now.` : ''}`;
   if (!change) return html`<div class="muted small" style=${{ marginTop: 6 }}>${found}</div>`;
 
   // Compare the chains that can be PRICED, which is the number the sentence above just quoted and
