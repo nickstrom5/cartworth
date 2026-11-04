@@ -113,15 +113,14 @@ final class DealsModel {
         guard let s = try? await WholeFoodsSource.shared.sales(place: place) else { return [] }
         let now = Date()
         return s.items.map { p in
-            let sale = p.priceText.contains("$") ? ProductFactory.money(p.priceText) : nil
-            let reg = p.regularText.contains("$") && !p.regularText.lowercased().contains("to") ? ProductFactory.money(p.regularText) : nil
-            let pct = Rx("(\\d+)\\s*%").match(p.priceText)?[1].flatMap { Int($0) }
-            let pctOff = pct ?? ((sale != nil && reg != nil && reg! > sale!) ? Int(((1 - sale! / reg!) * 100).rounded()) : nil)
+            // "$1 off" is not a $1 sale price, and "4 for $5.56" is not one item at $5.56.
+            let sale = WholeFoodsSale.parse(p.priceText, p.regularText)
+            let reg = sale.regular
             return Deal(
                 id: p.id, source: "wholefoods", flippId: nil, flyerId: nil, retailerId: "wholefoods", merchant: "Whole Foods Market",
-                name: p.name, brand: p.brand, description: p.description, imageURL: URL.from(p.image), price: sale, qty: 1, each: sale,
+                name: p.name, brand: p.brand, description: p.description, imageURL: URL.from(p.image), price: sale.price, qty: sale.qty, each: sale.each,
                 perLb: p.priceText.lowercased().contains("/lb"), priceText: p.priceText, regular: reg, regularText: p.regularText.nilIfEmpty,
-                memberText: p.memberText.isEmpty ? nil : "Prime: \(p.memberText)", pctOff: pctOff, story: nil,
+                memberText: p.memberText.isEmpty ? nil : "Prime: \(p.memberText)", pctOff: sale.pctOff, story: nil,
                 terms: DealParser.parse(p.priceText, basePrice: reg), needsCoupon: false, needsCard: false, limit: nil, mustBuy: nil,
                 disclaimer: p.disclaimer, validFrom: p.validFrom, validTo: p.validTo, week: .current,
                 category: GroceryCategory.classify(name: p.name, description: p.description), enriched: true, coupon: false,

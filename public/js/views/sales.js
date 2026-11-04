@@ -254,6 +254,8 @@ function badges(d) {
   if (d.needsCard) b.push(html`<span class="badge badge-info">With card</span>`);
   if (d.limit) b.push(html`<span class="badge">Limit ${d.limit}</span>`);
   if (d.mustBuy) b.push(html`<span class="badge badge-warn">Must buy ${d.mustBuy}</span>`);
+  const spend = d.minSpend ?? d.deal?.minSpend;
+  if (spend) b.push(html`<span class="badge badge-warn" title="The ad price needs a basket of at least this much">With $${Number.isInteger(spend) ? spend : spend.toFixed(2)} purchase</span>`);
   return b;
 }
 

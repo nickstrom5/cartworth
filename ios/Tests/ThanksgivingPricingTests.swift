@@ -358,3 +358,115 @@ final class HalloweenParityTests: XCTestCase {
         XCTAssertEqual(bananas.unitPrice(.count)?.perBase, 0.2)
     }
 }
+
+/// Thanksgiving pricing, weekly ads and the occasion card (3 Nov 2026). Same cases as
+/// test/qa-thanksgiving-deals.test.js; the numbering matches ops/coverage/thanksgiving-deals-2026-11-03.md.
+final class ThanksgivingDealsTests: XCTestCase {
+    private func item(_ store: String, _ name: String, _ size: String, _ price: Double, soldBy: SoldBy = .each, estPkg: Double? = nil, category: String? = "Whole Turkey") -> Product {
+        ProductFactory.make(ProductInput(storeId: store, id: "\(store)-\(name)", name: name, sizeText: size, price: price, soldBy: soldBy, estPkg: estPkg, category: category))!
+    }
+
+    /// BUG 1: "$1 off", Reg. $16.99 was a $1.00 sale price at "94% off" (Pizzolato, Whole Foods Lakeview).
+    func testDollarOffIsTheRegularPriceLessTheAmount() {
+        XCTAssertEqual(WholeFoodsSale.parse("$1 off", "$16.99"), .init(price: 15.99, qty: 1, each: 15.99, regular: 16.99, pctOff: 6))
+        XCTAssertEqual(WholeFoodsSale.parse("$3 off", "$11.99").pctOff, 25)
+        XCTAssertEqual(WholeFoodsSale.parse("50¢ off", "$4.99").price, 4.49)
+        XCTAssertEqual(WholeFoodsSale.parse("$1 off", "$9.99 to $19.99"), .init(price: nil, qty: 1, each: nil, regular: nil, pctOff: nil))
+        XCTAssertNil(WholeFoodsSale.parse("$1 off", "Regular prices vary").pctOff)
+    }
+
+    /// BUG 2: "4 for $5.56" is four for that total.
+    func testMultiBuyIsAQuantity() {
+        XCTAssertEqual(WholeFoodsSale.parse("2 for $6.67", "$3.49"), .init(price: 6.67, qty: 2, each: 3.34, regular: 3.49, pctOff: 4))
+        let avocados = WholeFoodsSale.parse("4 for $5.56", "$1.09")
+        XCTAssertEqual(avocados.qty, 4)
+        XCTAssertEqual(avocados.each, 1.39)
+        XCTAssertNil(avocados.pctOff)
+    }
+
+    func testOtherWholeFoodsShapesUnchanged() {
+        XCTAssertEqual(WholeFoodsSale.parse("$4.43 ea", "$5.49"), .init(price: 4.43, qty: 1, each: 4.43, regular: 5.49, pctOff: 19))
+        XCTAssertEqual(WholeFoodsSale.parse("$3.32/lb", "$3.99/lb"), .init(price: 3.32, qty: 1, each: 3.32, regular: 3.99, pctOff: 17))
+        XCTAssertEqual(WholeFoodsSale.parse("22% off", "$8.49 to $36.99"), .init(price: nil, qty: 1, each: nil, regular: nil, pctOff: 22))
+        XCTAssertEqual(WholeFoodsSale.parse("$6.66 ea", "Regular prices vary").price, 6.66)
+        XCTAssertNil(WholeFoodsSale.parse("", "$7.99 to $14.99").price)
+    }
+
+    /// BUG 3: a per-bird turkey with no weight joins the by-the-pound comparison, estimated.
+    func testPerBirdTurkeyIsRankedPerPound() {
+        let results: [String: [Product]] = [
+            "jewel": [item("jewel", "Signature Farms Frozen Whole Turkey", "per lb", 0.79, soldBy: .lb)],
+            "aldi": [item("aldi", "Butterball Frozen Whole Turkey", "per lb", 1.19, soldBy: .lb)],
+            "target": [item("target", "Good & Gather Frozen Whole Turkey", "1 ea", 12.99)],
+            "fry": [item("fry", "Kroger Frozen Whole Turkey", "14 lb", 9.66)],
+        ]
+        let t = results["target"]![0]
+        XCTAssertEqual(t.unitPrice(.weight)?.est, true)
+        XCTAssertEqual(t.unitPrice(.weight)!.perBase * 16, 12.99 / Units.typicalTurkeyLb, accuracy: 1e-9)
+        for q in ["turkey", "whole turkey", "frozen turkey"] {
+            let best = Compare.bestPerStore(query: q, results: results)
+            XCTAssertEqual(best.dim, .weight, q)
+            XCTAssertNotNil(best.stores["target"], q)
+        }
+        XCTAssertNil(results["jewel"]![0].estPkg, "a typical bird's price is never a register price")
+    }
+
+    func testOnlyAWholeBirdAtABelievablePriceIsEstimated() {
+        XCTAssertNil(item("festival", "Butterball Frozen Turkey", "1 ea", 2.89).unitPrice(.weight), "a per-lb price under an each label")
+        for n in ["Jennie-O Turkey Breast Roast", "Ground Turkey", "Butterball Turkey Breast Whole", "Oven Roasted Turkey Deli", "Whole Paws Turkey Dog Food", "Reynolds Turkey Size Oven Bags", "Turkey Drumsticks", "Boneless Whole Turkey Roast"] {
+            XCTAssertFalse(Units.wholeTurkey(n, category: "Whole Turkey"), n)
+        }
+        for (n, c) in [("Honeysuckle White Whole Frozen Young Turkey", ""), ("Jennie-O Natural Hen Turkey", ""), ("Fresh Turkeys", "Whole Turkey"), ("Butterball Whole Smoked Turkey", "")] {
+            XCTAssertTrue(Units.wholeTurkey(n, category: c), n)
+        }
+        XCTAssertEqual(item("fry", "Kroger Frozen Whole Turkey", "14 lb", 9.66).unitPrice(.weight)?.est, false)
+    }
+
+    /// BUG 4: loss-leader terms.
+    func testLossLeaderTerms() {
+        XCTAssertEqual(DealParser.parse("$0.59/lb with $25 purchase")?.minSpend, 25)
+        let a = DealParser.parse("59¢ lb with additional $25 purchase, limit 1")
+        XCTAssertEqual(a?.limit, 1)
+        XCTAssertEqual(a?.minSpend, 25)
+        let card = DealParser.parse("$0.49 lb. with card and $35 purchase. Limit 1.")
+        XCTAssertEqual(card?.needsCard, true)
+        XCTAssertEqual(card?.minSpend, 35)
+        XCTAssertEqual(DealParser.parse("Limit one turkey with any $50 or more purchase")?.minSpend, 50)
+        XCTAssertEqual(DealParser.parse("Free Turkey when you spend $100, limit 1")?.minSpend, 100)
+        XCTAssertEqual(DealParser.parse("w/ $35 purch.")?.minSpend, 35)
+        XCTAssertEqual(DealParser.parse("LIMIT ONE PER HOUSEHOLD")?.limit, 1)
+        XCTAssertNil(DealParser.parse("Save $5 with $5 mail-in rebate")?.minSpend)
+        XCTAssertNil(DealParser.parse("Buy 2 and $5 off"))
+        XCTAssertEqual(DealParser.parse("10 for $10")?.each, 1)
+        XCTAssertEqual(DealParser.parse("2/$5")?.each, 2.5)
+        XCTAssertEqual(DealParser.parse("$1 off", basePrice: 16.99)?.each, 15.99)
+    }
+
+    /// BUG 4: Food City states the spend threshold after the price (Flipp, Atlanta 30308, 3 Nov).
+    func testFlippSpendThresholdInPostPriceText() {
+        let item = FlippSource.FlyerItem(id: 1, flyerId: 2, name: "WAYS TO SAVE ON FROZEN BUTTERBALL TURKEY", brand: "", price: "0.96", discount: nil, image: nil, validFrom: nil, validTo: nil)
+        let det = FlippSource.Detail(description: nil, pre: "Only", priceText: nil, post: "*PER LB with an additional $50 purchase.", story: nil, original: nil, current: 0.96, disclaimer: nil, dollarsOff: nil, percentOff: nil, externalCategory: nil)
+        let d = FlippSource.deal(item: item, detail: det, retailerId: "foodcity", merchant: "FoodCity")
+        XCTAssertEqual(d.priceText, "$0.96/lb")
+        XCTAssertEqual(d.terms?.minSpend, 50)
+    }
+
+    /// BUG 6: Thanksgiving stays featured on Black Friday with the after-Thanksgiving line.
+    func testThanksgivingWindow() {
+        let cal = Calendar(identifier: .gregorian)
+        func at(_ m: Int, _ d: Int, _ h: Int = 12, _ min: Int = 30) -> Date { cal.date(from: DateComponents(year: 2026, month: m, day: d, hour: h, minute: min))! }
+        func tg(_ now: Date) -> Occasion? { Seasonal.featured(from: now).first { $0.name == "Thanksgiving" } }
+        XCTAssertNil(tg(at(11, 4, 23, 59)))
+        XCTAssertNotNil(tg(at(11, 5, 0, 1)))
+        XCTAssertEqual(tg(at(11, 26))?.dayAfter, false)
+        for h in [0, 12, 23] {
+            let after = tg(at(11, 27, h))
+            XCTAssertEqual(after?.dayAfter, true, "Nov 27 \(h):30")
+            XCTAssertEqual(after?.whenText, "was yesterday")
+            XCTAssertEqual(after?.blurb, Seasonal.dayAfter["thanksgiving"])
+        }
+        XCTAssertNil(tg(at(11, 28, 0, 5)))
+        XCTAssertEqual(Seasonal.featured(from: at(11, 27)).map(\.name), ["Thanksgiving", "Hanukkah"])
+        for d in 5...14 { XCTAssertNil(tg(at(10, d)), "Canadian Thanksgiving, Oct \(d)") }
+    }
+}

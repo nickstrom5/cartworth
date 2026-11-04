@@ -7,7 +7,7 @@ import { api } from '../api.js';
 import { getState } from '../store.js';
 import { addWatch, addToList } from '../actions.js';
 import { money2, unitPrice, unitLabel, shortDate, ago, plural, linkDestination, BASIS_LABEL, BASIS_TITLE, provenanceNote } from '../format.js';
-import { displayUnitsFor } from '/shared/units.js';
+import { displayUnitsFor, TYPICAL_TURKEY_LB } from '/shared/units.js';
 import { usesMember } from '/shared/compare.js';
 
 export function ProductDetail({ p, displayUnit }) {
@@ -64,6 +64,7 @@ export function ProductDetail({ p, displayUnit }) {
         ${p.promo && html`<div class="ink2 small"><b>Deal:</b> ${p.promo}</div>`}
         ${p.saleEnds && html`<div class="ink2 small">Sale ends ${shortDate(p.saleEnds)}</div>`}
         ${p.estPkg && html`<div class="ink2 small">Typical package ≈ ${money2(p.estPkg)} (priced by weight at the register)</div>`}
+        ${p.estBird && html`<div class="ink2 small">A typical ${TYPICAL_TURKEY_LB} lb bird ≈ ${money2(p.estBird)} (estimated; priced by weight at the register)</div>`}
         <div class="kv" style=${{ marginTop: 4 }}>
           ${Object.entries(p.unit || {}).map(
             ([dim, u]) => html`<dt>Per ${dim === 'count' ? 'item' : dim}</dt>

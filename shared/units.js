@@ -594,3 +594,31 @@ export function weighedWholePumpkin(name, size) {
   if (!size || size.perWeight || size.dim !== 'weight' || (size.count || 1) > 1 || !(size.base >= WHOLE_PUMPKIN_MIN_OZ)) return false;
   return pieceWeightVaries(n) && !NOT_ONE_PIECE_RE.test(n) && !NOT_A_WHOLE_PUMPKIN_RE.test(n);
 }
+
+/**
+ * A whole turkey sold at one price per bird with no weight on the listing: "Butterball Frozen Whole
+ * Turkey, 1 ea, $19.99". A "turkey" or "whole turkey" search compares by the pound, because most
+ * birds are sold by the pound ($0.49 to $2.99/lb in the four-ZIP Thanksgiving sweep), so a bird with
+ * no weight had no price per pound and dropped out of "Best price" and the per-store chart, named
+ * only as "not comparable per lb" (the Thanksgiving deals QA, 3 Nov; the turkey form of the
+ * Halloween round's per-lb pumpkin bug). A whole bird, unlike a pumpkin, has a typical weight:
+ * the 12 to 16 lb printed on most frozen birds. TYPICAL_TURKEY_LB turns a per-bird price into an
+ * estimated price per pound, and a per-pound price into an estimated price per bird, and both are
+ * always marked estimated.
+ *
+ * Only a whole bird: not breast, ground, deli, parts, a roast, a pet food, or a pan or bag for one.
+ * And only a per-bird price of TURKEY_EACH_MIN or more: Festival's "Butterball Frozen Turkey, 1 ea,
+ * $2.89" is a price per pound under an "each" label, and reading it as one bird made it 21¢/lb.
+ */
+export const TYPICAL_TURKEY_LB = 14;
+export const TURKEY_EACH_MIN = 5;
+const TURKEY_RE = /\bturkeys?\b/;
+const WHOLE_BIRD_RE = /\bwhole\b|\b(?:young|hen|tom)\s+turkeys?\b/;
+const NOT_A_WHOLE_TURKEY_RE = /\b(?:breasts?|ground|deli|drums?(?:ticks?)?|wings?|thighs?|necks?|legs?|tenderloins?|cutlets?|roast|boneless|sliced|slices|lunch(?:meat)?|bacon|sausages?|jerky|sticks?|burgers?|patt(?:y|ies)|pastrami|ham|gravy|stuffing|stock|broth|brine|bags?|baster|pans?|roasters?|injector|thermometer|kit|rack|lifters?|meals?|dinners?|pot pie|pies?|sandwich(?:es)?|wraps?|dogs?|cats?|pets?|recipe|pate|food|treats?|chews?|kibble|toy|decorations?|candles?|cards?|books?|chocolate|candy|cookies?|cakes?|giblets?|half|halves|pieces?|chili|meatballs?|franks?|hot dogs?|kielbasa|loaf|salami|bologna)\b/;
+
+export function wholeTurkey(name, category = '') {
+  const n = String(name || '').toLowerCase();
+  const c = String(category || '').toLowerCase();
+  if (!TURKEY_RE.test(n) || NOT_A_WHOLE_TURKEY_RE.test(n)) return false;
+  return WHOLE_BIRD_RE.test(n) || /\bwhole turkeys?\b/.test(c);
+}

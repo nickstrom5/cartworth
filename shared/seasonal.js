@@ -723,6 +723,8 @@ export const whenText = (n) => (n === -1 ? 'was yesterday' : n === 0 ? 'is today
  */
 export const DAY_AFTER = {
   halloween: 'Candy is often 50% off today — check the weekly ads.',
+  // Black Friday: the card used to vanish at midnight, when leftover birds go on markdown.
+  thanksgiving: 'Frozen turkeys and pie fixings are often marked down today — check the weekly ads.',
 };
 
 const baseId = (o) => o.id.replace(/-\d{4}$/, '');
