@@ -20,6 +20,25 @@ enum Match {
         // One token each: split, the "in" of "Bone-In" hid the next words from the trap check. Port of shared/match.js.
         "bone-in": ["bonein"], "skin-on": ["skinon"],
         "barbecue": ["bbq"], "bar-b-q": ["bbq"], "blackeye": ["black", "eyed"], "blackeyed": ["black", "eyed"],
+        // Kraft sells "Macaroni & Cheese"; shoppers type "mac and cheese". Port of shared/match.js.
+        "mac": ["macaroni"],
+    ]
+
+    /// Phrases rewritten before tokenising, on both sides, so one product has one spelling: a dietary
+    /// label is one claim ("gluten free stuffing" took half its credit from "Fat Free"), and regional
+    /// names for one product (cornbread dressing, chitlins, prime rib, pernil, japchae, US yams). The
+    /// Thanksgiving food styles run. Port of PHRASES in shared/match.js.
+    private static let phrases: [(Rx, String)] = [
+        (Rx("\\bgluten[- ]free\\b"), "glutenfree"),
+        (Rx("\\b(?:dairy|milk)[- ]free\\b|\\bnon[- ]?dairy\\b"), "dairyfree"),
+        (Rx("\\bmeat[- ]?free\\b|\\bmeatless\\b"), "meatless"),
+        (Rx("\\bplant[- ]based\\b"), "plant"),
+        (Rx("\\b(cornbread|oyster|sausage|southern|turkey) dressing\\b"), "$1 stuffing"),
+        (Rx("\\bchitlins?\\b"), "chitterlings"),
+        (Rx("\\bprime rib\\b"), "beef rib roast"), // BJ's "Boneless Pork Rib Roast" was Atlanta's prime rib
+        (Rx("\\bpernil\\b"), "pork shoulder"),
+        (Rx("\\b(?:japchae|jap chae|dangmyeon|dang myun)\\b"), "glass noodles"),
+        (Rx("(?<!\\b(?:mountain|purple|chinese|japanese|white|african|true|ube) )\\byams?\\b"), "sweet potatoes"),
     ]
 
     /// Words that turn a product into something else when they follow the searched noun
@@ -101,6 +120,11 @@ enum Match {
         // Filling" answered "caramel apples", "Jet-Puffed Candy Corn Shaped Halloween Fall
         // Marshmallows" "halloween candy" (the Halloween run). Mirrors shared/match.js.
         "filling", "marshmallow",
+        // Dough for the dish: "Traditional Prepared Tamale Masa" answered "tamales" (the Thanksgiving
+        // food styles run). Mirrors shared/match.js.
+        "masa",
+        // "Tobagi Oyster Kimchi" answered "oysters" (Atlanta). Mirrors shared/match.js.
+        "kimchi",
     ]
 
     /// Whole-name markers for things that are not groceries at all.
@@ -152,7 +176,7 @@ enum Match {
     private static let benignAfter: [String: Set<String>] = ["cream": ["sweet", "whipping"], "mix": ["sprinkle"], "spray": ["ocean"], "cocktail": ["juice"], "concentrate": ["from"], "squash": ["zucchini", "yellow", "summer", "butternut", "acorn"]]
     /// A trap noun forgiven when the next word names what it is: "King Oyster Mushrooms" are
     /// mushrooms. Mirrors BENIGN_BEFORE in shared/match.js.
-    private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"], "bread": ["flour"]]
+    private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"], "bread": ["flour"], "pecan": ["smoked", "wood"]]
 
     /// How the food is kept, not what it is. Only these are forgiven when the retailer's own
     /// category is exactly what was searched. 'dried' is deliberately absent: dried cranberries are
@@ -175,18 +199,25 @@ enum Match {
     private static let alcoholWords = ["wine", "red", "white", "rose", "sparkling", "chardonnay", "merlot", "cabernet", "pinot", "sauvignon", "riesling", "moscato", "zinfandel", "malbec", "prosecco", "cellars", "winery", "vineyard", "brut", "champagne", "cava"]
     private static let queryAllows: [String: Set<String>] = [
         "wine": Set(alcoholWords), "prosecco": Set(alcoholWords), "champagne": Set(alcoholWords),
-        "steak": Set(beefCut), "ribeye": Set(beefCut), "brisket": Set(beefCut), "rib": Set(animals), "chop": Set(animals), "roast": Set(animals), "tenderloin": Set(animals),
+        "steak": Set(beefCut), "ribeye": Set(beefCut), "brisket": Set(beefCut), "rib": Set(animals), "chop": Set(animals), "roast": Set(animals + ["stuffed"]), "tenderloin": Set(animals),
         "sirloin": Set(animals), "wing": Set(animals), "dog": Set(animals + ["frank"]), "frank": Set(animals), "brat": Set(animals + ["beer"]), "sausage": Set(animals),
-        "turkey": ["frozen"], "ham": ["honey", "spiral", "smoked", "pork"],
+        "turkey": ["frozen"], "ham": ["honey", "spiral", "smoked", "pork", "glazed", "cooked"],
         "bun": ["hot", "dog", "hamburger", "seed", "sesame"], "croissant": ["butter", "mini"], "flower": ["bouquet", "cut", "mixed"],
         "pumpkin": ["pie", "carving"], "stuffing": ["mix", "turkey", "chicken", "cornbread", "herb", "seasoned"],
-        "candy": ["snack", "halloween", "chocolate", "assortment"], "wrapper": ["wrap", "round"], "chip": ["potato", "tortilla", "kettle"],
+        "candy": ["snack", "halloween", "chocolate", "assortment"], "wrapper": ["wrap", "round", "frozen"], "chip": ["potato", "tortilla", "kettle"],
         "tortilla": ["taco", "soft"], "tortillas": ["taco", "soft"], "chocolate": ["bar", "dark"], "pea": ["dry", "dried"], "peas": ["dry", "dried"], "filling": ["mix"],
         "watermelon": ["mini", "seedless", "personal"], "bar": ["oat", "honey"],
         "bacon": ["smoked", "hardwood", "pork"],
+        // Chitterlings and andouille are pork, tamales come pork, chicken or cheese, tres leches is a
+        // cake, flan is caramel custard, boxed mac and cheese is a "Dinner", japchae's glass noodles
+        // are sweet potato starch (the Thanksgiving food styles run). Port of shared/match.js.
+        "chitterling": ["pork", "frozen", "cleaned"], "andouille": ["sausage", "pork", "chicken", "smoked", "cajun"],
+        // Sold frozen ("Pamana Frozen Lumpia Wrapper" was refused in Houston). Port of shared/match.js.
+        "tamale": ["pork", "chicken", "beef", "cheese", "bean", "sweet", "red", "green", "frozen"], "crust": ["frozen"], "lech": ["cake"], "flan": ["caramel"],
+        "macaroni": ["dinner"], "glass": ["sweet", "potato", "starch"],
     ]
     /// Products that normally come in flavours. Port of FLAVOR_OK_HEADS.
-    private static let flavorOkHeads: Set<String> = ["bar", "chip", "cereal", "candy", "soda", "bread", "ham", "meat", "cracker", "cookie", "sauce", "bean", "granola", "applesauce"]
+    private static let flavorOkHeads: Set<String> = ["roast", "flan", "lech", "bar", "chip", "cereal", "candy", "soda", "bread", "ham", "meat", "cracker", "cookie", "sauce", "bean", "granola", "applesauce"]
     /// Compound names that are a different product. Ports of HEAD_COMPOUNDS / MODIFIER_COMPOUNDS.
     private static let headCompounds = ["peanut butter cup", "bacon bit", "corn flake", "corn tortilla", "flour tortilla", "celery salt", "celery seed",
         "onion salt", "garlic salt", "yogurt raisin", "yogurt covered", "yogurt pretzel", "wine glass", "glass set", "champagne flute",
@@ -194,13 +225,21 @@ enum Match {
         // A pumpkin pie is not a pumpkin (Halloween). Port of shared/match.js.
         "pumpkin pie",
         // Celery root is another vegetable (Thanksgiving, NYC). Port of shared/match.js.
-        "celery root"].map { tokens($0) }
+        "celery root",
+        // King oyster mushrooms are not oysters (Houston). Port of shared/match.js.
+        "oyster mushroom",
+        // Snack sticks ("Archer Beef Sticks with Prime Rib", Atlanta). Port of shared/match.js.
+        "beef stick", "meat stick"].map { tokens($0) }
     private static let modifierCompounds = ["baking soda", "cooking wine", "creme egg", "cadbury egg", "chocolate egg", "plastic egg", "mini egg",
         "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak",
         // Scallions are not onions (Thanksgiving, NYC). Port of shared/match.js.
         "green onion", "spring onion",
         // Fruit and nut butters, and margarine that says so. Port of shared/match.js.
-        "apple butter", "pumpkin butter", "shea butter", "cocoa butter", "not butter"].map { tokens($0) }
+        "apple butter", "pumpkin butter", "shea butter", "cocoa butter", "not butter",
+        // Nut and seed butters, said outright now that a plant base is no penalty for a vegan search. Port of shared/match.js.
+        "almond butter", "cashew butter", "coconut butter", "sunflower butter", "seed butter", "cookie butter",
+        // A chuck cross rib roast is shoulder, not prime rib (El Paso). Port of shared/match.js.
+        "cross rib"].map { tokens($0) }
     private static func stem(_ w: String) -> String { w.hasSuffix("s") ? String(w.dropLast()) : w }
     private static func hasPhrase(_ words: [String], _ phrase: [String]) -> Bool {
         guard !phrase.isEmpty, words.count >= phrase.count else { return false }
@@ -265,7 +304,7 @@ enum Match {
 
     private static let soft: Set<String> = ["organic", "lactose", "free", "ultra", "filtered", "reduced", "fat", "low", "whole", "skim", "natural", "grass", "fed", "pasture", "raised", "cage", "large", "medium", "small", "extra", "jumbo", "grade", "fresh", "boneless", "skinless", "lean", "ground", "bonein", "skinon"]
     /// Product words that imply another ("ground chuck" is ground beef).
-    private static let implies: [String: [String]] = ["champagne": ["sparkling", "wine"], "prosecco": ["sparkling", "wine"], "cava": ["sparkling", "wine"], "frank": ["dog"], "chuck": ["beef"], "sirloin": ["beef"], "brisket": ["beef"], "ribeye": ["beef"], "kcup": ["coffee"], "k-cup": ["coffee"], "espresso": ["coffee"], "cage": ["egg"], "clementine": ["mandarin"], "cutie": ["mandarin"], "tp": ["toilet"]]
+    private static let implies: [String: [String]] = ["champagne": ["sparkling", "wine"], "prosecco": ["sparkling", "wine"], "cava": ["sparkling", "wine"], "frank": ["dog"], "chuck": ["beef"], "sirloin": ["beef"], "brisket": ["beef"], "ribeye": ["beef", "rib"], "kcup": ["coffee"], "k-cup": ["coffee"], "shell": ["crust"], "espresso": ["coffee"], "cage": ["egg"], "clementine": ["mandarin"], "cutie": ["mandarin"], "tp": ["toilet"]]
     private static let chipNoise: Set<String> = ["carton", "bottle", "jug", "container", "package", "bag", "box", "can", "jar", "each", "value", "family", "size", "select", "original", "classic", "premium", "organic", "brand", "pack", "count", "ounce", "gallon", "gal", "quart", "half", "pint", "fl", "lb", "lbs", "oz", "ct", "with", "made", "great", "best", "store", "kroger", "signature", "good", "gather", "market", "pantry", "farm", "farms", "simple", "truth", "nature", "kirkland", "365", "everyday", "item", "items"]
 
     private static let percentRx = Rx("(\\d)\\s*%")
@@ -315,7 +354,8 @@ enum Match {
 
     static func tokens(_ s: String?) -> [String] {
         var out: [String] = []
-        for raw in normalize(s).split(separator: " ").map(String.init) where !raw.isEmpty {
+        let text = phrases.reduce(normalize(s)) { t, p in p.0.replace(t, with: p.1) }
+        for raw in text.split(separator: " ").map(String.init) where !raw.isEmpty {
             if let syn = synonyms[raw] {
                 out.append(contentsOf: syn)
                 continue
@@ -340,6 +380,33 @@ enum Match {
         return t.isEmpty ? tokens(q) : t
     }
 
+    /// Dietary claims as tokens() spells them. A diet word in the query is a requirement, met by the
+    /// stricter claims; dairy-free meets "vegan" only for a dairy food. Ports of DIET_MEETS and the
+    /// rest in shared/match.js (the Thanksgiving food styles run: "vegan butter" never matched "Plant Butter").
+    private static let dietMeets: [String: [String]] = [
+        "vegan": ["vegan", "plant"], "plant": ["plant", "vegan"], "dairyfree": ["dairyfree", "vegan", "plant"],
+        "vegetarian": ["vegetarian", "vegan", "plant", "meatless", "veggie"], "meatless": ["meatless", "vegan", "plant", "vegetarian", "veggie"],
+    ]
+    /// "Plant Butter with Olive Oil", "Plant-Based Roast & Gravy": forgiven only for a diet search.
+    private static let dietCompanions: Set<String> = ["oil", "gravy", "stuffing"]
+    private static let dairyHeads: Set<String> = ["butter", "cheese", "milk", "cream", "creamer", "yogurt", "topping", "whip"]
+    private static let veganBrandRx = Rx("\\b(?:tofurky|gardein|beyond meat|impossible foods|field roast|lightlife|daring|miyoko s|violife|daiya|earth balance|follow your heart|so delicious|oatly)\\b")
+    private static let vegetarianBrandRx = Rx("\\b(?:morningstar farms|boca|quorn)\\b")
+    private static let dietNameRx = Rx("\\b(?:vegan|plant|meatless|vegetarian|dairyfree|tofu|seitan|tempeh|veggie (?:burger|roast|sausage|crumbles?))\\b")
+    /// A plain "turkey" or "butter" is not answered by its vegan analogue ("Field Roast Celebration
+    /// Roast Vegan", filed under Turkey, scored 0.88 for "turkey").
+    private static let animalHeads: Set<String> = dairyHeads.union(["egg", "turkey", "ham", "chicken", "beef", "pork", "sausage", "bacon", "roast", "meat", "burger", "steak", "mayonnaise", "mayo", "wing", "breast", "nugget", "frank", "dog", "jerky", "shrimp", "fish", "salmon", "tuna"])
+    /// Wild rice is the grain, not "Long Grain & Wild Rice" (the best wild rice in five of seven ZIPs). Port of WILD_RICE_BLEND_RE.
+    private static let wildRiceBlendRx = Rx("\\b(?:long grain|brown|white|jasmine|basmati|grain)(?: rice)? and wild rice\\b|\\bwild rice (?:blend|medley|mix|pilaf|soup)\\b|\\bwild (?:and|blend)\\b|\\bwith wild rice\\b|\\bblend\\b|\\bmedley\\b")
+    private static let wildRiceRx = Rx("\\bwild rice\\b")
+    private static let wantsRiceBlendRx = Rx("\\b(?:blend|medley|mix|long grain)\\b")
+    /// Hot Tamales are cinnamon candy ("HOT TAMALES 4.25OZ TROPICAL HEAT BOX", Chewy Candy, was Atlanta's
+    /// tamales); Rouses' "Old Style Hot Tamales" are in a tamale aisle. Port of CANDY_AISLE_RE.
+    private static let candyAisleRx = Rx("\\b(?:cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies)|chewy)\\b")
+    private static let candyNameRx = Rx("\\b(?:candy|candies|box)\\b")
+    /// A canned food says so in its liquid: "Princella Cut Yams in Light Syrup".
+    private static let cannedNameRx = Rx("\\bin (?:light |heavy |extra light )?syrup\\b|\\bcanned\\b")
+
     /// 0…1 relevance of a product for a query. `include`/`exclude` are word lists the user picked.
     /// `dim`, `base` and `soldBy` are the product's size, when the caller has one (the web reads them
     /// off the same product object).
@@ -352,9 +419,28 @@ enum Match {
         var nameTok = Set(productTokens(full))
         // Shoppers say "lunch meat"; labels say "Deli Fresh", "Sliced", and aisles "Deli Meat".
         if lunchNameRx.test(normalize(name)) || lunchCatRx.test(normalize(category ?? "")) { nameTok.insert("lunch"); nameTok.insert("meat") }
-        let selfTok = Set(productTokens(name))
+        // The product's own words, after the brand when the name repeats it: in "Field Roast
+        // Plant-Based Slices" the 'roast' is the maker's. Port of shared/match.js.
+        let brandNorm = normalize(brand)
+        let nameNormOnly = normalize(name)
+        let ownName = !brandNorm.isEmpty && nameNormOnly.hasPrefix(brandNorm + " ") ? String(nameNormOnly.dropFirst(brandNorm.count + 1)) : name
+        let selfTok = Set(productTokens(ownName))
         let brandTok = Set(productTokens(brand ?? ""))
         let catTok = Set(tokens(category))
+        if cannedNameRx.test(nameNorm) || catTok.contains("canned") { nameTok.insert("canned") }
+        // The diet a product claims, from its name or its maker. Port of shared/match.js.
+        let dietText = tokens(full).joined(separator: " ")
+        let veganBrand = veganBrandRx.test(nameNorm)
+        let vegetarianBrand = veganBrand || vegetarianBrandRx.test(nameNorm)
+        let dietProduct = vegetarianBrand || dietNameRx.test(dietText)
+        let qDiet = qt.filter { dietMeets[$0] != nil }
+        let qDietNorm = normalize(query)
+        let wantsDiet = !qDiet.isEmpty || veganBrandRx.test(qDietNorm) || vegetarianBrandRx.test(qDietNorm)
+        for t in qDiet {
+            let byBrand = t == "vegetarian" || t == "meatless" ? vegetarianBrand : veganBrand
+            let dairyFreeVegan = t == "vegan" && dairyHeads.contains(qt[qt.count - 1]) && nameTok.contains("dairyfree")
+            if byBrand || dairyFreeVegan || dietMeets[t]!.contains(where: { nameTok.contains($0) }) { nameTok.insert(t) }
+        }
 
         // A word that appears ONLY in the brand counts as a match when it identifies the product
         // ("Kerrygold" for a kerrygold search) but NOT when it is a generic grocery qualifier,
@@ -397,8 +483,13 @@ enum Match {
         // hand the query word back through hasPrefix at 0.7 instead of 1.
         let hitTok = nameTok.filter { !(fromBrandOnly($0) && generic($0)) }
 
+        // A search for a whole brand ("tofurky", "kerrygold") is answered by what that brand makes;
+        // a word of a brand is not ("Milk-Bone" is not "milk"). Port of shared/match.js.
+        let wholeBrand = !brandTok.isEmpty && qt.allSatisfy { brandTok.contains($0) && !generic($0) } && brandTok.allSatisfy { qt.contains($0) }
         var hits = 0.0
         for t in qt {
+            // The head noun from the brand alone is not the product ("Field Roast" slices). Port of shared/match.js.
+            if t == qt[qt.count - 1] && qt.count > 1 && !wholeBrand && fromBrandOnly(t) && !catTok.contains(t) { continue }
             if nameTok.contains(t) && !(fromBrandOnly(t) && generic(t)) { hits += 1 }
             else if catTok.contains(t) { hits += catCoversQuery ? 1 : 0.6 }
             else if t.count >= 5 && hitTok.contains(where: { $0.hasPrefix(t) || ($0.count >= 5 && t.hasPrefix($0)) }) { hits += 0.7 }
@@ -421,7 +512,11 @@ enum Match {
             }
         }
         let allowed = Set(qt.flatMap { Array(queryAllows[$0] ?? []) })
-        if let hi = headIdx {
+        // ...whatever the product's own words (Tofurky's "Plant-Based Roast & Gravy" for "tofurky").
+        let brandQuery = wholeBrand || (veganBrandRx.test(qDietNorm) && veganBrand)
+        if brandQuery {
+            // the name describes the brand's product
+        } else if let hi = headIdx {
             var strong = 0
             // Look on BOTH sides of the head noun. A trap word before it is just as disqualifying
             // as one after: "peanut butter" is not butter and "cream cheese" is not cheese, but
@@ -430,6 +525,7 @@ enum Match {
                 if i == hi { continue }
                 let w = words[i]
                 if qset.contains(w) || soft.contains(w) || allowed.contains(w) { continue }
+                if wantsDiet && (altBase.contains(w) || dietMeets[w] != nil || dietCompanions.contains(w)) { continue } // "Plant Butter" is the vegan butter
                 let prev = i >= 1 ? words[i - 1] : nil
                 let prev2 = i >= 2 ? words[i - 2] : nil
                 if prev == "in" || prev == "with" || prev2 == "in" { continue } // "tuna in oil", "with sauce"
@@ -439,7 +535,7 @@ enum Match {
             }
             var alt = 0, mildN = 0, flavorN = 0
             for w in words {
-                if qset.contains(w) || allowed.contains(w) { continue }
+                if qset.contains(w) || allowed.contains(w) || (wantsDiet && altBase.contains(w)) { continue }
                 // Position-independent: "Frozen Orange Juice" and "Orange Juice Frozen" are the
                 // same product and must score the same. Anchoring these to the head noun meant
                 // word order alone changed the score by a factor of two.
@@ -456,6 +552,8 @@ enum Match {
             let trapCount = Set(words).filter { traps.contains($0) && !qset.contains($0) && !allowed.contains($0) }.count
             mult *= pow(0.6, Double(min(trapCount, 3)))
         }
+        // A vegan analogue of an animal food answers a search for it only when the shopper asked for one.
+        if dietProduct && !wantsDiet && animalHeads.contains(head) { mult *= 0.3 }
         // "Tastes Like Butter" is margarine. Only penalize when the shopper did not ask for it.
         let qNormForImitation = normalize(query)
         let wantsImitation = imitationRx.test(qNormForImitation) || imitationCategoryRx.test(qNormForImitation)
@@ -500,6 +598,10 @@ enum Match {
         }
         if juiceWordRx.test(qNormForImitation) && juiceImpostorRx.test(nameNorm) && !wantsJuiceDrinkRx.test(qNormForImitation) { mult *= 0.3 }
         if babyProductRx.test(nameNorm) && !wantsBabyRx.test(qNormForImitation) { mult *= 0.2 }
+        if head == "tamale" && (candyAisleRx.test(normalize(category ?? "")) || candyNameRx.test(nameNorm)) && !candyAisleRx.test(qNormForImitation) { mult *= 0.2 }
+        // ...and the two words together ("Nature's Wild Sweet Rice" is glutinous rice, Brooklyn).
+        if wildRiceRx.test(qNormForImitation) && !wildRiceRx.test(nameNorm) && !wantsRiceBlendRx.test(qNormForImitation) { mult *= 0.3 }
+        if wildRiceRx.test(qNormForImitation) && wildRiceBlendRx.test(nameNorm) && !wildRiceBlendRx.test(qNormForImitation) && !wantsRiceBlendRx.test(qNormForImitation) { mult *= 0.3 }
         // Books, cookware and apparel that happen to name a food. Applied to the whole name because
         // the position rules deliberately look past "in"/"with" phrases, which is where the
         // giveaway sits.
