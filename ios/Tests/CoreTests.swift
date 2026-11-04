@@ -2835,3 +2835,15 @@ extension ThanksgivingCoreTests {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "fresh turkey", name: "Sprouts Fresh Whole Turkey", category: "Whole Turkey"), Match.relevant)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 18 (Las Vegas): mini phyllo shells were the best pie crust; shallots answered "onions"; a pecan cake "pecans".
+    func testPhylloCupsShallotsAndAPecanCake() {
+        XCTAssertLessThan(Match.relevance(query: "pie crust", name: "Signature SELECT Pastry Shells, Mini Phyllo", category: "Frozen Pie Crusts"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pie crust", name: "ALDI Deep Dish Pie Crusts - 2 Pack", category: "Frozen Pie Crusts"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "onions", name: "Onions Shallots", category: "Shallots", soldBy: .lb), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "onions", name: "Yellow Onion", category: "Yellow Onions", soldBy: .lb), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "pecans", name: "Pecan Brazo Gitano", category: "Other Cakes"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pecans", name: "Private Selection Shelled Pecans", category: "Pecans"), Match.relevant)
+    }
+}

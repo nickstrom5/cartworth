@@ -355,3 +355,22 @@ test('DEFECT 17: a turkey sandwich and in-shell pecans', () => {
   matches('turkey sandwich', 'Turkey Club Sandwich', { category: 'Prepared Sandwiches and Wraps' });
   matches('fresh turkey', 'Sprouts Fresh Whole Turkey', { category: 'Whole Turkey' });
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 18 (Las Vegas): Albertsons' and Vons' "Signature SELECT Pastry Shells, Mini Phyllo", 15 ct
+// in Frozen Pie Crusts, was the best pie crust at $0.40 a shell (the pie-shell fix above let them in);
+// "Onions Shallots" ($0.59/lb, Shallots) answered "onions"; El Super's "Pecan Brazo Gitano", a cake
+// roll in Other Cakes, answered "pecans".
+// ---------------------------------------------------------------------------
+test('DEFECT 18: phyllo cups, shallots and a pecan cake', () => {
+  rejects('pie crust', 'Signature SELECT Pastry Shells, Mini Phyllo', { category: 'Frozen Pie Crusts' });
+  rejects('pie crust', 'Signature SELECT Phyllo Mini Pastry Shells', { category: 'Frozen Pie Crusts' });
+  rejects('pie crust', 'Tart Shells', { category: 'Frozen Pie Crusts' });
+  matches('pie crust', 'ALDI Deep Dish Pie Crusts - 2 Pack', { category: 'Frozen Pie Crusts' });
+  matches('phyllo shells', 'Athens Phyllo Shells');
+  rejects('onions', 'Onions Shallots', { category: 'Shallots', soldBy: 'lb' });
+  matches('onions', 'Yellow Onion', { category: 'Yellow Onions', soldBy: 'lb' });
+  matches('shallots', 'Onions Shallots', { category: 'Shallots' });
+  rejects('pecans', 'Pecan Brazo Gitano', { category: 'Other Cakes' });
+  matches('pecans', 'Private Selection Shelled Pecans', { category: 'Pecans' });
+});

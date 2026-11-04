@@ -264,7 +264,8 @@ const CUTS = new Set(['wing', 'drumstick', 'thigh', 'breast', 'leg', 'tenderloin
 // words that also name a variety of something else: cherry/grape/pear tomatoes, orange/banana peppers.
 const PRODUCE_HEAD_RE = /^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|parsley|basil|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|garlic|ginger|scallion|avocado)$/;
 const PREPARED_AISLE_RE = /\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides)\b/;
-const PRODUCE_WORD_RE = /^(?:onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$/;
+// Shallots: Albertsons' and Vons' "Onions Shallots" answered Las Vegas's onions (the Thanksgiving core list).
+const PRODUCE_WORD_RE = /^(?:shallot|leek|onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$/;
 const FRESH_VEG_MEAT_RE = /^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$/;
 const SHELF_FORM_RE = /\b(?:canned|dehydrated|freeze[- ]?dried)\b/;
 
@@ -454,6 +455,8 @@ function otherTurkeyPart(query, nameNorm, category) {
 // costs $2-3 (the Thanksgiving core list, 3 Nov).
 const FROZEN_RE = /\bfrozen\b/;
 const TURKEY_DISH_AISLE_RE = /\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?)\b/;
+const PASTRY_CUP_RE = /\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\b/;
+const NUT_DISH_AISLE_RE = /\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|candy)\b/;
 const IN_SHELL_RE = /\bin[- ]?(?:the )?shells?\b/;
 const NUT_HEAD_RE = /^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$/;
 const SNACK_NUT_RE = /\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\b/;
@@ -664,6 +667,9 @@ export function relevance(query, product, opts = {}) {
   // A pie that boasts of its crust is a pie: "Mrs. Smith's Original Flaky Crust Dutch Apple Pie", 37 oz
   // in Frozen Pies, was the best "pie crust" at Stop & Shop, Weis, ACME and Kings (Newark, the
   // Thanksgiving core list).
+  // ...nor are phyllo cups and tart shells: Albertsons' and Vons' "Signature SELECT Pastry Shells, Mini
+  // Phyllo", 15 ct in Frozen Pie Crusts, was Las Vegas's best pie crust at $0.40 a shell.
+  if (head === 'crust' && PASTRY_CUP_RE.test(nameNorm) && !PASTRY_CUP_RE.test(normalize(query))) mult *= 0.2;
   if (head === 'crust' && (words.lastIndexOf('pie') > Math.max(...['crust', 'shell', 'dough'].map((w) => words.lastIndexOf(w))) || PIES_AISLE_RE.test(normalize(product.category || '')))) mult *= 0.2;
   // Cream is sold by fat: BJ's "Wellsley Farms Light Cream" and Stew Leonard's "Byrne Dairy Ultra
   // Pasteurized Light Cream", both filed under Heavy Creams, were Newark's two best "heavy cream".
@@ -675,6 +681,8 @@ export function relevance(query, product, opts = {}) {
   if (NUT_HEAD_RE.test(head || '') && SNACK_NUT_RE.test(nameNorm) && !SNACK_NUT_RE.test(normalize(query))) mult *= 0.3;
   // ...and nuts in the shell are weighed with it, about half of what a pound of shelled nuts holds:
   // Food Lion's "Diamond In Shell Pecans", 16 oz at $8.29, ranked against chopped pecans (Greenville).
+  // ...and a cake made with them is a cake: El Super's "Pecan Brazo Gitano" (Other Cakes), Las Vegas.
+  if (NUT_HEAD_RE.test(head || '') && NUT_DISH_AISLE_RE.test(normalize(product.category || '')) && !NUT_DISH_AISLE_RE.test(normalize(query))) mult *= 0.2;
   if (NUT_HEAD_RE.test(head || '') && IN_SHELL_RE.test(nameNorm) && !IN_SHELL_RE.test(normalize(query))) mult *= 0.3;
   // Whipped cream is not heavy cream: Trader Joe's "Sweetened Whipped Heavy Cream", a 13 oz can, answered
   // Dallas's heavy cream. Heavy WHIPPING cream is heavy cream.

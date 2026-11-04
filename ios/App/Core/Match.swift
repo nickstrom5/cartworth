@@ -228,7 +228,8 @@ enum Match {
     private static let lunchNameRx = Rx("\\b(?:deli|sliced|lunchmeat|lunch meat|cold cuts?)\\b")
     private static let lunchCatRx = Rx("\\b(?:deli|lunch ?meats?|lunchmeat|cold cuts?)\\b")
     private static let produceHeadRx = Rx("^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|parsley|basil|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|garlic|ginger|scallion|avocado)$")
-    private static let produceWordRx = Rx("^(?:onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$")
+    /// Shallots and leeks added from Las Vegas ("Onions Shallots" answered "onions").
+    private static let produceWordRx = Rx("^(?:shallot|leek|onion|tomato|tomatoe|jalapeno|pepper|garlic|carrot|celery|potato|lime|lemon|apple|banana|strawberry|blueberry|mango|pineapple|cucumber|spinach|kale|cilantro|parsley|basil|mushroom|corn|pea|bean|avocado)$")
     /// "pumpkin" alone is a pumpkin to carve, not a mini or ornamental one or a licensed novelty
     /// (the Halloween run), nor "Tiger Striped Pumpkin" (the rerun). These are produce filed under
     /// Pumpkin, so this rule is about size. Port of DECORATIVE_PUMPKIN_RE.
@@ -309,6 +310,8 @@ enum Match {
     private static let heavyRx = Rx("\\bheavy\\b")
     private static let lightRx = Rx("\\blight\\b")
     private static let turkeyDishAisleRx = Rx("\\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?)\\b")
+    private static let pastryCupRx = Rx("\\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\\b")
+    private static let nutDishAisleRx = Rx("\\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|candy)\\b")
     private static let inShellRx = Rx("\\bin[- ]?(?:the )?shells?\\b")
     private static let nutHeadRx = Rx("^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$")
     private static let snackNutRx = Rx("\\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\\b")
@@ -567,6 +570,8 @@ enum Match {
         if qt.contains("turkey") && otherTurkeyPart(query: query, nameNorm: nameNorm, category: category) { mult *= 0.2 }
         // ...nor a dish made of it ("The Turkey Trot (Half Panini)", "Turkey Carnitas"; Greenville). Port of shared/match.js.
         if qt.contains("turkey") && turkeyDishAisleRx.test(normalize(category ?? "")) && !turkeyDishAisleRx.test(normalize(query)) { mult *= 0.2 }
+        // ...nor are phyllo cups and tart shells ("Pastry Shells, Mini Phyllo", Las Vegas). Port of shared/match.js.
+        if head == "crust" && pastryCupRx.test(nameNorm) && !pastryCupRx.test(normalize(query)) { mult *= 0.2 }
         if head == "crust" && ((words.lastIndex(of: "pie") ?? -1) > (["crust", "shell", "dough"].compactMap { words.lastIndex(of: $0) }.max() ?? -1) || piesAisleRx.test(normalize(category ?? ""))) { mult *= 0.2 }
         // Cream is sold by fat: "Wellsley Farms Light Cream" in Heavy Creams was Newark's best heavy cream. Port of shared/match.js.
         let creamGrade = { (s: String) -> String? in heavyRx.test(s) ? "heavy" : lightRx.test(s) ? "light" : nil }
@@ -574,6 +579,8 @@ enum Match {
         // Snack nuts are not baking nuts ("Sweet & Spicy Pecans", "Candied Pecans"; the Thanksgiving core list). Port of shared/match.js.
         if nutHeadRx.test(head) && snackNutRx.test(nameNorm) && !snackNutRx.test(normalize(query)) { mult *= 0.3 }
         // ...and nuts in the shell are weighed with it (Food Lion's "Diamond In Shell Pecans"). Port of shared/match.js.
+        // ...and a cake made with them is a cake ("Pecan Brazo Gitano" in Other Cakes, Las Vegas). Port of shared/match.js.
+        if nutHeadRx.test(head) && nutDishAisleRx.test(normalize(category ?? "")) && !nutDishAisleRx.test(normalize(query)) { mult *= 0.2 }
         if nutHeadRx.test(head) && inShellRx.test(nameNorm) && !inShellRx.test(normalize(query)) { mult *= 0.3 }
         // Whipped cream is not heavy cream ("Sweetened Whipped Heavy Cream", Dallas). Port of shared/match.js.
         if head == "cream" && whippedRx.test(nameNorm) && !whippedRx.test(normalize(query)) { mult *= 0.2 }
