@@ -340,3 +340,18 @@ test('DEFECT 16: per-lb celery gets no price per bunch', () => {
   // A banana's estimate is one banana and stays.
   assert.equal(item('kroger', 'Bananas', '1 each', 0.59, { soldBy: 'lb', estEach: 0.2 }).unit.count.perBase, 0.2);
 });
+
+// ---------------------------------------------------------------------------
+// DEFECT 17 (Greenville SC): "fresh turkey" was answered by The Fresh Market's "The Turkey Trot (Half
+// Panini)" in Prepared Sandwiches and Wraps, and Sprouts' "Turkey Carnitas" in Prepared Turkey; Food
+// Lion's "Diamond In Shell Pecans" (16 oz, weighed with the shells) ranked against shelled pecans.
+// ---------------------------------------------------------------------------
+test('DEFECT 17: a turkey sandwich and in-shell pecans', () => {
+  rejects('fresh turkey', 'The Fresh Market The Turkey Trot (Half Panini)', { category: 'Prepared Sandwiches and Wraps' });
+  rejects('fresh turkey', 'Sprouts Turkey Carnitas', { category: 'Prepared Turkey' });
+  rejects('turkey', 'Sprouts Turkey Carnitas', { category: 'Prepared Turkey' });
+  rejects('pecans', 'Diamond In Shell Pecans', { category: 'Pecans' });
+  matches('in shell pecans', 'Diamond In Shell Pecans', { category: 'Pecans' });
+  matches('turkey sandwich', 'Turkey Club Sandwich', { category: 'Prepared Sandwiches and Wraps' });
+  matches('fresh turkey', 'Sprouts Fresh Whole Turkey', { category: 'Whole Turkey' });
+});

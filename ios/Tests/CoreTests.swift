@@ -2824,3 +2824,14 @@ extension ThanksgivingCoreTests {
         XCTAssertEqual(bananas.unitPrice(.count)?.perBase, 0.2)
     }
 }
+
+extension ThanksgivingCoreTests {
+    /// DEFECT 17 (Greenville SC): a turkey panini answered "fresh turkey"; in-shell pecans ranked against shelled ones.
+    func testATurkeySandwichAndInShellPecans() {
+        XCTAssertLessThan(Match.relevance(query: "fresh turkey", name: "The Fresh Market The Turkey Trot (Half Panini)", category: "Prepared Sandwiches and Wraps"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "turkey", name: "Sprouts Turkey Carnitas", category: "Prepared Turkey"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "pecans", name: "Diamond In Shell Pecans", category: "Pecans"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "in shell pecans", name: "Diamond In Shell Pecans", category: "Pecans"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "fresh turkey", name: "Sprouts Fresh Whole Turkey", category: "Whole Turkey"), Match.relevant)
+    }
+}

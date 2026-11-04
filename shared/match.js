@@ -453,6 +453,8 @@ function otherTurkeyPart(query, nameNorm, category) {
 // "Shady Brook Farms Frozen Whole Turkey", $0.84/lb, was Newark's best fresh turkey, where a fresh bird
 // costs $2-3 (the Thanksgiving core list, 3 Nov).
 const FROZEN_RE = /\bfrozen\b/;
+const TURKEY_DISH_AISLE_RE = /\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?)\b/;
+const IN_SHELL_RE = /\bin[- ]?(?:the )?shells?\b/;
 const NUT_HEAD_RE = /^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$/;
 const SNACK_NUT_RE = /\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\b/;
 const PIES_AISLE_RE = /^(?!.*\b(?:crusts?|dough|shells?)\b).*\bpies\b/;
@@ -656,6 +658,9 @@ export function relevance(query, product, opts = {}) {
   // "pumpkin pie" (Halloween QA, 24 Oct), and a "Pie Pumpkin" scored 0.80 against it.
   if (hasPhrase(qt, ['pumpkin', 'pie']) && (product.soldBy === 'lb' || (hasPhrase(words, ['pie', 'pumpkin']) && !hasPhrase(words, ['pumpkin', 'pie'])))) mult *= 0.2;
   if (qt.includes('turkey') && otherTurkeyPart(query, nameNorm, product.category)) mult *= 0.2;
+  // ...nor a dish made of it: The Fresh Market's "The Turkey Trot (Half Panini)" and Sprouts' "Turkey
+  // Carnitas" (Prepared Turkey) were Greenville's only "fresh turkey" (the Thanksgiving core list).
+  if (qt.includes('turkey') && TURKEY_DISH_AISLE_RE.test(normalize(product.category || '')) && !TURKEY_DISH_AISLE_RE.test(normalize(query))) mult *= 0.2;
   // A pie that boasts of its crust is a pie: "Mrs. Smith's Original Flaky Crust Dutch Apple Pie", 37 oz
   // in Frozen Pies, was the best "pie crust" at Stop & Shop, Weis, ACME and Kings (Newark, the
   // Thanksgiving core list).
@@ -668,6 +673,9 @@ export function relevance(query, product, opts = {}) {
   // Snack nuts are not baking nuts: Trader Joe's "Sweet & Spicy Pecans" and "Candied Pecans", 5 oz at
   // $15.97/lb, answered "pecans" in Salt Lake City and Dallas (the Thanksgiving core list).
   if (NUT_HEAD_RE.test(head || '') && SNACK_NUT_RE.test(nameNorm) && !SNACK_NUT_RE.test(normalize(query))) mult *= 0.3;
+  // ...and nuts in the shell are weighed with it, about half of what a pound of shelled nuts holds:
+  // Food Lion's "Diamond In Shell Pecans", 16 oz at $8.29, ranked against chopped pecans (Greenville).
+  if (NUT_HEAD_RE.test(head || '') && IN_SHELL_RE.test(nameNorm) && !IN_SHELL_RE.test(normalize(query))) mult *= 0.3;
   // Whipped cream is not heavy cream: Trader Joe's "Sweetened Whipped Heavy Cream", a 13 oz can, answered
   // Dallas's heavy cream. Heavy WHIPPING cream is heavy cream.
   if (head === 'cream' && /\bwhipped\b/.test(nameNorm) && !/\bwhipped\b/.test(normalize(query))) mult *= 0.2;
