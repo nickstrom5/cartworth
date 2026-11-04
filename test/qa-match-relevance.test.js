@@ -299,3 +299,26 @@ test('control: someone looking for the wine still finds it, and butter is still 
   matches('butter', 'Land O Lakes Salted Butter Sticks', 'Land O Lakes');
   matches('butter', 'Truly Grass Fed Butter');
 });
+
+// ---------------------------------------------------------------------------
+// The milk card named a cheese (3 Nov review recording): "Sold by the lb, so not ranked per gal:
+// Trader Joe's $19.99/lb" was "Raw Milk Cave Aged Le Gruyère", which never says "cheese" and scored
+// 0.81 for "milk". Named cheeses are traps for the dairy searches; elsewhere they stay a flavour.
+// ---------------------------------------------------------------------------
+test('a named cheese made from milk is not milk, cream or butter', () => {
+  rejects('milk', 'Raw Milk Cave Aged Le Gruyère', 'Trader Joe’s');
+  rejects('milk', 'Whole Milk Mozzarella');
+  rejects('whole milk', 'Whole Milk Ricotta & Mozzarella Blend');
+  rejects('cream', 'Cream Havarti');
+  rejects('butter', 'Butter Gouda Wedge');
+  assert.ok(score('milk', 'Raw Milk Cave Aged Le Gruyère', 'Trader Joe’s') < AD_MIN, 'and not a weekly-ad match either');
+});
+
+test('control: milk is milk, and a cheese name is still a flavour elsewhere', () => {
+  matches('milk', 'Organic Milk A2/A2', 'Trader Joe’s');
+  matches('milk', 'Lactose Free Whole Milk');
+  matches('cheese', 'Sharp Cheddar Cheese');
+  matches('gruyere', 'Raw Milk Cave Aged Le Gruyère', 'Trader Joe’s');
+  matches('crackers', 'White Cheddar Cheez-It Crackers');
+  matches('popcorn', 'White Cheddar Popcorn');
+});

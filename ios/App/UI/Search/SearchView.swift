@@ -5,6 +5,7 @@ struct SearchView: View {
     @Bindable var model: SearchModel
     @Environment(AppState.self) private var app
     @Environment(Entitlements.self) private var pro
+    @Environment(Router.self) private var router
     @Query(sort: \RecentSearch.lastAt, order: .reverse) private var recents: [RecentSearch]
 
     @State private var text = ""
@@ -98,6 +99,15 @@ struct SearchView: View {
                 }
             }
             .task(id: signature) { recompute() }
+            // "Compare" from the list, a deal, a watch or a cartworth:// link. Through start(), like
+            // a typed search: run straight from MainTabs, it left the field showing the previous
+            // query ("stuffing" results under "milk"), kept that query's refine filters, and
+            // skipped the free-search check. `initial`: the tab may be built by this very switch.
+            .onChange(of: router.pendingQuery, initial: true) { _, q in
+                guard let q else { return }
+                router.pendingQuery = nil
+                start(q)
+            }
             .refreshable { if !model.query.isEmpty { start(model.query, fresh: true) } }
         }
         // Keep lines readable instead of letting them run the full width of a 13" iPad — but cap

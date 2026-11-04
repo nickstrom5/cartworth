@@ -6,9 +6,16 @@ struct OnboardingView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var step = 0
     @State private var zip = ""
-    @State private var busy = false
+    /// Which way in is working, so its own button shows the spinner. One flag spun "Use my
+    /// location" for a typed ZIP (the 3 Nov review recording).
+    @State private var busy: Way?
+    @FocusState private var zipFocused: Bool
     @State private var error: String?
     @State private var fetcher = LocationFetcher()
+    /// The place just found, for the store step's heading while `app.setPlace` is still running.
+    @State private var found: UserPlace?
+
+    private enum Way { case location, zip }
 
     /// True on iPad and in wide windows. This is the first screen anyone sees, and stacked at the
     /// top-left of a 13" display it reads as an unfinished phone app, so the welcome step becomes
@@ -100,23 +107,37 @@ struct OnboardingView: View {
                 Task { await useCurrentLocation() }
             } label: {
                 HStack {
-                    if busy { ProgressView().controlSize(.small) } else { Image(systemName: "location.fill") }
+                    if busy == .location { ProgressView().controlSize(.small) } else { Image(systemName: "location.fill") }
                     Text("Use my location")
                 }
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(busy)
+            .disabled(busy != nil)
 
             HStack {
                 TextField("or enter ZIP code", text: $zip)
                     .keyboardType(.numberPad)
+                    .textContentType(.postalCode)
                     .textFieldStyle(.roundedBorder)
                     .frame(maxWidth: 180)
-                Button("Continue") { Task { await useZip() } }
-                    .buttonStyle(.bordered)
-                    .disabled(zip.count != 5 || busy)
+                    .focused($zipFocused)
+                    // Digits only, five at most: a sixth digit used to leave Continue greyed out
+                    // with nothing on screen saying why.
+                    .onChange(of: zip) { _, new in
+                        let digits = String(new.filter(\.isNumber).prefix(5))
+                        if digits != new { zip = digits }
+                    }
+                    .disabled(busy != nil)
+                Button { Task { await useZip() } } label: {
+                    HStack(spacing: 6) {
+                        if busy == .zip { ProgressView().controlSize(.small) }
+                        Text("Continue")
+                    }
+                }
+                .buttonStyle(.bordered)
+                .disabled(zip.count != 5 || busy != nil)
                 if isWide { Spacer(minLength: 0) }
             }
             if let error { InfoBanner(kind: .bad, symbol: "exclamationmark.triangle", text: error) }
@@ -142,7 +163,7 @@ struct OnboardingView: View {
     private var stores: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Stores near \(app.place?.city ?? app.place?.zip ?? "you")")
+                Text("Stores near \((app.place ?? found)?.city ?? (app.place ?? found)?.zip ?? "you")")
                     .font(.title2.bold())
                 Text(app.isLoadingDirectory ? (app.directoryProgress ?? "Finding stores…") : "Pick the ones you shop. You can change these any time.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -151,7 +172,16 @@ struct OnboardingView: View {
             .padding(.bottom, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            if app.isLoadingDirectory && app.directory == nil {
+            if app.directory == nil, !app.isLoadingDirectory, let err = app.lastDirectoryError {
+                // The directory failed outright (offline, server down). This used to show an empty
+                // list and a disabled "Choose at least one store" button with no way forward.
+                VStack(spacing: 12) {
+                    InfoBanner(kind: .bad, symbol: "wifi.exclamationmark", text: err)
+                    Button("Try again") { Task { await app.loadDirectory(fresh: true) } }
+                        .buttonStyle(.bordered)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if app.directory == nil {
                 VStack(spacing: 10) {
                     ProgressView()
                     Text(app.directoryProgress ?? "Checking which stores have prices…").font(.footnote).foregroundStyle(.secondary)
@@ -164,7 +194,7 @@ struct OnboardingView: View {
             Button {
                 app.onboarded = true
             } label: {
-                Text(app.selectedChainIds.isEmpty ? "Choose at least one store" : "Start comparing \(app.selectedChainIds.count) stores")
+                Text(app.directory == nil ? "Finding stores…" : app.selectedChainIds.isEmpty ? "Choose at least one store" : "Start comparing \(app.selectedChainIds.count) stores")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -180,30 +210,39 @@ struct OnboardingView: View {
     }
 
     private func useCurrentLocation() async {
-        busy = true
+        busy = .location
+        zipFocused = false
         error = nil
-        defer { busy = false }
+        defer { busy = nil }
         do {
             let loc = try await fetcher.current()
             let place = try await Geo.place(for: loc)
-            await app.setPlace(place)
-            step = 1
+            await showStores(for: place)
         } catch {
             self.error = (error as? LocalizedError)?.errorDescription ?? "Couldn’t get your location. Enter your ZIP instead."
         }
     }
 
     private func useZip() async {
-        busy = true
+        busy = .zip
+        zipFocused = false
         error = nil
-        defer { busy = false }
+        defer { busy = nil }
         do {
             let place = try await Geo.place(forZip: zip)
-            await app.setPlace(place)
-            step = 1
+            await showStores(for: place)
         } catch {
             self.error = (error as? LocalizedError)?.errorDescription ?? "Couldn’t find that ZIP code."
         }
+    }
+
+    /// Moves on to the store step as soon as the place is known. The store directory takes 20-30
+    /// seconds and the store step has its own progress ("Checking which stores have prices…");
+    /// waiting for it here left the welcome screen frozen behind a spinner.
+    private func showStores(for place: UserPlace) async {
+        found = place
+        step = 1
+        await app.setPlace(place)
     }
 }
 
