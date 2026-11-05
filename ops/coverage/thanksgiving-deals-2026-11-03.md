@@ -52,6 +52,8 @@ What ran:
    qa-pricing-round2). Guards: only whole birds (not breast, ground, deli, parts, roasts, pet food,
    oven bags or pans), and only per-bird prices of $5 or more. A $2.89 "each" is a price per pound
    with the "lb" missing (Festival). A stated weight is used as given and is never replaced.
+   This works with #14's `wholeBirdEach`, which drops the per-bird price for the same listings:
+   the per-bird price is not ranked, but the estimated per-lb price is (only from $5).
 4. **A spend threshold was read nowhere, and "LIMIT ONE" was not a limit.** "$0.59/lb with $25
    purchase" parsed to nothing, so the card showed a bare $0.59/lb. **Fixed:** `parseDeal` and
    `DealParser.parse` read `minSpend` in these forms: "with $25 purchase", "with additional $25
@@ -123,6 +125,12 @@ What ran:
 ## Tests
 
 - Web: `test/qa-thanksgiving-deals.test.js`, 15 tests: bugs 1–6, their controls, and the countdown
-  in eight time zones (one child process per zone). WEB_TOTALS
+  in eight time zones (one child process per zone). After rebasing onto main (#12 to #15),
+  `npm test` runs 907 tests: 906 pass, 0 fail, 0 cancelled (it didn't hang this time).
 - iOS: `ThanksgivingDealsTests` in `ios/Tests/ThanksgivingPricingTests.swift`, with the same cases
-  as the web tests. IOS_TOTALS
+  as the web tests. On iPhone 18 Pro Max (iOS 27.0) with Xcode 1.app, AppTests without
+  PurchaseTests: 437 pass, 0 fail, 1 expected failure. PurchaseTests alone: 15/15. In a full run
+  it crashed the test runner under simulator contention, which stopped every class after it from
+  running, so it runs on its own. The run found an iOS parity gap: `DealParser` had no branch for a
+  bare "$1 off" and read nothing from it, while `parseDeal` read a $1 saving. **Fixed**, so "$1 off"
+  against $16.99 is $15.99 on both sides.

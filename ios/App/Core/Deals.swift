@@ -84,6 +84,8 @@ enum DealParser {
     private static let offParenRx = Rx("^\\s*(?:\\$\\s*(\\d+(?:\\.\\d+)?)|(\\d+)\\s*¢)\\s*off\\s*\\((\\d+)\\)")
     /// "$1.00 off 2" is a dollar-off coupon that requires buying two, not a $1-off-each deal.
     private static let offCountRx = Rx("\\$\\s*(\\d+(?:\\.\\d+)?)\\s*off\\s+(\\d+)\\b")
+    /// A bare "$5 OFF" with no quantity attached. Mirrors shared/deals.js.
+    private static let bareOffRx = Rx("^\\s*\\$\\s*(\\d+(?:\\.\\d+)?)\\s*off\\s*$")
     private static let saveRx = Rx("save\\s*\\$\\s*(\\d+(?:\\.\\d+)?)")
     private static let savePerRx = Rx("save\\s*\\$\\s*\\d+(?:\\.\\d+)?\\s*(?:/|per\\s*)?(lb|each|ea)")
     private static let buySaveRx = Rx("buy\\s*(\\d+)\\s*,?\\s*save\\s*\\$\\s*(\\d+(?:\\.\\d+)?)")
@@ -135,6 +137,8 @@ enum DealParser {
             d.needsCoupon = true
         } else if let m = offCountRx.match(lower), let s = Double(m[1] ?? ""), let need = Int(m[2] ?? "") {
             d.kind = .save; d.save = s; d.mustBuy = need
+        } else if let m = bareOffRx.match(lower), let s = Double(m[1] ?? "") {
+            d.kind = .save; d.save = s
         } else if let m = saveRx.match(lower), let s = Double(m[1] ?? "") {
             d.kind = .save; d.save = s
             if let pm = savePerRx.match(lower) { d.perLb = pm[1] == "lb" }
