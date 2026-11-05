@@ -45,6 +45,7 @@ struct DealDetailView: View {
                     if shown.needsCard { Badge(text: "needs store card", kind: .info) }
                     if let l = shown.limit { Badge(text: "limit \(l)", kind: .neutral) }
                     if let m = shown.mustBuy { Badge(text: "must buy \(m)", kind: .warn) }
+                    if let s = shown.terms?.minSpend { Badge(text: "needs a \(Money.plain(s)) purchase", kind: .warn) }
                     Badge(text: shown.category.rawValue, kind: .neutral)
                 }
 

@@ -412,6 +412,12 @@ enum ProductFactory {
         if !soldByLb, unit[Dim.count.rawValue] == nil, price > 0, Units.weighedWholePumpkin(name, size) {
             unit[Dim.count.rawValue] = UnitPrice(perBase: price, est: false)
         }
+        // A whole turkey priced per bird with no weight: an estimated price per pound from a typical
+        // bird, so it is ranked with the birds sold by the pound (Units.wholeTurkey). Mirrors src/normalize.js.
+        let bird = price > 0 && Units.wholeTurkey(name, category: f.category)
+        if bird, !soldByLb, unit[Dim.weight.rawValue] == nil, price >= Units.turkeyEachMin, size == nil || (size?.dim == .count && size?.base == 1) {
+            unit[Dim.weight.rawValue] = UnitPrice(perBase: price / (Units.typicalTurkeyLb * 16), est: true)
+        }
         // A whole turkey sold "each" with no weight has no price per bird: Ingles' "Fresh Hen & Turkey",
         // 1 ea at $3.59, was Charlotte's best "fresh turkey" (the Thanksgiving core list). Mirrors wholeBirdEach in src/normalize.js.
         if !soldByLb, unit[Dim.count.rawValue] != nil, size == nil || (size?.dim == .count && size?.base == 1), wholeBirdEach(name, f.category) {

@@ -3,7 +3,7 @@
 
 /**
  * Parse promo text into a structured deal.
- * Returns { kind, qty, total, each, pct, save, text, needsCoupon, needsCard, limit, mustBuy } or null.
+ * Returns { kind, qty, total, each, pct, save, text, needsCoupon, needsCard, limit, mustBuy, minSpend } or null.
  * kinds: 'multi' (N for $X), 'bogo', 'bxgy' (buy X get Y free), 'pct', 'save', 'price'
  */
 export function parseDeal(text, basePrice = null) {
@@ -13,8 +13,14 @@ export function parseDeal(text, basePrice = null) {
   const out = { kind: null, text: t };
   if (/\bdigital\b|\bcoupon\b|\bclip\b|for u\b|\bj4u\b/.test(lower)) out.needsCoupon = true;
   if (/with (?:your )?(?:store |loyalty |rewards |member(?:ship)? )?card|card price|member price|with prime|loyalty price/.test(lower)) out.needsCard = true;
-  const lim = lower.match(/limit\s+(\d+)/);
-  if (lim) out.limit = +lim[1];
+  // "Limit 1" and "LIMIT ONE PER HOUSEHOLD" are both how a turkey loss leader states its limit.
+  const lim = lower.match(/limit\s+(\d+|one|two|three|four|five|six)\b/);
+  if (lim) out.limit = /\d/.test(lim[1]) ? +lim[1] : LIMIT_WORDS[lim[1]];
+  // "$0.59/lb with $25 purchase", "free turkey when you spend $100": the price only holds once the
+  // basket reaches that amount. Without this the card printed a bare $0.59/lb (the Thanksgiving
+  // deals QA, 3 Nov). "with $1 off" or "with $5 mail-in rebate" is not a spend threshold.
+  const spend = lower.match(MIN_SPEND_RE) || lower.match(MIN_SPEND_PURCHASE_RE);
+  if (spend) out.minSpend = +spend[1];
   // "must buy 2", "when you buy 4", "buy 3 or more" all mean the shelf price only applies at
   // that quantity. Missing any of them means quoting a price the shopper cannot actually get.
   const must = lower.match(/must buy\s+(\d+)/)
@@ -82,10 +88,13 @@ export function parseDeal(text, basePrice = null) {
     delete out.each;
     out.kind = null;
   }
-  return out.kind || out.needsCoupon || out.needsCard || out.limit || out.mustBuy ? out : null;
+  return out.kind || out.needsCoupon || out.needsCard || out.limit || out.mustBuy || out.minSpend ? out : null;
 }
 
 const round2ish = (n) => Math.round(n * 100) / 100;
+const LIMIT_WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+const MIN_SPEND_RE = /(?:\bwhen you spend|\bspend|\bwyb|\bpurchase of|\bminimum (?:purchase|order) of)\s+(?:a |an |any |additional |at least )*\$\s*(\d+(?:\.\d+)?)/;
+const MIN_SPEND_PURCHASE_RE = /(?:\bwith|\bw\/|\band)\s*(?:a |an |any |additional |minimum |min\.? )*\$\s*(\d+(?:\.\d+)?)\s*(?:or more |\+ ?)?(?:additional |minimum |min\.? |grocery )?(?:purchase|purch\b|order)/;
 
 export function dealLabel(d) {
   if (!d) return '';
@@ -185,7 +194,7 @@ function saysFree(text) {
  *         'bogo'      buy one, get one
  *         'bxgy'      buy N, get M
  *         'coupon'    a discount that covers the whole price
- *   needs 'card' | 'coupon' | 'purchase' | null — what the shopper has to do first
+ *   needs 'card' | 'coupon' | 'purchase' | 'points' | null — what the shopper has to do first
  */
 export function freeOffer(deal, text = '') {
   const blob = `${text} ${deal?.text || ''}`.trim();
@@ -212,12 +221,16 @@ export function freeOffer(deal, text = '') {
   // Store-reward promos ("earn $5 in-store rewards when you buy 3") are not free items.
   if (/\bearn\b[^.]*\b(rewards?|points?|cash)\b/i.test(blob) && !/\bfree\b/i.test(blob.replace(/\bearn\b[^.]*/i, ''))) return null;
   if (saysFree(blob)) {
-    const noPurchase = !mustBuy && !spendGate && !/\bbuy\b/i.test(blob);
+    // "FREE turkey with 1,500 points" is earned by spending, so it is not free with nothing to buy.
+    const points = /\bpoints?\b|\brewards?\b/i.test(blob);
+    const spend = deal?.minSpend ?? +(/\$\s*(\d+(?:\.\d+)?)/.exec(blob)?.[1] || 0);
+    const noPurchase = !mustBuy && !spendGate && !points && !/\bbuy\b/i.test(blob);
     return {
       kind: 'outright',
-      needs,
+      needs: needs || (points ? 'points' : spendGate ? 'purchase' : null),
       noPurchase,
-      label: needs === 'card' ? 'Free with your store card' : needs === 'coupon' ? 'Free with a clipped coupon' : 'Free',
+      label: needs === 'card' ? 'Free with your store card' : needs === 'coupon' ? 'Free with a clipped coupon'
+        : points ? 'Free with rewards points' : spendGate && spend > 0 ? `Free with a $${fmt(spend)} purchase` : spendGate ? 'Free with a purchase' : 'Free',
     };
   }
   return null;
@@ -277,6 +290,46 @@ export function wallClock(s) {
   if (!s) return null;
   const m = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}(?::\d{2})?))?/.exec(String(s));
   return m ? `${m[1]}T${m[2] || '00:00:00'}` : null;
+}
+
+/**
+ * A Whole Foods sale line as numbers: { price, qty, each, regular, pctOff }, any of them null.
+ *
+ * The sales flyer states a sale five ways: "$4.21 ea", "$3.32/lb", "22% off", "2 for $6.67" and
+ * "$1 off". Reading the first dollar amount as the sale price made "$1 off" a $1 bottle of wine:
+ * Pizzolato Spumante, "$1 off", Reg. $16.99, became a deal at $1.00 and "94% off" (the Thanksgiving
+ * deals QA, Whole Foods Lakeview, 3 Nov). A dollar-off line is the regular price less that amount,
+ * and its percent is the amount over the regular price (6%). "4 for $5.56" is four for that total,
+ * not one item at it. The percent is only ever worked out against one fixed regular price; "$5.49
+ * to $13.79" and "Regular prices vary" have none.
+ */
+export function wholeFoodsSale(priceText, regularText) {
+  const p = String(priceText || '').replace(/,/g, '').toLowerCase();
+  const r = String(regularText || '').replace(/,/g, '').toLowerCase();
+  const dollars = (s) => { const m = /\$\s*(\d+(?:\.\d+)?)/.exec(s); return m ? +m[1] : null; };
+  const regular = /\$/.test(r) && !/\bto\b/.test(r) ? dollars(r) : null;
+  const out = { price: null, qty: 1, each: null, regular, pctOff: null };
+  let m;
+  if ((m = /(\d+(?:\.\d+)?)\s*%\s*off/.exec(p))) {
+    out.pctOff = Math.round(+m[1]);
+  } else if ((m = /^\s*(?:\$\s*(\d+(?:\.\d+)?)|(\d+)\s*¢)\s*off\b/.exec(p))) {
+    const save = m[1] != null ? +m[1] : +m[2] / 100;
+    if (regular && regular > save) {
+      out.price = round2ish(regular - save);
+      out.each = out.price;
+      out.pctOff = Math.round((save / regular) * 100);
+    }
+  } else if ((m = /(\d+)\s*(?:for|\/)\s*\$\s*(\d+(?:\.\d+)?)/.exec(p))) {
+    out.qty = +m[1] > 1 ? +m[1] : 1;
+    out.price = +m[2];
+    out.each = round2ish(out.price / out.qty);
+  } else if (/\$/.test(p)) {
+    out.price = dollars(p);
+    out.each = out.price;
+  }
+  if (out.pctOff == null && regular && out.each && regular > out.each) out.pctOff = Math.round((1 - out.each / regular) * 100);
+  if (!(out.pctOff > 0 && out.pctOff < 100)) out.pctOff = null;
+  return out;
 }
 
 /**

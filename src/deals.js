@@ -2,7 +2,7 @@
 import * as flipp from './adapters/flipp.js';
 import * as wholefoods from './adapters/wholefoods.js';
 import { mapLimit } from './http.js';
-import { categorize, parseDeal } from '../shared/deals.js';
+import { categorize, parseDeal, wholeFoodsSale } from '../shared/deals.js';
 import { STORE_BY_ID } from '../shared/stores.js';
 import { normalize } from '../shared/match.js';
 import { money } from './normalize.js';
@@ -82,13 +82,12 @@ function dedupe(deals) {
 }
 
 function wfmDeal(p, now) {
-  const saleNum = /\$/.test(p.priceText) ? money(p.priceText) : null;
-  const regNum = /\$/.test(p.regularText) && !/to/i.test(p.regularText) ? money(p.regularText) : null;
-  const pct = /(\d+)\s*%/.exec(p.priceText)?.[1];
+  // "$1 off" is not a $1 sale price, and "4 for $5.56" is not one item at $5.56 (wholeFoodsSale).
+  const sale = wholeFoodsSale(p.priceText, p.regularText);
+  const regNum = sale.regular;
   const primePct = /(\d+)\s*%/.exec(p.memberText)?.[1];
   const primeNum = /\$/.test(p.memberText) ? money(p.memberText) : null;
   const to = p.validTo ? Date.parse(p.validTo) : null;
-  const pctOff = pct ? +pct : saleNum && regNum && regNum > saleNum ? Math.round((1 - saleNum / regNum) * 100) : null;
   return {
     id: p.id,
     source: 'wholefoods',
@@ -98,9 +97,9 @@ function wfmDeal(p, now) {
     brand: p.brand,
     description: p.description || null,
     image: p.image,
-    price: saleNum,
-    qty: 1,
-    each: saleNum,
+    price: sale.price,
+    qty: sale.qty,
+    each: sale.each,
     perLb: /\/\s*lb/i.test(p.priceText),
     priceText: p.priceText,
     regular: regNum,
@@ -108,7 +107,7 @@ function wfmDeal(p, now) {
     member: primeNum,
     memberText: p.memberText ? `Prime: ${p.memberText}` : null,
     memberPct: primePct ? +primePct : null,
-    pctOff,
+    pctOff: sale.pctOff,
     story: null,
     deal: parseDeal(p.priceText, regNum),
     needsCoupon: false,

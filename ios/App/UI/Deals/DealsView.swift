@@ -423,6 +423,7 @@ struct DealCard: View {
                     if deal.needsCard { Badge(text: "with card", kind: .info) }
                     if let l = deal.limit { Badge(text: "limit \(l)", kind: .neutral) }
                     if let m = deal.mustBuy { Badge(text: "buy \(m)", kind: .warn) }
+                    if let s = deal.terms?.minSpend { Badge(text: "with \(Money.plain(s)) purchase", kind: .warn) }
                 }
             }
             .padding(10)

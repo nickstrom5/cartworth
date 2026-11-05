@@ -571,6 +571,24 @@ enum Units {
         return pieceWeightVaries(n) && !notProduceRx.test(n) && !notAWholePumpkinRx.test(n)
     }
 
+    /// A whole turkey priced per bird with no weight ("Butterball Frozen Whole Turkey, 1 ea, $19.99")
+    /// has no price per pound, so it dropped out of a by-the-pound turkey comparison. A whole bird has
+    /// a typical weight (the 12 to 16 lb on most frozen birds), so it gets an estimated price per
+    /// pound, and a per-pound bird an estimated price per bird. Not parts, deli, a roast, pet food or
+    /// a pan; and a per-bird price under $5 is a per-pound price under an "each" label. Port of
+    /// wholeTurkey in shared/units.js.
+    static let typicalTurkeyLb = 14.0
+    static let turkeyEachMin = 5.0
+    private static let turkeyRx = Rx("\\bturkeys?\\b")
+    private static let wholeBirdRx = Rx("\\bwhole\\b|\\b(?:young|hen|tom)\\s+turkeys?\\b")
+    private static let wholeTurkeyCategoryRx = Rx("\\bwhole turkeys?\\b")
+    private static let notAWholeTurkeyRx = Rx("\\b(?:breasts?|ground|deli|drums?(?:ticks?)?|wings?|thighs?|necks?|legs?|tenderloins?|cutlets?|roast|boneless|sliced|slices|lunch(?:meat)?|bacon|sausages?|jerky|sticks?|burgers?|patt(?:y|ies)|pastrami|ham|gravy|stuffing|stock|broth|brine|bags?|baster|pans?|roasters?|injector|thermometer|kit|rack|lifters?|meals?|dinners?|pot pie|pies?|sandwich(?:es)?|wraps?|dogs?|cats?|pets?|recipe|pate|food|treats?|chews?|kibble|toy|decorations?|candles?|cards?|books?|chocolate|candy|cookies?|cakes?|giblets?|half|halves|pieces?|chili|meatballs?|franks?|hot dogs?|kielbasa|loaf|salami|bologna)\\b")
+    static func wholeTurkey(_ name: String, category: String? = nil) -> Bool {
+        let n = name.lowercased()
+        guard turkeyRx.test(n), !notAWholeTurkeyRx.test(n) else { return false }
+        return wholeBirdRx.test(n) || wholeTurkeyCategoryRx.test((category ?? "").lowercased())
+    }
+
     static func produceWeightLb(_ name: String) -> Double? {
         let n = name.lowercased()
         if notProduceRx.test(n) || pieceWeightVaries(n) { return nil }

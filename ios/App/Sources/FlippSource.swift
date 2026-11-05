@@ -260,7 +260,13 @@ actor FlippSource {
         else if let d = raw.discount, d > 0, d < 95 { pctOff = Int(d.rounded()) }
         // A bare "10 for" is read against the TOTAL (see DealParser); given one unit's $1.00 it
         // made the deal ten for $1.00. Mirrors toDeal.
-        let terms = DealParser.parse("\(pre) \(story) \(disclaimer)", basePrice: qty > 1 && story.isEmpty && disclaimer.isEmpty ? price : each)
+        var terms = DealParser.parse("\(pre) \(story) \(disclaimer)", basePrice: qty > 1 && story.isEmpty && disclaimer.isEmpty ? price : each)
+        // A spend threshold is often in the post-price text: Food City's "$0.96" "*PER LB with an
+        // additional $50 purchase." (Atlanta, 3 Nov). Mirrors toDeal.
+        if terms?.minSpend == nil, let spend = DealParser.parse(post)?.minSpend {
+            if terms == nil { terms = DealTerms(kind: nil, text: post) }
+            terms?.minSpend = spend
+        }
         if pctOff == nil, let t = terms, t.kind == .bogo || t.kind == .bxgy, let p = t.pct { pctOff = Int(p) }
         var priceText = ""
         if let price {

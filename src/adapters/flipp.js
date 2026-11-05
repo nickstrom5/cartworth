@@ -281,6 +281,9 @@ export function toDeal(raw, storeId, merchant, now = Date.now()) {
     needsCoupon,
     needsCard,
     limit: deal?.limit || null,
+    // A spend threshold is often in the post-price text: Food City's "$0.96" "*PER LB with an
+    // additional $50 purchase." (Atlanta, 3 Nov).
+    minSpend: deal?.minSpend || parseDeal(post)?.minSpend || null,
     mustBuy: deal?.mustBuy || null,
     disclaimer: disclaimer || null,
     validFrom,

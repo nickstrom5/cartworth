@@ -1,5 +1,5 @@
 // Build the normalized product shape every adapter returns.
-import { parseSize, sizeFromName, coerceLiquid, unitPrices, formatSize, produceWeightLb, noEachEstimate, weighedWholePumpkin } from '../shared/units.js';
+import { parseSize, sizeFromName, coerceLiquid, unitPrices, formatSize, produceWeightLb, noEachEstimate, weighedWholePumpkin, wholeTurkey, TYPICAL_TURKEY_LB, TURKEY_EACH_MIN } from '../shared/units.js';
 
 export function money(s) {
   if (s == null) return null;
@@ -471,6 +471,13 @@ export function makeProduct(f) {
   // A whole pumpkin at a fixed price with its weight stated is one pumpkin at that price
   // (weighedWholePumpkin). A per-lb pumpkin still gets no per-pumpkin price: see pieceWeightVaries.
   if (!soldByLb && !up.count && effective > 0 && weighedWholePumpkin(name, size)) up.count = { perBase: effective, est: false };
+  // A whole turkey priced per bird with no weight gets an estimated price per pound from a typical
+  // bird (wholeTurkey in shared/units.js), so it is ranked with the birds sold by the pound instead
+  // of dropping out of the comparison.
+  const bird = effective > 0 && wholeTurkey(name, f.category);
+  if (bird && !soldByLb && !up.weight && effective >= TURKEY_EACH_MIN && (!size || (size.dim === 'count' && size.base === 1))) {
+    up.weight = { perBase: effective / (TYPICAL_TURKEY_LB * 16), est: true };
+  }
   // A roll of foil, wrap or parchment states its length or area ("18\"W x 500'L", "75 sq ft"), and
   // a per-EACH price then compares a 500 ft roll with a 25 sq ft one as if they were the same
   // thing: Costco's $55.97 Kirkland roll was set against ALDI's 75 ft roll at $3.95, "per each".
@@ -524,6 +531,10 @@ export function makeProduct(f) {
     memberLabel: member ? f.memberLabel || 'Member' : null,
     memberUnit: member && !soldByLb && size?.base && !sizeConflict ? member / size.base : member && soldByLb ? member / 16 : null,
     estPkg,
+    // A bird sold by the pound: what a typical bird would cost, for display only. Never a register
+    // price (excludedCheaper reads estPkg): a $2.89 "1 each" listing is not cheaper than a $48.86
+    // estimate (qa-pricing-round2, "a package price is never called cheaper than a price per pound").
+    estBird: soldByLb && bird && !f.estPkg ? round2(effective * TYPICAL_TURKEY_LB) : null,
     onSale,
     pctOff: pctOff > 0 ? pctOff : null,
     promo: f.promo || null,

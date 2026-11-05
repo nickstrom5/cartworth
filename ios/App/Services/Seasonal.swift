@@ -163,6 +163,7 @@ enum Seasonal {
     /// in shared/seasonal.js.
     static let dayAfter: [String: String] = [
         "halloween": "Candy is often 50% off today — check the weekly ads.",
+        "thanksgiving": "Frozen turkeys and pie fixings are often marked down today — check the weekly ads.",
     ]
 
     private static func baseId(_ id: String) -> String {

@@ -8,7 +8,7 @@ import { runSearch, addWatch, addToList, go } from '../actions.js';
 import { money, money2, unitPrice, unitLabel, ago, shortDate, endsLabel, plural, shortPromo, BASIS_LABEL, BASIS_TITLE, BASIS_BADGE, linkDestination } from '../format.js';
 import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim, tieBreak, standings, perLbAside } from '/shared/compare.js';
 import { refineChips, RELEVANT } from '/shared/match.js';
-import { displayUnitsFor, DISPLAY_UNITS } from '/shared/units.js';
+import { displayUnitsFor, DISPLAY_UNITS, TYPICAL_TURKEY_LB } from '/shared/units.js';
 import { ProductDetail } from './product.js';
 import { DealCardMini } from './sales.js';
 import { OccasionCards } from './occasions.js';
@@ -579,6 +579,7 @@ export function ProductRow({ p, displayUnit, best, prefs, q, compact }) {
         <span class="nw">${money2(eff)}${p.soldBy === 'lb' ? '/lb' : ''}</span>
         ${p.regularPrice && html` <span class="was">${money2(p.regularPrice)}</span>`}
         ${p.estPkg && html` <span class="muted">· <span class="nw">~${money2(p.estPkg)}/pkg</span></span>`}
+        ${p.estBird && html` <span class="muted">· <span class="nw" title=${`Estimated for a typical ${TYPICAL_TURKEY_LB} lb bird; the register charges by weight`}>~${money2(p.estBird)} per ${TYPICAL_TURKEY_LB} lb bird (est.)</span></span>`}
       </div>`}
       ${!up && p.regularPrice && html`<div class="pkg"><span class="was">${money2(p.regularPrice)}</span></div>`}
     </div>

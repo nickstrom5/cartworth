@@ -15,6 +15,8 @@ struct DealTerms: Codable, Hashable {
     var needsCard: Bool = false
     var limit: Int?
     var mustBuy: Int?
+    /// The basket the price needs: "$0.59/lb with $25 purchase" is 25.
+    var minSpend: Double?
 
     var label: String {
         switch kind {
@@ -58,7 +60,13 @@ extension DealTerms {
 enum DealParser {
     private static let couponRx = Rx("\\bdigital\\b|\\bcoupon\\b|\\bclip\\b|for u\\b|\\bj4u\\b")
     private static let cardRx = Rx("with (?:your )?card|card price|member price|with prime")
-    private static let limitRx = Rx("limit\\s+(\\d+)")
+    /// "Limit 1" and "LIMIT ONE PER HOUSEHOLD" are both how a turkey loss leader states its limit.
+    private static let limitRx = Rx("limit\\s+(\\d+|one|two|three|four|five|six)\\b")
+    private static let limitWords = ["one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6]
+    /// "$0.59/lb with $25 purchase", "when you spend $100": the price holds only once the basket
+    /// reaches that amount. Mirrors MIN_SPEND_RE / MIN_SPEND_PURCHASE_RE in shared/deals.js.
+    private static let minSpendRx = Rx("(?:\\bwhen you spend|\\bspend|\\bwyb|\\bpurchase of|\\bminimum (?:purchase|order) of)\\s+(?:a |an |any |additional |at least )*\\$\\s*(\\d+(?:\\.\\d+)?)")
+    private static let minSpendPurchaseRx = Rx("(?:\\bwith|\\bw/|\\band)\\s*(?:a |an |any |additional |minimum |min\\.? )*\\$\\s*(\\d+(?:\\.\\d+)?)\\s*(?:or more |\\+ ?)?(?:additional |minimum |min\\.? |grocery )?(?:purchase|purch\\b|order)")
     // "must buy 2", "when you buy 4", "buy 3 or more" all mean the shelf price only applies at
     // that quantity. Missing any of them means quoting a price the shopper cannot actually get.
     private static let mustRx = Rx("must buy\\s+(\\d+)")
@@ -76,6 +84,8 @@ enum DealParser {
     private static let offParenRx = Rx("^\\s*(?:\\$\\s*(\\d+(?:\\.\\d+)?)|(\\d+)\\s*¢)\\s*off\\s*\\((\\d+)\\)")
     /// "$1.00 off 2" is a dollar-off coupon that requires buying two, not a $1-off-each deal.
     private static let offCountRx = Rx("\\$\\s*(\\d+(?:\\.\\d+)?)\\s*off\\s+(\\d+)\\b")
+    /// A bare "$5 OFF" with no quantity attached. Mirrors shared/deals.js.
+    private static let bareOffRx = Rx("^\\s*\\$\\s*(\\d+(?:\\.\\d+)?)\\s*off\\s*$")
     private static let saveRx = Rx("save\\s*\\$\\s*(\\d+(?:\\.\\d+)?)")
     private static let savePerRx = Rx("save\\s*\\$\\s*\\d+(?:\\.\\d+)?\\s*(?:/|per\\s*)?(lb|each|ea)")
     private static let buySaveRx = Rx("buy\\s*(\\d+)\\s*,?\\s*save\\s*\\$\\s*(\\d+(?:\\.\\d+)?)")
@@ -88,7 +98,8 @@ enum DealParser {
         var d = DealTerms(kind: nil, text: t)
         d.needsCoupon = couponRx.test(lower)
         d.needsCard = cardRx.test(lower)
-        if let m = limitRx.match(lower), let n = Int(m[1] ?? "") { d.limit = n }
+        if let m = limitRx.match(lower), let w = m[1], let n = Int(w) ?? limitWords[w] { d.limit = n }
+        if let m = minSpendRx.match(lower) ?? minSpendPurchaseRx.match(lower), let v = Double(m[1] ?? "") { d.minSpend = v }
         if let m = mustRx.match(lower) ?? whenYouBuyRx.match(lower) ?? buyOrMoreRx.match(lower),
            let n = Int(m[1] ?? "") { d.mustBuy = n }
 
@@ -126,6 +137,8 @@ enum DealParser {
             d.needsCoupon = true
         } else if let m = offCountRx.match(lower), let s = Double(m[1] ?? ""), let need = Int(m[2] ?? "") {
             d.kind = .save; d.save = s; d.mustBuy = need
+        } else if let m = bareOffRx.match(lower), let s = Double(m[1] ?? "") {
+            d.kind = .save; d.save = s
         } else if let m = saveRx.match(lower), let s = Double(m[1] ?? "") {
             d.kind = .save; d.save = s
             if let pm = savePerRx.match(lower) { d.perLb = pm[1] == "lb" }
@@ -157,7 +170,48 @@ enum DealParser {
         }
         // A deal carrying only a must-buy requirement is still a deal: dropping it showed the
         // shopper a single-unit price with no qualifier.
-        return d.kind != nil || d.needsCoupon || d.needsCard || d.limit != nil || d.mustBuy != nil ? d : nil
+        return d.kind != nil || d.needsCoupon || d.needsCard || d.limit != nil || d.mustBuy != nil || d.minSpend != nil ? d : nil
+    }
+}
+
+/// A Whole Foods sale line as numbers. "$1 off" against Reg. $16.99 is $15.99 and 6% off, never a
+/// $1 sale price at "94% off" (Pizzolato Spumante, Whole Foods Lakeview, the Thanksgiving deals QA);
+/// "4 for $5.56" is four for that total. Port of wholeFoodsSale in shared/deals.js.
+enum WholeFoodsSale {
+    struct Numbers: Equatable { var price: Double?; var qty = 1; var each: Double?; var regular: Double?; var pctOff: Int? }
+    private static let dollarsRx = Rx("\\$\\s*(\\d+(?:\\.\\d+)?)")
+    private static let toRx = Rx("\\bto\\b")
+    private static let pctRx = Rx("(\\d+(?:\\.\\d+)?)\\s*%\\s*off")
+    private static let offRx = Rx("^\\s*(?:\\$\\s*(\\d+(?:\\.\\d+)?)|(\\d+)\\s*¢)\\s*off\\b")
+    private static let multiRx = Rx("(\\d+)\\s*(?:for|/)\\s*\\$\\s*(\\d+(?:\\.\\d+)?)")
+
+    static func parse(_ priceText: String?, _ regularText: String?) -> Numbers {
+        let p = (priceText ?? "").replacingOccurrences(of: ",", with: "").lowercased()
+        let r = (regularText ?? "").replacingOccurrences(of: ",", with: "").lowercased()
+        func dollars(_ s: String) -> Double? { dollarsRx.match(s)?[1].flatMap { Double($0) } }
+        func round2(_ v: Double) -> Double { (v * 100).rounded() / 100 }
+        let regular = r.contains("$") && !toRx.test(r) ? dollars(r) : nil
+        var out = Numbers(price: nil, each: nil, regular: regular, pctOff: nil)
+        if let m = pctRx.match(p), let v = Double(m[1] ?? "") {
+            out.pctOff = Int(v.rounded())
+        } else if let m = offRx.match(p) {
+            let save = m[1].flatMap { Double($0) } ?? (m[2].flatMap { Double($0) } ?? 0) / 100
+            if let reg = regular, reg > save {
+                out.price = round2(reg - save)
+                out.each = out.price
+                out.pctOff = Int((save / reg * 100).rounded())
+            }
+        } else if let m = multiRx.match(p), let q = Int(m[1] ?? ""), let total = Double(m[2] ?? "") {
+            out.qty = q > 1 ? q : 1
+            out.price = total
+            out.each = round2(total / Double(out.qty))
+        } else if p.contains("$") {
+            out.price = dollars(p)
+            out.each = out.price
+        }
+        if out.pctOff == nil, let reg = regular, let e = out.each, reg > e { out.pctOff = Int(((1 - e / reg) * 100).rounded()) }
+        if let pct = out.pctOff, !(pct > 0 && pct < 100) { out.pctOff = nil }
+        return out
     }
 }
 
