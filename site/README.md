@@ -24,7 +24,7 @@ site/
   terms.html      required: linked from the iPhone app's Settings and its paywall
   support.html    required: linked from Settings, and it is the App Store Support URL
   styles.css      the only stylesheet, shared by all four pages
-  appstore.js     one constant: the App Store URL. See "Before you launch the app" below.
+  appstore.js     the App Store URL (and the web app URL). See "The App Store URL" below.
   robots.txt
   sitemap.xml
   img/            empty except for its own README, which lists the images the site expects
@@ -61,36 +61,42 @@ That grep must return nothing before the site goes live.
 
 ---
 
-## 2. Before you launch the app: the App Store URL
+## 2. The App Store URL
 
-The App Store listing does not exist yet, so the site never pretends it does. Every App Store
-button reads **"Coming to the App Store"**, is not a live link, and falls back to the pricing
-section, where the plans are explained. That is deliberate and it is the honest state.
+Cartworth is live on the App Store: **"Cartworth: Grocery Prices"**, Apple ID `6816954374`, released
+6 November 2026, at <https://apps.apple.com/us/app/cartworth-grocery-prices/id6816954374>.
 
-The URL lives in exactly one place: the `APP_STORE_URL` constant at the top of `appstore.js`. It is
-currently an empty string. When the app is approved:
+The URL lives in exactly one place: the `APP_STORE_URL` constant at the top of `appstore.js`:
 
 ```js
-var APP_STORE_URL = 'https://apps.apple.com/us/app/cartworth/id0000000000';
+var APP_STORE_URL = 'https://apps.apple.com/us/app/cartworth-grocery-prices/id6816954374';
 ```
 
-Redeploy, and every App Store button on every page becomes a live link and relabels itself to
-"Download on the App Store". Nothing else changes.
+With it set, every element marked `data-appstore` becomes a live link to the listing and relabels
+itself to its `data-appstore` text, "Download on the App Store". There are four such buttons, all in
+`index.html` (the hero, the iPhone section, pricing and the closing call to action) and none on the
+other pages. The HTML itself still carries the pre-launch state, "Coming to the App Store"
+linking to `#pricing`, so that is what a visitor without JavaScript sees. Setting the constant back
+to an empty string restores that state everywhere, for example if the app is ever removed from
+sale.
 
 If you would rather not depend on JavaScript for that link, you can instead edit each element
-marked `data-appstore` in the HTML directly (set its `href` and change the text inside the
-`data-appstore-label` span), then delete `appstore.js` and its `<script>` tags. There are three such
-buttons in `index.html` and none on the other pages.
+marked `data-appstore` in the HTML directly (set its `href`, change the text inside the
+`data-appstore-label` span and drop the `btn-soon` class), then set `APP_STORE_URL` back to `''`.
+Do not delete `appstore.js`: it also holds `WEB_APP_URL` and the missing-image fallback.
 
-Two related notes:
+The Apple ID appears in two more places in `index.html`; change all three together:
 
-- The site does **not** currently use Apple's official "Download on the App Store" badge artwork,
-  because the listing does not exist. When you add it, use the current official badge from Apple's
-  marketing resources, unmodified, at or above Apple's minimum size and clear space. Do not recolour
-  or redraw it.
-- `SoftwareApplication` JSON-LD on the landing page deliberately omits `downloadUrl` and
-  `availability` while the app is unreleased. Add `"downloadUrl"` alongside the offers once it is
-  live.
+- the Smart App Banner, `<meta name="apple-itunes-app" content="app-id=6816954374">`, which makes
+  Safari on iPhone and iPad show its own banner for the app (Get, or Open if it is installed). It is
+  Safari's own UI: the page loads nothing extra and the CSP is unaffected.
+- `downloadUrl` in the `SoftwareApplication` JSON-LD, whose three Pro offers also carry
+  `"availability": "https://schema.org/InStock"`.
+
+Apple's official "Download on the App Store" badge artwork is still not used: the buttons are plain
+text in the site's own style. If you add the badge, use the current official file from Apple's
+marketing resources, unmodified, at or above Apple's minimum size and clear space. Do not recolour
+or redraw it.
 
 ---
 
