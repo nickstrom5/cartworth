@@ -6,6 +6,8 @@
 <title>Cartworth: compare grocery prices at every store near you</title>
 <meta name="description" content="Compare grocery prices at every store near you, anywhere in the US. Live prices, normalized per unit so package sizes compare fairly, plus every weekly ad.">
 <link rel="canonical" href="https://cartworth.app/">
+<!-- Safari's Smart App Banner for the iPhone app (Apple ID 6816954374, the same app as APP_STORE_URL in appstore.js). -->
+<meta name="apple-itunes-app" content="app-id=6816954374">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: dark)">
 
@@ -59,7 +61,7 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <p class="eyebrow">Free on the web. iPhone app on the way.</p>
+        <p class="eyebrow">Free on the web. Now on iPhone, too.</p>
         <h1 class="h-display">Which store near you is actually cheaper?</h1>
         <p class="lede">Type an item. Cartworth prices it at the grocery stores that are really around you, all at the same time, and converts every price to one shared unit so a 12 oz box and a 42 oz canister can be compared honestly.</p>
         <ul class="hero-points">
@@ -332,7 +334,7 @@
         <a class="btn btn-lg btn-soon" href="#pricing" data-appstore="Download on the App Store"><span data-appstore-label>Coming to the App Store</span></a>
         <a class="btn btn-lg" href="/app/">Use the free web version now</a>
       </div>
-      <p class="cta-note">Requires iOS 17 or later. The iPhone pictures above are illustrations of the app in development. Example prices, September 2026. Varies by location.</p>
+      <p class="cta-note">Requires iOS 17 or later. The iPhone pictures above are illustrations of the app, not screenshots; only the iPad and iPhone Duo picture shows real app screens. Example prices, September 2026. Varies by location.</p>
     </div>
   </section>
 
@@ -617,6 +619,7 @@
       "applicationCategory": "ShoppingApplication",
       "operatingSystem": "iOS 17.0 or later",
       "url": "https://cartworth.app/",
+      "downloadUrl": "https://apps.apple.com/us/app/cartworth-grocery-prices/id6816954374",
       "publisher": {
         "@id": "https://cartworth.app/#organization"
       },
@@ -641,6 +644,7 @@
           "price": "3.99",
           "priceCurrency": "USD",
           "category": "subscription",
+          "availability": "https://schema.org/InStock",
           "description": "Cartworth Pro billed monthly, renews automatically until cancelled."
         },
         {
@@ -649,6 +653,7 @@
           "price": "19.99",
           "priceCurrency": "USD",
           "category": "subscription",
+          "availability": "https://schema.org/InStock",
           "description": "Cartworth Pro billed yearly, renews automatically until cancelled."
         },
         {
@@ -657,6 +662,7 @@
           "price": "29.99",
           "priceCurrency": "USD",
           "category": "one-time purchase",
+          "availability": "https://schema.org/InStock",
           "description": "A one-time purchase that unlocks Cartworth Pro permanently. Nothing renews."
         }
       ]

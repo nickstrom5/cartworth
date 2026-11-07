@@ -1,23 +1,26 @@
 /* ---------------------------------------------------------------------------
    APP_STORE_URL: the one and only place the App Store link is configured.
 
-   The Cartworth listing does not exist yet, so this is deliberately EMPTY.
-   While it is empty every App Store button on the site reads
-   "Coming to the App Store" and falls back to the pricing section, which is
-   the honest state: nothing on the site implies the app is downloadable.
+   Cartworth is live on the App Store ("Cartworth: Grocery Prices", Apple ID
+   6816954374, released 6 Nov 2026), so this holds the US listing URL. Every
+   element marked data-appstore gets this href and relabels itself with its
+   data-appstore text ("Download on the App Store").
 
-   When the app is approved, paste the URL between the quotes below and
-   redeploy. Every button on every page turns into a live App Store link and
-   relabels itself. Nothing else needs to change.
+   The HTML itself still says "Coming to the App Store" and links to #pricing,
+   which is what a visitor without JavaScript sees. Setting this back to an
+   empty string restores that state everywhere, for example if the app is ever
+   pulled from sale.
 
-     var APP_STORE_URL = 'https://apps.apple.com/us/app/cartworth/id0000000000';
+   The same app ID is in the apple-itunes-app meta tag and the
+   SoftwareApplication JSON-LD in index.html; change all three together.
 
-   If you would rather not rely on JavaScript at all, you can instead edit the
-   href and the label of each element marked data-appstore directly in the HTML
-   and delete this file plus its <script> tags. See README.md.
+   If you would rather not rely on JavaScript for the link, you can instead edit
+   the href, the label and the btn-soon class of each element marked
+   data-appstore directly in the HTML. Keep this file either way: it also holds
+   WEB_APP_URL and the missing-image fallback below. See README.md.
    --------------------------------------------------------------------------- */
 
-var APP_STORE_URL = '';
+var APP_STORE_URL = 'https://apps.apple.com/us/app/cartworth-grocery-prices/id6816954374';
 
 /* ---------------------------------------------------------------------------
    WEB_APP_URL: where the free web app lives.
