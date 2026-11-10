@@ -102,8 +102,8 @@ function App() {
     (async () => {
       try {
         const own = await boot(local);
-        if (!own.settings.zip) setState({ onboarding: true });
-        else {
+        // First-time visitors are already in onboarding (set before the first render, below).
+        if (own.settings.zip) {
           loadDirectory();
           loadLocations();
           // No background timer exists on the web, so stale watches are re-checked here, on load.
@@ -164,6 +164,12 @@ function OnboardingGate() {
 // "Loading" frame. Then the static first screen in index.html (drawn before any script loaded) is
 // swapped for the live one in the same task: no paint in between, and the layout is identical.
 const local = bootLocal();
+// A first-time visitor is in onboarding from the first frame, not from when /api/state answers.
+// It used to be set after that request: a ZIP submitted while it was still out (a slow connection,
+// or the CI browser) left `settings.zip` set with `onboarding` unset, so the app dropped the
+// visitor into Compare and then pulled them back to the store step when the request landed. The
+// store step's "Look within 40 miles" button vanished in between (a flaky test on main, 10 Nov).
+if (!local.settings.zip) setState({ onboarding: true });
 const root = document.getElementById('app');
 root.replaceChildren();
 render(html`<${App} />`, root);
