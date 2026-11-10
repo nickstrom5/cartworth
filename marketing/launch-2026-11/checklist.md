@@ -25,6 +25,11 @@ Every line is the owner's action, or needs the owner's yes for that one item. Ti
 
 - [ ] **Top three, 2:** press pitch to the Chicago consumer desks ([press-pitch.md](press-pitch.md)).
       Re-run 60618 that morning before quoting any figure.
+      - [x] ABC7 Chicago consumer I-Team: emailed to the unit's public inbox on 10 Nov, with the
+            owner's approval, from the owner's Gmail. No phone number given; reply-to is the email.
+      - [ ] CBS News Chicago
+      - [ ] Chicago Sun-Times / WBEZ
+      - [ ] NBC 5, WGN, Chicago Tribune (routes still to find)
 - [ ] Social post 2, Thanksgiving guide.
 - [ ] Message admins of two or three local Facebook groups ([facebook-groups.md](facebook-groups.md)).
 
