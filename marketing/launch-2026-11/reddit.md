@@ -29,7 +29,7 @@ removed.
 Hi mods. I make a free grocery price comparison web app (cartworth.app; no account, no ads). It has a Thanksgiving list that prices each item at the stores near a ZIP in the same unit. I've read the rules and I know promotion isn't allowed without permission, so I'm asking: would a single text post about pricing a Thanksgiving list, with my connection stated in the first line, be acceptable? If the answer is no, I won't post. Thanks for your time.
 ```
 
-## 1. r/iosapps (post first)
+## 1. r/iosapps (Mon 16 Nov)
 
 **Rule check.** Self-promotion is allowed with conditions: use the developer or self-promotion
 flair, say the app is yours, and no more than about once per developer in 30 days. One snapshot
@@ -76,8 +76,10 @@ Independent, not affiliated with any store.
 with its conditions, the trip plan. Follow `compliance.md` rule 28 (no retailer product photos or
 flyer art as the subject; blur thumbnails if needed). No image is fine too.
 
-**Best time:** a weekday, 9 to 11 am US Eastern. Suggested **Tue 10 or Wed 11 Nov**. Timing is
-common advice, not a rule.
+**Best time:** a weekday, 9 to 11 am US Eastern. **Mon 16 Nov**: the owner is making a new
+Reddit account for this (decided 10 Nov), and a brand-new account's first post being its own app
+is likely to be filtered. Use the days before to comment in the sub. Timing is common advice, not
+a rule.
 
 ## 2. r/apple (Sunday only)
 
@@ -105,7 +107,8 @@ On privacy, since this is r/apple: the app has no server of mine behind it. Ther
 ```
 
 Do not post the r/iosapps and r/apple versions within a few days of each other with identical
-wording; change the opening.
+wording; change the opening. With r/iosapps now on 16 Nov and a new account that has no r/apple
+history, the realistic r/apple date is Sunday 22 Nov, or not at all.
 
 ## 3. r/Thanksgiving (ask first)
 

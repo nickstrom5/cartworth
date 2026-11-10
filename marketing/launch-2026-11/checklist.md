@@ -10,18 +10,20 @@ Every line is the owner's action, or needs the owner's yes for that one item. Ti
       ([app-store-promo-text.md](app-store-promo-text.md)). No review needed.
 - [ ] Open the Rules tab of r/iosapps and r/apple; note flair names, karma and day rules.
 - [ ] If there is no Product Hunt account, decide whether to make one today (one-week wait).
-- [ ] **Post 1 of the top three:** r/iosapps ([reddit.md](reddit.md) §1). Today or Wed.
+- [ ] Create the Reddit account for Cartworth posts (owner's step). Over the next few days,
+      comment helpfully in r/iosapps and elsewhere so the account has ordinary history and some
+      karma in the sub before it promotes anything.
 
 ## Wed 11 Nov
 
 - [ ] X / Threads / Bluesky post 1, launch ([social-short.md](social-short.md)).
-- [ ] **Top three, 2:** Show HN, 8 to 10 am ET, today or Thu ([hacker-news.md](hacker-news.md)).
+- [ ] **Top three, 1:** Show HN, 8 to 10 am ET, today or Thu ([hacker-news.md](hacker-news.md)).
       Only on a morning you can stay in the thread. Check the web app holds up first.
 - [ ] Send modmail to r/Thanksgiving and r/budgetfood (optional: r/EatCheapAndHealthy).
 
 ## Thu 12 Nov
 
-- [ ] **Top three, 3:** press pitch to the Chicago consumer desks ([press-pitch.md](press-pitch.md)).
+- [ ] **Top three, 2:** press pitch to the Chicago consumer desks ([press-pitch.md](press-pitch.md)).
       Re-run 60618 that morning before quoting any figure.
 - [ ] Social post 2, Thanksgiving guide.
 - [ ] Message admins of two or three local Facebook groups ([facebook-groups.md](facebook-groups.md)).
@@ -31,11 +33,13 @@ Every line is the owner's action, or needs the owner's yes for that one item. Ti
 - [ ] Social post 3, turkey fine print (Sat).
 - [ ] r/Thanksgiving text post, only if the mods said yes.
 - [ ] Facebook group post, only where an admin said yes.
-- [ ] r/apple self-post, **Sunday 15 Nov** Pacific time, only if the account is active there.
 
 ## Mon 16 Nov
 
 - [ ] Social post 4, the "94% off" fix.
+- [ ] **Top three, 3:** r/iosapps ([reddit.md](reddit.md) §1), 9 to 11 am ET, from the new account.
+      Moved here from 10 Nov so the account is not brand new. Check the sub's karma rule first;
+      if the account still falls short, wait rather than post.
 - [ ] Press pitch to other markets where you have re-run a local ZIP. Last sensible day.
 - [ ] Check whether 1.0.1 is approved; if so, release it.
 
@@ -54,7 +58,8 @@ Every line is the owner's action, or needs the owner's yes for that one item. Ti
 
 - [ ] Second Facebook group, if any, by Sunday.
 - [ ] Social post 7, thaw reminder (Sun).
-- [ ] r/apple fallback Sunday, only if 15 Nov was skipped.
+- [ ] r/apple self-post, **Sunday 22 Nov** Pacific time, only if the new account has real
+      history in r/apple by then. Otherwise skip it.
 
 ## Tue 24 Nov
 
