@@ -168,6 +168,37 @@ enum ProductFactory {
         return SizeConflict(text: Units.format(size), name: "priced per lb")
     }
 
+    /// The retailer's URL names a different product: King Soopers' "KRO TURKEY STUFFING MIX" (20 oz,
+    /// $1.09) carried ".../19275341-kroger-sugar-cinnamon-mini-pretzel-20-oz" and was Denver's best
+    /// stuffing at $0.87/lb (QA, 9 Nov 2026). When no name word (4+ letters, not a unit) agrees with a
+    /// slug word, the row is a contradiction and is never crowned. Port of `slugProductConflict` in
+    /// src/normalize.js.
+    private static let slugUnitWords: Set<String> = ["each", "count", "pack", "liter", "litre"]
+    private static func slugWords(_ s: String) -> [String] {
+        let folded = s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil).lowercased()
+        return folded.replacingOccurrences(of: "[^a-z0-9]+", with: " ", options: .regularExpression)
+            .split(separator: " ").map(String.init)
+            .filter { $0.count >= 4 && $0.rangeOfCharacter(from: .decimalDigits) == nil && !slugUnitWords.contains($0) }
+    }
+    private static func inOrder(_ a: String, _ b: String) -> Bool {
+        guard let f = a.first, b.first == f else { return false }
+        var it = a.makeIterator(); var want = it.next()
+        for c in b where c == want { want = it.next() }
+        return want == nil
+    }
+    private static func sameSlugWord(_ a: String, _ b: String) -> Bool {
+        let shared = zip(a, b).prefix { $0 == $1 }.count
+        return a.hasPrefix(b) || b.hasPrefix(a) || shared >= 5 || inOrder(a, b) || inOrder(b, a)
+    }
+    static func slugProductConflict(name: String, url: URL?) -> SizeConflict? {
+        guard let u = url?.absoluteString, let r = u.range(of: "/products/[0-9]+-[^?#/]+", options: .regularExpression) else { return nil }
+        let tail = String(u[r]).replacingOccurrences(of: "^/products/[0-9]+-", with: "", options: .regularExpression)
+        let slug = slugWords(tail.replacingOccurrences(of: "-", with: " "))
+        let own = slugWords(name)
+        guard slug.count >= 2, own.count >= 2, !own.contains(where: { a in slug.contains { sameSlugWord(a, $0) } }) else { return nil }
+        return SizeConflict(text: tail.replacingOccurrences(of: "-", with: " "), name: "listing names another product")
+    }
+
     /// True when the retailer's URL slug spells out this size (".../18848374-sweet-potatoes-10-lbs-10-lb"
     /// states 10 lb and never 5 lb). Port of `slugStates` in src/normalize.js.
     static func slugStates(_ url: URL?, _ size: ParsedSize?, beforeEnd: Bool = false) -> Bool {
@@ -375,6 +406,9 @@ enum ProductFactory {
         // The URL says "per-lb" but the stated size is a fixed weight: Smart & Final's "Table Carrots",
         // stated 25 lb at $2.19, slug "...-bulk-carrots-per-lb", was $0.09/lb. Port of slugPerLbConflict.
         if let c = slugPerLbConflict(size, url: f.url, soldByLb: soldByLb) { sizeConflict = c }
+        // The URL names another product ("...-kroger-sugar-cinnamon-mini-pretzel-20-oz" on a stuffing
+        // mix): the price and size may be the other product's. Port of slugProductConflict.
+        else if let c = slugProductConflict(name: name, url: f.url) { sizeConflict = c }
         // Where the size behind the unit price came from; see `Product.sizeSource`.
         let sizeSource: String? = {
             if soldByLb { return "perLb" }

@@ -8,6 +8,8 @@ const STOP = new Set(['the', 'a', 'an', 'of', 'and', 'or', 'for', 'with', 'in', 
 
 const SYNONYMS = {
   oj: ['orange', 'juice'],
+  // "Oatly Original Oatmilk" scored 0 for "oat milk": one word, so neither query word was in the name (QA, 9 Nov 2026).
+  oatmilk: ['oat', 'milk'],
   // One spelling each, so "bbq sauce" finds Sweet Baby Ray's Barbecue Sauce and "black-eyed peas"
   // finds Bush's Blackeye Peas (the holiday matrix).
   // One token: split, its "in" made the "tuna in oil" rule skip the next words, so "Bone-In Butt Pork
@@ -702,6 +704,10 @@ export function relevance(query, product, opts = {}) {
       if (BENIGN_AFTER[w]?.has(words[i - 1])) continue; // "sweet cream butter" is plain butter
       if (BENIGN_BEFORE[w]?.has(words[i + 1])) continue; // "oyster mushrooms" are mushrooms
       if (TRAPS.has(w) || HEAD_TRAPS[head]?.has(w)) strong += 1;
+      // A base right before a dairy noun names another product: "Rouses Coconut Milk" (a 13.5 oz
+      // can) and "Carnation Evaporated Milk" scored 0.51 for "milk", under the 0.55 cut for results
+      // but over the weekly-ad strip's 0.4, so they were shown as milk deals (QA, 9 Nov 2026).
+      else if (ALT_BASE.has(w) && i === headIdx - 1 && DAIRY_HEADS.has(head)) strong += 1;
     }
     let alt = 0;
     let mild = 0;
@@ -728,7 +734,9 @@ export function relevance(query, product, opts = {}) {
     mult *= Math.pow(0.6, Math.min(traps, 3));
   }
   // A vegan analogue of an animal food answers a search for it only when the shopper asked for one.
-  if (dietProduct && !wantsDiet && ANIMAL_HEADS.has(head)) mult *= 0.3;
+  // A plant base in the query ("oat milk", "almond milk") asks for the analogue too: Oatly is on the vegan-brand
+  // list, so "Oatly Oat Milk" scored 0.28 for "oat milk" (QA, 9 Nov 2026).
+  if (dietProduct && !wantsDiet && !qt.some((t) => ALT_BASE.has(t)) && ANIMAL_HEADS.has(head)) mult *= 0.3;
   // "Tastes Like Butter" is margarine. Only penalize when the shopper did not ask for it.
   const wantsImitation = IMITATION_RE.test(normalize(query)) || IMITATION_CATEGORY_RE.test(normalize(query));
   if (IMITATION_RE.test(nameNorm) && !wantsImitation) mult *= 0.3;

@@ -9,7 +9,7 @@ enum Match {
     private static let stop: Set<String> = ["the", "a", "an", "of", "and", "or", "for", "with", "in", "to", "by", "fresh", "brand", "ct", "oz", "lb", "pack", "pk"]
 
     private static let synonyms: [String: [String]] = [
-        "oj": ["orange", "juice"], "tp": ["toilet", "paper"], "evoo": ["extra", "virgin", "olive", "oil"],
+        "oatmilk": ["oat", "milk"], "oj": ["orange", "juice"], "tp": ["toilet", "paper"], "evoo": ["extra", "virgin", "olive", "oil"],
         "pb": ["peanut", "butter"], "pj": ["pajama"], "bsb": ["boneless", "skinless", "breast"], "bscb": ["boneless", "skinless", "chicken", "breast"],
         "hh": ["half", "half"], "half-and-half": ["half", "half"],
         // "100% Pure Pumpkin" is pumpkin puree (the Thanksgiving run, Dallas). Port of shared/match.js.
@@ -610,6 +610,10 @@ enum Match {
                 if let ok = benignAfter[w], let p = prev, ok.contains(p) { continue } // "sweet cream butter"
                 if let ok = benignBefore[w], i + 1 < words.count, ok.contains(words[i + 1]) { continue } // "oyster mushrooms"
                 if traps.contains(w) || headTraps[head]?.contains(w) == true { strong += 1 }
+                // A base right before a dairy noun names another product: "Rouses Coconut Milk"
+                // and "Carnation Evaporated Milk" scored 0.51 for "milk", over the weekly-ad
+                // strip's 0.4 cut, so they were shown as milk deals (QA, 9 Nov 2026).
+                else if altBase.contains(w) && i == hi - 1 && dairyHeads.contains(head) { strong += 1 }
             }
             var alt = 0, mildN = 0, flavorN = 0
             for w in words {
@@ -631,7 +635,9 @@ enum Match {
             mult *= pow(0.6, Double(min(trapCount, 3)))
         }
         // A vegan analogue of an animal food answers a search for it only when the shopper asked for one.
-        if dietProduct && !wantsDiet && animalHeads.contains(head) { mult *= 0.3 }
+        // A plant base in the query ("oat milk") asks for the analogue too: Oatly is on the vegan-brand
+        // list, so "Oatly Oat Milk" scored 0.28 for "oat milk" (QA, 9 Nov 2026).
+        if dietProduct && !wantsDiet && !qt.contains(where: { altBase.contains($0) }) && animalHeads.contains(head) { mult *= 0.3 }
         // "Tastes Like Butter" is margarine. Only penalize when the shopper did not ask for it.
         let qNormForImitation = normalize(query)
         let wantsImitation = imitationRx.test(qNormForImitation) || imitationCategoryRx.test(qNormForImitation)

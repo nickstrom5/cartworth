@@ -181,6 +181,35 @@ export function slugPerLbConflict(size, f, soldByLb) {
 }
 
 /**
+ * The retailer's own URL names a different product.
+ *
+ * King Soopers' "KRO TURKEY STUFFING MIX" came with a 20 oz size, $1.09, and the slug
+ * ".../19275341-kroger-sugar-cinnamon-mini-pretzel-20-oz": a pretzel bag's listing under a stuffing
+ * name. At $0.87/lb it was Denver's best stuffing (QA, 9 Nov 2026). Whole Foods' "Mary's Turkey ...
+ * Turkey Bone-In Breast" carried ".../green-chile-chicken-sausage-bulk-1-lb" and its "Plainville
+ * Farms Bone-In Turkey Breast" ".../chicken-leg-quarters-package-1-lb". When not one word of the
+ * name (4+ letters, not a unit) appears in the slug, the price and size may belong to the other
+ * product, so the row is recorded as a contradiction like every other and never crowned. A word
+ * matches when one is a prefix of the other, they share 5 letters, or its letters appear in order
+ * in the other ("chkn" in "chicken"), so store abbreviations still agree with their slugs. Across
+ * 1,981 captured rows this flags the 4 mix-ups above and 3 renames (Whole Foods' "Heirloom Pumpkin"
+ * as "autumn-couleur-bin", "Orange Sweet Potatoes" as "yams-jewel"), which only lose the crown.
+ */
+const SLUG_UNIT_WORDS = new Set(['each', 'count', 'pack', 'liter', 'litre']);
+const slugWords = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, ' ').split(' ').filter((w) => w.length >= 4 && !/\d/.test(w) && !SLUG_UNIT_WORDS.has(w));
+const inOrder = (a, b) => { if (a[0] !== b[0]) return false; let i = 0; for (const c of b) if (c === a[i]) i += 1; return i === a.length; };
+const sharedHead = (a, b) => { let i = 0; while (i < a.length && a[i] === b[i]) i += 1; return i >= 5; };
+const sameWord = (a, b) => a.startsWith(b) || b.startsWith(a) || sharedHead(a, b) || inOrder(a, b) || inOrder(b, a);
+export function slugProductConflict(name, url) {
+  const m = String(url || '').match(/\/products\/\d+-([^?#/]+)/);
+  if (!m) return null;
+  const slug = slugWords(m[1].replace(/-/g, ' '));
+  const own = slugWords(name);
+  if (slug.length < 2 || own.length < 2 || own.some((a) => slug.some((b) => sameWord(a, b)))) return null;
+  return { text: m[1].replace(/-/g, ' '), name: 'listing names another product' };
+}
+
+/**
  * Pack count stated only in the retailer's URL slug.
  *
  * Sam's Club lists "Kerrygold Salted Irish Butter Sticks" with a sizeText of "4 oz" — the size of
@@ -422,7 +451,7 @@ export function makeProduct(f) {
   // "24-count", or "64 fl oz" against "Half Gallon, 3-count" — it has already resolved the
   // reading, and that is a decision, not a contradiction.
   const soldByLb = f.soldBy === 'lb' || size?.perWeight;
-  const sizeConflict = slugPerLbConflict(size, f, soldByLb) || (
+  const sizeConflict = slugPerLbConflict(size, f, soldByLb) || slugProductConflict(name, f.url) || (
     // A range in the name ("4-10 Pounds HoKa Turkey Breast") describes a variable-weight item,
     // not a second statement of this package, so it contradicts nothing.
     // And when the retailer's own URL slug names the stated size and not the name's, the name's

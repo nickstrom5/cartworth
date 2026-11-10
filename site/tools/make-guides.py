@@ -276,7 +276,7 @@ THANKSGIVING = dict(
     <p>Many stores publish their prices only through a delivery storefront, and those can run above the shelf (<a href="/guides/instacart-vs-in-store-prices">what we measured</a>). Cartworth labels every price as a shelf, online, chain-wide or weekly-ad price, and the trip plan says which columns are online prices. If you are shopping in person, keep that in mind before you add a second stop.</p>
 
     <h2 id="start">Start with your ZIP</h2>
-    <p><a href="/app/">Open the free web app</a>, enter your ZIP, and add the list. No account, no sign-up. The iPhone app is on its way; everything on this page already works in the browser, free.</p>
+    <p><a href="/app/">Open the free web app</a>, enter your ZIP, and add the list. No account, no sign-up. Or get the <a href="https://apps.apple.com/us/app/cartworth-grocery-prices/id6816954374">iPhone app on the App Store</a>; everything on this page also works in the browser, free.</p>
 ''',
 )
 
