@@ -583,6 +583,37 @@ test('a store the server did not ask (busy) says so and offers a retry, not "no 
   }
 });
 
+// The flake on main, 10 Nov 2026 (the test below: "Cannot read properties of undefined (reading
+// 'click')"). `onboarding` was only set once /api/state had answered, so a ZIP submitted before
+// that left the app outside onboarding: Compare was drawn, and the store step came back when the
+// request landed. Held open here so the order is the same on every run.
+test('DEFECT (flaky deploy): a ZIP submitted before /api/state answers stays in onboarding', { skip: SKIP }, async () => {
+  let release;
+  const held = new Promise((r) => { release = r; });
+  const state = api()['GET /api/state'];
+  const near = { ...fx.directory, zip: '71635', city: 'Crossett', state: 'AR', otherMerchants: [], maxMiles: 25,
+    chains: [{ id: 'walmart', name: 'Walmart', short: 'Walmart', status: 'national', hasAds: true, distance: null, address: null }], suggested: ['walmart'] };
+  await srv.close();
+  srv = await startAppServer({ api: api({ 'GET /api/state': async () => { await held; return state; }, 'GET /api/directory': near }) });
+  try {
+    await page.viewport(390, 844);
+    await openApp(page, srv.origin, { storage: {}, hash: '#/' });
+    await page.waitFor(`!!document.querySelector('input[aria-label="Your ZIP code"]:not([disabled])')`, { what: 'the live ZIP step' });
+    await page.eval(`(() => { const i = document.querySelector('input[aria-label="Your ZIP code"]'); i.value = '71635'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+    await page.eval(`(() => { document.querySelector('.onboard form').requestSubmit(); return true; })()`);
+    // /api/state is still out. The store step must be up, and must stay up.
+    await page.waitFor(`[...document.querySelectorAll("button")].some((b) => /Look within 40 miles/.test(b.textContent))`, { what: 'the store step while /api/state is still out', timeout: 4000 });
+    assert.equal(await page.eval(`!!document.querySelector('header nav')`), false, 'the app is not drawn behind onboarding');
+    release();
+    await page.waitFor(`document.querySelector('.onboard') && [...document.querySelectorAll("button")].some((b) => /Look within 40 miles/.test(b.textContent))`, { what: 'the store step after /api/state answers' });
+    assert.equal(await page.eval(`!!document.querySelector('header nav')`), false, 'still in onboarding once the server has answered');
+  } finally {
+    release();
+    await srv.close();
+    srv = await startAppServer({ api: api() });
+  }
+});
+
 test('DEFECT (nationwide sweep): a rural ZIP with nothing in 25 miles is offered 40 miles in one tap', { skip: SKIP }, async () => {
   const asked = [];
   const near = { ...fx.directory, zip: '71635', city: 'Crossett', state: 'AR', otherMerchants: [], maxMiles: 25,
