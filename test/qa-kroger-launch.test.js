@@ -77,8 +77,11 @@ test('control: a Kroger answer with a max-age is kept and reused', async () => {
   try {
     const c = ctx('60602', { 'x-kroger-client-id': 'maxage-id', 'x-kroger-client-secret': 's' });
     await ensureValidated(c);
-    await searchStore('marianos', 'milk maxage', c);
-    const r2 = await searchStore('marianos', 'milk maxage', c);
+    // A query of its own each run: the answer is cached on disk for its max-age (120 s), so a rerun
+    // inside two minutes found it already there and the first search made no call.
+    const q = `milk maxage ${Date.now()}`;
+    await searchStore('marianos', q, c);
+    const r2 = await searchStore('marianos', q, c);
     assert.equal(calls, 1);
     assert.equal(r2.cached, true);
   } finally {

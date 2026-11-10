@@ -188,6 +188,7 @@ actor FlippSource {
     private static let offStoryRx = Rx("^\\s*(?:\\$\\s*(\\d+(?:\\.\\d+)?)|(\\d+)\\s*¢)\\s*off\\b")
     private static let withoutCouponRx = Rx("(?:without coupon|reg(?:ular)?\\.?(?: price)?)\\s*\\$?\\s*(\\d+(?:\\.\\d{2})?)")
     private static let multiPreRx = Rx("^(\\d+)\\s*/?\\s*(?:for)?\\s*$|^(\\d+)\\s*(?:/|for)")
+    private static let perPackSaveRx = Rx("save\\s*\\$\\s*(\\d+(?:\\.\\d{1,2})?)\\s*(?:per|a|/)\\s*(?:pack|pkg|package|bag|case|box|tray|bucket|each|ea)\\b")
 
     /// `deal` rebuilt with the item's own detail, for a deal that was shown before its terms arrived.
     static func deal(_ d: Deal, detail: Detail, now: Date = Date()) -> Deal {
@@ -254,8 +255,14 @@ actor FlippSource {
         // $10.00" Chobani has 18.90, ten cups at $1.89. A regular price above the bundle's sale total
         // is read as the bundle's and divided down to one unit (it was 95% off, not 47%). Mirrors toDeal.
         if let r = regular, qty > 1, let p = price, r > p { regular = (r / Double(qty) * 100).rounded() / 100 }
+        // A per-pound price with a saving per package: Rouses' leg quarters at $0.58/lb, "SAVE $2.19
+        // PER PACK", came with original_price 2.77 (the two added) and showed 79% off for a real 27%
+        // (QA, 9 Nov 2026). Without the pack's weight the regular price per pound is unknown. Mirrors toDeal.
+        let perPack = perLb ? perPackSaveRx.match(story) : nil
+        if let m = perPack, let save = Double(m[1] ?? ""), let r = regular, let p = price, abs(r - p - save) <= 0.02 { regular = nil }
         var pctOff: Int?
         if let r = regular, let e = each, r > e { pctOff = Int(((1 - e / r) * 100).rounded()) }
+        else if perPack != nil { pctOff = nil }
         else if let p = det?.percentOff { pctOff = Int(p.rounded()) }
         else if let d = raw.discount, d > 0, d < 95 { pctOff = Int(d.rounded()) }
         // A bare "10 for" is read against the TOTAL (see DealParser); given one unit's $1.00 it

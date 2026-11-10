@@ -225,8 +225,17 @@ export function toDeal(raw, storeId, merchant, now = Date.now()) {
   // above what the whole bundle costs on sale is read as the bundle's, so it is divided down to one
   // unit; compared with $1.00 each it was 95% off, where the ad's "save up to $8.90" is 47%.
   if (regular && qty > 1 && price != null && regular > price) regular = Math.round((regular / qty) * 100) / 100;
+  // A per-pound price with a saving per package: Rouses' "Chicken Leg Quarters" at $0.58/lb, "SAVE
+  // $2.19 PER PACK" (a 10 lb pack), came with original_price 2.77, the two simply added, and showed
+  // as 79% off from "Reg. $2.77"; the pack is really $7.99 down to $5.80, 27%. Its shrimp, $4.99/lb
+  // and "SAVE $10.03 PER BAG", read 67% for 33% (QA, 9 Nov 2026). Without the package's weight the
+  // regular price per pound is unknown, so no regular price and no percentage; the story still says
+  // what is saved.
+  const perPack = perLb && story.match(/save\s*\$\s*(\d+(?:\.\d{1,2})?)\s*(?:per|a|\/)\s*(?:pack|pkg|package|bag|case|box|tray|bucket|each|ea)\b/i);
+  if (perPack && regular != null && price != null && Math.abs(regular - price - +perPack[1]) <= 0.02) regular = null;
   let pctOff = null;
   if (regular && each && regular > each) pctOff = Math.round((1 - each / regular) * 100);
+  else if (perPack) pctOff = null;
   else if (det?.percentOff) pctOff = Math.round(det.percentOff);
   else if (raw.discount && raw.discount > 0 && raw.discount < 95) pctOff = Math.round(raw.discount);
 

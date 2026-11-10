@@ -3012,3 +3012,104 @@ extension ThanksgivingCoreTests {
         XCTAssertNotNil(make("x", "Yellow Onion", "1 ea", 0.89).unitPrice(.weight))
     }
 }
+
+/// QA, 9 Nov 2026 (test/qa-plant-milk-2026-11-09.test.js): "milk" showed canned coconut milk in the
+/// weekly-ad strip (0.51 against the strip's 0.4 cut), and "oat milk" rejected Oatly.
+final class PlantMilkTests: XCTestCase {
+    private let adCut = 0.4 // PriceSearch's weekly-ad cut
+    private func score(_ q: String, _ name: String) -> Double { Match.relevance(query: q, name: name, brand: nil, category: nil) }
+
+    func testABaseRightBeforeMilkIsNotMilkEvenForAds() {
+        for name in ["Rouses Coconut Milk", "Chaokoh, Coconut Milk", "Nestlé Carnation Evaporated Milk", "Chef's Quality Evaporated Milk", "Oatly Original Oatmilk"] {
+            XCTAssertLessThan(score("milk", name), adCut, name)
+        }
+    }
+
+    func testOatMilkFindsOatlyAndOneWordOatmilk() {
+        for name in ["Oatly Oat Milk", "Oatly Original Oatmilk", "Planet Oat Oatmilk Original"] {
+            XCTAssertGreaterThanOrEqual(score("oat milk", name), Match.relevant, name)
+        }
+    }
+
+    func testNamedBasesAndPlainMilkStillMatch() {
+        for (q, name) in [("coconut milk", "Rouses Coconut Milk"), ("evaporated milk", "Carnation Evaporated Milk"), ("almond milk", "Silk Unsweetened Almond Milk"), ("milk", "Great Value 2% Reduced Fat Milk"), ("milk", "Lucerne Whole Milk")] {
+            XCTAssertGreaterThanOrEqual(score(q, name), Match.relevant, "\(q) | \(name)")
+        }
+    }
+
+    func testRealAdMatchesInTheLowBandStay() {
+        for (q, name) in [("eggs", "OrgaNick Pastures Organic Corn & Soy Feed Free Eggs"), ("green beans", "James Farm Frozen Cut Green Beans"), ("dinner rolls", "Rhodes Dinner or Cinnamon Rolls")] {
+            XCTAssertGreaterThanOrEqual(score(q, name), adCut, "\(q) | \(name)")
+        }
+    }
+
+    func testPlainSearchesStillRefusePlantAnalogues() {
+        for (q, name) in [("milk", "Oatly Oat Milk"), ("milk", "Silk Almond Milk"), ("butter", "Earth Balance Plant Butter")] {
+            XCTAssertLessThan(score(q, name), Match.relevant, "\(q) | \(name)")
+        }
+    }
+}
+
+/// QA, 9 Nov 2026 (test/qa-slug-product-2026-11-09.test.js): King Soopers' "KRO TURKEY STUFFING MIX"
+/// carried a pretzel listing's slug, size and price and was Denver's best stuffing at $0.87/lb.
+final class SlugProductTests: XCTestCase {
+    private func ic(_ slug: String) -> URL { URL(string: "https://www.instacart.com/products/\(slug)?retailerSlug=x")! }
+
+    func testAListingWhoseSlugNamesAnotherProductIsAContradiction() {
+        let kro = ProductFactory.make(ProductInput(storeId: "kingsoopers", id: "k", name: "KRO TURKEY STUFFING MIX", sizeText: "20 oz", price: 1.09, url: ic("19275341-kroger-sugar-cinnamon-mini-pretzel-20-oz")))!
+        XCTAssertNotNil(kro.sizeConflict)
+        let pf = ProductFactory.make(ProductInput(storeId: "walmart", id: "w", name: "Pepperidge Farm Herb Seasoned Classic Stuffing", sizeText: "12 oz", price: 1.68, url: ic("20128745-pepperidge-farm-herb-seasoned-classic-stuffing-12-oz")))!
+        XCTAssertNil(pf.sizeConflict)
+    }
+
+    func testWholeFoodsTurkeyRowsLinkingToChickenAreFlagged() {
+        XCTAssertNotNil(ProductFactory.slugProductConflict(name: "Mary's Turkey No Antibiotics Ever, Turkey Bone-In Breast", url: ic("17852189-green-chile-chicken-sausage-bulk-1-lb")))
+        XCTAssertNotNil(ProductFactory.slugProductConflict(name: "Plainville Farms Bone-In Turkey Breast, No Antibiotics Ever", url: ic("17852196-chicken-leg-quarters-package-1-lb")))
+    }
+
+    func testAbbreviationsAndReorderedWordsStillAgree() {
+        for (name, slug) in [("GV CHKN BRTH", "1-great-value-chicken-broth-32-oz"),
+                             ("Great Value Green Cut Beans", "2-great-value-cut-green-beans-14-5-oz"),
+                             ("Hershey's Assorted, Halloween Candy Bulk Variety Bag, 51.03 oz (165 Pieces)", "64584342-chocolate-miniatures-assortment-stand-up-bag"),
+                             ("Café Bustelo Espresso", "3-cafe-bustelo-espresso-10-oz"),
+                             ("Costco Sweet Potatoes, 5 lbs", "18848374-sweet-potatoes-10-lbs-10-lb")] {
+            XCTAssertNil(ProductFactory.slugProductConflict(name: name, url: ic(slug)), name)
+        }
+    }
+
+    func testNoProductSlugOrTooFewWordsIsLeftAlone() {
+        XCTAssertNil(ProductFactory.slugProductConflict(name: "KRO TURKEY STUFFING MIX", url: URL(string: "https://www.wholefoodsmarket.com/product/365-stuffing-b074")))
+        XCTAssertNil(ProductFactory.slugProductConflict(name: "Celery", url: ic("5-organic-celery-hearts-1-ea")))
+        XCTAssertNil(ProductFactory.slugProductConflict(name: "KRO TURKEY STUFFING MIX", url: ic("6-pretzels")))
+    }
+}
+
+/// QA, 9 Nov 2026 (test/qa-per-pack-save-2026-11-09.test.js): Rouses' leg quarters at $0.58/lb with
+/// "SAVE $2.19 PER PACK" showed 79% off and "Reg. $2.77" for a real 27%.
+final class PerPackSaveTests: XCTestCase {
+    private func deal(_ name: String, _ price: Double, post: String?, story: String?, original: Double?) -> Deal {
+        let item = FlippSource.FlyerItem(id: 1, flyerId: 2, name: name, brand: "", price: String(price), discount: nil, image: nil, validFrom: nil, validTo: nil)
+        let det = FlippSource.Detail(description: nil, pre: "ONLY", priceText: nil, post: post, story: story, original: original, current: price, disclaimer: nil, dollarsOff: nil, percentOff: nil, externalCategory: nil)
+        return FlippSource.deal(item: item, detail: det, retailerId: "rouses", merchant: "Rouses Supermarkets")
+    }
+
+    func testPerPoundPriceWithPerPackSavingHasNoMadeUpPercentage() {
+        for d in [deal("Chicken Leg Quarters", 0.58, post: "LB", story: "SAVE $2.19 PER PACK", original: 2.77),
+                  deal("41/50 Count Headless Local Gulf Brown Shrimp", 4.99, post: "LB", story: "SAVE $10.03 PER BAG", original: 15.02)] {
+            XCTAssertNil(d.regular, d.name)
+            XCTAssertNil(d.pctOff, d.name)
+        }
+    }
+
+    func testPerPoundSavingStillShowsItsPercentage() {
+        let d = deal("Boneless Pork Loin", 1.99, post: "LB", story: "SAVE $1.50 LB", original: 3.49)
+        XCTAssertEqual(d.regular, 3.49)
+        XCTAssertEqual(d.pctOff, 43)
+    }
+
+    func testPerPackSavingOnAPackPriceKeepsItsPercentage() {
+        let d = deal("Shrimp Bag 2 lb", 9.99, post: nil, story: "SAVE $5.00 PER BAG", original: 14.99)
+        XCTAssertEqual(d.regular, 14.99)
+        XCTAssertEqual(d.pctOff, 33)
+    }
+}

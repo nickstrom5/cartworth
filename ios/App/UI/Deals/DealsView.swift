@@ -359,10 +359,14 @@ struct DealCard: View {
                 // the item is half price today — it is not, and the discount only exists if they
                 // buy two. The offer is the honest headline, which is what the deal detail shows
                 // and what the ad itself prints.
+                //
+                // The badge's own tint is 18% orange, see-through by design; laid over the ad's
+                // picture its red text sat on the ad's red "SAVE $2.19" and could not be read (QA,
+                // 9 Nov 2026). An opaque backing under the tint keeps it legible on any picture.
                 if let offer = deal.terms?.offerBadge {
-                    Badge(text: offer, kind: .sale).padding(6)
+                    Badge(text: offer, kind: .sale).background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 5)).padding(6)
                 } else if let pct = deal.pctOff {
-                    Badge(text: "\(pct)% off", kind: .sale).padding(6)
+                    Badge(text: "\(pct)% off", kind: .sale).background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 5)).padding(6)
                 }
             }
             .clipShape(UnevenRoundedRectangle(topLeadingRadius: 12, topTrailingRadius: 12))
