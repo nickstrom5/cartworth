@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <title>Cartworth Thanksgiving share card</title>
+  <!-- Square working canvas, as site/tools/src/og-cartworth.svg: qlmanage only renders
+       squares. The 1200x630 card is the centred band y=285..915. No prices, no store
+       names, no retailer art. Render: see ../README.md "Share image". -->
+  <defs>
+    <linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="600" y1="285" x2="600" y2="915">
+      <stop offset="0" stop-color="#27AE63"/>
+      <stop offset="0.55" stop-color="#16884A"/>
+      <stop offset="1" stop-color="#0B5A32"/>
+    </linearGradient>
+    <linearGradient id="mark" gradientUnits="userSpaceOnUse" x1="0" y1="187" x2="0" y2="846">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E8F2EA"/>
+    </linearGradient>
+    <linearGradient id="best" gradientUnits="userSpaceOnUse" x1="0" y1="379" x2="0" y2="604">
+      <stop offset="0" stop-color="#FFD24A"/>
+      <stop offset="1" stop-color="#F5A81F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <g transform="translate(0,285)">
+    <g transform="translate(507,34) scale(0.1816)">
+      <rect x="284" y="187" width="125" height="394" rx="20" fill="url(#mark)"/>
+      <rect x="457" y="283" width="125" height="298" rx="20" fill="url(#mark)"/>
+      <rect x="630" y="379" width="125" height="202" rx="20" fill="url(#best)"/>
+      <path d="M 172.00 552.00 A 38.00 38.00 0 0 1 210.00 514.00 L 814.00 514.00 A 38.00 38.00 0 0 1 852.00 552.00 L 852.00 586.00 A 18.00 18.00 0 0 1 834.00 604.00 L 798.14 604.00 A 18.00 18.00 0 0 0 780.65 617.74 L 741.00 780.37 A 86.00 86.00 0 0 1 657.45 846.00 L 366.55 846.00 A 86.00 86.00 0 0 1 283.00 780.37 L 243.35 617.74 A 18.00 18.00 0 0 0 225.86 604.00 L 190.00 604.00 A 18.00 18.00 0 0 1 172.00 586.00 Z" fill="url(#mark)"/>
+    </g>
+    <g font-family="-apple-system, system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">
+      <text x="600" y="262" fill="#FFD24A" font-size="34" font-weight="700" letter-spacing="3">THANKSGIVING 2026</text>
+      <text x="600" y="352" fill="#FFFFFF" font-size="78" font-weight="800" letter-spacing="-1.5">Price your dinner</text>
+      <text x="600" y="438" fill="#FFFFFF" font-size="78" font-weight="800" letter-spacing="-1.5">before you shop</text>
+      <text x="600" y="512" fill="#DFF3E6" font-size="36" font-weight="600">Every store near your ZIP, in one unit</text>
+      <text x="600" y="572" fill="#DFF3E6" font-size="32" font-weight="600">cartworth.app · free · no account</text>
+    </g>
+  </g>
+</svg>
