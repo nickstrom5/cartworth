@@ -6,7 +6,7 @@ from. It also shows the week's ads.
 
 - **Web app:** [app.cartworth.app](https://app.cartworth.app)
 - **Website:** [cartworth.app](https://cartworth.app)
-- **iPhone and iPad:** native SwiftUI app (iOS 17+), in `ios/`
+- **iPhone and iPad:** [on the App Store](https://apps.apple.com/us/app/cartworth-grocery-prices/id6816954374), a native SwiftUI app (iOS 17+); source in `ios/`
 
 ## What's in this repo
 
