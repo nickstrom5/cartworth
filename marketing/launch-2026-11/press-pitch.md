@@ -52,8 +52,8 @@ Notes on the brackets:
 
 - **[CITY] and the bracketed sentence:** include the city figure only for the metros in
   `facts.md` (table under "About turkey at $0.84/lb"), only with its label, and only after
-  re-running that ZIP within 24 hours. Chicago is not in that table; the Chicago figure is
-  `facts.md` #1 ("from $0.99 to $3.29 per pound at the eight stores that had one, 3 Nov"). For any
+  re-running that ZIP within 24 hours. Chicago is not in that table; use the
+  10 Nov re-run below, or `facts.md` #1 for 3 Nov. For any
   other city, delete the bracketed sentence.
 - **"comes out next week":** true if sent 10 to 14 Nov and the 2026 survey follows the usual
   timing (2025's came out 19 to 20 Nov). If it is already out, say "came out this week".
@@ -76,11 +76,12 @@ the outlet's current site.
 
 | Outlet | Section or unit | Public route | Confirmed? |
 |---|---|---|---|
-| ABC7 Chicago (WLS) | I-Team consumer unit; "Consumer Chronicles" series | Consumer tip form on abc7chicago.com ("Need a story investigated? Contact the ABC7 I-Team") | Page found by search; open it and confirm the form is current |
+| ABC7 Chicago (WLS) | I-Team consumer unit; "Consumer Chronicles" series | Story-tip form and separate consumer form on abc7chicago.com ("Need a story investigated? Contact the ABC7 I-Team"); the page also gives a consumer tip line and a consumer-unit inbox | Page read 10 Nov 2026; it asks for a phone number and says the station does not pay for stories |
 | NBC 5 Chicago (WMAQ) | NBC 5 Responds | Consumer form on nbcchicago.com | Named in search results; form not opened |
-| CBS News Chicago (WBBM) | CBS 2 Investigators (covers consumer stories) | Station contact or tips page | Unit named in search results; route not found |
+| CBS News Chicago (WBBM) | CBS 2 Investigators (covers consumer stories) | "Send your tips to CBS 2 News Chicago" page on cbsnews.com/chicago (web form and a station tips inbox) | Found by search 10 Nov; page not opened |
 | WGN-TV | Newsroom / morning news | Station "contact" or "submit a tip" page | Not found by search; look on wgntv.com |
 | Chicago Tribune | Business or food desk | Newsroom tips page | Not found by search; look on chicagotribune.com |
+| Chicago Sun-Times / WBEZ | Newsroom (shared tips page) | chicago.suntimes.com/tips | Found by search 10 Nov; page not opened |
 
 Note that NBC 5 Responds and the I-Team forms are built for consumer complaints. Choose the
 "story idea" or "news tip" option where there is one, and use the general newsroom tip page if
@@ -101,6 +102,22 @@ again). Pitch only those where the list has been re-run in a local ZIP:
 
 **Not pitched:** anything that needs a paid placement, and national consumer publications' review
 desks (they have their own testing process and no tip route was found).
+
+## Chicago figure, re-run 10 Nov 2026
+
+"whole turkey", ZIP 60618, live web app, the eight stores it switches on by default, run on the
+morning of 10 Nov. Six of the eight had a whole turkey. The cheapest match at each ran from
+**$0.99/lb to $2.99/lb**. Two stores tied at $0.99: one a shelf price, one an online listing whose
+name carries "Limit 1 at sale price"; the app marked them "≈ same". Next week's ad for one chain already listed a frozen turkey at
+$0.69/lb "open for terms".
+
+Sentence for the Chicago pitch, in place of the bracketed one:
+
+```
+In Chicago (ZIP 60618) this morning, the cheapest whole turkey at each of the six nearby stores that had one ran from $0.99 to $2.99 per pound, and one of the $0.99 birds was "limit 1 at sale price".
+```
+
+"This morning" is only true on the day of the run. Re-run on the day you send, or write the date.
 
 ## When
 
