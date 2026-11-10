@@ -78,7 +78,7 @@ the outlet's current site.
 |---|---|---|---|
 | ABC7 Chicago (WLS) | I-Team consumer unit; "Consumer Chronicles" series | Story-tip form and separate consumer form on abc7chicago.com ("Need a story investigated? Contact the ABC7 I-Team"); the page also gives a consumer tip line and a consumer-unit inbox | Page read 10 Nov 2026; it asks for a phone number and says the station does not pay for stories |
 | NBC 5 Chicago (WMAQ) | NBC 5 Responds | Consumer form on nbcchicago.com | Named in search results; form not opened |
-| CBS News Chicago (WBBM) | CBS 2 Investigators (covers consumer stories) | "Send your tips to CBS 2 News Chicago" page on cbsnews.com/chicago (web form and a station tips inbox) | Found by search 10 Nov; page not opened |
+| CBS News Chicago (WBBM) | CBS 2 Investigators (covers consumer stories) | "Send your tips to CBS 2 News Chicago" page on cbsnews.com/chicago (web form and a station tips inbox) | The station's tips page (cbsnews.com/chicago/cbs-2-tips) lists the tips inbox as its newsroom contact; read 10 Nov 2026 |
 | WGN-TV | Newsroom / morning news | Station "contact" or "submit a tip" page | Not found by search; look on wgntv.com |
 | Chicago Tribune | Business or food desk | Newsroom tips page | Not found by search; look on chicagotribune.com |
 | Chicago Sun-Times / WBEZ | Newsroom (shared tips page) | chicago.suntimes.com/tips | Found by search 10 Nov; page not opened |
