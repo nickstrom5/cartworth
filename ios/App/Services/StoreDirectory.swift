@@ -31,6 +31,22 @@ struct NearbyChain: Identifiable, Codable, Hashable {
     var note: String?
 }
 
+extension NearbyChain {
+    /// The store step's header, worded like the website's (public/js/views/onboarding.js): stores
+    /// we can price nearby, then ad-only, then chain-wide listings, each counted separately. The
+    /// old header ("10 stores within 15 miles") sat between "Finding prices at 12 stores" and
+    /// "Start comparing 11 stores" in the 9 Nov QA (New Orleans) with nothing saying what each counted.
+    static func countLine(_ chains: [NearbyChain], miles: Int) -> String {
+        let local = chains.filter { $0.status == .shelf || $0.status == .online }.count
+        let ads = chains.filter { $0.status == .adsOnly }.count
+        let national = chains.filter { $0.status == .national }.map(\.short)
+        var line = "\(local) \(local == 1 ? "store" : "stores") with prices within \(miles) miles"
+        if ads > 0 { line += ", plus \(ads) with a weekly ad" }
+        if !national.isEmpty { line += ", plus chain-wide prices from \(national.joined(separator: ", "))" }
+        return line
+    }
+}
+
 /// An independent/unknown store found on the map (no price source).
 struct MapStore: Identifiable, Codable, Hashable {
     var id: String { "\(name)|\(latitude)|\(longitude)" }
@@ -91,7 +107,7 @@ actor StoreDirectory {
         for m in merchants { if let c = RetailerCatalog.chain(forMerchant: m) { candidateIds.insert(c.id) } }
         let adChainIds = Set(merchants.compactMap { RetailerCatalog.chain(forMerchant: $0)?.id })
 
-        progress?("Finding prices at \(candidateIds.count) stores…")
+        progress?("Asking \(candidateIds.count) chains near you which prices they publish…")
         let candidates = candidateIds.compactMap { RetailerCatalog.byId[$0] }
         var results: [NearbyChain] = []
         var unresolved: [String] = []

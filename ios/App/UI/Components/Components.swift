@@ -701,7 +701,11 @@ struct BestPerStoreChart: View {
     private func tags(_ i: Int) -> (close: Bool, source: String?) {
         let r = rows[i]
         let source = PriceProvenance.badge(r.product.priceBasis)
-        guard i > 0, let w = rows.first, let a = w.perBase, let b = r.perBase else { return (false, source) }
+        let ai = Compare.closeAnchor(rows.map(\.product.priceBasis))
+        guard i > 0 else { return (false, source) }
+        if i == ai { return (true, source) }
+        let w = rows[ai]
+        guard let a = w.perBase, let b = r.perBase else { return (false, source) }
         return (Compare.isClose(winner: a, w.product.priceBasis, w.est, to: b, r.product.priceBasis, r.est), source)
     }
 

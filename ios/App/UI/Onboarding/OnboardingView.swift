@@ -194,7 +194,7 @@ struct OnboardingView: View {
             Button {
                 app.onboarded = true
             } label: {
-                Text(app.directory == nil ? "Finding stores…" : app.selectedChainIds.isEmpty ? "Choose at least one store" : "Start comparing \(app.selectedChainIds.count) stores")
+                Text(app.directory == nil ? "Finding stores…" : app.selectedChainIds.isEmpty ? "Choose at least one store" : "Start with \(app.selectedChainIds.count) selected")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -260,7 +260,8 @@ struct StorePickerList: View {
                 } header: {
                     // A chain-wide listing has no store and no distance, so it is not one of the stores
                     // "within N miles" (same rule as the web onboarding and src/directory.js countsFor).
-                    Text("\(dir.chains.filter { $0.status != .none && $0.status != .national }.count) stores within \(Int(app.radiusMiles)) miles")
+                    Text(NearbyChain.countLine(dir.chains, miles: Int(app.radiusMiles)))
+                        .textCase(nil)
                 } footer: {
                     Text("“Shelf prices” come from the store’s in-store listing. “Online (Instacart) prices” come from the store’s listing on Instacart, which can run higher than the shelf or the store’s own app. “National prices” are Instacart’s chain-wide listing, not a store near you. Ad-only stores don’t publish prices, but their weekly deals are included.")
                 }
