@@ -3113,3 +3113,40 @@ final class PerPackSaveTests: XCTestCase {
         XCTAssertEqual(d.pctOff, 33)
     }
 }
+
+/// test/qa-national-close-2026-11-11.test.js: "≈ same" is measured against the cheapest LOCAL price
+/// when the cheapest price is a chain-wide listing, and the onboarding header counts each kind.
+final class NationalCloseTests: XCTestCase {
+    private func best(_ id: String, _ basis: PriceBasis, _ perBase: Double) -> Compare.Best {
+        let p = ProductFactory.make(ProductInput(storeId: id, id: "\(id)-celery", name: "Celery", sizeText: "1 ct",
+                                                 price: perBase, soldBy: .each, url: nil, category: nil, priceBasis: basis))
+        return Compare.Best(product: p!, perBase: perBase, est: false, member: false, score: 1)
+    }
+
+    func testANationalWinnerNoLongerMakesEveryShelfPriceAboutTheSame() {
+        let r = Compare.standings(["walmart": best("walmart", .national, 1.0), "aldi": best("aldi", .shelf, 1.1),
+                                   "kroger": best("kroger", .shelf, 1.2), "meijer": best("meijer", .shelf, 1.3)])
+        XCTAssertEqual(r.map { "\($0.storeId):\($0.verdict)" }, ["walmart:best", "aldi:close", "kroger:dearer", "meijer:dearer"])
+    }
+
+    func testALocalWinnerIsUnchanged() {
+        let r = Compare.standings(["aldi": best("aldi", .shelf, 1.0), "jewel": best("jewel", .online, 1.1), "kroger": best("kroger", .shelf, 1.3)])
+        XCTAssertEqual(r.map { "\($0.storeId):\($0.verdict)" }, ["aldi:best", "jewel:close", "kroger:dearer"])
+    }
+
+    func testCloseAnchor() {
+        XCTAssertEqual(Compare.closeAnchor([.national, .national]), 0)
+        XCTAssertEqual(Compare.closeAnchor([.national, .online]), 1)
+        XCTAssertEqual(Compare.closeAnchor([]), 0)
+    }
+
+    func testOnboardingHeaderCountsEachKind() {
+        func c(_ id: String, _ s: PriceStatus) -> NearbyChain {
+            NearbyChain(id: id, name: id, short: id.capitalized, distance: nil, address: nil, latitude: nil, longitude: nil,
+                        status: s, hasAds: false, onMap: false, mapCount: 0, note: nil)
+        }
+        let chains = [c("aldi", .shelf), c("jewel", .online), c("walmart", .national), c("target", .adsOnly), c("x", .none)]
+        XCTAssertEqual(NearbyChain.countLine(chains, miles: 15), "2 stores with prices within 15 miles, plus 1 with a weekly ad, plus chain-wide prices from Walmart")
+        XCTAssertEqual(NearbyChain.countLine([c("aldi", .shelf)], miles: 25), "1 store with prices within 25 miles")
+    }
+}

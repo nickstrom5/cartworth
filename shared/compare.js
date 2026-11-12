@@ -475,6 +475,20 @@ export function tieBreak(a, b) {
     || (a.est || a.cmpEst ? 1 : 0) - (b.est || b.cmpEst ? 1 : 0);
 }
 
+/**
+ * Which row the other stores are measured against for "≈ same": the cheapest row, unless that is a
+ * chain-wide ('national') listing and a local price exists, then the cheapest local one. A national
+ * price carries +/-25%, so measured against it nearly every store came out "≈ same" (Detroit, 9 Nov
+ * QA: 9 of 10 rows on "celery"), which says nothing. The cheapest local row itself is 'close' to the
+ * national winner (it is inside that spread), and every other row is compared with it. Rows must be
+ * sorted cheapest first. Mirrors Compare.closeAnchor in ios/App/Core/Compare.swift.
+ */
+export function closeAnchor(rows) {
+  if (!rows.length || (rows[0].basis ?? rows[0].priceBasis) !== 'national') return 0;
+  const i = rows.findIndex((r) => (r.basis ?? r.priceBasis) !== 'national');
+  return i < 0 ? 0 : i;
+}
+
 export function standings(stores) {
   const rows = [];
   for (const [storeId, entry] of Object.entries(stores || {})) {
@@ -488,7 +502,12 @@ export function standings(stores) {
   rows[0].verdict = 'best';
   // Exactly the savings line's rule (relation): a store is 'dearer' only when the line under the
   // headline could say so about it, by a number or in words.
-  for (const r of rows.slice(1)) { const rel = relation(rows[0], r); r.verdict = rel === 'exact' || rel === 'ahead' ? 'dearer' : 'close'; }
+  const anchor = rows[closeAnchor(rows)];
+  for (const r of rows.slice(1)) {
+    if (r === anchor) { r.verdict = 'close'; continue; }
+    const rel = relation(anchor, r);
+    r.verdict = rel === 'exact' || rel === 'ahead' ? 'dearer' : 'close';
+  }
   return rows;
 }
 

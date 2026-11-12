@@ -409,6 +409,14 @@ enum Compare {
         return !(rel == "exact" || rel == "ahead")
     }
 
+    /// Which row "≈ same" is measured against: the cheapest, unless that is a chain-wide listing and
+    /// a local price exists, then the cheapest local one (a national price's +/-25% made nearly every
+    /// store "≈ same"). `bases` must be cheapest first. Mirrors closeAnchor in shared/compare.js.
+    static func closeAnchor(_ bases: [PriceBasis]) -> Int {
+        guard let first = bases.first, first == .national else { return 0 }
+        return bases.firstIndex { $0 != .national } ?? 0
+    }
+
     static func standings(_ stores: [String: Best]) -> [Standing] {
         var rows: [Standing] = stores.compactMap { id, b in
             guard b.perBase > 0 else { return nil }
@@ -416,9 +424,12 @@ enum Compare {
             return Standing(storeId: id, perBase: b.perBase, basis: b.product.priceBasis, est: b.est, low: b.perBase * (1 - sp.below), high: b.perBase * (1 + sp.above), verdict: "dearer")
         }
         rows.sort { $0.perBase != $1.perBase ? $0.perBase < $1.perBase : tieBreak($0.basis, $0.est, $1.basis, $1.est) ?? ($0.storeId < $1.storeId) }
-        guard let w = rows.first else { return rows }
+        guard !rows.isEmpty else { return rows }
         rows[0].verdict = "best"
+        let ai = closeAnchor(rows.map(\.basis))
+        let w = rows[ai]
         for i in rows.indices.dropFirst() {
+            if i == ai { rows[i].verdict = "close"; continue }
             let rel = relation(w.perBase, w.basis, w.est, rows[i].perBase, rows[i].basis, rows[i].est)
             rows[i].verdict = rel == "exact" || rel == "ahead" ? "dearer" : "close"
         }
