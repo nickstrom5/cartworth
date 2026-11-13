@@ -3316,3 +3316,13 @@ final class AdBeatsBestTests: XCTestCase {
         XCTAssertLessThan(Match.relevance(query: "whole turkey", name: "Frozen Turkey Breast"), Match.relevant)
     }
 }
+
+/// Mirrors the knob onion / filled milk cases in test/qa-whole-bird-cut-2026-11-13.test.js.
+final class KnobOnionFilledMilkTests: XCTestCase {
+    func testKnobOnionsAndFilledMilkAreOtherProducts() {
+        XCTAssertLessThan(Match.relevance(query: "onions", name: "Medium Knob Onions"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "evaporated milk", name: "Jans Enterprises Evaporated Filled Milk"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "onions", name: "Fresh Yellow Onions"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "evaporated milk", name: "Great Value Evaporated Milk"), Match.relevant)
+    }
+}

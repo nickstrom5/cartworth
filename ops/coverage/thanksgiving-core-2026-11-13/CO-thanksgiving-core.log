@@ -1,0 +1,31 @@
+
+== 80218 Denver: 9 priced stores (wholefoods, traderjoes, sprouts, safeway, naturalgrocers, samsclub, costco, kingsoopers, walmart); unresolved: none
+80218 whole turkey    $0.84/lb     walmart [national] "Jennie-O Frozen Prime Young Turkey" per lb $0.84 | About the same as {store} (online price), so no saving is claimed
+80218 frozen turkey   $0.84/lb     walmart [national] "Jennie-O 10 to 21.35 Pounds Frozen Hen Turkey" per lb $0.84 | Less than the next-best store, {store} (online price)
+80218 fresh turkey    $1.23/lb     costco [online] "Fresh Tom Turkey" per lb $1.23 | {amount}/{unit} (23%) less than the next-best store, {store} (both online prices)
+80218 turkey          $0.84/lb     walmart [national] "Jennie-O 10 to 21.35 Pounds Frozen Hen Turkey" per lb $0.84 | About the same as {store} (online price), so no saving is claimed
+80218 turkey breast   $2.97/lb     walmart [national] "Jennie-O 11.0 to 13.0 Pound Frozen Bone-In Turkey Breast" per lb $2.97 | About the same as {store} (online price), so no saving is claimed
+80218 stuffing mix    $2.24/lb     walmart [national] "Pepperidge Farm Herb Seasoned Classic Stuffing" 12 oz $1.68 | Less than the next-best store, {store} (shelf price)
+80218 cranberry sauce $1.97/lb     walmart [national] "Great Value Jellied Cranberry Sauce" 14 oz $1.72 | About the same as {store} (online price), so no saving is claimed
+80218 jellied cranberry sauce $1.97/lb     walmart [national] "Great Value Jellied Cranberry Sauce" 14 oz $1.72 | About the same as {store} (online price), so no saving is claimed
+80218 whole berry cranberry sauce $1.97/lb     walmart [national] "Great Value Whole Berry Cranberry Sauce" 14 oz $1.72 | About the same as {store} (online price), so no saving is claimed
+80218 canned pumpkin  $1.07/lb     walmart [national] "Great Value Pumpkin" 15 oz $1.00 | Less than the next-best store, {store} (online price)
+80218 pie crust       $2.99/lb     kingsoopers [online] "Kroger® Deep Dish Ready-to-Bake Pie Crusts" 16 oz $2.99 | Less than the next-best store, {store} (shelf price)
+80218 evaporated milk $10.67/gal   walmart [national] "Great Value Evaporated Milk" 12 fl oz $1.00 | About the same as {store} (online price), so no saving is claimed
+80218 sweet potatoes  $0.74/lb     costco [online] "Sweet Potatoes" 10 lb $7.45 | About the same as {store} (chain-wide price), so no saving is claimed
+80218 russet potatoes $0.47/lb     safeway [online] "Russet Potato Bag" 10 lb $4.69 | About the same as {store} (chain-wide price), so no saving is claimed
+80218 green beans     $0.55/lb     walmart [national] "Great Value Green Cut Beans" 14.5 oz $0.50 | Less than the next-best store, {store} (online price)
+80218 cream of mushroom soup $1.14/lb     walmart [national] "Great Value Family Size Cream of Mushroom Condensed Soup" 26 oz $1.86 | About the same as {store} (online price), so no saving is claimed
+80218 french fried onions $6.88/lb     samsclub [online] "French's® Original Crispy Fried Onions" 26.5 oz $11.40 | About the same as {store} (estimated price), so no saving is claimed
+80218 dinner rolls    $0.14/ct     walmart [national] "Rhodes Bake-N-Serv Dinner Rolls" 36 ct $5.12 | About the same as {store} (online price), so no saving is claimed
+80218 butter          $2.79/lb     costco [online] "Kirkland Signature Salted Sweet Cream Butter, 16 oz , 4-count" 4 × 16 oz $11.18 | About the same as {store} (chain-wide price), so no saving is claimed
+80218 heavy cream     $19.88/gal   costco [online] "Darigold 40% Whipping Cream, 64 fl oz" 64 fl oz $9.94 | About the same as {store} (chain-wide price), so no saving is claimed
+80218 gravy           $1.95/lb     walmart [national] "Great Value Brown Gravy With Onions" 10.5 oz $1.28 | About the same as {store} (online price), so no saving is claimed
+80218 celery          $1.79/lb     naturalgrocers [online] "Celery" per lb $1.79 | About the same as {store} (chain-wide price), so no saving is claimed
+80218 onions          $0.88/lb     walmart [national] "Yellow Onion Bag" 3 lb $2.64 | About the same as {store} (online price), so no saving is claimed
+80218 brown sugar     $0.84/lb     kingsoopers [online] "Kroger® Light Brown Sugar" 32 oz $1.69 | {amount}/{unit} (15%) less than the next-best store, {store} (both online prices)
+80218 marshmallows    $1.60/lb     walmart [national] "Jet-Puffed Mini Marshmallows" 10 oz $1.00 | About the same as {store} (online price), so no saving is claimed
+80218 pecans          $6.65/lb     kingsoopers [online] "Private Selection® Shelled Pecans" 12 oz $4.99 | {amount}/{unit} (11%) less than the next-best store, {store} (both online prices)
+80218 pumpkin pie     $2.06/lb     costco [online] "Kirkland Signature Pumpkin Pie, 58 oz" 58 oz $7.45 | {amount}/{unit} (2%) less than the next-best store, {store} (both online prices)
+
+wrote 27 answers to /Users/nicksoderstrom/cartworth/.claude/worktrees/tg-qa/ops/coverage/thanksgiving-core-2026-11-13/CO-thanksgiving-core.json

@@ -255,6 +255,8 @@ enum Match {
         "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak",
         // Scallions are not onions (Thanksgiving, NYC). Port of shared/match.js.
         "green onion", "spring onion",
+        // Knob onions are spring onions; filled milk is not evaporated milk (Thanksgiving core list, 13 Nov 2026).
+        "knob onion", "filled milk",
         // Chinese celery is a leaf vegetable of its own (Woodman's, Milwaukee). Port of shared/match.js.
         "chinese celery",
         // Fruit and nut butters, and margarine that says so. Port of shared/match.js.

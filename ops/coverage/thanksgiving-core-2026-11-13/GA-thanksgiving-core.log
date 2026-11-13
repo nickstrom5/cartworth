@@ -1,0 +1,31 @@
+
+== 30308 Atlanta: 13 priced stores (wholefoods, traderjoes, sprouts, aldi, publix, kroger, freshmarket, samsclub, costco, hmart, bjs, ingles, walmart); unresolved: none
+30308 whole turkey    $0.65/lb     publix [online] "Publix Whole Turkey 24-28 Pounds, Grade A, Frozen" per lb $0.65 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 frozen turkey   $0.65/lb     publix [online] "Publix Young Turkey (limit 2), 12-16 Pounds, Broad-Breasted Frozen, USDA Grade A" per lb $0.65 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 fresh turkey    $0.99/lb     aldi [shelf] "Famer's Choice Brined Young Turkey" per lb $0.99 | About the same as {store} (online price), so no saving is claimed
+30308 turkey          $0.65/lb     publix [online] "Publix Young Turkey (limit 2), 12-16 Pounds, Broad-Breasted Frozen, USDA Grade A" per lb $0.65 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 turkey breast   $0.99/lb     aldi [shelf] "Kirkwood Bone-In Turkey Breasts" per lb $0.99 | Less than the next-best store, {store} (chain-wide price)
+30308 stuffing mix    $2.24/lb     walmart [national] "Pepperidge Farm Herb Seasoned Classic Stuffing" 12 oz $1.68 | About the same as {store} (shelf price), so no saving is claimed
+30308 cranberry sauce $1.66/lb     aldi [shelf] "Sweet Harvest Jellied Cranberry Sauce" 14 oz $1.45 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 jellied cranberry sauce $1.66/lb     aldi [shelf] "Sweet Harvest Jellied Cranberry Sauce" 14 oz $1.45 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 whole berry cranberry sauce $1.66/lb     aldi [shelf] "Sweet Harvest Whole Berry Cranberry Sauce" 14 oz $1.45 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 canned pumpkin  $1.06/lb     aldi [shelf] "ALDI Canned Pumpkin" 15 oz $0.99 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 pie crust       $2.99/lb     kroger [online] "Kroger® Deep Dish Ready-to-Bake Pie Crusts" 16 oz $2.99 | Less than the next-best store, {store} (shelf price)
+30308 evaporated milk $10.67/gal   walmart [national] "Great Value Evaporated Milk" 12 fl oz $1.00 | About the same as {store} (online price), so no saving is claimed
+30308 sweet potatoes  $0.56/lb     costco [online] "Sweet Potatoes" 10 lb $5.59 | Less than the next-best store, {store} (shelf price)
+30308 russet potatoes $0.40/lb     aldi [shelf] "Russet Potatoes" 10 lb $3.99 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 green beans     $0.53/lb     aldi [shelf] "Happy Harvest Cut Green Beans" 15 oz $0.50 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 cream of mushroom soup $1.05/lb     aldi [shelf] "Chef's Cupboard Condensed Cream of Mushroom Soup" 10.5 oz $0.69 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 french fried onions $3.97/lb     aldi [shelf] "Chef's Cupboard Original French Fried Onions" 6 oz $1.49 | Less than the next-best store, {store} (online price)
+30308 dinner rolls    $0.14/ct     walmart [national] "Rhodes Bake-N-Serv Dinner Rolls" 36 ct $5.12 | About the same as {store} (shelf price), so no saving is claimed
+30308 butter          $1.99/lb     aldi [shelf] "Countryside Creamery Salted Butter Quarters" 16 oz $1.99 | Less than the next-best store, {store} (online price)
+30308 heavy cream     $17.40/gal   aldi [shelf] "Friendly Farms Heavy Whipping Cream" 32 fl oz $4.35 | About the same as {store} (online price), so no saving is claimed
+30308 gravy           $1.95/lb     walmart [national] "Great Value Brown Gravy With Onions" 10.5 oz $1.28 | About the same as {store} (shelf price), so no saving is claimed
+30308 celery          $0.65/ct     bjs [online] "Foxy Organic Organic Celery Hearts" 4 ea $2.59 | Less than the next-best store, {store} (shelf price)
+30308 onions          $0.73/lb     aldi [shelf] "Fresh Yellow Onions" 3 lb $2.19 | About the same as {store} (online price), so no saving is claimed
+30308 brown sugar     $0.80/lb     aldi [shelf] "Baker's Corner Light Brown Sugar" 32 oz $1.59 | About the same as {store} (online price), so no saving is claimed
+30308 marshmallows    $1.58/lb     aldi [shelf] "Baker's Corner Marshmallows" 10 oz $0.99 | About the same as {store} (chain-wide price), so no saving is claimed
+30308 pecans          $6.65/lb     kroger [online] "Private Selection® Shelled Pecans" 12 oz $4.99 | Less than the next-best store, {store} (shelf price)
+30308 pumpkin pie     $2.06/lb     costco [online] "Kirkland Signature Pumpkin Pie, 58 oz" 58 oz $7.45
+
+wrote 27 answers to /Users/nicksoderstrom/cartworth/.claude/worktrees/tg-qa/ops/coverage/thanksgiving-core-2026-11-13/GA-thanksgiving-core.json

@@ -1,0 +1,31 @@
+
+== 02130 Jamaica Plain: 14 priced stores (wholefoods, traderjoes, aldi, stopandshop, starmarket, hmart, wegmans, 99ranch, bjs, costco, hannaford, bigy, freshmarket, walmart); unresolved: none
+02130 whole turkey    $0.59/lb     stopandshop [online] "Shady Brook Farms® Hen Turkey Frozen" 1 lb $0.59 | {amount}/{unit} (25%) less than the next-best store, {store} (both online prices)
+02130 frozen turkey   $0.59/lb     stopandshop [online] "SHADY BROOK FARMS SBF FRZN WHL TRKY 24-26" 1 lb $0.59 | Less than the next-best store, {store} (chain-wide price)
+02130 fresh turkey    $0.79/lb     bigy [online] "Big Y Hen Turkeys" 1 lb $0.79
+02130 turkey          $0.59/lb     stopandshop [online] "Shady Brook Farms® Hen Turkey Frozen" 1 lb $0.59 | {amount}/{unit} (25%) less than the next-best store, {store} (both online prices)
+02130 turkey breast   $1.99/lb     aldi [shelf] "Kirkwood Bone-In Turkey Breasts" per lb $1.99 | Less than the next-best store, {store} (chain-wide price)
+02130 stuffing mix    $2.24/lb     walmart [national] "Pepperidge Farm Herb Seasoned Classic Stuffing" 12 oz $1.68 | About the same as {store} (shelf price), so no saving is claimed
+02130 cranberry sauce $1.36/lb     hannaford [online] "Hannaford Jellied Cranberry Sauce" 14 oz $1.19 | Less than the next-best store, {store} (shelf price)
+02130 jellied cranberry sauce $1.36/lb     hannaford [online] "Hannaford Jellied Cranberry Sauce" 14 oz $1.19 | Less than the next-best store, {store} (shelf price)
+02130 whole berry cranberry sauce $1.36/lb     hannaford [online] "Hannaford Whole Berry Cranberry Sauce" 14 oz $1.19 | Less than the next-best store, {store} (shelf price)
+02130 canned pumpkin  $1.06/lb     aldi [shelf] "ALDI Canned Pumpkin" 15 oz $0.99 | About the same as {store} (chain-wide price), so no saving is claimed
+02130 pie crust       $3.27/lb     traderjoes [shelf] "Pie Crusts" 22 oz $4.49 | About the same as {store} (online price), so no saving is claimed
+02130 evaporated milk $10.67/gal   walmart [national] "Great Value Evaporated Milk" 12 fl oz $1.00 | About the same as {store} (online price), so no saving is claimed
+02130 sweet potatoes  $0.59/lb     wegmans [online] "Wegmans Yams (Sweet Potatoes)" per lb $0.59 | Less than the next-best store, {store} (shelf price)
+02130 russet potatoes $0.62/lb     costco [online] "Baking Potatoes, 10 lbs" 10 lb $6.21 | {amount}/{unit} (11%) less than the next-best store, {store} (both online prices)
+02130 green beans     $0.53/lb     aldi [shelf] "Happy Harvest Cut Green Beans" 15 oz $0.50 | {amount}/{unit} (68%) less than the next-best store, {store}
+02130 cream of mushroom soup $1.05/lb     aldi [shelf] "Chef's Cupboard Condensed Cream of Mushroom Soup" 10.5 oz $0.69 | {amount}/{unit} (65%) less than the next-best store, {store}
+02130 french fried onions $3.97/lb     aldi [shelf] "Chef's Cupboard Original French Fried Onions" 6 oz $1.49
+02130 dinner rolls    $3.97/lb     aldi [shelf] "Specially Selected Brioche Rolls - 12 Pack" 16.9 oz $4.19
+02130 butter          $1.99/lb     aldi [shelf] "Countryside Creamery Salted Butter Quarters" 16 oz $1.99 | {amount}/{unit} (33%) less than the next-best store, {store}
+02130 heavy cream     $17.40/gal   aldi [shelf] "Friendly Farms Heavy Whipping Cream" 32 fl oz $4.35 | {amount}/{unit} (56%) less than the next-best store, {store}
+02130 gravy           $2.12/lb     aldi [shelf] "Chef's Cupboard Homestyle Turkey Gravy" 12 oz $1.59 | {amount}/{unit} (47%) less than the next-best store, {store}
+02130 celery          $0.95/lb     aldi [shelf] "Celery, each" 1 lb $0.95
+02130 onions          $0.80/lb     aldi [shelf] "Fresh Yellow Onions" 3 lb $2.39 | {amount}/{unit} (50%) less than the next-best store, {store}
+02130 brown sugar     $0.93/lb     aldi [shelf] "Baker's Corner Light Brown Sugar" 32 oz $1.85 | {amount}/{unit} (67%) less than the next-best store, {store}
+02130 marshmallows    $1.58/lb     aldi [shelf] "Baker's Corner Marshmallows" 10 oz $0.99 | {amount}/{unit} (55%) less than the next-best store, {store}
+02130 pecans          $7.18/lb     aldi [shelf] "Southern Grove Chopped Pecans" 8 oz $3.59 | {amount}/{unit} (46%) less than the next-best store, {store}
+02130 pumpkin pie     $4.40/lb     traderjoes [shelf] "Pumpkin Pie" 25.39 oz $6.99 | {amount}/{unit} (45%) less than the next-best store, {store}
+
+wrote 27 answers to /Users/nicksoderstrom/cartworth/.claude/worktrees/tg-qa/ops/coverage/thanksgiving-core-2026-11-13/MA-thanksgiving-core.json
