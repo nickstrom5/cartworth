@@ -43,3 +43,18 @@ test('control: pecans in a baking or nut aisle still match', () => {
   assert.ok(relevance('pecans', { name: 'Southern Grove Chopped Pecans', category: 'Nuts' }) >= cut);
   assert.ok(relevance('pecans', { name: 'Durham-Ellis Pecan Co. Pecan Halves', category: 'Baking Nuts' }) >= cut);
 });
+
+// Same run, 12 more states: Pete's "Medium Knob Onions" (one bunch, 9¢) was Chicago's cheapest
+// "onions", and "Filled Milk" (vegetable fat for butterfat) the runner-up "evaporated milk" in New
+// Orleans and Phoenix.
+test('DEFECT: knob onions are not onions, and filled milk is not evaporated milk', () => {
+  assert.ok(relevance('onions', { name: 'Medium Knob Onions' }) < cut);
+  assert.ok(relevance('evaporated milk', { name: 'Jans Enterprises Evaporated Filled Milk' }) < cut);
+});
+
+test('control: yellow onions, evaporated milk, and either one asked for by name still match', () => {
+  assert.ok(relevance('onions', { name: 'Fresh Yellow Onions' }) >= cut);
+  assert.ok(relevance('evaporated milk', { name: 'Great Value Evaporated Milk' }) >= cut);
+  assert.ok(relevance('knob onions', { name: 'Medium Knob Onions' }) >= cut);
+  assert.ok(relevance('filled milk', { name: 'Always Save FILLED MILK' }) >= cut);
+});

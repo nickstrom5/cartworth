@@ -3,7 +3,7 @@
 The 27-item Thanksgiving core list (`holiday-matrix.mjs --holiday thanksgiving-core`) in the metro
 ZIP of 14 more states (AZ, CA, CO, FL, GA, IL, LA, MA, MI, MN, NY, OH, PA, WA; results in
 `thanksgiving-core-2026-11-13/`), the web app's list planner on a 20-item Thanksgiving list in Chicago,
-and the iPhone app in the simulator. The state run takes about 20 minutes a state: AZ done, CA 26 of 27 items (the run was stopped by a restart), the other 12 rerun after.
+and the iPhone app in the simulator. The state run takes about 20 minutes a state. Done: AZ, CA (26 of 27 items; a restart stopped it), CO, FL, GA, IL, LA, MA. Instacart refused this Mac (429) after MA, so MI, MN, NY, OH, PA and WA are still to run.
 
 ## Fixed
 
@@ -46,6 +46,18 @@ and the iPhone app in the simulator. The state run takes about 20 minutes a stat
 7. **iPhone list plans gave no sign of progress.** 14 Thanksgiving items at the Chicago stores ran
    over five minutes on a first run behind a small spinner. It now says "Priced 4 of 14 items at 21
    stores · 1m 12s", and after a few seconds why it takes that long.
+
+8. **Knob onions answered "onions"** (Pete's "Medium Knob Onions", one bunch at 9¢, Chicago's
+   cheapest), and **"Filled Milk"** (vegetable fat for the butterfat) was the runner-up "evaporated
+   milk" in New Orleans and Phoenix. Both are now compounds that need asking for by name.
+
+## Checked, looks right (CO, FL, GA, IL, LA, MA)
+
+- Whole turkey is under $1/lb everywhere: Walmart's chain-wide 84¢, Publix 65¢ (Florida and Georgia,
+  Instacart), Stop & Shop 59¢ and Big Y 79¢ in Boston, ALDI's 99¢ shelf price.
+- Store brands win the canned and dry staples (ALDI, Woodman's, Hannaford, Great Value), at prices
+  that agree across states (canned pumpkin $0.99-$1.00, green beans $0.50, butter $1.99/lb at ALDI).
+- Pumpkin pie answers with whole pies (Costco and Sam's 58 oz at about $2/lb; Trader Joe's in Boston).
 
 ## New
 

@@ -297,6 +297,12 @@ const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury
   'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
   // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
   'green onion', 'spring onion',
+  // ...nor are knob onions (spring onions with a bulb): Pete's "Medium Knob Onions", one bunch at 9¢,
+  // was Chicago's cheapest "onions" (the Thanksgiving core list, 13 Nov 2026).
+  'knob onion',
+  // Filled milk is evaporated milk with vegetable fat for the butterfat: "Always Save FILLED MILK" and
+  // "Evaporated Filled Milk" were the runner-up "evaporated milk" in New Orleans and Phoenix (same run).
+  'filled milk',
   // Chinese celery is a leaf vegetable of its own: Woodman's answered Milwaukee's "celery" with it.
   'chinese celery',
   // Fruit and nut butters, and margarine that says so: apple butter is not butter.
