@@ -3150,3 +3150,27 @@ final class NationalCloseTests: XCTestCase {
         XCTAssertEqual(NearbyChain.countLine([c("aldi", .shelf)], miles: 25), "1 store with prices within 25 miles")
     }
 }
+
+/// QA 13 Nov 2026: ALDI's circular printed "CHEF'S CUPBOARD Assorted Stuffing", $0.79, on two pages,
+/// and the "In this week's ads" strip showed it twice (the Deals tab already kept one).
+final class AdStripDuplicateTests: XCTestCase {
+    private func deal(_ id: Int, _ name: String, _ price: String, store: String = "aldi") -> Deal {
+        let item = FlippSource.FlyerItem(id: id, flyerId: 8221120, name: name, brand: "", price: price, discount: nil, image: nil, validFrom: nil, validTo: nil)
+        return FlippSource.deal(item: item, detail: nil, retailerId: store, merchant: store == "aldi" ? "ALDI" : "Jewel-Osco")
+    }
+
+    func testTheSameDealPrintedTwiceShowsOnce() {
+        let ads = PriceSearch.uniqueAds([deal(1, "CHEF'S CUPBOARD Assorted Stuffing", "0.79"), deal(2, "CHEF'S CUPBOARD Assorted Stuffing", "0.79")])
+        XCTAssertEqual(ads.map(\.name), ["CHEF'S CUPBOARD Assorted Stuffing"])
+    }
+
+    func testControlDifferentPriceOrStoreStaysSeparate() {
+        let ads = PriceSearch.uniqueAds([
+            deal(1, "CHEF'S CUPBOARD Assorted Stuffing", "0.79"),
+            deal(2, "CHEF'S CUPBOARD Assorted Stuffing", "0.99"),
+            deal(3, "CHEF'S CUPBOARD Assorted Stuffing", "0.79", store: "jewel"),
+        ])
+        XCTAssertEqual(ads.count, 3)
+        XCTAssertEqual(ads.map(\.flippId), [1, 2, 3], "the strip keeps its relevance order")
+    }
+}

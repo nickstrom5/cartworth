@@ -106,7 +106,25 @@ enum PriceSearch {
             let score = Match.relevance(query: query, name: "\(d.name) \(d.description ?? "")")
             if score >= 0.4 { out.append((d, score)) }
         }
-        return out.sorted { $0.1 > $1.1 }.map(\.0)
+        return uniqueAds(out.sorted { $0.1 > $1.1 }.map(\.0))
+    }
+
+    /// One card per printed deal, as on the Deals tab (DealsModel): a circular can print the same
+    /// deal on two pages (ALDI's "CHEF'S CUPBOARD Assorted Stuffing", $0.79, twice in one flyer,
+    /// 13 Nov 2026), and the strip showed it twice. An enriched copy (fine print loaded) wins.
+    static func uniqueAds(_ deals: [Deal]) -> [Deal] {
+        var seen = [String: Int]()
+        var out: [Deal] = []
+        for d in deals {
+            let k = "\(d.retailerId)|\(Match.normalize(d.name))|\(d.priceText)"
+            if let i = seen[k] {
+                if !out[i].enriched && d.enriched { out[i] = d }
+                continue
+            }
+            seen[k] = out.count
+            out.append(d)
+        }
+        return out
     }
 }
 

@@ -62,7 +62,7 @@ export async function getDeals(settings, { week = 'current', fresh = false } = {
     }
   }
 
-  return { week, deals: dedupe(deals), flyers: flyerInfo.sort(byStoreOrder), errors, stale: stale ? 'Showing the last weekly-ad list we loaded — the circular service is not responding right now.' : null, generatedAt: now };
+  return { week, deals: dedupeDeals(deals), flyers: flyerInfo.sort(byStoreOrder), errors, stale: stale ? 'Showing the last weekly-ad list we loaded — the circular service is not responding right now.' : null, generatedAt: now };
 }
 
 function byStoreOrder(a, b) {
@@ -70,8 +70,8 @@ function byStoreOrder(a, b) {
   return ids.indexOf(a.storeId) - ids.indexOf(b.storeId) || String(a.name).localeCompare(String(b.name));
 }
 
-/** Same store + same item + same price across overlapping flyers: keep one. */
-function dedupe(deals) {
+/** Same store + same item + same price across overlapping flyers (or twice in one): keep one. */
+export function dedupeDeals(deals) {
   const seen = new Map();
   for (const d of deals) {
     const k = `${d.storeId}|${normalize(d.name)}|${d.priceText}|${d.week}`;
