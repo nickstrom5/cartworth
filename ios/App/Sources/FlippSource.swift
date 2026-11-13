@@ -244,9 +244,12 @@ actor FlippSource {
         let perLb = post.lowercased().contains("lb") || post.lowercased().contains("pound") || (det?.priceText ?? "").lowercased().contains("lb")
         var qty = 1
         if let m = multiPreRx.match(pre), let n = Int(m[1] ?? m[2] ?? ""), n > 1 { qty = n }
-        let all = "\(pre) \(post) \(story) \(disclaimer)".lowercased()
+        // The detail's own price text carries the condition too: Mariano's prints "lb With Card" and
+        // "lb WITH DIGITAL COUPON" there and nowhere else (QA, 13 Nov 2026).
+        let priceWords = "\(pre) \(post) \(det?.priceText ?? "") \(story)".lowercased()
+        let all = "\(priceWords) \(disclaimer)".lowercased()
         let needsCoupon = all.contains("for u") || all.contains("digital") || all.contains("coupon") || all.contains("clip")
-        let needsCard = "\(pre) \(post) \(story)".lowercased().contains("card")
+        let needsCard = priceWords.contains("card")
         if price == 0 { price = nil }
         let each = price.map { ($0 / Double(qty) * 100).rounded() / 100 }
         var regular = det?.original

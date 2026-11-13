@@ -247,7 +247,8 @@ struct SearchView: View {
     @ViewBuilder
     private var resultsAside: some View {
         if let best = output.bestPerStore.first, let unit = output.unit {
-            HeroBestCard(row: best, unit: unit, runnerUp: output.bestPerStore.dropFirst().first, prefs: app.prefs, perLb: output.perLb) {
+            HeroBestCard(row: best, unit: unit, runnerUp: output.bestPerStore.dropFirst().first, prefs: app.prefs, perLb: output.perLb,
+                         adBeat: Compare.adBeatsBest(query: model.query, ads: model.ads, bestPerBase: best.perBase ?? 0, dim: output.dim)) {
                 detail = best.product
             }
         }
@@ -553,6 +554,8 @@ struct HeroBestCard: View {
     var runnerUp: ComparedRow?
     var prefs: PricePrefs
     var perLb: [Compare.PerLbAside] = []
+    /// A weekly-ad price below this one (`Compare.adBeatsBest`): said, not ranked.
+    var adBeat: (deal: Deal, perBase: Double)? = nil
     var onTap: () -> Void
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -628,6 +631,17 @@ struct HeroBestCard: View {
                     Text(Compare.perLbLine(perLb, unitLabel: unit.label, storeName: { RetailerCatalog.byId[$0]?.short ?? $0 }))
                         .font(.caption).foregroundStyle(.secondary)
                         .accessibilityIdentifier("perLbAside")
+                }
+                if let a = adBeat {
+                    // "Lower in this week's ad: Jennie-O Turkey, 58¢/lb at Mariano's (with card, limit 5)."
+                    let terms = a.deal.conditions
+                    Text("Lower in this week’s ad: \(a.deal.name), \(Money.unit(a.perBase, unit))/\(unit.label) at \(RetailerCatalog.byId[a.deal.retailerId]?.short ?? a.deal.merchant)\(terms.isEmpty ? "" : " (\(terms.joined(separator: ", ")))").")
+                        .font(.caption.weight(.semibold))
+                        // The web's deal colours (--deal-ink / --deal-bg), light and dark: 7.6:1 and 8.4:1.
+                        .foregroundStyle(Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 1, green: 0.737, blue: 0.596, alpha: 1) : UIColor(red: 0.545, green: 0.227, blue: 0.059, alpha: 1) }))
+                        .padding(.horizontal, 8).padding(.vertical, 6)
+                        .background(Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.227, green: 0.145, blue: 0.098, alpha: 1) : UIColor(red: 1, green: 0.914, blue: 0.867, alpha: 1) }), in: RoundedRectangle(cornerRadius: 8))
+                        .accessibilityIdentifier("adBeatsBest")
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

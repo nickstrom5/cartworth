@@ -90,24 +90,51 @@ enum PriceSearch {
         return m.count > 140 ? String(m.prefix(137)) + "…" : m
     }
 
-    /// Weekly-ad items matching a query at the user's stores.
+    /// Weekly-ad items matching a query at the user's stores. Mirrors searchAds in src/search.js.
     static func ads(query: String, place: UserPlace, chainIds: Set<String>) async -> [Deal] {
-        guard let hits = try? await FlippSource.shared.search(query, postal: place.zip) else { return [] }
+        guard let first = try? await FlippSource.shared.search(query, postal: place.zip) else { return [] }
+        // Flipp's search wants every word: "whole turkey" found none of Mariano's ad turkeys, which
+        // say "Jennie-O Turkey" (58¢/lb, 13 Nov 2026). The head noun alone is searched too.
+        let words = query.split(separator: " ").map(String.init)
+        var hits = first
+        if words.count > 1, let more = try? await FlippSource.shared.search(words.last!, postal: place.zip) {
+            let have = Set(first.map(\.item.id))
+            hits += more.filter { !have.contains($0.item.id) }
+        }
         let now = Date()
-        var out: [(Deal, Double)] = []
-        for h in hits {
-            guard let chain = RetailerCatalog.chain(forMerchant: h.merchant), chainIds.contains(chain.id) else { continue }
-            // A search result without its multiplier yields to the item's own detail when it is on hand.
-            let stored = h.detail.partial == true ? await FlippSource.shared.storedDetails(h.item.flyerId)[h.item.id] : nil
-            let d = FlippSource.deal(item: h.item, detail: stored ?? h.detail, retailerId: chain.id, merchant: h.merchant, now: now)
-            if let to = d.validTo, to < now { continue }
+        let live = hits.filter { h in
+            guard let chain = RetailerCatalog.chain(forMerchant: h.merchant), chainIds.contains(chain.id) else { return false }
+            if let to = h.item.validTo, to < now { return false }
             // Next week's circular is not "in this week's ads" (and is a Pro feature on its own tab).
-            if let from = d.validFrom, from > now { continue }
+            if let from = h.item.validFrom, from > now { return false }
+            return true
+        }
+        // Read the fine print of the likeliest few first: "lb With Card" is what makes a 58¢ turkey a
+        // per-pound price with a condition (Compare.adBeatsBest), and "Frozen, Grade A" what makes it
+        // a whole bird. A hit that names the head noun is a candidate before it scores.
+        let head = Match.normalize(words.last ?? query).replacingOccurrences(of: "s$", with: "", options: .regularExpression)
+        var fetched: [Int: FlippSource.Detail] = [:]
+        let need = live.filter { Match.normalize($0.item.name).contains(head) }
+            .sorted { Match.relevance(query: query, name: $0.item.name) > Match.relevance(query: query, name: $1.item.name) }
+            .prefix(adDetails)
+        for h in need where await FlippSource.shared.storedDetails(h.item.flyerId)[h.item.id] == nil {
+            if let d = try? await FlippSource.shared.detail(itemId: h.item.id, flyerId: h.item.flyerId) { fetched[h.item.id] = d }
+        }
+        var out: [(Deal, Double)] = []
+        for h in live {
+            guard let chain = RetailerCatalog.chain(forMerchant: h.merchant) else { continue }
+            // A search result without its multiplier yields to the item's own detail when it is on hand.
+            var stored = fetched[h.item.id]
+            if stored == nil, h.detail.partial == true { stored = await FlippSource.shared.storedDetails(h.item.flyerId)[h.item.id] }
+            let d = FlippSource.deal(item: h.item, detail: stored ?? h.detail, retailerId: chain.id, merchant: h.merchant, now: now)
             let score = Match.relevance(query: query, name: "\(d.name) \(d.description ?? "")")
             if score >= 0.4 { out.append((d, score)) }
         }
         return Deal.unique(out.sorted { $0.1 > $1.1 }.map(\.0))
     }
+
+    /// How many of a search's ad matches have their fine print read first. Mirrors AD_DETAILS.
+    static let adDetails = 6
 }
 
 struct TimeoutError: Error {}

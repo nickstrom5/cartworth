@@ -13,6 +13,8 @@ enum WatchService {
         var byStore: [String: [Product]] = [:]
         var errors: [String: String] = [:]
         var saved: [String: Date] = [:]
+        // This week's ads, read alongside: an ad price below every listing is kept as `ad`.
+        async let adsTask = PriceSearch.ads(query: q, place: place, chainIds: Set(chains.map(\.id)))
         await withTaskGroup(of: StoreResult.self) { group in
             for c in chains { group.addTask { await PriceSearch.search(chain: c, query: q, place: place, limit: app.resultsPerStore, fresh: fresh) } }
             for await r in group {
@@ -34,16 +36,23 @@ enum WatchService {
             // A saved copy is not a new reading: a point dated now would put a days-old price on
             // today in the trend, and a drop it never saw could alert. Port of src/watch.js.
             if saved[storeId] == nil { context.insert(WatchPoint(watchId: w.id, storeId: storeId, name: p.name, price: stores[storeId]!.price, unitPerBase: b.perBase, onSale: p.onSale, at: now)) }
-            if overall == nil || b.perBase < overall!.1 { overall = (storeId, b.perBase) }
+        }
+        // The best store: cheapest, and at a tie the shelf price, exact before estimated.
+        if let first = Compare.watchOrder(stores.map { ($0.key, $0.value.unitPerBase, $0.value.priceBasis, $0.value.est) }).first {
+            overall = (first, stores[first]!.unitPerBase)
         }
         if w.dim == nil { w.dim = best.dim?.rawValue }
         if w.displayUnit == nil, let d = best.dim {
             w.displayUnit = Compare.suggestUnit(d, items: byStore.values.flatMap { $0 }.filter { $0.dim == d }, query: w.query).rawValue
         }
-        w.result = WatchResult(dim: best.dim?.rawValue, stores: stores, errors: errors, bestStoreId: overall?.0, checkedAt: now)
+        let ads = await adsTask
+        let beat = overall.flatMap { Compare.adBeatsBest(query: w.query, ads: ads, bestPerBase: $0.1, dim: best.dim) }
+        w.result = WatchResult(dim: best.dim?.rawValue, stores: stores, errors: errors, bestStoreId: overall?.0, checkedAt: now,
+                               ad: beat.map { .init(name: $0.deal.name, storeId: $0.deal.retailerId, unitPerBase: $0.perBase, terms: $0.deal.conditions, validTo: $0.deal.validTo) })
         w.lastChecked = now
         w.lastError = stores.isEmpty ? (errors.isEmpty ? "No matching products found" : "Stores didn’t answer") : nil
         try? context.save()
+        WidgetBridge.publish(context: context)
     }
 
     /// Best unit price in display units, and whether it hits the target.
@@ -97,7 +106,10 @@ enum TripPlanner {
     }
 
     @MainActor
-    static func price(entries: [ListEntry], fresh: Bool = false) async -> Result {
+    /// - Parameter progress: called after each batch with (items priced, items in all), so a long
+    ///   list can say how far it has got (ListsView): 14 Thanksgiving items took over five minutes
+    ///   in Chicago on a first run (13 Nov 2026) behind a bare spinner.
+    static func price(entries: [ListEntry], fresh: Bool = false, progress: ((Int, Int) -> Void)? = nil) async -> Result {
         let app = AppState.shared
         let chains = app.pricedChains
         let storeIds = chains.map(\.id)
@@ -129,6 +141,7 @@ enum TripPlanner {
                 for await p in group { priced.append(p) }
             }
             index += batch.count
+            progress?(index, items.count)
         }
         let order = items.map(\.id)
         priced.sort { (order.firstIndex(of: $0.id) ?? 0) < (order.firstIndex(of: $1.id) ?? 0) }

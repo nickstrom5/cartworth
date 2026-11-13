@@ -1,6 +1,6 @@
 // Shopping list + trip planner.
-import { useState } from '/vendor/preact-hooks.mjs';
-import { html, StoreTag, StoreDot, Spinner, Notice, Empty, Seg, storeInfo, ProductImage } from '../ui.js';
+import { useEffect, useState } from '/vendor/preact-hooks.mjs';
+import { html, StoreTag, StoreDot, Spinner, Notice, Empty, Seg, storeInfo, ProductImage, useTick } from '../ui.js';
 import { Icon } from '../icons.js';
 import { useStore, setState, toast } from '../store.js';
 import { addToList, updateListItem, removeListItem, clearDoneItems, optimizeList, runSearch } from '../actions.js';
@@ -14,6 +14,7 @@ export function ListView() {
   const [text, setText] = useState('');
   const [qty, setQty] = useState(1);
   const [planning, setPlanning] = useState(false);
+  const stores = useStore((s) => s.settings?.stores?.length || 0);
   const [error, setError] = useState(null);
 
   const add = (e) => {
@@ -43,6 +44,24 @@ export function ListView() {
       setPlanning(false);
     }
   };
+  // "See prices" from a holiday card or a toast (priceList): plan as soon as the list opens.
+  const autoPlan = useStore((s) => s.autoPlan);
+  useEffect(() => {
+    if (!autoPlan) return;
+    setState({ autoPlan: false });
+    if (!(items || []).some((i) => !i.done) || planning) return;
+    // On a phone the plan panel is below the whole list: bring it into view, or "See prices" looks
+    // like it only opened the list. Again when the plan lands: each row then grows a "cheapest" line
+    // and pushes the panel down.
+    const toPanel = () => setTimeout(() => {
+      const el = document.querySelector('[data-testid="plan-panel"]');
+      const top = el?.getBoundingClientRect().top;
+      // Instant: a smooth scroll is cancelled by the list re-rendering under it (each row's price).
+      if (el && (top > innerHeight * 0.6 || top < 0)) el.scrollIntoView({ block: 'start' });
+    }, 60);
+    toPanel();
+    optimize(false).then(toPanel);
+  }, [autoPlan]);
 
   const open = (items || []).filter((i) => !i.done);
   const done = (items || []).filter((i) => i.done);
@@ -93,7 +112,7 @@ export function ListView() {
           </button>
         </div>`}
       </div>
-      <div>${plan ? html`<${PlanView} plan=${plan} onRefresh=${() => optimize(true)} planning=${planning} />` : open.length > 0 && !planning ? html`<div class="card"><${Empty} icon="cart" title="Plan your trip">Cartworth will price each item at every store (for the same amount), then show the cheapest single store, the best two- and three-store combos, and the cherry-pick total.</${Empty}></div>` : null}</div>
+      <div data-testid="plan-panel" style=${{ scrollMarginTop: 12 }}>${plan ? html`<${PlanView} plan=${plan} onRefresh=${() => optimize(true)} planning=${planning} />` : planning ? html`<div class="card card-pad" data-testid="planning"><div class="row" style=${{ gap: 8 }}><${Spinner} size=${14} /><b>Pricing your list</b></div><${PlanningNote} items=${open.length} stores=${stores} /></div>` : open.length > 0 ? html`<div class="card"><${Empty} icon="cart" title="Plan your trip">Cartworth will price each item at every store (for the same amount), then show the cheapest single store, the best two- and three-store combos, and the cherry-pick total.</${Empty}></div>` : null}</div>
     </div>
   </div>`;
 }
@@ -303,4 +322,21 @@ export function planVsSingle(p, single) {
   if (!c) return null;
   if (c.kind === 'exact') return html`<div class="small" style=${{ color: 'var(--good-ink)', fontWeight: 600 }}>Saves ${money2(c.amount)} vs one store</div>`;
   return html`<div class="small ink2">${c.text[0].toUpperCase() + c.text.slice(1)} (vs one store)</div>`;
+}
+
+/**
+ * What a long plan is doing while it runs. A 20-item Thanksgiving list at eight Chicago stores took
+ * about five minutes on a cold cache (QA, 13 Nov 2026) behind nothing but a spinning button: every
+ * item is asked of every store, one request at a time per store, as the stores ask. Prices are then
+ * kept for 20 minutes (src/search.js), so a re-plan inside that is quick.
+ */
+export function PlanningNote({ items, stores }) {
+  const [start] = useState(() => Date.now());
+  useTick(1000);
+  const s = Math.floor((Date.now() - start) / 1000);
+  const clock = s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;
+  return html`<p class="muted small" role="status" style=${{ margin: '8px 0 0' }}>
+    Asking ${plural(stores, 'store')} about ${plural(items, 'item')} · ${clock}
+    ${s >= 8 && html`<br />A long list can take a few minutes the first time: each store is asked one item at a time. Prices are kept for 20 minutes, so planning again is quick.`}
+  </p>`;
 }

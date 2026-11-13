@@ -353,6 +353,18 @@ enum Match {
         let deliOk: Set<String> = deli.contains(where: { want.contains($0) }) ? Set(deli + ["breast"]) : []
         return parts.contains { !want.contains($0) && !deliOk.contains($0) }
     }
+    /// A cut is not the bird: Costco's "Fresh Hen Turkey" (a whole bird), filed under Turkey Breast,
+    /// scored 0.88 for "turkey breast" in Phoenix (13 Nov 2026). Port of wholeBirdForCut().
+    private static let poultryCutRx = Rx("\\b(?:breasts?|tenderloins?|tenders?|cutlets?|thighs?|wings?|drumsticks?|drummies|legs?|necks?|quarters?)\\b")
+    private static let wholeBirdRx = Rx("\\b(?:whole|hens?|toms?|young turkey|fryers?|roasters?|broilers?|rotisserie|birds?)\\b")
+    private static func wholeBirdForCut(query: String, nameNorm: String) -> Bool {
+        let q = normalize(query)
+        return Rx("\\b(?:turkey|chicken)\\b").test(q) && poultryCutRx.test(q) && wholeBirdRx.test(nameNorm) && !poultryCutRx.test(nameNorm)
+    }
+    private static let birdSoldRx = Rx("\\b(?:frozen|fresh|grade a|young|hens?|toms?|\\d+ ?(?:to \\d+ ?)?(?:lbs?|pounds?)(?: (?:and|&) (?:up|over))?|(?:under|over|less than) \\d+ ?(?:lbs?|pounds?))\\b")
+    private static func wholeBirdImplied(_ nameNorm: String) -> Bool {
+        Rx("\\bturkeys?\\b").test(nameNorm) && birdSoldRx.test(nameNorm) && turkeyPartRx.matches(nameNorm).isEmpty && !lunchNameRx.test(nameNorm)
+    }
     /// "fresh" is a stop word, but "fresh turkey" is not a frozen one: a $0.84/lb frozen bird was
     /// Newark's best fresh turkey (the Thanksgiving core list). Port of FROZEN_RE.
     private static let frozenRx = Rx("\\bfrozen\\b")
@@ -362,7 +374,8 @@ enum Match {
     private static let lightRx = Rx("\\blight\\b")
     private static let turkeyDishAisleRx = Rx("\\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?|seasonings?|spices?|herbs?)\\b")
     private static let pastryCupRx = Rx("\\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\\b")
-    private static let nutDishAisleRx = Rx("\\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|candy)\\b")
+    /// "Candies" too: "Durham-Ellis Pecan Co. Orange Slices" (Gummy Candies) answered "pecans" in Phoenix (13 Nov 2026).
+    private static let nutDishAisleRx = Rx("\\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies))\\b")
     private static let inShellRx = Rx("\\bin[- ]?(?:the )?shells?\\b")
     private static let nutHeadRx = Rx("^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$")
     private static let snackNutRx = Rx("\\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\\b")
@@ -495,6 +508,9 @@ enum Match {
         var nameTok = Set(productTokens(full))
         // Shoppers say "lunch meat"; labels say "Deli Fresh", "Sliced", and aisles "Deli Meat".
         if lunchNameRx.test(normalize(name)) || lunchCatRx.test(normalize(category ?? "")) { nameTok.insert("lunch"); nameTok.insert("meat") }
+        // A turkey that names no part but is sold as a bird is a whole one (Mariano's "Jennie-O Turkey,
+        // Frozen, Grade A", 58¢/lb, 13 Nov 2026). Port of wholeBirdImplied().
+        if qt.contains("whole") && wholeBirdImplied(nameNorm) { nameTok.insert("whole") }
         // The product's own words, after the brand when the name repeats it: in "Field Roast
         // Plant-Based Slices" the 'roast' is the maker's. Port of shared/match.js.
         let brandNorm = normalize(brand)
@@ -684,6 +700,7 @@ enum Match {
         // A pie pumpkin is the produce, not the pie (Jewel's per-lb "Pumpkin Pie", Chicago). Port of shared/match.js.
         if hasPhrase(qt, ["pumpkin", "pie"]) && (soldBy == .lb || (hasPhrase(words, ["pie", "pumpkin"]) && !hasPhrase(words, ["pumpkin", "pie"]))) { mult *= 0.2 }
         if qt.contains("turkey") && otherTurkeyPart(query: query, nameNorm: nameNorm, category: category) { mult *= 0.2 }
+        if wholeBirdForCut(query: query, nameNorm: nameNorm) { mult *= 0.2 }
         // ...nor a dish made of it ("The Turkey Trot (Half Panini)", "Turkey Carnitas"; Greenville). Port of shared/match.js.
         if qt.contains("turkey") && turkeyDishAisleRx.test(normalize(category ?? "")) && !turkeyDishAisleRx.test(normalize(query)) { mult *= 0.2 }
         // ...nor are phyllo cups and tart shells ("Pastry Shells, Mini Phyllo", Las Vegas). Port of shared/match.js.

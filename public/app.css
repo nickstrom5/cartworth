@@ -1064,6 +1064,14 @@ label.field .hint {
   color: var(--ink-2);
   font-size: 13.5px;
 }
+/* A weekly-ad price below the best listed one (adBeatLine). The deal colours, as on deal cards. */
+.ad-beat {
+  background: var(--deal-bg);
+  color: var(--deal-ink);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-weight: 600;
+}
 .toolbar {
   display: flex;
   gap: 8px;

@@ -3174,3 +3174,145 @@ final class AdStripDuplicateTests: XCTestCase {
         XCTAssertEqual(ads.map(\.flippId), [1, 2, 3], "the strip keeps its relevance order")
     }
 }
+
+/// The home-screen widget's snapshot (WidgetSnapshot): what it may call a trend, the change it
+/// prints, and which watch it shows when none was chosen.
+final class WidgetSnapshotTests: XCTestCase {
+    private let t0 = Date(timeIntervalSince1970: 1_794_000_000)
+
+    private func watch(_ label: String, atTarget: Bool = false, lowest: Bool = false, checked: TimeInterval = 0) -> WidgetSnapshot.Watch {
+        .init(id: UUID(), label: label, price: "$3.29", unit: "gal", storeId: "aldi", storeName: "ALDI", qualifiers: [], onSale: false,
+              atTarget: atTarget, lowest: lowest, target: nil, trend: [], change: nil, checkedAt: t0.addingTimeInterval(checked), error: nil)
+    }
+
+    func testOneCheckIsTheBestStoreAtThatInstant() {
+        // One refresh dates every store's point the same instant; the cheapest store is the check.
+        let r = WidgetSnapshot.checks([(t0, 0.030), (t0, 0.026), (t0, 0.041), (t0.addingTimeInterval(3600), 0.028)])
+        XCTAssertEqual(r.map(\.perBase), [0.026, 0.028])
+    }
+
+    func testABurstOfRefreshesIsNotATrend() {
+        // Ten checks a minute apart: a change can be printed, but no line is drawn (WatchCard's rule).
+        let r = (0..<10).map { WidgetSnapshot.Reading(at: t0.addingTimeInterval(Double($0) * 60), perBase: 0.03 - Double($0) * 0.0001) }
+        let t = WidgetSnapshot.trend(r, factor: 128)
+        XCTAssertEqual(t.line, [])
+        XCTAssertEqual(t.change, -0.01)
+    }
+
+    func testChecksOverSixHoursAreATrendInDisplayUnits() {
+        let r = [WidgetSnapshot.Reading(at: t0, perBase: 0.03), .init(at: t0.addingTimeInterval(7 * 3600), perBase: 0.025)]
+        let t = WidgetSnapshot.trend(r, factor: 128)
+        XCTAssertEqual(t.line.map { ($0 * 100).rounded() / 100 }, [3.84, 3.2])
+        XCTAssertEqual(t.change, -0.64)
+    }
+
+    func testTheTrendIsCappedToTheLatestChecks() {
+        let r = (0..<50).map { WidgetSnapshot.Reading(at: t0.addingTimeInterval(Double($0) * 3600), perBase: Double($0)) }
+        let line = WidgetSnapshot.trend(r, factor: 1).line
+        XCTAssertEqual(line.count, WidgetSnapshot.maxTrendPoints)
+        XCTAssertEqual(line.last, 49)
+    }
+
+    func testAnUnchosenWidgetShowsATargetHitThenALowestThenTheLatest() {
+        let a = watch("eggs", checked: 100), b = watch("milk", lowest: true), c = watch("butter", atTarget: true, checked: -100)
+        let s = WidgetSnapshot(watches: [a, b, c], generatedAt: t0)
+        XCTAssertEqual(WidgetSnapshot.ordered(s.watches).map(\.label), ["butter", "milk", "eggs"])
+        XCTAssertEqual(s.watch(nil)?.label, "butter")
+        XCTAssertEqual(s.watch(a.id)?.label, "eggs", "a chosen watch wins")
+        XCTAssertEqual(s.watch(UUID())?.label, "butter", "a removed watch falls back rather than going blank")
+        XCTAssertNil(WidgetSnapshot.empty.watch(nil))
+    }
+
+    func testTheSnapshotRoundTripsAsJSON() throws {
+        let s = WidgetSnapshot(watches: [watch("milk", lowest: true)], generatedAt: t0)
+        let enc = JSONEncoder(); enc.dateEncodingStrategy = .iso8601
+        let dec = JSONDecoder(); dec.dateDecodingStrategy = .iso8601
+        XCTAssertEqual(try dec.decode(WidgetSnapshot.self, from: enc.encode(s)), s)
+    }
+}
+
+/// QA 13 Nov 2026: a whole-turkey watch in Chicago headlined Mariano's Instacart 99¢/lb over ALDI's
+/// 99¢ shelf price, because the best store was whichever tied store the dictionary listed first.
+final class WatchTieBreakTests: XCTestCase {
+    func testAShelfPriceWinsATieOverInstacartAndChainWide() {
+        let order = Compare.watchOrder([("marianos", 0.061875, .online, false), ("walmart", 0.061875, .national, false), ("aldi", 0.061875, .shelf, false)])
+        XCTAssertEqual(order, ["aldi", "marianos", "walmart"])
+    }
+
+    func testAnExactPriceWinsATieOverAnEstimate() {
+        XCTAssertEqual(Compare.watchOrder([("tonys", 0.05, .shelf, true), ("jewel", 0.05, .shelf, false)]), ["jewel", "tonys"])
+    }
+
+    func testControlACheaperPriceStillWinsWhateverItsBasis() {
+        XCTAssertEqual(Compare.watchOrder([("aldi", 0.062, .shelf, false), ("marianos", 0.061, .online, false)]).first, "marianos")
+    }
+
+    func testAFullTieIsDecidedByStoreIdNotArrivalOrder() {
+        let a = Compare.watchOrder([("woodmans", 0.05, .shelf, false), ("aldi", 0.05, .shelf, false)])
+        let b = Compare.watchOrder([("aldi", 0.05, .shelf, false), ("woodmans", 0.05, .shelf, false)])
+        XCTAssertEqual(a, ["aldi", "woodmans"]); XCTAssertEqual(a, b)
+    }
+}
+
+/// Mirrors test/qa-whole-bird-cut-2026-11-13.test.js: Costco's "Fresh Hen Turkey", filed under
+/// Turkey Breast, answered "turkey breast" in Phoenix (13 Nov 2026).
+final class WholeBirdForCutTests: XCTestCase {
+    func testAWholeBirdInACutsAisleDoesNotAnswerTheCut() {
+        XCTAssertLessThan(Match.relevance(query: "turkey breast", name: "Fresh Hen Turkey", category: "Turkey Breast"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "chicken breast", name: "Whole Chicken", category: "Chicken Breast"), Match.relevant)
+    }
+
+    func testControlRealCutsAndWholeBirdSearchesStillMatch() {
+        for (q, name) in [("turkey breast", "Kirkwood Bone-In Turkey Breasts"), ("turkey breast", "Butterball Whole Turkey Breast"),
+                          ("chicken breast", "Boneless Skinless Chicken Breasts"), ("chicken wings", "Whole Chicken Wings"), ("turkey", "Butterball Whole Turkey")] {
+            XCTAssertGreaterThanOrEqual(Match.relevance(query: q, name: name), Match.relevant, "\(q): \(name)")
+        }
+    }
+}
+
+final class PecanCandyTests: XCTestCase {
+    func testAGummyCandyFromAPecanCompanyIsNotPecans() {
+        XCTAssertLessThan(Match.relevance(query: "pecans", name: "Durham-ellis Pecan Co. Orange Slices", category: "Gummy Candies"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pecans", name: "Southern Grove Chopped Pecans", category: "Nuts"), Match.relevant)
+    }
+}
+
+/// Mirrors test/qa-ad-beats-best-2026-11-13.test.js: Mariano's 58¢/lb Jennie-O turkey (with card,
+/// limit 5) against a 99¢/lb listing in Chicago, and "whole turkey" for a turkey sold as a bird.
+final class AdBeatsBestTests: XCTestCase {
+    private func adDeal(_ name: String, each: Double, perLb: Bool = true, card: Bool = false, coupon: Bool = false, disclaimer: String? = nil, desc: String? = nil) -> Deal {
+        let item = FlippSource.FlyerItem(id: Int.random(in: 1...1_000_000), flyerId: 8214817, name: name, brand: "", price: String(each), discount: nil, image: nil, validFrom: nil, validTo: nil)
+        let det = FlippSource.Detail(description: desc, pre: nil, priceText: perLb ? (card ? "lb With Card" : coupon ? "lb WITH DIGITAL COUPON" : "lb") : nil, post: nil, story: nil,
+                                     original: nil, current: each, disclaimer: disclaimer, dollarsOff: nil, percentOff: nil, externalCategory: nil)
+        return FlippSource.deal(item: item, detail: det, retailerId: "marianos", merchant: "Mariano's")
+    }
+
+    func testTheConditionInThePriceTextIsRead() {
+        let d = adDeal("Jennie-O Turkey", each: 0.58, card: true, disclaimer: "Limit 5", desc: "Frozen, Grade A,")
+        XCTAssertTrue(d.perLb)
+        XCTAssertTrue(d.needsCard)
+        XCTAssertEqual(d.conditions, ["with card", "limit 5"])
+        XCTAssertTrue(adDeal("Butterball Turkey", each: 0.88, coupon: true).needsCoupon)
+    }
+
+    func testAPerPoundAdBelowEveryListingIsNamedCheapestFirst() {
+        let ads = [adDeal("Butterball Turkey", each: 0.88, coupon: true, desc: "Frozen, Grade A, 10 lb and up"),
+                   adDeal("Jennie-O Turkey", each: 0.58, card: true, desc: "Frozen, Grade A,")]
+        let a = Compare.adBeatsBest(query: "whole turkey", ads: ads, bestPerBase: 0.99 / 16, dim: .weight)
+        XCTAssertEqual(a?.deal.name, "Jennie-O Turkey")
+        XCTAssertEqual(((a?.perBase ?? 0) * 16 * 100).rounded() / 100, 0.58)
+    }
+
+    func testControlNoCalloutForADearerEachOrCountAd() {
+        XCTAssertNil(Compare.adBeatsBest(query: "whole turkey", ads: [adDeal("Jennie-O Turkey", each: 1.29, desc: "Frozen")], bestPerBase: 0.99 / 16, dim: .weight))
+        XCTAssertNil(Compare.adBeatsBest(query: "turkey breast", ads: [adDeal("Jennie-O Turkey Breast", each: 8.99, perLb: false)], bestPerBase: 0.99 / 16, dim: .weight))
+        XCTAssertNil(Compare.adBeatsBest(query: "whole turkey", ads: [adDeal("Jennie-O Turkey", each: 0.58, desc: "Frozen")], bestPerBase: 0.03, dim: .count))
+    }
+
+    func testATurkeySoldAsABirdIsAWholeTurkey() {
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "whole turkey", name: "Butterball Turkey Frozen, Grade A, 10 lb and up"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "whole turkey", name: "Fresh Hen Turkey"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "whole turkey", name: "Jennie-O Ground Turkey Frozen"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "whole turkey", name: "Frozen Turkey Breast"), Match.relevant)
+    }
+}

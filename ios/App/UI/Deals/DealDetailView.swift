@@ -139,10 +139,19 @@ func simplify(_ name: String) -> String {
 struct OccasionView: View {
     let occasion: Occasion
     @Environment(Router.self) private var router
+    @Environment(Entitlements.self) private var pro
+    @Query private var entries: [ListEntry]
     @State private var model = DealsModel.shared
-    @State private var added = false
+    /// How many items the last "Add all" put on the list (0: none yet, or all were already there).
+    @State private var added = 0
 
     private var matches: [Deal] { model.matchingDeals(terms: occasion.keywords) }
+    private var openCount: Int { entries.filter { !$0.done }.count }
+    /// Every item of this holiday's list is on the shopping list (not ticked off).
+    private var allOnList: Bool {
+        let have = Set(entries.filter { !$0.done }.map { $0.text.lowercased().trimmingCharacters(in: .whitespaces) })
+        return occasion.list.allSatisfy { have.contains($0.lowercased()) }
+    }
 
     var body: some View {
         ScrollView {
@@ -170,19 +179,34 @@ struct OccasionView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    Button {
-                        let ctx = Persistence.container.mainContext
-                        for (i, item) in occasion.list.enumerated() {
-                            ctx.insert(ListEntry(text: item, sort: i, recipe: occasion.name))
-                        }
-                        try? ctx.save()
-                        added = true
-                    } label: {
-                        Label(added ? "Added \(occasion.list.count) items" : "Add all to my list", systemImage: added ? "checkmark" : "plus")
+                    if allOnList {
+                        // The next step once the items are on the list: what they cost.
+                        Button { router.priceList() } label: {
+                            HStack {
+                                Label("See prices for my list (\(openCount) \(openCount == 1 ? "item" : "items"))", systemImage: "cart")
+                                if !pro.isPro { ProBadge() }
+                            }
                             .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier("priceOccasion")
+                        Label(added > 0 ? "Added \(added) \(added == 1 ? "item" : "items") to your list" : "All on your list", systemImage: "checkmark")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    } else {
+                        Button {
+                            // Items already on the list are not added twice (the web's addManyToList).
+                            let ctx = Persistence.container.mainContext
+                            let have = Set(entries.filter { !$0.done }.map { $0.text.lowercased().trimmingCharacters(in: .whitespaces) })
+                            let fresh = occasion.list.filter { !have.contains($0.lowercased()) }
+                            let start = (entries.map(\.sort).max() ?? 0) + 1
+                            for (i, item) in fresh.enumerated() { ctx.insert(ListEntry(text: item, sort: start + i, recipe: occasion.name)) }
+                            try? ctx.save()
+                            added = fresh.count
+                        } label: {
+                            Label("Add all to my list", systemImage: "plus").frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(added)
                 }
 
                 if !matches.isEmpty {

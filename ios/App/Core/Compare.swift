@@ -395,6 +395,19 @@ enum Compare {
     /// `tieBreak` in shared/compare.js (Mariano's Instacart carrots were named over the identical
     /// price on Woodman's shelf because "marianos" < "woodmans").
     static func basisRank(_ b: PriceBasis) -> Int { b == .shelf ? 0 : b == .online ? 1 : 2 }
+
+    /// A watch's stores, best first: cheaper unit price; at the same price the shelf price before
+    /// an online or chain-wide one and an exact figure before an estimate (`tieBreak`); then the
+    /// store id, so the answer never depends on the order the stores answered in. A whole-turkey
+    /// watch in Chicago (13 Nov 2026) headlined Mariano's Instacart 99¢/lb over ALDI's 99¢ shelf
+    /// price. Mirrors `byWatchPrice` in shared/compare.js.
+    static func watchOrder(_ rows: [(id: String, perBase: Double, basis: PriceBasis, est: Bool)]) -> [String] {
+        rows.sorted { a, b in
+            if a.perBase != b.perBase { return a.perBase < b.perBase }
+            if let t = tieBreak(a.basis, a.est, b.basis, b.est) { return t }
+            return a.id < b.id
+        }.map(\.id)
+    }
     static func tieBreak(_ a: PriceBasis, _ aEst: Bool, _ b: PriceBasis, _ bEst: Bool) -> Bool? {
         if basisRank(a) != basisRank(b) { return basisRank(a) < basisRank(b) }
         if aEst != bEst { return !aEst }

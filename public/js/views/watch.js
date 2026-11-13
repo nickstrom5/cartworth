@@ -7,6 +7,7 @@ import { useStore, toast } from '../store.js';
 import { addWatch, refreshWatch, refreshAllWatches, updateWatch, removeWatch, runSearch, addToList } from '../actions.js';
 import { money2, unitPrice, unitPriceStep, unitLabel, ago, plural, savedNote, BASIS_LABEL, BASIS_BADGE, BASIS_TITLE, linkDestination } from '../format.js';
 import { DISPLAY_UNITS, displayUnitsFor } from '/shared/units.js';
+import { byWatchPrice } from '/shared/compare.js';
 
 const SUGGESTED = ['milk 1 gal', 'eggs', 'bananas', 'chicken breast', 'ground beef', 'butter', 'coffee', 'bread'];
 
@@ -92,7 +93,7 @@ function WatchCard({ w }) {
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const du = w.displayUnit || (w.result?.dim ? displayUnitsFor(w.result.dim)[0] : null);
-  const stores = Object.entries(w.result?.stores || {}).sort((a, b) => a[1].unitPerBase - b[1].unitPerBase);
+  const stores = Object.entries(w.result?.stores || {}).sort(byWatchPrice);
   const best = stores[0];
   const factor = du ? DISPLAY_UNITS[du]?.factor : null;
 
@@ -165,6 +166,8 @@ function WatchCard({ w }) {
       </div>
       ${trend.length > 1 && html`<div title="Best price over time"><${Sparkline} points=${trend} target=${w.target} label=${`Best price trend for ${w.label}`} /></div>`}
     </div>`}
+    ${w.result?.ad && du && (!w.result.ad.validTo || Date.parse(w.result.ad.validTo) > Date.now()) &&
+    html`<div class="ad-beat small" data-testid="watch-ad">Lower in this week’s ad: ${w.result.ad.name}, ${unitPrice(w.result.ad.unitPerBase, du).text}/${unitPrice(w.result.ad.unitPerBase, du).unit} at ${w.result.ad.storeName}${w.result.ad.terms?.length ? ` (${w.result.ad.terms.join(', ')})` : ''}.</div>`}
 
     ${stores.length > 0 &&
     html`<table class="wtable">

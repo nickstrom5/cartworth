@@ -10,7 +10,7 @@ import { STORE_BY_ID, storeForMerchant } from '../shared/stores.js';
 import { normalize, relevance } from '../shared/match.js';
 import { storeZip, snapRadius } from './context.js';
 import { outsideRadius, sourceHosts } from './directory.js';
-import { withStallTimeout } from './http.js';
+import { withStallTimeout, mapLimit } from './http.js';
 import { dedupeDeals } from './deals.js';
 import { recordProducts, historyStats } from './history.js';
 
@@ -204,9 +204,34 @@ export function withHistory(items, { record = true } = {}) {
 
 /** Weekly-ad items matching a query, for enabled stores. */
 export async function searchAds(query, settings) {
-  const raw = await flipp.searchItems(query, settings.zip);
-  return adsFromHits(query, raw, new Set(settings.stores), Date.now());
+  // Flipp's search wants every word: "whole turkey" found none of Mariano's ad turkeys, which say
+  // "Jennie-O Turkey" (58¢/lb), 13 Nov 2026. The head noun alone is searched too and the hits merged;
+  // the matcher below still decides what answers the shopper's words.
+  const words = String(query).trim().split(/\s+/);
+  const extra = words.length > 1 ? [words[words.length - 1]] : [];
+  const lists = await Promise.all([query, ...extra].map((q, i) => (i ? flipp.searchItems(q, settings.zip).catch(() => []) : flipp.searchItems(q, settings.zip))));
+  const seen = new Set();
+  const raw = lists.flat().filter((r) => !seen.has(r.id) && seen.add(r.id));
+  const enabled = new Set(settings.stores);
+  const now = Date.now();
+  // Read the fine print of the likeliest few before answering. A search hit gives "$0.58" and no
+  // unit; the item's detail says "lb With Card", which is what lets a 58¢/lb turkey be set against
+  // the stores' listed prices (adBeatsBest in shared/compare.js) and shown with its condition. The
+  // detail's description can also make the match ("Frozen, Grade A" is a whole bird), so a hit at one
+  // of the shopper's stores that names the head noun is a candidate even before it scores. A detail
+  // is fetched once and kept (flipp_details), so a repeat search costs nothing.
+  const head = normalize(words[words.length - 1]).replace(/s$/, '');
+  const need = raw
+    .filter((r) => enabled.has(storeForMerchant(r.merchant)) && !flipp.storedDetail(r.id) && normalize(r.name).includes(head)
+      && !(r.validTo && Date.parse(r.validTo) < now) && !(r.validFrom && Date.parse(r.validFrom) > now))
+    .map((r) => ({ r, s: relevance(query, { name: r.name }) }))
+    .sort((a, b) => b.s - a.s)
+    .slice(0, AD_DETAILS);
+  if (need.length) await mapLimit(need, 2, ({ r }) => flipp.itemDetail(r.id).catch(() => null));
+  return adsFromHits(query, raw, enabled, now);
 }
+/** How many of a search's ad matches have their fine print read before the strip is sent. */
+const AD_DETAILS = 6;
 
 /** Flyer search hits to the "In this week's ads" strip: the user's stores, live this week, relevant
  *  to the query, one per printed deal. A circular can print the same deal on two pages (ALDI's

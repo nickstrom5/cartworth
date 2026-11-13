@@ -39,6 +39,16 @@ targets:
       # copied into the app. As a resource it shipped inside the Release build.
       - path: App/Resources/Products.storekit
         buildPhase: none
+      # The widget's shared file (WidgetStore), compiled into the app and the widget.
+      - path: Shared
+    dependencies:
+      - target: Widget
+    # The App Group the app writes the widget's snapshot into (WidgetBridge, Shared/WidgetStore.swift).
+    entitlements:
+      path: App/Resources/Cartworth.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.app.cartworth.ios
     settings:
       base:
         PRODUCT_NAME: Cartworth
@@ -73,6 +83,27 @@ targets:
       testTargets:
         - AppTests
         - AppUITests
+  # The home-screen / Lock Screen price-watch widget (Widget/WatchWidget.swift). It reads the
+  # snapshot the app writes into the shared App Group and never asks a store for a price itself.
+  Widget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widget
+      - path: Shared
+      - path: App/Core/WidgetSnapshot.swift
+    entitlements:
+      path: Widget/Widget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.app.cartworth.ios
+    settings:
+      base:
+        PRODUCT_NAME: CartworthWidget
+        PRODUCT_BUNDLE_IDENTIFIER: app.cartworth.ios.widget
+        INFOPLIST_FILE: Widget/Info.plist
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
   AppTests:
     type: bundle.unit-test
     platform: iOS

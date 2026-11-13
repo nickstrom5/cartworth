@@ -476,6 +476,51 @@ export function tieBreak(a, b) {
 }
 
 /**
+ * Order two stores' best prices for a watch: cheaper unit price first; at the same price the shelf
+ * price before an online or chain-wide listing and an exact figure before an estimate (tieBreak),
+ * then the store id so the answer never depends on the order the stores answered in. A whole-turkey
+ * watch in Chicago (13 Nov 2026) headlined Mariano's Instacart 99¢/lb over ALDI's 99¢ shelf price.
+ * Rows are [storeId, { unitPerBase, priceBasis, est }], as a watch result's stores are.
+ */
+export function byWatchPrice([aId, a], [bId, b]) {
+  return a.unitPerBase - b.unitPerBase || tieBreak(a, b) || (aId < bId ? -1 : aId > bId ? 1 : 0);
+}
+
+/**
+ * A weekly-ad price that beats every price the stores list. Ads are not ranked with the listings (an
+ * ad price has conditions, a limit and often no package size), so the best price stays the best
+ * listed one; this is the ad the shopper should still hear about. Mariano's ad on 13 Nov 2026 had
+ * Jennie-O frozen turkey at 58¢/lb with card, below every listed whole turkey in Chicago (99¢), and
+ * Cartworth said 99¢.
+ *
+ * Only a per-pound ad price can be set against a per-pound listing: "$8.99" for a turkey breast says
+ * nothing about how much breast. `ads` are the search's ad deals (scored by relevance); `best` is
+ * { perBase, dim } of the best listing, per ounce for weight. Returns { deal, perBase } or null.
+ */
+export function adBeatsBest(ads, best) {
+  if (!best || best.dim !== 'weight' || !(best.perBase > 0)) return null;
+  let top = null;
+  for (const d of ads || []) {
+    if (!d.perLb || !(d.each > 0) || (d.score ?? 0) < RELEVANT || d.week === 'next') continue;
+    const perBase = d.each / 16;
+    if (perBase < best.perBase - 1e-9 && (!top || perBase < top.perBase)) top = { deal: d, perBase };
+  }
+  return top;
+}
+
+/** An ad deal's conditions, in the shopper's words: ["with card", "digital coupon", "limit 5"]. */
+export function adTerms(d) {
+  const t = [];
+  if (d.needsCard) t.push('with card');
+  if (d.needsCoupon) t.push('digital coupon');
+  if (d.mustBuy > 1) t.push(`buy ${d.mustBuy}`);
+  if (d.minSpend > 0) t.push(`with a $${d.minSpend} purchase`);
+  const limit = d.limit || +(/\blimit\s+(\d+)/i.exec(d.disclaimer || '')?.[1] || 0);
+  if (limit > 0) t.push(`limit ${limit}`);
+  return t;
+}
+
+/**
  * Which row the other stores are measured against for "≈ same": the cheapest row, unless that is a
  * chain-wide ('national') listing and a local price exists, then the cheapest local one. A national
  * price carries +/-25%, so measured against it nearly every store came out "≈ same" (Detroit, 9 Nov

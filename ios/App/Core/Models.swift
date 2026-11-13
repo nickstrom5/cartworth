@@ -274,3 +274,35 @@ extension Deal {
         return out
     }
 }
+
+extension Deal {
+    /// The deal's conditions, in the shopper's words: ["with card", "digital coupon", "limit 5"].
+    /// Port of adTerms in shared/compare.js.
+    var conditions: [String] {
+        var t: [String] = []
+        if needsCard { t.append("with card") }
+        if needsCoupon { t.append("digital coupon") }
+        if let n = mustBuy, n > 1 { t.append("buy \(n)") }
+        let fromText = Rx("\\blimit\\s+(\\d+)").match(disclaimer ?? "")?[1].flatMap { $0 }.flatMap { Int($0) }
+        if let n = limit ?? fromText, n > 0 { t.append("limit \(n)") }
+        return t
+    }
+}
+
+extension Compare {
+    /// A weekly-ad price that beats every listed price (Mariano's Jennie-O turkey at 58¢/lb with
+    /// card against a 99¢ listing in Chicago, 13 Nov 2026). Said beside the best price, never
+    /// ranked with it. Only a per-pound ad price compares with a per-pound listing. `bestPerBase`
+    /// is per ounce. Port of adBeatsBest in shared/compare.js.
+    static func adBeatsBest(query: String, ads: [Deal], bestPerBase: Double, dim: Dim?) -> (deal: Deal, perBase: Double)? {
+        guard dim == .weight, bestPerBase > 0 else { return nil }
+        var top: (deal: Deal, perBase: Double)?
+        for d in ads where d.perLb && d.week != .next {
+            guard let each = d.each, each > 0 else { continue }
+            guard Match.relevance(query: query, name: "\(d.name) \(d.description ?? "")") >= Match.relevant else { continue }
+            let perBase = each / 16
+            if perBase < bestPerBase - 1e-9 && (top == nil || perBase < top!.perBase) { top = (d, perBase) }
+        }
+        return top
+    }
+}
