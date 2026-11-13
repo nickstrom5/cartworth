@@ -3160,12 +3160,12 @@ final class AdStripDuplicateTests: XCTestCase {
     }
 
     func testTheSameDealPrintedTwiceShowsOnce() {
-        let ads = PriceSearch.uniqueAds([deal(1, "CHEF'S CUPBOARD Assorted Stuffing", "0.79"), deal(2, "CHEF'S CUPBOARD Assorted Stuffing", "0.79")])
+        let ads = Deal.unique([deal(1, "CHEF'S CUPBOARD Assorted Stuffing", "0.79"), deal(2, "CHEF'S CUPBOARD Assorted Stuffing", "0.79")])
         XCTAssertEqual(ads.map(\.name), ["CHEF'S CUPBOARD Assorted Stuffing"])
     }
 
     func testControlDifferentPriceOrStoreStaysSeparate() {
-        let ads = PriceSearch.uniqueAds([
+        let ads = Deal.unique([
             deal(1, "CHEF'S CUPBOARD Assorted Stuffing", "0.79"),
             deal(2, "CHEF'S CUPBOARD Assorted Stuffing", "0.99"),
             deal(3, "CHEF'S CUPBOARD Assorted Stuffing", "0.79", store: "jewel"),
