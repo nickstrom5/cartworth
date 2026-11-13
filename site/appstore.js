@@ -75,8 +75,14 @@ var WEB_APP_URL = '/app/';
     var el = buttons[i];
     el.setAttribute('href', APP_STORE_URL);
     el.setAttribute('rel', 'noopener');
+    // Go live without the .btn background fade: the label turns white at once, so a 0.14s fade
+    // from the grey "soon" background left white text on light grey (axe failed / at random,
+    // 13 Nov 2026). Turn the transition off, switch, force a style pass, then restore it.
+    el.style.transition = 'none';
     el.classList.add('is-live');
     var label = el.querySelector('[data-appstore-label]');
     if (label) label.textContent = el.getAttribute('data-appstore') || 'Get it on the App Store';
+    void el.offsetWidth;
+    el.style.transition = '';
   }
 })();

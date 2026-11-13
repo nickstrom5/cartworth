@@ -11,6 +11,7 @@ import { normalize, relevance } from '../shared/match.js';
 import { storeZip, snapRadius } from './context.js';
 import { outsideRadius, sourceHosts } from './directory.js';
 import { withStallTimeout } from './http.js';
+import { dedupeDeals } from './deals.js';
 import { recordProducts, historyStats } from './history.js';
 
 const STORE_TIMEOUT = 35000;
@@ -203,21 +204,28 @@ export function withHistory(items, { record = true } = {}) {
 
 /** Weekly-ad items matching a query, for enabled stores. */
 export async function searchAds(query, settings) {
-  const enabled = new Set(settings.stores);
   const raw = await flipp.searchItems(query, settings.zip);
-  const now = Date.now();
+  return adsFromHits(query, raw, new Set(settings.stores), Date.now());
+}
+
+/** Flyer search hits to the "In this week's ads" strip: the user's stores, live this week, relevant
+ *  to the query, one per printed deal. A circular can print the same deal on two pages (ALDI's
+ *  "CHEF'S CUPBOARD Assorted Stuffing", $0.79, twice in flyer 8221120, 13 Nov 2026): the Deals tab
+ *  kept one (dedupeDeals) and the strip showed both. Next week's circular is left out, as
+ *  on the iPhone (PriceSearch.ads): it is not "this week's". */
+export function adsFromHits(query, raw, enabled, now) {
   const out = [];
   for (const r of raw) {
     const storeId = storeForMerchant(r.merchant);
     if (!storeId || !enabled.has(storeId)) continue;
     const d = flipp.toDeal(r, storeId, r.merchant, now);
     if (d.validTo && Date.parse(d.validTo) < now) continue;
+    if (d.validFrom && Date.parse(d.validFrom) > now) continue;
     d.score = relevance(query, { name: `${d.name} ${d.description || ''}` });
     if (d.score < 0.4) continue;
     out.push(d);
   }
-  out.sort((a, b) => b.score - a.score);
-  return out;
+  return dedupeDeals(out).sort((a, b) => b.score - a.score);
 }
 
 // Recent searches used to be kept in a `searches` table here. They are a record of what one person

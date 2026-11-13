@@ -252,3 +252,25 @@ struct StoreResult: Identifiable {
     var ms: Int = 0
     var id: String { retailerId }
 }
+
+extension Deal {
+    /// One card per printed deal: same store, same item, same price across overlapping flyers, or
+    /// twice in one (ALDI printed "CHEF'S CUPBOARD Assorted Stuffing", $0.79, on two pages of one
+    /// flyer, 13 Nov 2026). An enriched copy (fine print loaded) wins; order is kept. The Deals tab
+    /// (DealsModel) and the search ads strip (PriceSearch.ads) both use it, as the web does
+    /// (src/deals.js dedupeDeals).
+    static func unique(_ deals: [Deal]) -> [Deal] {
+        var seen = [String: Int]()
+        var out: [Deal] = []
+        for d in deals {
+            let k = "\(d.retailerId)|\(Match.normalize(d.name))|\(d.priceText)"
+            if let i = seen[k] {
+                if !out[i].enriched && d.enriched { out[i] = d }
+                continue
+            }
+            seen[k] = out.count
+            out.append(d)
+        }
+        return out
+    }
+}

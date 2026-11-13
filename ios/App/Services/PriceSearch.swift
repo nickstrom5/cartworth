@@ -106,7 +106,7 @@ enum PriceSearch {
             let score = Match.relevance(query: query, name: "\(d.name) \(d.description ?? "")")
             if score >= 0.4 { out.append((d, score)) }
         }
-        return out.sorted { $0.1 > $1.1 }.map(\.0)
+        return Deal.unique(out.sorted { $0.1 > $1.1 }.map(\.0))
     }
 }
 

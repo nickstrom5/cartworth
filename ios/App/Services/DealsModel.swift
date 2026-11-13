@@ -68,18 +68,7 @@ final class DealsModel {
         let now = Date()
         var out: [Deal] = items.map { FlippSource.deal(item: $0.item, detail: detailsByFlyer[$0.item.flyerId]?[$0.item.id], retailerId: $0.chainId, merchant: $0.merchant, now: now) }
         if week == .current { out += wfm }
-        var seen = [String: Int]()
-        var deduped: [Deal] = []
-        for d in out where !(d.priceText.isEmpty && d.story == nil) {
-            let k = "\(d.retailerId)|\(Match.normalize(d.name))|\(d.priceText)"
-            if let i = seen[k] {
-                if !deduped[i].enriched && d.enriched { deduped[i] = d }
-                continue
-            }
-            seen[k] = deduped.count
-            deduped.append(d)
-        }
-        deals[week] = deduped
+        deals[week] = Deal.unique(out.filter { !($0.priceText.isEmpty && $0.story == nil) })
     }
 
     private func startEnrichment(_ week: AdWeek, _ flyerIds: [Int]) {
