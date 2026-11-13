@@ -118,6 +118,17 @@ final class AppState {
 final class Router {
     var tab = 0
     var pendingQuery: String?
+    /// A watch the Tracking tab should scroll to (opened from the home-screen widget).
+    var focusWatch: UUID?
+    /// Set by "See prices for my list" on a holiday screen: the List tab plans as soon as it opens.
+    var planList = false
+
+    /// Open the list and price it. "Add all to my list" used to end on a greyed-out "Added 14
+    /// items", with no way on to what they cost (the owner, 13 Nov 2026).
+    func priceList() {
+        planList = true
+        tab = 2
+    }
 
     func compare(_ query: String) {
         pendingQuery = query

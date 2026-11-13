@@ -5,8 +5,8 @@
 // buys, so it lives in that person's browser along with its history points; this module is a pure
 // function of the request. There is no scheduler either: a server timer would be refreshing
 // somebody's private list on a server that is not supposed to know it has one.
-import { searchStore, withHistory, sourceFor } from './search.js';
-import { bestPerStore, searchTextFor, suggestUnit } from '../shared/compare.js';
+import { searchStore, withHistory, sourceFor, searchAds } from './search.js';
+import { adBeatsBest, adTerms, bestPerStore, byWatchPrice, searchTextFor, suggestUnit } from '../shared/compare.js';
 import { STORE_BY_ID } from '../shared/stores.js';
 
 function bad(message) {
@@ -39,6 +39,15 @@ export async function checkWatch(spec, ctx, { fresh = false } = {}) {
   if (!stores.length) throw bad('None of your stores can be priced — turn on a store that publishes prices');
 
   const q = searchTextFor(query);
+  // This week's ads are read alongside: an ad price below every listing is kept as `ad` (adBeatsBest).
+  // Never at the watch's expense: not while the server is shedding lookups (src/guard.js admitCold),
+  // and given up after AD_WAIT_MS, the watch's own prices stand without it.
+  const adsP = ctx.admitCold && !ctx.admitCold(['backflipp.wishabi.com'])
+    ? Promise.resolve([])
+    : Promise.race([
+      searchAds(q, ctx).catch(() => []),
+      new Promise((resolve) => setTimeout(resolve, AD_WAIT_MS, []).unref?.()),
+    ]);
   const results = await Promise.all(stores.map((s) => searchStore(s, q, ctx, { fresh })));
   const byStore = {};
   const errors = {};
@@ -67,8 +76,10 @@ export async function checkWatch(spec, ctx, { fresh = false } = {}) {
     // A saved copy is not a new reading: a point stamped now would put a days-old price on today's
     // date in the watch's history, and a drop it never saw could alert.
     if (!(storeId in savedAt)) points.push({ storeId, pkey: p.key, name: p.name, price, unit: b.unit.perBase, onSale: !!p.onSale, t: now });
-    if (!overall || b.unit.perBase < overall.unitPerBase) overall = { storeId, unitPerBase: b.unit.perBase };
   }
+  // The best store: cheapest, and at a tie the shelf price, exact before estimated (byWatchPrice).
+  const first = Object.entries(storesOut).sort(byWatchPrice)[0];
+  if (first) overall = { storeId: first[0], unitPerBase: first[1].unitPerBase };
 
   let suggestedUnit = null;
   if (best.dim) {
@@ -82,6 +93,7 @@ export async function checkWatch(spec, ctx, { fresh = false } = {}) {
       stores: storesOut,
       errors,
       best: overall ? { ...overall, storeName: STORE_BY_ID[overall.storeId]?.name } : null,
+      ad: adNote(adBeatsBest(await adsP, overall && { perBase: overall.unitPerBase, dim: best.dim })),
       checkedAt: now,
     },
     points,
@@ -89,4 +101,14 @@ export async function checkWatch(spec, ctx, { fresh = false } = {}) {
     checkedAt: now,
     error: Object.keys(best.stores).length ? null : 'No matching products found',
   };
+}
+
+/** How long a watch check waits for this week's ads before going on without them. */
+const AD_WAIT_MS = 8000;
+
+/** What a watch keeps of an ad that beats its best listing: enough to say it, nothing to rank. */
+function adNote(a) {
+  if (!a) return null;
+  const d = a.deal;
+  return { name: d.name, storeId: d.storeId, storeName: STORE_BY_ID[d.storeId]?.name || d.merchant, unitPerBase: a.perBase, terms: adTerms(d), validTo: d.validTo || null };
 }

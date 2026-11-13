@@ -23,6 +23,7 @@ struct CartworthApp: App {
                     await Entitlements.shared.load()
                     await NationalStats.shared.refresh()
                     BackgroundRefresh.schedule()
+                    WidgetBridge.publish()
                     await Cache.shared.purge()
                 }
         }
@@ -73,6 +74,10 @@ struct MainTabs: View {
             switch url.host {
             case "search":
                 if let q = items.first(where: { $0.name == "q" })?.value { router.compare(q) }
+            case "watch":
+                // From the home-screen widget: cartworth://watch?id=<uuid>
+                router.focusWatch = items.first(where: { $0.name == "id" })?.value.flatMap(UUID.init(uuidString:))
+                router.go(3)
             case "tab":
                 let names = ["search": 0, "deals": 1, "list": 2, "tracking": 3, "settings": 4]
                 if let n = items.first(where: { $0.name == "name" })?.value, let i = names[n] { router.go(i) }
@@ -124,6 +129,12 @@ enum QABootstrap {
     @MainActor
     static func applyLaunchArguments() async {
         let args = ProcessInfo.processInfo.arguments
+        if args.contains("-qaClearList") {
+            // UI tests that add a holiday list start from an empty one (HolidayListPriceTests).
+            let ctx = Persistence.container.mainContext
+            for e in (try? ctx.fetch(FetchDescriptor<ListEntry>())) ?? [] { ctx.delete(e) }
+            try? ctx.save()
+        }
         if args.contains("-qaReset") {
             for key in ["place", "selectedChainIds", "onboarded", "radiusMiles"] { UserDefaults.standard.removeObject(forKey: key) }
         }
@@ -198,6 +209,7 @@ enum QABootstrap {
                 }
                 seed(watch: w, result: result, into: ctx)
                 seeded.insert(w.id)
+                WidgetBridge.publish(context: ctx)
                 print("QA seeded \(sampleCount) back-dated samples for \(result.stores.count) stores on watch “\(w.query)”")
             }
             try? await Task.sleep(nanoseconds: 3_000_000_000)

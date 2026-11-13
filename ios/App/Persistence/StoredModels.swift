@@ -85,6 +85,17 @@ struct WatchResult: Codable, Hashable {
     var errors: [String: String]
     var bestStoreId: String?
     var checkedAt: Date
+    /// A weekly-ad price below every listing at this check (`Compare.adBeatsBest`). Optional, so a
+    /// result saved before it existed still decodes.
+    var ad: AdNote? = nil
+
+    struct AdNote: Codable, Hashable {
+        var name: String
+        var storeId: String
+        var unitPerBase: Double
+        var terms: [String]
+        var validTo: Date?
+    }
 }
 
 /// Unit price of the best store at each check (for trend lines).

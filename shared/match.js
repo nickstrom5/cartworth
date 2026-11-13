@@ -519,13 +519,30 @@ function otherTurkeyPart(query, nameNorm, category) {
   const deliOk = deli.some((d) => want.has(d)) ? new Set([...deli, 'breast']) : new Set();
   return parts.some((w) => !want.has(w) && !deliOk.has(w));
 }
+// A cut is not the bird. Costco's "Fresh Hen Turkey" (Foster Farms, a whole bird at $1.23/lb), which
+// Instacart files under Turkey Breast, scored 0.88 for "turkey breast" in Phoenix because the aisle
+// supplied the word the name lacks (the Thanksgiving core list, 13 Nov 2026); a whole chicken filed
+// under Chicken Breast did the same for "chicken breast". When the shopper names a cut, a name that
+// says it is the whole bird and never names a cut is another purchase, whatever its aisle.
+const POULTRY_CUT_RE = /\b(?:breasts?|tenderloins?|tenders?|cutlets?|thighs?|wings?|drumsticks?|drummies|legs?|necks?|quarters?)\b/;
+const WHOLE_BIRD_RE = /\b(?:whole|hens?|toms?|young turkey|fryers?|roasters?|broilers?|rotisserie|birds?)\b/;
+function wholeBirdForCut(query, nameNorm) {
+  const q = normalize(query);
+  return /\b(?:turkey|chicken)\b/.test(q) && POULTRY_CUT_RE.test(q) && WHOLE_BIRD_RE.test(nameNorm) && !POULTRY_CUT_RE.test(nameNorm);
+}
+const BIRD_SOLD_RE = /\b(?:frozen|fresh|grade a|young|hens?|toms?|\d+ ?(?:to \d+ ?)?(?:lbs?|pounds?)(?: (?:and|&) (?:up|over))?|(?:under|over|less than) \d+ ?(?:lbs?|pounds?))\b/;
+function wholeBirdImplied(nameNorm) {
+  return /\bturkeys?\b/.test(nameNorm) && BIRD_SOLD_RE.test(nameNorm) && !(nameNorm.match(TURKEY_PART_RE) || []).length && !LUNCH_NAME_RE.test(nameNorm);
+}
 // "fresh" is a stop word ("fresh milk" is milk), but "fresh turkey" is not a frozen one: Walmart's
 // "Shady Brook Farms Frozen Whole Turkey", $0.84/lb, was Newark's best fresh turkey, where a fresh bird
 // costs $2-3 (the Thanksgiving core list, 3 Nov).
 const FROZEN_RE = /\bfrozen\b/;
 const TURKEY_DISH_AISLE_RE = /\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?|seasonings?|spices?|herbs?)\b/;
 const PASTRY_CUP_RE = /\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\b/;
-const NUT_DISH_AISLE_RE = /\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|candy)\b/;
+// "Candies" too: Bashas' "Durham-Ellis Pecan Co. Orange Slices" (Gummy Candies) was Phoenix's best
+// "pecans" at 0.72, the nut word from the maker's name (the Thanksgiving core list, 13 Nov 2026).
+const NUT_DISH_AISLE_RE = /\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies))\b/;
 const IN_SHELL_RE = /\bin[- ]?(?:the )?shells?\b/;
 const NUT_HEAD_RE = /^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$/;
 const SNACK_NUT_RE = /\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\b/;
@@ -590,6 +607,10 @@ export function relevance(query, product, opts = {}) {
   // Shoppers say "lunch meat"; labels say "Deli Fresh", "Sliced", "Lunchmeat", and aisles "Deli Meat". Omaha's
   // "turkey lunch meat" found nothing in the state x holiday audit.
   if (LUNCH_NAME_RE.test(normalize(product.name || '')) || LUNCH_CAT_RE.test(normalize(product.category || ''))) { nameTok.add('lunch'); nameTok.add('meat'); }
+  // A turkey that names no part but is sold as a bird is a whole one: Mariano's ad says "Jennie-O
+  // Turkey, Frozen, Grade A" and "Butterball Turkey, Frozen, Grade A, 10 lb and up" (58¢ and 88¢/lb,
+  // 13 Nov 2026), and scored 0.275 for "whole turkey" for want of the word (wholeBirdImplied).
+  if (qt.includes('whole') && wholeBirdImplied(nameNorm)) nameTok.add('whole');
   // The product's own words, after the brand when the name repeats it: in "Field Roast Plant-Based
   // Slices" (brand Field Roast) the 'roast' is the maker's (the Thanksgiving food styles run).
   const brandNorm = normalize(product.brand || '');
@@ -795,6 +816,7 @@ export function relevance(query, product, opts = {}) {
   // "pumpkin pie" (Halloween QA, 24 Oct), and a "Pie Pumpkin" scored 0.80 against it.
   if (hasPhrase(qt, ['pumpkin', 'pie']) && (product.soldBy === 'lb' || (hasPhrase(words, ['pie', 'pumpkin']) && !hasPhrase(words, ['pumpkin', 'pie'])))) mult *= 0.2;
   if (qt.includes('turkey') && otherTurkeyPart(query, nameNorm, product.category)) mult *= 0.2;
+  if (wholeBirdForCut(query, nameNorm)) mult *= 0.2;
   // ...nor a dish made of it: The Fresh Market's "The Turkey Trot (Half Panini)" and Sprouts' "Turkey
   // Carnitas" (Prepared Turkey) were Greenville's only "fresh turkey", and BJ's "Infinite Herbs Turkey
   // Blend" (3 oz, Other Seasoning Mixes) answered it in Virginia Beach (the Thanksgiving core list).

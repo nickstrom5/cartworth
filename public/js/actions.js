@@ -496,8 +496,18 @@ export function addManyToList(texts, { label = 'items' } = {}) {
     saveList([...(getState().list || []), ...fresh.map((text) => ({ id: newId(), text, qty: 1, pinned: null, done: false, addedAt: Date.now() }))]);
     setState({ plan: null });
   }
-  toast(fresh.length ? `Added ${fresh.length} ${label} to your list` : 'Those are already on your list', { action: { label: 'View list', run: () => go('list') } });
+  toast(fresh.length ? `Added ${fresh.length} ${label} to your list` : 'Those are already on your list', { action: { label: 'See prices', run: () => priceList() } });
   return fresh.length;
+}
+
+/**
+ * Open the list and price it at once. "Add all to my list" on a holiday card used to end in a toast
+ * whose "View list" vanished in four seconds, and the list then still waited for "Plan my trip": the
+ * owner, adding the Thanksgiving list, expected a button to see what those items cost (13 Nov 2026).
+ */
+export function priceList() {
+  setState({ autoPlan: true });
+  go('list');
 }
 
 export function updateListItem(id, patch) {

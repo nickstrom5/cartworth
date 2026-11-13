@@ -6,7 +6,7 @@ import { BestBars } from '../charts.js';
 import { useStore, pref, setPref, openModal, getState } from '../store.js';
 import { runSearch, addWatch, addToList, go } from '../actions.js';
 import { money, money2, unitPrice, unitLabel, ago, shortDate, endsLabel, plural, shortPromo, BASIS_LABEL, BASIS_TITLE, BASIS_BADGE, linkDestination } from '../format.js';
-import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim, tieBreak, standings, perLbAside } from '/shared/compare.js';
+import { scoreItems, dominantDim, suggestUnit, unitFor, usesMember, flagImplausible, savingsClaim, tieBreak, standings, perLbAside, adBeatsBest, adTerms } from '/shared/compare.js';
 import { refineChips, RELEVANT } from '/shared/match.js';
 import { displayUnitsFor, DISPLAY_UNITS, TYPICAL_TURKEY_LB } from '/shared/units.js';
 import { ProductDetail } from './product.js';
@@ -277,6 +277,8 @@ function Results({ search, settings }) {
 
   const { rows, dim, dims, displayUnit, bestRows } = model;
   const winner = bestRows[0];
+  // A weekly-ad price below every listed one: said beside the best price, not ranked with it.
+  const adBeat = winner && !include.length ? adBeatsBest(search.ads, { perBase: winner.cmp, dim }) : null;
   // The chart's "Best" and the headline's savings line follow one rule: a store within the
   // price-basis margin of the winner is 'close', not beaten (shared/compare.js standings).
   const verdicts = Object.fromEntries(standings(Object.fromEntries(bestRows.map((p) => [p.storeId, p]))).map((r) => [r.storeId, r.verdict]));
@@ -439,6 +441,7 @@ function Results({ search, settings }) {
               <div class="hero-sub"><a href="#" onClick=${(e) => { e.preventDefault(); openProduct(winner, displayUnit); }}>${winner.name}</a>${winner.size ? ` · ${winner.size}` : ''} · ${money2(effPrice(winner, prefs))}${winner.soldBy === 'lb' ? '/lb' : ''}</div>
               ${bestRows[1] && savingsLine(winner, bestRows[1], displayUnit) && html`<div class="muted small">${savingsLine(winner, bestRows[1], displayUnit)}</div>`}
               ${model.perLb.length > 0 && html`<div class="muted small" data-testid="per-lb-aside">${perLbLine(model.perLb, displayUnit)}</div>`}
+              ${adBeat && html`<div class="ad-beat small" data-testid="ad-beats-best">${adBeatLine(adBeat, displayUnit)}</div>`}
               ${loading && html`<div class="muted small">${pendingStores} more ${pendingStores === 1 ? 'store is' : 'stores are'} still answering; this can change.</div>`}
             </div>`
           : loading
@@ -468,6 +471,14 @@ function Results({ search, settings }) {
       </div>
     </div>
   </div>`;
+}
+
+// "Lower in this week's ad: Jennie-O Turkey, 58¢/lb at Mariano's (with card, limit 5)." The ad is
+// not ranked with the listings (adBeatsBest), so the line says it is an ad and what it takes.
+export function adBeatLine(a, displayUnit) {
+  const terms = adTerms(a.deal);
+  const price = unitPrice(a.perBase, displayUnit)?.text ?? money2(a.deal.each);
+  return `Lower in this week\u2019s ad: ${a.deal.name}, ${price}/${unitLabel(displayUnit)} at ${storeInfo(a.deal.storeId).short}${terms.length ? ` (${terms.join(', ')})` : ''}.`;
 }
 
 // "Sold by the lb, so not ranked per each: El Super $0.33/lb, Bashas' $0.44/lb. Listed below." The

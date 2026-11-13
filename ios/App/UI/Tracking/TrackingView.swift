@@ -18,6 +18,7 @@ struct TrackingView: View {
 
     var body: some View {
         NavigationStack {
+          ScrollViewReader { proxy in
             List {
                 Section {
                     HStack {
@@ -48,6 +49,7 @@ struct TrackingView: View {
                                       onCompare: { router.compare(w.query) },
                                       onDelete: { delete(w) })
                         }
+                        .id(w.id)
                     }
                 }
 
@@ -99,6 +101,13 @@ struct TrackingView: View {
             }
             .sheet(isPresented: $showPaywall) { PaywallView(reason: paywallReason) }
             .task { if dealsModel.deals[.current] == nil { await dealsModel.load(.current) } }
+            // Opened from the home-screen widget: bring that watch into view.
+            .onChange(of: router.focusWatch, initial: true) { _, id in
+                guard let id else { return }
+                withAnimation { proxy.scrollTo(id, anchor: .top) }
+                router.focusWatch = nil
+            }
+          }
         }
         // The watch rows and their text fields ran the full width. This used to be the one tab
         // that got the title right, by leading-aligning a capped list — which put "Tracking" on
@@ -149,6 +158,7 @@ struct TrackingView: View {
         for p in points where p.watchId == w.id { ctx.delete(p) }
         ctx.delete(w)
         try? ctx.save()
+        WidgetBridge.publish(context: ctx)
     }
 }
 
@@ -188,7 +198,8 @@ struct WatchCard: View {
 
     private var status: (best: Double?, du: DisplayUnit?, atTarget: Bool, lowest: Bool) { WatchService.status(watch, points: points) }
     private var stores: [(String, WatchResult.StoreBest)] {
-        (watch.result?.stores ?? [:]).sorted { $0.value.unitPerBase < $1.value.unitPerBase }
+        let all = watch.result?.stores ?? [:]
+        return Compare.watchOrder(all.map { ($0.key, $0.value.unitPerBase, $0.value.priceBasis, $0.value.est) }).map { ($0, all[$0]!) }
     }
 
     var body: some View {
@@ -234,6 +245,12 @@ struct WatchCard: View {
                         if b.est { Badge(text: "est.", kind: .outline) }
                         if let saved = b.savedAt { SavedNote(date: saved) }
                     }
+                }
+                if let a = watch.result?.ad, let du = status.du, a.validTo.map({ $0 > Date() }) ?? true {
+                    Text("Lower in this week’s ad: \(a.name), \(Money.unit(a.unitPerBase, du))/\(du.label) at \(RetailerCatalog.byId[a.storeId]?.short ?? a.storeId)\(a.terms.isEmpty ? "" : " (\(a.terms.joined(separator: ", ")))").")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 1, green: 0.737, blue: 0.596, alpha: 1) : UIColor(red: 0.545, green: 0.227, blue: 0.059, alpha: 1) }))
+                        .accessibilityIdentifier("watchAd")
                 }
             } else if let err = watch.lastError {
                 Text(err).font(.footnote).foregroundStyle(.secondary)

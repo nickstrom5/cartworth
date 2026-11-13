@@ -12,6 +12,9 @@ struct ListsView: View {
     @State private var newItem = ""
     @State private var plan: TripPlanner.Result?
     @State private var planning = false
+    /// When the running plan started and how far it has got, for the note under the plan button.
+    @State private var planStarted: Date?
+    @State private var planProgress = (done: 0, total: 0)
     @State private var showRecipe = false
     @State private var paywall: PaywallReason?
     /// Return adds the item and keeps the keyboard up: a holiday list is typed one item after
@@ -32,6 +35,7 @@ struct ListsView: View {
 
     var body: some View {
         NavigationStack {
+          ScrollViewReader { proxy in
             List {
                 Section {
                     HStack {
@@ -67,6 +71,7 @@ struct ListsView: View {
                 if let plan {
                     Section("Trip plan") {
                         TripPlanSummary(plan: plan, onRefresh: { Task { await runPlan(fresh: true) } }, planning: planning)
+                            .id("tripPlan")
                     }
                 }
 
@@ -83,6 +88,24 @@ struct ListsView: View {
                             }
                         }
                         .disabled(planning)
+                        .id("planButton")
+                        if planning, let started = planStarted {
+                            // What a long plan is doing (the web's PlanningNote): each store is asked
+                            // about each item, a few at a time; prices are then kept for 20 minutes.
+                            TimelineView(.periodic(from: started, by: 1)) { tl in
+                                let s = max(0, Int(tl.date.timeIntervalSince(started)))
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Priced \(planProgress.done) of \(planProgress.total) items at \(app.pricedChains.count) stores · \(s < 60 ? "\(s)s" : "\(s / 60)m \(String(format: "%02d", s % 60))s")")
+                                        .font(.footnote.weight(.semibold)).monospacedDigit()
+                                    if s >= 8 {
+                                        Text("A long list can take a few minutes the first time: each store is asked about each item. Prices are kept for 20 minutes, so planning again is quick.")
+                                            .font(.footnote).foregroundStyle(.secondary)
+                                    }
+                                }
+                                .accessibilityElement(children: .combine)
+                                .accessibilityIdentifier("planningNote")
+                            }
+                        }
                     } footer: {
                         Text("Prices each item at every store you follow — for the same amount — then finds the cheapest single store, the best two- and three-store split, and the cherry-pick total.")
                     }
@@ -119,6 +142,21 @@ struct ListsView: View {
             }
             .sheet(isPresented: $showRecipe) { RecipeImportView() }
             .sheet(item: $paywall) { PaywallView(reason: $0.title) }
+            // "See prices for my list" from a holiday screen (Router.priceList): plan now, and show it.
+            .onChange(of: router.planList, initial: true) { _, go in
+                guard go else { return }
+                router.planList = false
+                guard !open.isEmpty else { return }
+                guard pro.isPro else { paywall = PaywallReason(title: "Trip planning"); return }
+                Task {
+                    withAnimation { proxy.scrollTo("planButton", anchor: .center) }
+                    await runPlan()
+                    // After the plan's rows are laid out, or the scroll stops short of them.
+                    try? await Task.sleep(nanoseconds: 350_000_000)
+                    withAnimation { proxy.scrollTo("tripPlan", anchor: .top) }
+                }
+            }
+          }
         }
         // A shopping list is one column of short lines. Left unbounded it puts the item name at
         // one edge of a 13" iPad and its price and search button 900pt away at the other. The
@@ -208,8 +246,10 @@ struct ListsView: View {
 
     private func runPlan(fresh: Bool = false) async {
         planning = true
-        defer { planning = false }
-        plan = await TripPlanner.price(entries: open, fresh: fresh)
+        planStarted = Date()
+        planProgress = (0, open.count)
+        defer { planning = false; planStarted = nil }
+        plan = await TripPlanner.price(entries: open, fresh: fresh) { done, total in planProgress = (done, total) }
     }
 
     private func copyList() {

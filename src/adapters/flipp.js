@@ -210,8 +210,12 @@ export function toDeal(raw, storeId, merchant, now = Date.now()) {
   let qty = 1;
   const multi = pre.match(/^(\d+)\s*\/?\s*(?:for)?\s*$/i) || pre.match(/^(\d+)\s*(?:\/|for)/i);
   if (multi && +multi[1] > 1) qty = +multi[1];
-  const needsCoupon = /for u|digital|coupon|clip/i.test(`${pre} ${post} ${story} ${disclaimer}`);
-  const needsCard = /with card|card price|w\/ card/i.test(`${pre} ${post} ${story}`);
+  // The detail's own price text carries the condition too: Mariano's prints "lb With Card" and
+  // "lb WITH DIGITAL COUPON" there and nowhere else, so its 58¢/lb Jennie-O turkey read as a plain
+  // price (QA, 13 Nov 2026).
+  const terms = `${pre} ${post} ${det?.priceText || ''} ${story}`;
+  const needsCoupon = /for u|digital|coupon|clip/i.test(`${terms} ${disclaimer}`);
+  const needsCard = /with card|card price|w\/ card/i.test(terms);
   const each = price != null ? Math.round((price / qty) * 100) / 100 : null;
 
   // "SALE PRICE WITHOUT COUPON $10.99 EA." / "REG. $4.99"
