@@ -3326,3 +3326,19 @@ final class KnobOnionFilledMilkTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "evaporated milk", name: "Great Value Evaporated Milk"), Match.relevant)
     }
 }
+
+/// Mirrors test/qa-turkey-each-2026-11-14.test.js: "1 ea" birds at $5-$6 are prices per pound, and a
+/// pastry or bread named for the nut is not the nut (Thanksgiving core list, 14 Nov 2026).
+final class TurkeyEachAndNutFormTests: XCTestCase {
+    func testTheEachPricedBirdFloorIsTenDollars() {
+        XCTAssertEqual(Units.turkeyEachMin, 10)
+    }
+
+    func testAPastryOrBreadNamedForTheNutIsNotTheNut() {
+        XCTAssertLessThan(Match.relevance(query: "pecans", name: "Lady Linda Pecan Twirls"), Match.relevant)
+        XCTAssertLessThan(Match.relevance(query: "pecans", name: "Organic Raisin Pecan Sliced"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pecans", name: "Fisher Chopped Pecans"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "almonds", name: "Blue Diamond Sliced Almonds"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "pecan pie", name: "Mrs Smiths Pecan Pie"), Match.relevant)
+    }
+}

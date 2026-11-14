@@ -3,7 +3,7 @@
 The 27-item Thanksgiving core list (`holiday-matrix.mjs --holiday thanksgiving-core`) in the metro
 ZIP of 14 more states (AZ, CA, CO, FL, GA, IL, LA, MA, MI, MN, NY, OH, PA, WA; results in
 `thanksgiving-core-2026-11-13/`), the web app's list planner on a 20-item Thanksgiving list in Chicago,
-and the iPhone app in the simulator. The state run takes about 20 minutes a state. Done: AZ, CA (26 of 27 items; a restart stopped it), CO, FL, GA, IL, LA, MA. Instacart refused this Mac (429) after MA, so MI, MN, NY, OH, PA and WA are still to run.
+and the iPhone app in the simulator. The state run takes about 20 minutes a state. All 14 done: AZ, CA (26 of 27 items; a restart stopped it), CO, FL, GA, IL, LA, MA on 13 Nov; MI, MN, NY, OH, PA, WA on 14 Nov (Instacart refused this Mac partway through WA, so Seattle's last items have fewer stores).
 
 ## Fixed
 
@@ -51,7 +51,17 @@ and the iPhone app in the simulator. The state run takes about 20 minutes a stat
    cheapest), and **"Filled Milk"** (vegetable fat for the butterfat) was the runner-up "evaporated
    milk" in New Orleans and Phoenix. Both are now compounds that need asking for by name.
 
-## Checked, looks right (CO, FL, GA, IL, LA, MA)
+9. **A whole turkey "1 ea" at $5-$6 won "whole turkey" in four of six states** (14 Nov): Kowalski's
+   organic fresh $5.49 (Minneapolis), Bravo's Jennie-O $5.19 (Queens), Weis' kosher $5.79
+   (Philadelphia), Metropolitan Market's free-range brined $5.29 (Seattle), each read as one 14 lb bird
+   at 37-41¢/lb. They are prices per pound under an "each" label. The per-bird floor rose from $5 to
+   $10 (`TURKEY_EACH_MIN`, `Units.turkeyEachMin`); below it a bird is listed but not ranked per lb.
+   Marc's Butterball at $10.19 a bird (73¢/lb) still counts.
+10. **Pastries and bread answered "pecans"**: Bravo's "Lady Linda Pecan Twirls" (Queens) and Whole
+    Foods' "Organic Raisin Pecan Sliced" (Seattle), neither with an aisle. A nut search now passes over
+    a name that makes the nut a baked good or another food (`NUT_FORM_RE` / `nutFormRx`).
+
+## Checked, looks right (CO, FL, GA, IL, LA, MA, MI, MN, NY, OH, PA, WA)
 
 - Whole turkey is under $1/lb everywhere: Walmart's chain-wide 84¢, Publix 65¢ (Florida and Georgia,
   Instacart), Stop & Shop 59¢ and Big Y 79¢ in Boston, ALDI's 99¢ shelf price.
@@ -70,6 +80,10 @@ and the iPhone app in the simulator. The state run takes about 20 minutes a stat
   `group.app.cartworth.ios` after every check; the widget never asks a store itself.
 
 ## For the owner
+
+- **Flavoured cranberry sauce**: Bravo's "Sa Strawberry Cranberry Sauce" (16 oz, 79¢) is Queens' best
+  "cranberry sauce". It is a cranberry sauce, so it stays; say if a flavoured one should need asking for.
+- **Save-A-Lot white onions, 3 lb for 43¢** (Columbus), may be a real loss leader or a data error.
 
 - **Planning a long list on a first run is slow** (about 5 minutes for 14-20 items on web and
   iPhone): every store is asked about every item at the stores' pace. Both now say so while it runs;

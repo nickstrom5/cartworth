@@ -380,6 +380,9 @@ enum Match {
     private static let nutDishAisleRx = Rx("\\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies))\\b")
     private static let inShellRx = Rx("\\bin[- ]?(?:the )?shells?\\b")
     private static let nutHeadRx = Rx("^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$")
+    /// A baked good or another food made with the nut ("Lady Linda Pecan Twirls", "Organic Raisin
+    /// Pecan Sliced" bread answered "pecans", 14 Nov 2026). Port of NUT_FORM_RE.
+    private static let nutFormRx = Rx("\\b(?:twirls?|danish|breads?|loaf|loaves|rolls?|buns?|muffins?|scones?|cookies?|sandies|bars?|clusters?|turtles?|brittle|pralines?|pies?|tarts?|cakes?|raisins?|pastr(?:y|ies)|coffee ?cake|granola)\\b")
     private static let snackNutRx = Rx("\\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\\b")
     private static let whippedRx = Rx("\\bwhipped\\b")
     private static let freshRx = Rx("\\bfresh\\b")
@@ -713,6 +716,7 @@ enum Match {
         if head == "cream", let want = creamGrade(normalize(query)), let got = creamGrade(nameNorm), got != want { mult *= 0.2 }
         // Snack nuts are not baking nuts ("Sweet & Spicy Pecans", "Candied Pecans"; the Thanksgiving core list). Port of shared/match.js.
         if nutHeadRx.test(head) && snackNutRx.test(nameNorm) && !snackNutRx.test(normalize(query)) { mult *= 0.3 }
+        if nutHeadRx.test(head) && nutFormRx.test(nameNorm) && !nutFormRx.test(normalize(query)) { mult *= 0.2 }
         // ...and nuts in the shell are weighed with it (Food Lion's "Diamond In Shell Pecans"). Port of shared/match.js.
         // ...and a cake made with them is a cake ("Pecan Brazo Gitano" in Other Cakes, Las Vegas). Port of shared/match.js.
         if nutHeadRx.test(head) && nutDishAisleRx.test(normalize(category ?? "")) && !nutDishAisleRx.test(normalize(query)) { mult *= 0.2 }
