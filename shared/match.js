@@ -551,6 +551,10 @@ const PASTRY_CUP_RE = /\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\b/;
 const NUT_DISH_AISLE_RE = /\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies))\b/;
 const IN_SHELL_RE = /\bin[- ]?(?:the )?shells?\b/;
 const NUT_HEAD_RE = /^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$/;
+// A baked good or another food made with the nut, by its name when the aisle does not say: Bravo's
+// "Lady Linda Pecan Twirls" (6 oz, 99¢) was Queens' best "pecans" and Whole Foods' "Organic Raisin
+// Pecan Sliced" (bread) Seattle's (the Thanksgiving core list, 14 Nov 2026).
+const NUT_FORM_RE = /\b(?:twirls?|danish|breads?|loaf|loaves|rolls?|buns?|muffins?|scones?|cookies?|sandies|bars?|clusters?|turtles?|brittle|pralines?|pies?|tarts?|cakes?|raisins?|pastr(?:y|ies)|coffee ?cake|granola)\b/;
 const SNACK_NUT_RE = /\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\b/;
 const PIES_AISLE_RE = /^(?!.*\b(?:crusts?|dough|shells?)\b).*\bpies\b/;
 // A dish named as a flavour. "Pumpkin pie spice" is kept out of "pumpkin pie" by the 'spice' trap;
@@ -842,6 +846,7 @@ export function relevance(query, product, opts = {}) {
   // Snack nuts are not baking nuts: Trader Joe's "Sweet & Spicy Pecans" and "Candied Pecans", 5 oz at
   // $15.97/lb, answered "pecans" in Salt Lake City and Dallas (the Thanksgiving core list).
   if (NUT_HEAD_RE.test(head || '') && SNACK_NUT_RE.test(nameNorm) && !SNACK_NUT_RE.test(normalize(query))) mult *= 0.3;
+  if (NUT_HEAD_RE.test(head || '') && NUT_FORM_RE.test(nameNorm) && !NUT_FORM_RE.test(normalize(query))) mult *= 0.2;
   // ...and nuts in the shell are weighed with it, about half of what a pound of shelled nuts holds:
   // Food Lion's "Diamond In Shell Pecans", 16 oz at $8.29, ranked against chopped pecans (Greenville).
   // ...and a cake made with them is a cake: El Super's "Pecan Brazo Gitano" (Other Cakes), Las Vegas.

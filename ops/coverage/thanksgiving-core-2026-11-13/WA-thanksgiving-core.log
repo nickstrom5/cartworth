@@ -1,0 +1,31 @@
+
+== 98103 Seattle: 14 priced stores (pcc, wholefoods, traderjoes, townandcountry, groceryoutlet, sprouts, qfc, fredmeyer, safeway, metropolitanmarket, albertsons, costco, haggen, walmart); unresolved: none
+98103 whole turkey    $0.38/lb     metropolitanmarket [online est] "Metropolitan Market Free Range Brined Turkey" 1 ea $5.29 | Less than the next-best store, {store} (chain-wide price)
+98103 frozen turkey   $0.84/lb     walmart [national] "Jennie-O 10 to 21.35 Pounds Frozen Hen Turkey" per lb $0.84 | About the same as {store} (online price), so no saving is claimed
+98103 fresh turkey    $0.38/lb     metropolitanmarket [online est] "Metropolitan Market Free Range Brined Turkey" 1 ea $5.29 | Less than the next-best store, {store} (online price)
+98103 turkey          $0.38/lb     metropolitanmarket [online est] "Metropolitan Market Free Range Brined Turkey" 1 ea $5.29 | Less than the next-best store, {store} (chain-wide price)
+98103 turkey breast   $2.69/lb     fredmeyer [online] "Jennie-O Basted Frozen Turkey Breast (4-9 lb) - Limit 5 at sale retail" per lb $2.69
+98103 stuffing mix    $2.24/lb     walmart [national] "Pepperidge Farm Herb Seasoned Classic Stuffing" 12 oz $1.68 | Less than the next-best store, {store} (shelf price)
+98103 cranberry sauce $1.97/lb     walmart [national] "Great Value Jellied Cranberry Sauce" 14 oz $1.72 | About the same as {store} (online price), so no saving is claimed
+98103 jellied cranberry sauce $1.97/lb     walmart [national] "Great Value Jellied Cranberry Sauce" 14 oz $1.72 | About the same as {store} (online price), so no saving is claimed
+98103 whole berry cranberry sauce $1.97/lb     walmart [national] "Great Value Whole Berry Cranberry Sauce" 14 oz $1.72 | About the same as {store} (online price), so no saving is claimed
+98103 canned pumpkin  $1.07/lb     walmart [national] "Great Value Pumpkin" 15 oz $1.00 | About the same as {store} (online price), so no saving is claimed
+98103 pie crust       $2.99/lb     fredmeyer [online] "Kroger® Deep Dish Ready-to-Bake Pie Crusts" 16 oz $2.99
+98103 evaporated milk $10.67/gal   walmart [national] "Great Value Evaporated Milk" 12 fl oz $1.00 | Less than the next-best store, {store} (shelf price)
+98103 sweet potatoes  $0.74/lb     costco [online] "Sweet Potatoes" 10 lb $7.45 | About the same as {store} (chain-wide price), so no saving is claimed
+98103 russet potatoes $0.18/lb     haggen [online est] "Russet Potato" 80 ct $7.99 | Less than the next-best store, {store} (shelf price)
+98103 green beans     $0.55/lb     walmart [national] "Great Value Green Cut Beans" 14.5 oz $0.50 | Less than the next-best store, {store} (shelf price)
+98103 cream of mushroom soup $1.22/lb     fredmeyer [online] "Kroger Condensed Cream of Mushroom Soup" 26 oz $1.99 | {amount}/{unit} (23%) less than the next-best store, {store} (both online prices)
+98103 french fried onions NO ANSWER
+98103 dinner rolls    $3.99/lb     traderjoes [shelf] "Dinner Rolls" 12 oz $2.99 | {amount}/{unit} (40%) less than the next-best store, {store}
+98103 butter          $2.99/lb     traderjoes [shelf] "Butter Quarters, Salted" 16 oz $2.99 | {amount}/{unit} (69%) less than the next-best store, {store}
+98103 heavy cream     $36.72/gal   wholefoods [shelf] "Organic Heavy Cream" 16 fl oz $4.59 | {amount}/{unit} (8%) less than the next-best store, {store}
+98103 gravy           $3.99/lb     wholefoods [shelf] "Organic Mushroom Gravy" 12 oz $2.99
+98103 celery          $7.18/lb     wholefoods [shelf] "Organic Celery Sticks" 8 oz $3.59
+98103 onions          $1.49/lb     wholefoods [shelf] "Yellow Onion" per lb $1.49 | About the same as {store} (estimated price), so no saving is claimed
+98103 brown sugar     $2.99/lb     traderjoes [shelf] "Organic Brown Sugar" 24 oz $4.49 | {amount}/{unit} (4%) less than the next-best store, {store}
+98103 marshmallows    $3.50/lb     wholefoods [shelf] "Large Marshmallows" 10 oz $2.19 | {amount}/{unit} (27%) less than the next-best store, {store}
+98103 pecans          $8.99/lb     wholefoods [shelf] "Organic Raisin Pecan Sliced" 16 oz $8.99
+98103 pumpkin pie     $4.40/lb     traderjoes [shelf] "Pumpkin Pie" 25.39 oz $6.99 | {amount}/{unit} (40%) less than the next-best store, {store}
+
+wrote 27 answers to /Users/nicksoderstrom/cartworth/.claude/worktrees/tg-qa/ops/coverage/thanksgiving-core-2026-11-13/WA-thanksgiving-core.json

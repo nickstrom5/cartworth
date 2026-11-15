@@ -1,0 +1,31 @@
+
+== 11375 Forest Hills: 22 priced stores (traderjoes, aldi, foodbazaar, wholefoods, keyfood, walmart, sprouts, costco, stopandshop, ctown, bjs, hmart, shoprite, bravo, fairway, wegmans, acme, kings, stewleonards, freshmarket, decicco, samsclub); unresolved: none
+11375 whole turkey    $0.37/lb     bravo [online est] "Jennie-O Frozen Whole Young Turkey" 1 ea $5.19 | About the same as {store} (estimated price), so no saving is claimed
+11375 frozen turkey   $0.37/lb     bravo [online est] "Jennie-O Frozen Whole Young Turkey" 1 ea $5.19 | About the same as {store} (online price), so no saving is claimed
+11375 fresh turkey    $0.41/lb     ctown [online est] "Fresh Killed Turkey" 1 ea $5.79 | Less than the next-best store, {store} (shelf price)
+11375 turkey          $0.97/lb     walmart [shelf] "Butterball Premium All Natural Frozen Whole Turkey (16-24 lbs.)" per lb $0.97 | {amount}/{unit} (2%) less than the next-best store, {store}
+11375 turkey breast   $1.99/lb     aldi [shelf] "Kirkwood Bone-In Turkey Breasts" per lb $1.99 | Less than the next-best store, {store} (online price)
+11375 stuffing mix    $2.53/lb     aldi [shelf] "Chef's Cupboard Turkey Stuffing Mix" 6 oz $0.95 | About the same as {store} (online price), so no saving is claimed
+11375 cranberry sauce $0.79/lb     bravo [online] "Sa Strawberry Cranberry Sauce" 16 oz $0.79 | Less than the next-best store, {store} (shelf price)
+11375 jellied cranberry sauce $1.59/lb     bravo [online] "Kras Jellied Cranberry Sauce" 16 oz $1.59 | Less than the next-best store, {store} (shelf price)
+11375 whole berry cranberry sauce $1.71/lb     keyfood [shelf] "Urban Meadow Whole Berry Cranberry Sauce" 14 oz $1.50 | {amount}/{unit} (6%) less than the next-best store, {store}
+11375 canned pumpkin  $1.07/lb     walmart [shelf] "Great Value Pumpkin" 15 oz $1.00 | Less than the next-best store, {store} (online price)
+11375 pie crust       $3.27/lb     traderjoes [shelf] "Pie Crusts" 22 oz $4.49 | {amount}/{unit} (17%) less than the next-best store, {store}
+11375 evaporated milk $10.56/gal   bravo [online] "Compare Evaporated Milk" 12 fl oz $0.99 | Less than the next-best store, {store} (shelf price)
+11375 sweet potatoes  $0.59/lb     wegmans [online] "Wegmans Yams (Sweet Potatoes)" per lb $0.59 | Less than the next-best store, {store} (shelf price)
+11375 russet potatoes $0.34/lb     bravo [online] "Food Lion Russet Baking Potatoes" 5 lb $1.69 | Less than the next-best store, {store} (shelf price)
+11375 green beans     $0.29/lb     bravo [online] "Green Beans" per lb $0.29 | Less than the next-best store, {store} (shelf price)
+11375 cream of mushroom soup $1.14/lb     walmart [shelf] "Great Value Family Size Cream of Mushroom Condensed Soup" 26 oz $1.86 | {amount}/{unit} (11%) less than the next-best store, {store}
+11375 french fried onions $2.67/lb     walmart [shelf] "Great Value French Fried Onions" 6 oz $1.00 | {amount}/{unit} (33%) less than the next-best store, {store}
+11375 dinner rolls    $0.10/ct     bravo [online] "Stroe Spl Top Dinner Roll" 18 ct $1.89 | Less than the next-best store, {store} (shelf price)
+11375 butter          $1.89/lb     bravo [online] "White Rose Butter, Salted" 16 oz $1.89 | Less than the next-best store, {store} (shelf price)
+11375 heavy cream     $12.64/gal   bravo [online] "White Rose Heavy Cream" 8 fl oz $0.79 | Less than the next-best store, {store} (shelf price)
+11375 gravy           $2.07/lb     shoprite [online] "Bowl & Basket Beef Gravy" 10.5 oz $1.36 | {amount}/{unit} (1%) less than the next-best store, {store} (both online prices)
+11375 celery          $0.65/ct     bjs [online] "Foxy Organic Organic Celery Hearts" 4 ea $2.59 | Less than the next-best store, {store} (shelf price)
+11375 onions          $0.55/lb     ctown [online] "WATSON Red Onions" 10 lb $5.49 | {amount}/{unit} (17%) less than the next-best store, {store} (both online prices)
+11375 brown sugar     $0.93/lb     aldi [shelf] "Baker's Corner Light Brown Sugar" 32 oz $1.85 | {amount}/{unit} (11%) less than the next-best store, {store}
+11375 marshmallows    $1.58/lb     aldi [shelf] "Baker's Corner Marshmallows" 10 oz $0.99
+11375 pecans          $2.64/lb     bravo [online] "Lady Linda Pecan Twirls" 6 oz $0.99 | Less than the next-best store, {store} (shelf price)
+11375 pumpkin pie     $2.01/lb     samsclub [online] "Member’s Mark Pumpkin Pie" 58 oz $7.30 | {amount}/{unit} (2%) less than the next-best store, {store} (both online prices)
+
+wrote 27 answers to /Users/nicksoderstrom/cartworth/.claude/worktrees/tg-qa/ops/coverage/thanksgiving-core-2026-11-13/NY-thanksgiving-core.json

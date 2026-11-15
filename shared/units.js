@@ -608,10 +608,14 @@ export function weighedWholePumpkin(name, size) {
  *
  * Only a whole bird: not breast, ground, deli, parts, a roast, a pet food, or a pan or bag for one.
  * And only a per-bird price of TURKEY_EACH_MIN or more: Festival's "Butterball Frozen Turkey, 1 ea,
- * $2.89" is a price per pound under an "each" label, and reading it as one bird made it 21¢/lb.
+ * $2.89" is a price per pound under an "each" label, and reading it as one bird made it 21¢/lb. The
+ * floor was $5 until the Thanksgiving core list of 13-14 Nov 2026, where "1 ea" birds at $5.19-$5.79
+ * won "whole turkey" in four of six states at 37-41¢/lb: Kowalski's organic fresh (Minneapolis),
+ * Bravo's Jennie-O (Queens), Weis' kosher (Philadelphia), Metropolitan Market's free-range brined
+ * (Seattle). Those are prices per pound; a bird sold whole costs $10 and up ($10.19 at Marc's, $12.99).
  */
 export const TYPICAL_TURKEY_LB = 14;
-export const TURKEY_EACH_MIN = 5;
+export const TURKEY_EACH_MIN = 10;
 const TURKEY_RE = /\bturkeys?\b/;
 const WHOLE_BIRD_RE = /\bwhole\b|\b(?:young|hen|tom)\s+turkeys?\b/;
 const NOT_A_WHOLE_TURKEY_RE = /\b(?:breasts?|ground|deli|drums?(?:ticks?)?|wings?|thighs?|necks?|legs?|tenderloins?|cutlets?|roast|boneless|sliced|slices|lunch(?:meat)?|bacon|sausages?|jerky|sticks?|burgers?|patt(?:y|ies)|pastrami|ham|gravy|stuffing|stock|broth|brine|bags?|baster|pans?|roasters?|injector|thermometer|kit|rack|lifters?|meals?|dinners?|pot pie|pies?|sandwich(?:es)?|wraps?|dogs?|cats?|pets?|recipe|pate|food|treats?|chews?|kibble|toy|decorations?|candles?|cards?|books?|chocolate|candy|cookies?|cakes?|giblets?|half|halves|pieces?|chili|meatballs?|franks?|hot dogs?|kielbasa|loaf|salami|bologna)\b/;

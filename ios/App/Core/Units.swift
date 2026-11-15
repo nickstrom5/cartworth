@@ -578,7 +578,8 @@ enum Units {
     /// a pan; and a per-bird price under $5 is a per-pound price under an "each" label. Port of
     /// wholeTurkey in shared/units.js.
     static let typicalTurkeyLb = 14.0
-    static let turkeyEachMin = 5.0
+    /// $10, not $5: "1 ea" birds at $5.19-$5.79 are prices per pound (Thanksgiving core list, 13-14 Nov 2026). See shared/units.js.
+    static let turkeyEachMin = 10.0
     private static let turkeyRx = Rx("\\bturkeys?\\b")
     private static let wholeBirdRx = Rx("\\bwhole\\b|\\b(?:young|hen|tom)\\s+turkeys?\\b")
     private static let wholeTurkeyCategoryRx = Rx("\\bwhole turkeys?\\b")

@@ -1,0 +1,31 @@
+
+== 43214 Columbus: 14 priced stores (groceryoutlet, aldi, wholefoods, traderjoes, kroger, gianteagle, marcs, freshthyme, saveolot, samsclub, meijer, costco, bjs, walmart); unresolved: none
+43214 whole turkey    $0.73/lb     marcs [online est] "Butterball Thanksgiving Turkey" 1 ea $10.19 | About the same as {store} (chain-wide price), so no saving is claimed
+43214 frozen turkey   $0.84/lb     walmart [national] "Jennie-O 10 to 21.35 Pounds Frozen Hen Turkey" per lb $0.84 | About the same as {store} (online price), so no saving is claimed
+43214 fresh turkey    $0.73/lb     marcs [online est] "Butterball Thanksgiving Turkey" 1 ea $10.19 | Less than the next-best store, {store} (shelf price)
+43214 turkey          $0.73/lb     marcs [online est] "Butterball Thanksgiving Turkey" 1 ea $10.19 | About the same as {store} (chain-wide price), so no saving is claimed
+43214 turkey breast   $2.29/lb     marcs [online] "Frozen Bone-in Turkey Breast" per lb $2.29 | About the same as {store} (chain-wide price), so no saving is claimed
+43214 stuffing mix    $2.24/lb     walmart [national] "Pepperidge Farm Herb Seasoned Classic Stuffing" 12 oz $1.68 | About the same as {store} (shelf price), so no saving is claimed
+43214 cranberry sauce $1.82/lb     aldi [shelf] "Sweet Harvest Jellied Cranberry Sauce" 14 oz $1.59
+43214 jellied cranberry sauce $1.82/lb     aldi [shelf] "Sweet Harvest Jellied Cranberry Sauce" 14 oz $1.59 | About the same as {store} (online price), so no saving is claimed
+43214 whole berry cranberry sauce $1.82/lb     aldi [shelf] "Sweet Harvest Whole Berry Cranberry Sauce" 14 oz $1.59
+43214 canned pumpkin  $1.06/lb     aldi [shelf] "ALDI Canned Pumpkin" 15 oz $0.99 | About the same as {store} (chain-wide price), so no saving is claimed
+43214 pie crust       $2.13/lb     meijer [online] "Meijer Ready-to-Bake Pie Crusts 2 Count 15 oz" 2 × 15 oz $3.99 | {amount}/{unit} (29%) less than the next-best store, {store} (both online prices)
+43214 evaporated milk $10.67/gal   walmart [national] "Great Value Evaporated Milk" 12 fl oz $1.00 | Less than the next-best store, {store} (shelf price)
+43214 sweet potatoes  $0.50/lb     costco [online] "Sweet Potatoes" 10 lb $4.96 | Less than the next-best store, {store} (shelf price)
+43214 russet potatoes $0.40/lb     meijer [online] "Russet Potato" 5 lb $1.99 | Less than the next-best store, {store} (shelf price)
+43214 green beans     $0.53/lb     aldi [shelf] "Happy Harvest Cut Green Beans" 15 oz $0.50 | About the same as {store} (chain-wide price), so no saving is claimed
+43214 cream of mushroom soup $1.05/lb     aldi [shelf] "Chef's Cupboard Condensed Cream of Mushroom Soup" 10.5 oz $0.69 | About the same as {store} (chain-wide price), so no saving is claimed
+43214 french fried onions $3.97/lb     aldi [shelf] "Chef's Cupboard Original French Fried Onions" 6 oz $1.49 | Less than the next-best store, {store} (online price)
+43214 dinner rolls    $0.14/ct     walmart [national] "Rhodes Bake-N-Serv Dinner Rolls" 36 ct $5.12 | About the same as {store} (shelf price), so no saving is claimed
+43214 butter          $1.12/lb     groceryoutlet [shelf] "Président Salted Butter" 7 oz $0.49 | {amount}/{unit} (44%) less than the next-best store, {store}
+43214 heavy cream     $17.40/gal   aldi [shelf] "Friendly Farms Heavy Whipping Cream" 32 fl oz $4.35 | About the same as {store} (online price), so no saving is claimed
+43214 gravy           $1.51/lb     meijer [online] "Meijer Gravy Beef 10.5oz" 10.5 oz $0.99 | {amount}/{unit} (9%) less than the next-best store, {store} (both online prices)
+43214 celery          $0.95/lb     aldi [shelf] "Celery, each" 1 lb $0.95 | Less than the next-best store, {store} (online price)
+43214 onions          $0.14/lb     saveolot [online] "White Onion" 3 lb $0.43 | {amount}/{unit} (75%) less than the next-best store, {store} (both online prices)
+43214 brown sugar     $0.83/lb     costco [online] "Pioneer Sugar Golden Light Brown Sugar, 7 lbs" 7 lb $5.83 | {amount}/{unit} (1%) less than the next-best store, {store} (both online prices)
+43214 marshmallows    $1.51/lb     meijer [online] "Meijer Mini Marshmallows 10.5 oz" 10.5 oz $0.99 | Less than the next-best store, {store} (shelf price)
+43214 pecans          $6.38/lb     marcs [online] "Mariani Pecans, Premium, Shelled" 10 oz $3.99 | {amount}/{unit} (4%) less than the next-best store, {store} (both online prices)
+43214 pumpkin pie     $2.06/lb     costco [online] "Kirkland Signature Pumpkin Pie, 58 oz" 58 oz $7.45 | {amount}/{unit} (2%) less than the next-best store, {store} (both online prices)
+
+wrote 27 answers to /Users/nicksoderstrom/cartworth/.claude/worktrees/tg-qa/ops/coverage/thanksgiving-core-2026-11-13/OH-thanksgiving-core.json
