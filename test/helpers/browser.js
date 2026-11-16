@@ -145,9 +145,18 @@ export async function launchBrowser() {
     ],
     { stdio: ['ignore', 'ignore', 'pipe'] },
   );
+  // A Chrome that never says it is listening must not outlive the attempt: on 16 Nov 2026 a CI
+  // runner's Chrome took longer than the wait, the launch failed, and the still-running Chrome
+  // (its stderr piped to us) kept the test process alive until the job's 30-minute limit, twice.
+  // Give a slow runner longer, and kill the browser whenever the launch gives up.
+  const giveUp = (reject, e) => {
+    proc.kill('SIGKILL');
+    fs.rmSync(profile, { recursive: true, force: true });
+    reject(e);
+  };
   const wsUrl = await new Promise((resolve, reject) => {
     let err = '';
-    const t = setTimeout(() => reject(new Error(`Chrome did not start: ${err.slice(-400)}`)), 20000);
+    const t = setTimeout(() => giveUp(reject, new Error(`Chrome did not start: ${err.slice(-400)}`)), process.env.CI ? 60000 : 20000);
     proc.stderr.on('data', (d) => {
       err += d;
       const m = err.match(/DevTools listening on (ws:\/\/\S+)/);
