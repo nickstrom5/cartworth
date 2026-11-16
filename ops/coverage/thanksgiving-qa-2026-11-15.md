@@ -1,4 +1,4 @@
-# Thanksgiving QA, 15 Nov 2026 (11 days out)
+# Thanksgiving QA, 15-16 Nov 2026 (11 days out)
 
 Code: `main` at 156cb44 (PR #28, Fly v14). Two passes:
 
@@ -28,6 +28,16 @@ Code: `main` at 156cb44 (PR #28, Fly v14). Two passes:
    Each is now a compound that must be asked for by name (`HEAD_COMPOUNDS`, shared/match.js and
    Match.swift); "onion rings" and "marshmallow fluff" still find them.
 
+## 16 Nov: Indianapolis, Louisville, Baltimore (on PR #29's code, Fly v15)
+
+The run resumed for TN, MO, MD, IN and KY. IN, KY and MD came back whole (12, 11 and 19 priced stores);
+Instacart refused this Mac again in St. Louis (7 stores priced, 10 unresolved) and TN was not reached.
+
+- **ALDI's evaporated milk now wins** all three: 95¢ in Indianapolis and Louisville, 79¢ in Baltimore
+  ($8.43-10.13/gal, against $30.72/gal before the fix).
+- Whole turkey: Giant 49¢/lb (Baltimore), Publix 65¢ (Louisville), Walmart chain-wide 84¢ (Indianapolis).
+- ALDI again wins the canned and dry staples at the same prices as elsewhere.
+
 ## Checked, looks right (Birmingham, and the probe)
 
 - ALDI wins most of the list at the prices seen elsewhere: butter $1.99/lb, green beans 50¢, canned
@@ -42,5 +52,16 @@ Code: `main` at 156cb44 (PR #28, Fly v14). Two passes:
 - **Celery "86% less"**: ALDI's 95¢ celery against Whole Foods' "Organic Celery Sticks", 8 oz at
   $3.49, the only other celery found in Birmingham. Cut snack sticks are celery, so the claim stands,
   but it compares a whole head with a convenience pack.
-- **The rest of the six states** (TN, MO, MD, IN, KY) wait for Instacart to let this Mac back in; the
-  run resumes where it stopped (`--only TN,MO,MD,IN,KY`).
+- **Grocery Outlet "Président Salted Butter", 7 oz for 49¢** ($1.12/lb) is the best butter in Baltimore
+  and Columbus, 44% under ALDI's $1.99/lb. The same price in both cities means it is Grocery Outlet's own
+  Instacart listing; a closeout store can do that, but the brand usually sells for several dollars. Like
+  the Save-A-Lot onions, it is too close to real prices for the plausibility guard (8x) to catch.
+- **St. Louis and Tennessee** wait for Instacart to let this Mac back in; the run resumes where it
+  stopped (`--only TN,MO`; St. Louis's partial run is kept as `MO-thanksgiving-core.partial.json`).
+
+## iPhone 1.0.3
+
+Build 10 (1.0.3) carries every iOS change since 1.0.2: the widget, the weekly-ad callout, the holiday
+"See prices" flow, plan progress, and the matcher fixes of 13-15 Nov. Archived with the release Xcode
+(27.2, 27B52, iphoneos27.2 SDK) and uploaded to App Store Connect on 16 Nov; it appears in TestFlight
+after processing. Not submitted for review.
