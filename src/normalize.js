@@ -200,9 +200,21 @@ const slugWords = (s) => String(s || '').toLowerCase().normalize('NFKD').replace
 const inOrder = (a, b) => { if (a[0] !== b[0]) return false; let i = 0; for (const c of b) if (c === a[i]) i += 1; return i === a.length; };
 const sharedHead = (a, b) => { let i = 0; while (i < a.length && a[i] === b[i]) i += 1; return i >= 5; };
 const sameWord = (a, b) => a.startsWith(b) || b.startsWith(a) || sharedHead(a, b) || inOrder(a, b) || inOrder(b, a);
+// A slug that is only a house brand and label words names no product, so it cannot name another
+// one. ALDI's Instacart listing "ALDI Evaporated Milk" (12 fl oz, 79-95¢) carries
+// ".../18647623-baker-s-corner-vitamin-d-added-12-fl-oz": no word in common with the name, so it was
+// flagged and dropped in 8 of the 13 states with an ALDI in the Thanksgiving core runs (13-15 Nov 2026), leaving organic
+// cans at $2.88. ALDI renames its house brands "ALDI <product>" and the slug keeps the brand.
+const SLUG_HOUSE_BRAND_RE = /^(?:baker s corner|bakers corner|countryside creamery|friendly farms|happy harvest|chef s cupboard|simply nature|specially selected|southern grove|lunch buddies|sweet harvest|bake shop|bakers treat|belmont|livegfree|millville|reggano|stonemill|kirkwood|never any|park street deli|season s choice|l oven fresh|earth grown|appleton farms|nature s nectar|carlini|savoritz|clancy s|barissimo|benton s|sundae shoppe|casa mamita|priano|mama cozzi s)\b/;
+const SLUG_LABEL_WORDS = new Set(['vitamin', 'added', 'fortified', 'enriched', 'organic', 'natural', 'original', 'classic', 'premium', 'pure', 'fresh', 'reduced', 'free', 'light', 'lite', 'whole', 'grade', 'family', 'size', 'value']);
+const slugNamesNoProduct = (slugText) => {
+  const rest = slugText.toLowerCase().replace(SLUG_HOUSE_BRAND_RE, '');
+  return rest !== slugText.toLowerCase() && slugWords(rest).every((w) => SLUG_LABEL_WORDS.has(w));
+};
 export function slugProductConflict(name, url) {
   const m = String(url || '').match(/\/products\/\d+-([^?#/]+)/);
   if (!m) return null;
+  if (slugNamesNoProduct(m[1].replace(/-/g, ' '))) return null;
   const slug = slugWords(m[1].replace(/-/g, ' '));
   const own = slugWords(name);
   if (slug.length < 2 || own.length < 2 || own.some((a) => slug.some((b) => sameWord(a, b)))) return null;

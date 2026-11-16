@@ -3342,3 +3342,38 @@ final class TurkeyEachAndNutFormTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(Match.relevance(query: "pecan pie", name: "Mrs Smiths Pecan Pie"), Match.relevant)
     }
 }
+
+/// Mirrors test/qa-no-aisle-compounds-2026-11-15.test.js: names with no aisle (15 Nov 2026).
+final class NoAisleCompoundTests: XCTestCase {
+    func testOnionRingsCelerySodaAndMarshmallowCremeAreNotTheStaple() {
+        for (q, name) in [("onions", "Onion Rings"), ("onions", "Ore-Ida Golden Onion Rings"), ("french fried onions", "Alexia Onion Rings"),
+                          ("celery", "Dr. Brown's Cel-Ray Celery Soda"), ("marshmallows", "Marshmallow Fluff"),
+                          ("marshmallows", "Jet-Puffed Marshmallow Creme"), ("marshmallows", "Peeps Marshmallow Chicks")] {
+            XCTAssertLessThan(Match.relevance(query: q, name: name), Match.relevant, "\(q): \(name)")
+        }
+    }
+
+    func testTheStaplesAndEachProductByNameStillMatch() {
+        for (q, name) in [("onions", "Sweet Onions"), ("onions", "Pearl Onions"), ("french fried onions", "French's Crispy Fried Onions"),
+                          ("celery", "Organic Celery"), ("marshmallows", "Kraft Jet-Puffed Marshmallows"),
+                          ("onion rings", "Alexia Onion Rings"), ("marshmallow fluff", "Marshmallow Fluff"), ("marshmallow creme", "Jet-Puffed Marshmallow Creme")] {
+            XCTAssertGreaterThanOrEqual(Match.relevance(query: q, name: name), Match.relevant, "\(q): \(name)")
+        }
+    }
+}
+
+/// Mirrors test/qa-aldi-house-brand-slug-2026-11-15.test.js: ALDI's "ALDI Evaporated Milk" slug is its
+/// house brand and label words, not another product (Thanksgiving core list, Birmingham, 15 Nov 2026).
+final class HouseBrandSlugTests: XCTestCase {
+    private func u(_ slug: String) -> URL? { URL(string: "https://www.aldi.us/store/aldi/products/\(slug)") }
+
+    func testAHouseBrandAndLabelWordsAreNotAnotherProduct() {
+        XCTAssertNil(ProductFactory.slugProductConflict(name: "ALDI Evaporated Milk", url: u("18647623-baker-s-corner-vitamin-d-added-12-fl-oz")))
+    }
+
+    func testASlugNamingAnotherProductIsStillAConflict() {
+        XCTAssertNotNil(ProductFactory.slugProductConflict(name: "KRO TURKEY STUFFING MIX", url: u("19275341-kroger-sugar-cinnamon-mini-pretzel-20-oz")))
+        XCTAssertNotNil(ProductFactory.slugProductConflict(name: "ALDI Evaporated Milk", url: u("1-baker-s-corner-chocolate-almond-bark-24-oz")))
+        XCTAssertNotNil(ProductFactory.slugProductConflict(name: "ALDI Evaporated Milk", url: u("1-friendly-farms-organic-hazelnut-creamer-32-fl-oz")))
+    }
+}

@@ -190,9 +190,20 @@ enum ProductFactory {
         let shared = zip(a, b).prefix { $0 == $1 }.count
         return a.hasPrefix(b) || b.hasPrefix(a) || shared >= 5 || inOrder(a, b) || inOrder(b, a)
     }
+    /// A slug that is only a house brand and label words names no product, so it cannot name another:
+    /// ALDI's "ALDI Evaporated Milk" carries ".../baker-s-corner-vitamin-d-added-12-fl-oz" and was dropped
+    /// in 8 states of the Thanksgiving runs (13-15 Nov 2026). Port of `slugNamesNoProduct` in src/normalize.js.
+    private static let slugHouseBrand = "^(?:baker s corner|bakers corner|countryside creamery|friendly farms|happy harvest|chef s cupboard|simply nature|specially selected|southern grove|lunch buddies|sweet harvest|bake shop|bakers treat|belmont|livegfree|millville|reggano|stonemill|kirkwood|never any|park street deli|season s choice|l oven fresh|earth grown|appleton farms|nature s nectar|carlini|savoritz|clancy s|barissimo|benton s|sundae shoppe|casa mamita|priano|mama cozzi s)\\b"
+    private static let slugLabelWords: Set<String> = ["vitamin", "added", "fortified", "enriched", "organic", "natural", "original", "classic", "premium", "pure", "fresh", "reduced", "free", "light", "lite", "whole", "grade", "family", "size", "value"]
+    static func slugNamesNoProduct(_ slugText: String) -> Bool {
+        let lower = slugText.lowercased()
+        let rest = lower.replacingOccurrences(of: slugHouseBrand, with: "", options: .regularExpression)
+        return rest != lower && slugWords(rest).allSatisfy { slugLabelWords.contains($0) }
+    }
     static func slugProductConflict(name: String, url: URL?) -> SizeConflict? {
         guard let u = url?.absoluteString, let r = u.range(of: "/products/[0-9]+-[^?#/]+", options: .regularExpression) else { return nil }
         let tail = String(u[r]).replacingOccurrences(of: "^/products/[0-9]+-", with: "", options: .regularExpression)
+        if slugNamesNoProduct(tail.replacingOccurrences(of: "-", with: " ")) { return nil }
         let slug = slugWords(tail.replacingOccurrences(of: "-", with: " "))
         let own = slugWords(name)
         guard slug.count >= 2, own.count >= 2, !own.contains(where: { a in slug.contains { sameSlugWord(a, $0) } }) else { return nil }
