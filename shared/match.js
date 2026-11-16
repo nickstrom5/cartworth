@@ -292,7 +292,11 @@ const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn to
 
   // Brown Turkey is a fig: Key Food's "Organic Heirloom Brown Turkey Fig Tree", 8 oz of figs, answered
   // Newark's "fresh turkey" (the Thanksgiving core list rerun).
-  'turkey fig'];
+  'turkey fig',
+  // Found by probing the Thanksgiving list against names with no aisle (15 Nov 2026): "Onion Rings"
+  // answered "onions", Dr. Brown's "Cel-Ray Celery Soda" "celery", and "Marshmallow Fluff" and Peeps
+  // "Marshmallow Chicks" "marshmallows". A store that gives no aisle (ALDI, Trader Joe's) has only the name.
+  'onion ring', 'celery soda', 'marshmallow fluff', 'marshmallow creme', 'marshmallow cream', 'marshmallow chick', 'marshmallow bunny'];
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
   'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
   // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
