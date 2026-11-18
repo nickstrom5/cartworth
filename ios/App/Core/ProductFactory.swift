@@ -168,6 +168,17 @@ enum ProductFactory {
         return SizeConflict(text: Units.format(size), name: "priced per lb")
     }
 
+    /// A turkey with a weight range in its name, sold "each" for less than a bird costs: Fred Meyer's
+    /// "Butterball Fresh Bone-In Turkey Breast, All Natural, 3-9 lbs.", stated 6 lb at $2.99, is $2.99
+    /// a pound, and divided over 6 lb was Portland's best turkey breast at $0.50/lb (18 Nov 2026). The
+    /// row keeps its price and loses its unit price. Port of `rangedTurkeyPerLbConflict` in src/normalize.js.
+    private static let rangedTurkeyRx = Rx("\\bturkeys?\\b")
+    static func rangedTurkeyPerLbConflict(name: String, size: ParsedSize?, nameSize: ParsedSize?, price: Double?, soldByLb: Bool) -> SizeConflict? {
+        guard !soldByLb, let n = nameSize, n.range, n.dim == .weight, let size, size.dim == .weight, !size.perWeight, let b = size.base, b >= 48 else { return nil }
+        guard let price, price > 0, price < Units.turkeyEachMin, rangedTurkeyRx.test(name) else { return nil }
+        return SizeConflict(text: Units.format(size), name: "priced per lb")
+    }
+
     /// The retailer's URL names a different product: King Soopers' "KRO TURKEY STUFFING MIX" (20 oz,
     /// $1.09) carried ".../19275341-kroger-sugar-cinnamon-mini-pretzel-20-oz" and was Denver's best
     /// stuffing at $0.87/lb (QA, 9 Nov 2026). When no name word (4+ letters, not a unit) agrees with a
@@ -417,6 +428,8 @@ enum ProductFactory {
         // The URL says "per-lb" but the stated size is a fixed weight: Smart & Final's "Table Carrots",
         // stated 25 lb at $2.19, slug "...-bulk-carrots-per-lb", was $0.09/lb. Port of slugPerLbConflict.
         if let c = slugPerLbConflict(size, url: f.url, soldByLb: soldByLb) { sizeConflict = c }
+        // A ranged turkey priced "each" under what a bird costs is a price per pound. Port of rangedTurkeyPerLbConflict.
+        else if let c = rangedTurkeyPerLbConflict(name: name, size: size, nameSize: nameSize, price: f.price, soldByLb: soldByLb) { sizeConflict = c }
         // The URL names another product ("...-kroger-sugar-cinnamon-mini-pretzel-20-oz" on a stuffing
         // mix): the price and size may be the other product's. Port of slugProductConflict.
         else if let c = slugProductConflict(name: name, url: f.url) { sizeConflict = c }

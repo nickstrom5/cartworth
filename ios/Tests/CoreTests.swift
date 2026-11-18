@@ -3377,3 +3377,33 @@ final class HouseBrandSlugTests: XCTestCase {
         XCTAssertNotNil(ProductFactory.slugProductConflict(name: "ALDI Evaporated Milk", url: u("1-friendly-farms-organic-hazelnut-creamer-32-fl-oz")))
     }
 }
+
+/// Thanksgiving core list, 18 Nov 2026: Fred Meyer's ranged turkey breast at $2.99 "each" over a stated
+/// 6 lb was Portland's best at $0.50/lb, and Costco's "Turkey Flour" answered "turkey" in Salt Lake City.
+/// Port of test/qa-ranged-turkey-per-lb-2026-11-18.test.js.
+final class RangedTurkeyPerLbTests: XCTestCase {
+    private func conflict(_ name: String, _ size: String, _ price: Double, soldByLb: Bool = false) -> SizeConflict? {
+        ProductFactory.rangedTurkeyPerLbConflict(name: name, size: Units.parseSize(size), nameSize: Units.sizeFromName(name), price: price, soldByLb: soldByLb)
+    }
+
+    func testARangedTurkeyPricedEachUnderABirdsPriceIsPerLb() {
+        XCTAssertEqual(conflict("Butterball Fresh Bone-In Turkey Breast, All Natural, 3-9 lbs., Serves 3-5", "6 lb", 2.99)?.name, "priced per lb")
+        XCTAssertEqual(conflict("Jennie-O Whole Fresh Turkey (16-20 lb)", "20 lb", 1.59)?.name, "priced per lb")
+        XCTAssertEqual(conflict("Shady Brook Farms® 24-26 Pound Frozen Turkey", "24 lb", 0.49)?.name, "priced per lb")
+    }
+
+    func testARealEachPriceAPerLbListingAFixedWeightAndAPumpkinStand() {
+        XCTAssertNil(conflict("Kroger® Tender and Juicy Whole Frozen Turkey (14-16 lb) - Limit 5 at sale retail", "14 lb", 18.99))
+        XCTAssertNil(conflict("Jennie-O Basted Frozen Turkey Breast (4-9 lb)", "9 lb", 2.69, soldByLb: true))
+        XCTAssertNil(conflict("JENNIE-O OVEN READY Boneless Turkey Breast - 2.75 lb.", "2.75 lb", 8.99))
+        XCTAssertNil(conflict("Pumpkin (average weight 15-20lbs)", "15 lb", 6.89))
+    }
+
+    func testTurkeyFlourIsNotTurkey() {
+        for q in ["turkey", "whole turkey", "fresh turkey"] {
+            XCTAssertLessThan(Match.relevance(query: q, name: "Lehi Roller Mills Turkey Flour, 25 lbs"), Match.relevant, q)
+        }
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey", name: "Butterball Frozen Whole Turkey"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(Match.relevance(query: "turkey flour", name: "Lehi Roller Mills Turkey Flour, 25 lbs"), Match.relevant)
+    }
+}

@@ -296,7 +296,10 @@ const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn to
   // Found by probing the Thanksgiving list against names with no aisle (15 Nov 2026): "Onion Rings"
   // answered "onions", Dr. Brown's "Cel-Ray Celery Soda" "celery", and "Marshmallow Fluff" and Peeps
   // "Marshmallow Chicks" "marshmallows". A store that gives no aisle (ALDI, Trader Joe's) has only the name.
-  'onion ring', 'celery soda', 'marshmallow fluff', 'marshmallow creme', 'marshmallow cream', 'marshmallow chick', 'marshmallow bunny'];
+  'onion ring', 'celery soda', 'marshmallow fluff', 'marshmallow creme', 'marshmallow cream', 'marshmallow chick', 'marshmallow bunny',
+  // Turkey is a hard red wheat: Costco's "Lehi Roller Mills Turkey Flour, 25 lbs" (Bread Flour) answered
+  // "turkey" in Salt Lake City at $0.64/lb, under every bird (the Thanksgiving core list, 18 Nov 2026).
+  'turkey flour'];
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
   'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
   // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
