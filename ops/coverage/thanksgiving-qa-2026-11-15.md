@@ -38,6 +38,17 @@ Instacart refused this Mac again in St. Louis (7 stores priced, 10 unresolved) a
 - Whole turkey: Giant 49¢/lb (Baltimore), Publix 65¢ (Louisville), Walmart chain-wide 84¢ (Indianapolis).
 - ALDI again wins the canned and dry staples at the same prices as elsewhere.
 
+## 17 Nov: St. Louis and Nashville (Fly v16)
+
+- **St. Louis** came back whole: 9 priced stores (Ruler Foods and Schnucks unresolved). ALDI's
+  evaporated milk wins at 95¢; Walmart's chain-wide Jennie-O 84¢/lb is the best turkey; Dierbergs'
+  store brand wins cranberry sauce ($1.29) and gravy.
+- **Nashville** answered all 27 items at 13 stores, but Instacart refused this Mac from "dinner rolls"
+  on, so the last ten items were priced only at ALDI, Whole Foods and Trader Joe's (ALDI won each).
+  The first 17 had every store: Publix 65¢/lb turkey, Food Lion's $1.50 cranberry sauce, ALDI's 95¢
+  evaporated milk.
+- No new defects. With these, the Thanksgiving core list has run in 33 states.
+
 ## Checked, looks right (Birmingham, and the probe)
 
 - ALDI wins most of the list at the prices seen elsewhere: butter $1.99/lb, green beans 50¢, canned
@@ -56,8 +67,9 @@ Instacart refused this Mac again in St. Louis (7 stores priced, 10 unresolved) a
   and Columbus, 44% under ALDI's $1.99/lb. The same price in both cities means it is Grocery Outlet's own
   Instacart listing; a closeout store can do that, but the brand usually sells for several dollars. Like
   the Save-A-Lot onions, it is too close to real prices for the plausibility guard (8x) to catch.
-- **St. Louis and Tennessee** wait for Instacart to let this Mac back in; the run resumes where it
-  stopped (`--only TN,MO`; St. Louis's partial run is kept as `MO-thanksgiving-core.partial.json`).
+- **Food Lion "Sweet Potato (Yam)", 1 ea at 29¢** is the best sweet potatoes in Baltimore and
+  Nashville as an estimate (48¢/lb at a typical 0.6 lb). If Food Lion's 29¢ is really per pound, the
+  price is lower still; either way it is cheapest, but the shown unit price is a guess.
 
 ## iPhone 1.0.3
 
