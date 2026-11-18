@@ -181,6 +181,25 @@ export function slugPerLbConflict(size, f, soldByLb) {
 }
 
 /**
+ * A turkey with a weight range in its name, priced under an "each" label at less than a bird costs.
+ *
+ * Fred Meyer's "Butterball Fresh Bone-In Turkey Breast, All Natural, 3-9 lbs.": stated "6 lb", sold
+ * "each", $2.99. The range says the piece is weighed at the till, the 6 lb is its middle, and the
+ * $2.99 buys a pound; divided over 6 lb it was Portland's best turkey breast at $0.50/lb, "81% less
+ * than the next-best store" (the Thanksgiving core list, 18 Nov 2026). The same shape in the QA
+ * cache: Smith's "Jennie-O Whole Fresh Turkey (16-20 lb)" at $1.59 ($0.08/lb), Giant's Shady Brook
+ * "24-26 Pound Frozen Turkey" at $0.49 ($0.02/lb), Martin's "Frozen Whole Turkey 16-20 lb" at $1.99.
+ * No turkey of 3 lb or more sells whole for under TURKEY_EACH_MIN (wholeBirdEach's floor, for the
+ * same reason), and a real each price stays: Harris Teeter's "Kroger Whole Frozen Turkey (14-16 lb)"
+ * at $18.99. The row keeps its price and loses its unit price, like every size contradiction.
+ */
+export function rangedTurkeyPerLbConflict(name, size, nameSize, f, soldByLb) {
+  if (soldByLb || !nameSize?.range || nameSize.dim !== 'weight' || !size || size.dim !== 'weight' || size.perWeight || !(size.base >= 48)) return null;
+  if (!(f.price > 0) || f.price >= TURKEY_EACH_MIN || !/\bturkeys?\b/i.test(name)) return null;
+  return { text: formatSize(size), name: 'priced per lb' };
+}
+
+/**
  * The retailer's own URL names a different product.
  *
  * King Soopers' "KRO TURKEY STUFFING MIX" came with a 20 oz size, $1.09, and the slug
@@ -463,7 +482,7 @@ export function makeProduct(f) {
   // "24-count", or "64 fl oz" against "Half Gallon, 3-count" — it has already resolved the
   // reading, and that is a decision, not a contradiction.
   const soldByLb = f.soldBy === 'lb' || size?.perWeight;
-  const sizeConflict = slugPerLbConflict(size, f, soldByLb) || slugProductConflict(name, f.url) || (
+  const sizeConflict = slugPerLbConflict(size, f, soldByLb) || rangedTurkeyPerLbConflict(name, size, nameSize, f, soldByLb) || slugProductConflict(name, f.url) || (
     // A range in the name ("4-10 Pounds HoKa Turkey Breast") describes a variable-weight item,
     // not a second statement of this package, so it contradicts nothing.
     // And when the retailer's own URL slug names the stated size and not the name's, the name's

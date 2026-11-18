@@ -252,7 +252,9 @@ enum Match {
         // Brown Turkey is a fig (Key Food's "Brown Turkey Fig Tree" answered "fresh turkey"). Port of shared/match.js.
         "turkey fig",
         // Onion rings, celery soda, marshmallow Fluff and Peeps chicks (no aisle, 15 Nov 2026). Port of shared/match.js.
-        "onion ring", "celery soda", "marshmallow fluff", "marshmallow creme", "marshmallow cream", "marshmallow chick", "marshmallow bunny"].map { tokens($0) }
+        "onion ring", "celery soda", "marshmallow fluff", "marshmallow creme", "marshmallow cream", "marshmallow chick", "marshmallow bunny",
+        // Turkey is a wheat: Costco's "Lehi Roller Mills Turkey Flour, 25 lbs" answered "turkey" (18 Nov 2026). Port of shared/match.js.
+        "turkey flour"].map { tokens($0) }
     private static let modifierCompounds = ["baking soda", "cooking wine", "creme egg", "cadbury egg", "chocolate egg", "plastic egg", "mini egg",
         "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak",
         // Scallions are not onions (Thanksgiving, NYC). Port of shared/match.js.
