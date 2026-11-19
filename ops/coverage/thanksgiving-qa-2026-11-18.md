@@ -216,5 +216,6 @@ Decisions, or prices nobody can verify from a cache. The first group changes wha
 
 ## iPhone
 
-None of this is in build 10 (1.0.3), which is in TestFlight. The iOS code and tests are in this PR; it
-reaches phones in the next build.
+Build 11 (1.0.3) carries all of it. It was archived from main after #33 with the release Xcode (27.2,
+`iphoneos27.2`), and it has been in TestFlight for the Owner group since 19 Nov; the iOS unit tests pass
+(506). 1.0.3 is not submitted for App Review, and the App Store still has 1.0.2.
