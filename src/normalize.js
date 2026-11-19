@@ -1,5 +1,5 @@
 // Build the normalized product shape every adapter returns.
-import { parseSize, sizeFromName, coerceLiquid, unitPrices, formatSize, produceWeightLb, noEachEstimate, weighedWholePumpkin, wholeTurkey, TYPICAL_TURKEY_LB, TURKEY_EACH_MIN } from '../shared/units.js';
+import { parseSize, sizeFromName, coerceLiquid, looksLiquid, namesContainers, unitPrices, formatSize, produceWeightLb, noEachEstimate, weighedWholePumpkin, wholeTurkey, TYPICAL_TURKEY_LB, TURKEY_EACH_MIN, TURKEY_WHOLE_PACKAGE_LB_MIN, TURKEY_BREAST_PACKAGE_LB_MIN, PRODUCE_GRADE_COUNT, PRODUCE_PIECE_MAX } from '../shared/units.js';
 
 export function money(s) {
   if (s == null) return null;
@@ -36,7 +36,7 @@ const round2 = (n) => (n == null ? null : Math.round(n * 100) / 100);
 function pickSize(fromText, fromName, listing = {}) {
   if (!fromName) return fromText;
   if (!fromText) return fromName;
-  const settled = settleCountFirst(fromText, fromName) || settleByStatedCount(fromText, fromName, listing);
+  const settled = settleCountFirst(fromText, fromName, listing) || settleByStatedCount(fromText, fromName, listing);
   if (settled) return settled;
   const textPack = fromText.count > 1;
   const namePack = fromName.count > 1;
@@ -72,7 +72,9 @@ function pickSize(fromText, fromName, listing = {}) {
  * neither) settles nothing and the parse's own conservative reading stands. 2% tolerance, the
  * same as dropStaleSizeFromName, for "5.63 lb" against 6 x 15 oz = 5.625 lb.
  */
-function settleCountFirst(fromText, fromName) {
+const WAREHOUSE_CLUBS = new Set(['costco', 'samsclub', 'bjs']);
+const SAYS_PACKAGE_RE = /\b(?:oz|ounces?|lbs?|pounds?)\.?\s+(?:package|pkg|total)\b/i;
+function settleCountFirst(fromText, fromName, { club = false, name = '' } = {}) {
   const cf = fromName.countFirst;
   if (!cf || !(cf.n > 1) || !(cf.unitBase > 0)) return null;
   if (fromText.perWeight || fromText.count > 1 || fromText.dim !== fromName.dim || !(fromText.base > 0)) return null;
@@ -82,7 +84,18 @@ function settleCountFirst(fromText, fromName) {
   // When the name was already read as the pack (a volume, or a plural container after the size),
   // the stated size only confirms it: that is the name's own reading, not one we derived.
   const pack = fromName.count === cf.n && fromName.base === packBase ? fromName : { ...fromName, base: packBase, count: cf.n };
-  if (near(fromText.base, one) || near(fromText.base, cf.n * one)) return pack;
+  if (near(fromText.base, cf.n * one)) return pack;
+  // "stated == M, so there are N" is how a warehouse club lists a multipack, and only a club. At a
+  // supermarket a stated weight equal to the name's is the package said twice, and the count is
+  // pieces: Meijer's "Ready-to-Bake Pie Crusts 2 Count 15 oz" (stated 15 oz) read as 30 oz and was
+  // the best pie crust in Louisville, Indianapolis, Columbus and Detroit at $2.13/lb; Dierbergs'
+  // "Split Top Dinner Rolls 16 ct - 20 oz" read $0.22/lb. Of the cached weights of this shape every
+  // supermarket's is one package (10 products, 60 stores) and the clubs' are packs, bar one that
+  // says so: BJ's "Gorton's ... 10 Count, 32.5 Ounce Package" (every cached answer re-scored, 19 Nov
+  // 2026). Drinks keep the pack reading everywhere ("6 Pack 12 Fl Oz Cans", stated 12 fl oz), whether
+  // their size is written fl oz or oz ("Chicken Broth 6 Pack 14.5 oz"), and so does a name that
+  // counts containers ("4 ct 5 oz Cans").
+  if (near(fromText.base, one)) return fromName.dim !== 'weight' || looksLiquid(name) || namesContainers(name) || (club && !SAYS_PACKAGE_RE.test(name)) ? pack : null;
   if (near(fromText.base * cf.n, one)) {
     return { ...fromName, base: Math.round(fromText.base * cf.n * 10000) / 10000, amount: fromText.amount, unit: fromText.unit, count: cf.n };
   }
@@ -181,7 +194,7 @@ export function slugPerLbConflict(size, f, soldByLb) {
 }
 
 /**
- * A turkey with a weight range in its name, priced under an "each" label at less than a bird costs.
+ * A turkey priced under an "each" label at less than a bird costs: the price buys a pound.
  *
  * Fred Meyer's "Butterball Fresh Bone-In Turkey Breast, All Natural, 3-9 lbs.": stated "6 lb", sold
  * "each", $2.99. The range says the piece is weighed at the till, the 6 lb is its middle, and the
@@ -192,11 +205,31 @@ export function slugPerLbConflict(size, f, soldByLb) {
  * No turkey of 3 lb or more sells whole for under TURKEY_EACH_MIN (wholeBirdEach's floor, for the
  * same reason), and a real each price stays: Harris Teeter's "Kroger Whole Frozen Turkey (14-16 lb)"
  * at $18.99. The row keeps its price and loses its unit price, like every size contradiction.
+ *
+ * The same listing under a name with no range won again the day that shipped: Dillons' "Butterball
+ * All Natural Fresh Bone-In Turkey Breast" (Fred Meyer's product id), stated "6 lb" at $2.99, was
+ * Wichita's best turkey breast at $0.50/lb. Cub's "Festive Frozen Turkey Breast" (4.5 lb, $1.99)
+ * had won Minneapolis at $0.44/lb and Smart & Final's "Turkey Breast Random Cuts" (4 lb, $2.39)
+ * Phoenix and Los Angeles at $0.60/lb since the 13-14 Nov runs. With no range to say the piece is
+ * weighed, the price itself has to be one the kind never sells for: a whole bird that works out
+ * under TURKEY_WHOLE_PACKAGE_LB_MIN a pound, a breast under TURKEY_BREAST_PACKAGE_LB_MIN. Every
+ * such row in the QA cache is a price per pound (whole birds at 2-20c/lb, breasts at 25-60c/lb).
+ * A real package price stands: Fry's "Kroger Frozen Whole Turkey", 14 lb at $9.66 (69c/lb), a 6 lb
+ * breast at 99c/lb, ALDI's 3 lb ground turkey at $9.95. Parts and franks, which do sell near a
+ * dollar a pound, are left to the store's own unit line (unitLineConflict).
  */
-export function rangedTurkeyPerLbConflict(name, size, nameSize, f, soldByLb) {
-  if (soldByLb || !nameSize?.range || nameSize.dim !== 'weight' || !size || size.dim !== 'weight' || size.perWeight || !(size.base >= 48)) return null;
+const TURKEY_BREAST_RE = /\bbreasts?\b/i;
+const PET_AISLE_RE = /\b(?:dogs?|cats?|pets?|pupp(?:y|ies)|kittens?|kibble)\b/i;
+export function turkeyPerLbConflict(name, size, nameSize, f, soldByLb) {
+  if (soldByLb || !size || size.dim !== 'weight' || size.perWeight || !(size.base >= 48)) return null;
   if (!(f.price > 0) || f.price >= TURKEY_EACH_MIN || !/\bturkeys?\b/i.test(name)) return null;
-  return { text: formatSize(size), name: 'priced per lb' };
+  // To the cent, so a package at exactly the floor (12 lb at $4.44) is not under it.
+  const perLb = Math.round((f.price / (size.base / 16)) * 100) / 100;
+  const priced = nameSize?.range && nameSize.dim === 'weight' ? true
+    : wholeTurkey(name, f.category) ? perLb < TURKEY_WHOLE_PACKAGE_LB_MIN
+    : TURKEY_BREAST_RE.test(name) && !PET_AISLE_RE.test(`${name} ${f.category || ''}`) ? perLb < TURKEY_BREAST_PACKAGE_LB_MIN
+    : false;
+  return priced ? { text: formatSize(size), name: 'priced per lb' } : null;
 }
 
 /**
@@ -215,7 +248,8 @@ export function rangedTurkeyPerLbConflict(name, size, nameSize, f, soldByLb) {
  * as "autumn-couleur-bin", "Orange Sweet Potatoes" as "yams-jewel"), which only lose the crown.
  */
 const SLUG_UNIT_WORDS = new Set(['each', 'count', 'pack', 'liter', 'litre']);
-const slugWords = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, ' ').split(' ').filter((w) => w.length >= 4 && !/\d/.test(w) && !SLUG_UNIT_WORDS.has(w));
+// Accents are folded, not split: "País" is "pais", as in the slug (and as the iPhone reads it).
+const slugWords = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').split(' ').filter((w) => w.length >= 4 && !/\d/.test(w) && !SLUG_UNIT_WORDS.has(w));
 const inOrder = (a, b) => { if (a[0] !== b[0]) return false; let i = 0; for (const c of b) if (c === a[i]) i += 1; return i === a.length; };
 const sharedHead = (a, b) => { let i = 0; while (i < a.length && a[i] === b[i]) i += 1; return i >= 5; };
 const sameWord = (a, b) => a.startsWith(b) || b.startsWith(a) || sharedHead(a, b) || inOrder(a, b) || inOrder(b, a);
@@ -230,6 +264,7 @@ const slugNamesNoProduct = (slugText) => {
   const rest = slugText.toLowerCase().replace(SLUG_HOUSE_BRAND_RE, '');
   return rest !== slugText.toLowerCase() && slugWords(rest).every((w) => SLUG_LABEL_WORDS.has(w));
 };
+const SLUG_SAME_THING = [[/\bsweet potato(?:es)?\b/, /\byams?\b/], [/\bcrusts?\b/, /\bshells?\b/]];
 export function slugProductConflict(name, url) {
   const m = String(url || '').match(/\/products\/\d+-([^?#/]+)/);
   if (!m) return null;
@@ -237,6 +272,9 @@ export function slugProductConflict(name, url) {
   const slug = slugWords(m[1].replace(/-/g, ' '));
   const own = slugWords(name);
   if (slug.length < 2 || own.length < 2 || own.some((a) => slug.some((b) => sameWord(a, b)))) return null;
+  // The same thing in the trade's other word: Sprouts' "Orange Sweet Potatoes" is ".../yams-jewel"
+  // (set aside in 14 ZIPs) and Grocery Outlet's pie crusts are "...-pie-shell" (19 Nov 2026).
+  if (SLUG_SAME_THING.some(([a, b]) => (a.test(own.join(' ')) && b.test(slug.join(' '))) || (b.test(own.join(' ')) && a.test(slug.join(' '))))) return null;
   return { text: m[1].replace(/-/g, ' '), name: 'listing names another product' };
 }
 
@@ -462,7 +500,7 @@ export function makeProduct(f) {
   const name = String(f.name || '').replace(/\s+/g, ' ').trim();
   const textSize = parseSize(f.sizeText);
   const nameSize = sizeFromName(name);
-  const chosen = pickSize(textSize, nameSize, { name, url: f.url });
+  const chosen = pickSize(textSize, nameSize, { name, url: f.url, club: WAREHOUSE_CLUBS.has(f.storeId) });
   let size = applyUrlPack(chosen, f);
   // Four sticks of butter are a pound only when the retailer's slug says so too (butterSticks).
   const sticks = butterSticks(size, { name, category: f.category, url: f.url });
@@ -470,7 +508,7 @@ export function makeProduct(f) {
   // Instacart's own unit line may say the price buys several of this size (listingPack).
   const listed = listingPack(size, f.packText, { name, url: f.url });
   if (listed?.size) size = listed.size;
-  size = coerceLiquid(size, `${name} ${f.category || ''}`);
+  size = coerceLiquid(size, `${name} ${f.category || ''}`, name);
 
   // The product's own name and its stated size sometimes contradict each other outright: Costco
   // lists "Sweet Potatoes, 5 lbs" with a sizeText of "10 lb", and the app silently keeps the
@@ -482,7 +520,7 @@ export function makeProduct(f) {
   // "24-count", or "64 fl oz" against "Half Gallon, 3-count" — it has already resolved the
   // reading, and that is a decision, not a contradiction.
   const soldByLb = f.soldBy === 'lb' || size?.perWeight;
-  const sizeConflict = slugPerLbConflict(size, f, soldByLb) || rangedTurkeyPerLbConflict(name, size, nameSize, f, soldByLb) || slugProductConflict(name, f.url) || (
+  const sizeConflict = slugPerLbConflict(size, f, soldByLb) || turkeyPerLbConflict(name, size, nameSize, f, soldByLb) || slugProductConflict(name, f.url) || (
     // A range in the name ("4-10 Pounds HoKa Turkey Breast") describes a variable-weight item,
     // not a second statement of this package, so it contradicts nothing.
     // And when the retailer's own URL slug names the stated size and not the name's, the name's
@@ -526,7 +564,8 @@ export function makeProduct(f) {
   const pieceLb = produceWeightLb(name);
   if (pieceLb && effective > 0) {
     if (soldByLb && !up.count) up.count = { perBase: effective * pieceLb, est: true };
-    else if (!soldByLb && size?.dim === 'count' && size.base > 0 && !up.weight) up.weight = { perBase: effective / size.base / (pieceLb * 16), est: true };
+    // One loose piece, at a price a piece can cost: see PRODUCE_GRADE_COUNT and PRODUCE_PIECE_MAX.
+    else if (!soldByLb && size?.dim === 'count' && size.base > 0 && size.base < PRODUCE_GRADE_COUNT && effective / size.base <= PRODUCE_PIECE_MAX && !up.weight) up.weight = { perBase: effective / size.base / (pieceLb * 16), est: true };
   }
   // A whole pumpkin at a fixed price with its weight stated is one pumpkin at that price
   // (weighedWholePumpkin). A per-lb pumpkin still gets no per-pumpkin price: see pieceWeightVaries.

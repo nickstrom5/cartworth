@@ -152,7 +152,8 @@ enum Units {
     //
     // A bare "/" separator is excluded because "3/4 lb" is a fraction, not three 4-lb packs; a
     // slash-separated multipack ("12 pk / 12 fl oz") still matches via the pack-word branch.
-    private static let multiRx = Rx("(?<![\\d.])(\\d+)\\s*-?\\s*(?:x|×|pk\\.?|pack|ct\\.?|count|cans?|bottles?)\\s*(?:/|,|x|×|-|of)?\\s*\(num)\\s*(\(unitPattern))\\b")
+    // A "#10 Can" is a can size, not ten cans ("..., #10 Can, 117oz" read as 10 x 117 oz, 19 Nov 2026).
+    private static let multiRx = Rx("(?<![\\d.#])(\\d+)\\s*-?\\s*(?:x|×|pk\\.?|pack|ct\\.?|count|cans?|bottles?)\\s*(?:/|,|x|×|-|of)?\\s*\(num)\\s*(\(unitPattern))\\b")
     private static let multiRx1B = Rx("(?<![\\d.])(\\d+)\\s*(?:,|x|×|-|of)\\s*\(num)\\s*(\(unitPattern))\\b")
     private static let multiRx2 = Rx("(?<![\\d.])(\\d+)\\s*(?:pk\\.?|pack|ct\\.?|count)\\s+\(num)\\s*(\(unitPattern))\\b")
     /// A COUNT WORD before the size ("12 ct, 15 oz", "6-Pack, 5.63 LB", "24 Count, 6.75 FL OZ") says
@@ -175,6 +176,13 @@ enum Units {
     /// container noun count PACKAGES: 15 of the 16 captured products named "Npk" are packs of units,
     /// and the sixteenth states no weight. Round 2's first cut included "pk" and read "12pk 12oz" as
     /// one 12 oz package, twelve times too dear (testUnambiguousMultipackForm caught it).
+    /// The most a "M lb, N-count" multipack weighs in all (100 lb): past it the count is pieces.
+    private static let maxPackOz = 1600.0
+    private static let piecesMinCount = 10
+    private static let piecesMinUnitOz = 24.0
+    private static let countOfPacksRx = Rx("(?<![\\d.])(\\d+)\\s*-?\\s*(?:ct|count)\\.?\\s*,\\s*(\\d+)\\s*-?\\s*(?:pk|packs?)\\b")
+    private static let butterRx = Rx("\\bbutter\\b")
+    private static let sticksRx = Rx("\\bsticks\\b")
     private static let countWordFirstRx = Rx("^\\s*\\d+\\s*-?\\s*(?:pack|packs|ct\\.?|count|cnt)\\b")
     /// ...unless a PLURAL container noun follows the size ("12-count 5.3 oz cups", "8 Pack, 6.75 fl
     /// oz Juice Boxes"): each of those holds that much. Singular does not ("15 oz Bag" is the bag).
@@ -347,7 +355,15 @@ enum Units {
             // is kept for sizeFromName (see containerInNameRx).
             let word = (t[5] ?? "").lowercased()
             let pieceWord = (word.hasPrefix("ct") || word.hasPrefix("count")) && !(t[4] ?? "").contains("-")
-            if pieceWord, let uu = u, uu.dim == .weight, let nn = n, nn > 1, nn <= 200, let ee = each, ee > 0, !isDoseNotPackage(uu, ee) {
+            // ...and so is a weight whose "N-count" would make a pack no one sells: Costco's "Dinner
+            // Rolls, 7.5 lbs, 60-count" is sixty rolls in 7.5 lb, not 450 lb, and "Hamburger Buns, 32 oz,
+            // 16-count" is not 32 lb of buns (19 Nov 2026). Ten or more of 24 oz or more are pieces; the
+            // clubs' real multipacks are fewer or smaller. See MAX_PACK_OZ in shared/units.js.
+            let tooBig: Bool = {
+                guard let uu = u, uu.dim == .weight, let nn = n, let ee = each else { return false }
+                return Double(nn) * ee * uu.factor > maxPackOz || (nn >= piecesMinCount && ee * uu.factor >= piecesMinUnitOz)
+            }()
+            if pieceWord || tooBig, let uu = u, uu.dim == .weight, let nn = n, nn > 1, nn <= 200, let ee = each, ee > 0, !isDoseNotPackage(uu, ee) {
                 let one = round4(ee * uu.factor)
                 return ParsedSize(dim: uu.dim, base: one, amount: ee, unit: uu.key, count: 1, perWeight: false, range: false, text: s, countAfter: CountFirst(n: nn, unitBase: one))
             }
@@ -382,8 +398,14 @@ enum Units {
     }
 
     /// "Yogurt Cups, 5.3 oz, 12 Count": the name counts containers, so the count-after reading is N of M.
+    /// The name counts containers ("Cups", "Cans", "Pouches"): each holds the stated size.
+    static func namesContainers(_ name: String) -> Bool { containerInNameRx.test(name) }
+
     private static func packIfContainers(_ p: ParsedSize, _ name: String) -> ParsedSize {
         guard let ca = p.countAfter, containerInNameRx.test(name) else { return p }
+        // Sticks of butter are quarter-pound pieces of the stated weight: Meijer's "Salted Butter
+        // Sticks 8 oz 2 ct" is one half-pound pack (19 Nov 2026). "4 oz, 4 ct" is still four sticks.
+        if butterRx.test(name), sticksRx.test(name), abs(ca.unitBase / Double(ca.n) - 4) <= 0.08 { return p }
         var pack = p
         pack.base = round4(Double(ca.n) * ca.unitBase)
         pack.count = ca.n
@@ -413,7 +435,18 @@ enum Units {
             }
         }
         for p in parts.reversed() {
-            if let s = parseSize(p), !s.perWeight { return packIfContainers(s, name) }
+            if let s = parseSize(p), !s.perWeight {
+                // Two counts are a pack of packs: Costco's "King's Hawaiian, Hawaiian Sweet Rolls,
+                // 16-count, 2-pack" read as 2, $4.16 a roll, in 23 ZIPs (19 Nov 2026).
+                if s.dim == .count, let cc = countOfPacksRx.match(name), let a = Double(cc[1] ?? ""), let b = Double(cc[2] ?? ""), b == s.base, a > 1, a * b <= 500 {
+                    var both = s
+                    both.base = a * b
+                    both.amount = a * b
+                    both.unit = "ct"
+                    return both
+                }
+                return packIfContainers(s, name)
+            }
         }
         if let m = nameSizeRx.match(name), let whole = m[0] { return parseSize(whole) }
         // A container word with no number ("Alta Dena Whole Milk, Paper Quart") is one of it, for
@@ -463,7 +496,12 @@ enum Units {
     // search whose real broths sat near $10/gal. 'butter' does not fire on "Butter Chicken", a
     // curry: Kettle & Fire's Butter Chicken and Classic Chicken bone broths, both 16.9 OZ at the
     // same price, landed in different dimensions because of it. Mirrors SOLID_RE in shared/units.js.
-    private static let solidRx = Rx("\\b(gelatin|jell-?o|bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\\b")
+    private static let solidRx = Rx("\\b(gelatin|jell-?o|bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk|tenderloins?|patt(?:y|ies)|lunch ?meat)\\b")
+    /// Gravy, stuffing and bread are sold by weight whatever the aisle is called (Trader Joe's files its
+    /// "Turkey Gravy" under "Dressing & Seasoning"), unless the product's own name says it is poured:
+    /// "Spring Roll Sweet Chili Sauce", "Cinnamon Roll Coffee Creamer". Port of BREAD_GRAVY_RE / POURED_RE.
+    private static let breadGravyRx = Rx("\\b(?:grav(?:y|ies)|stuffing|croutons?|cornbread|rolls?|buns?)\\b")
+    private static let pouredRx = Rx("\\b(?:sauces?|creamers?|syrups?)\\b")
 
     static func looksLiquid(_ name: String) -> Bool {
         let n = packingMediumRx.replace(name, with: " ")
@@ -473,10 +511,12 @@ enum Units {
     }
 
     /// Stores often write "12 oz" for canned/bottled drinks when they mean fluid ounces.
-    static func coerceLiquid(_ size: ParsedSize?, name: String) -> ParsedSize? {
+    /// `name` is the label and aisle together; `ownName` the product's own name where they differ.
+    static func coerceLiquid(_ size: ParsedSize?, name: String, ownName: String? = nil) -> ParsedSize? {
         guard var s = size, s.dim == .weight, !s.perWeight else { return size }
         guard ["oz", "ounce", "ounces", "onz"].contains(s.unit) else { return size }
         guard looksLiquid(name), !solidRx.test(name) else { return size }
+        if breadGravyRx.test(name) && !pouredRx.test(ownName ?? name) { return size }
         s.dim = .volume
         s.unit = "floz"
         s.liquidCoerced = true
@@ -533,8 +573,16 @@ enum Units {
         (Rx("\\bkiwis?\\b"), 0.2), (Rx("\\bpomegranates?\\b"), 0.6), (Rx("\\bjalapenos?\\b"), 0.05), (Rx("\\b(bell )?peppers?\\b"), 0.4), (Rx("\\bcucumbers?\\b"), 0.6),
         (Rx("\\bzucchini\\b"), 0.5), (Rx("\\byellow squash\\b"), 0.5), (Rx("\\beggplants?\\b"), 1.0), (Rx("\\broma tomato(es)?\\b"), 0.15),
         (Rx("\\btomato(es)?\\b"), 0.33), (Rx("\\bsweet potato(es)?\\b|\\byams?\\b"), 0.6), (Rx("\\bpotato(es)?\\b"), 0.55),
+        // A jumbo onion is nearer a pound (the retailers' own estimates: 0.9 to 1.07 lb). At half a
+        // pound Trader Joe's "Jumbo Yellow Onions", 99c each, read $1.98/lb (19 Nov 2026).
+        (Rx("\\bjumbo (?:[a-z]+ )?onions?\\b"), 0.9),
         (Rx("\\bonions?\\b"), 0.5), (Rx("\\bgarlic\\b"), 0.12), (Rx("\\bartichokes?\\b"), 0.5), (Rx("\\bcorn\\b"), 0.6),
     ]
+    /// What one loose piece can be: a name's count of 40 or more on loose produce is a carton grade
+    /// ("Russet Potato 80 ct"), and a "1 each" row over $5 is a bag (Sam's "Sweet Potato (Yam)").
+    /// See PRODUCE_GRADE_COUNT and PRODUCE_PIECE_MAX in shared/units.js.
+    static let produceGradeCount = 40.0
+    static let producePieceMax = 5.0
     /// Words that mean the produce word in the name is not one loose piece of produce.
     ///
     /// The estimate is multiplied by a price to publish a per-pound figure, so a wrong match
@@ -545,7 +593,7 @@ enum Units {
     /// 0.5 lb onion, and pricing it as one published $25.98/lb against a real median of $1.75.
     /// "Bagged" too: "Produce Onions Cipollini (Bagged)", 1 ea at $0.19, was Dallas's best onions at an
     /// estimated $0.38/lb (the Thanksgiving core list). Mirrors shared/units.js.
-    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag(?:ged|s)?|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\\b")
+    private static let notProduceRx = Rx("\\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag(?:ged|s)?|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder|rolls?|buns?|bagels?|fried|crispy|rings?|pickled|chopper)\\b")
 
     /// Produce whose pieces differ too much in weight for an "each" price worked out from a price per
     /// pound: a pumpkin weighs a quarter pound to twenty-five. Grocery Outlet's $0.99/lb "Small White
@@ -580,6 +628,11 @@ enum Units {
     static let typicalTurkeyLb = 14.0
     /// $10, not $5: "1 ea" birds at $5.19-$5.79 are prices per pound (Thanksgiving core list, 13-14 Nov 2026). See shared/units.js.
     static let turkeyEachMin = 10.0
+    /// The least a package of whole turkey, or of turkey breast, works out to per pound: under the
+    /// cheapest either has sold for by the pound (37c and 99c), not under it. Below it the price is
+    /// per pound over the piece's weight. See TURKEY_WHOLE_PACKAGE_LB_MIN in shared/units.js.
+    static let turkeyWholePackageLbMin = 0.37
+    static let turkeyBreastPackageLbMin = 0.99
     private static let turkeyRx = Rx("\\bturkeys?\\b")
     private static let wholeBirdRx = Rx("\\bwhole\\b|\\b(?:young|hen|tom)\\s+turkeys?\\b")
     private static let wholeTurkeyCategoryRx = Rx("\\bwhole turkeys?\\b")

@@ -569,7 +569,9 @@ export function ProductRow({ p, displayUnit, best, prefs, q, compact }) {
         ${p.implausible &&
         html`<span
           class="badge warn"
-          title=${`This works out ${p.implausible.ratio}\u00d7 the typical unit price for this search. Usually it means the listing's size is wrong, for example a multi-pack priced as one unit. Check the label before trusting it.`}
+          title=${p.implausible.placeholder
+            ? 'A price this low per pound is a placeholder the store has not replaced with its real price. It is never counted as the best price.'
+            : `This works out ${p.implausible.ratio}\u00d7 the typical unit price for this search. Usually it means the listing's size is wrong, for example a multi-pack priced as one unit. Check the label before trusting it.`}
           >price looks wrong</span
         >`}
         ${p.sizeConflict && !p.implausible &&

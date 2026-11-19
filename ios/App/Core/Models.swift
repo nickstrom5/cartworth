@@ -29,6 +29,9 @@ struct ImplausiblePrice: Codable, Hashable {
     /// True when a package far larger than typical is also far cheaper per unit: a case size on a
     /// single piece (see `Compare.flagSizeOutliers`). Optional so older saved products decode.
     var sizeOutlier: Bool? = nil
+    /// True when the price is a placeholder: 10c a pound or less (see `Compare.perLbPlaceholder`).
+    /// `ratio` and `median` are 0 when there was nothing to compare it with. Optional as above.
+    var placeholder: Bool? = nil
 }
 
 enum PriceBasis: String, Codable, Hashable {
