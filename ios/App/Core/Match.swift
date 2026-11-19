@@ -39,6 +39,18 @@ enum Match {
         (Rx("\\bpernil\\b"), "pork shoulder"),
         (Rx("\\b(?:japchae|jap chae|dangmyeon|dang myun)\\b"), "glass noodles"),
         (Rx("(?<!\\b(?:mountain|purple|chinese|japanese|white|african|true|ube) )\\byams?\\b"), "sweet potatoes"),
+        // From re-scoring every cached Thanksgiving answer (18-19 Nov 2026). Port of shared/match.js.
+        // "Bone In" with no hyphen scored 0.12 ('bone' is a pet-aisle trap): Stater Bros' $1.99/lb breast was hidden.
+        (Rx("\\bbone[- ]in\\b"), "bonein"), (Rx("\\bskin[- ]on\\b"), "skinon"),
+        // Label phrases that describe the product: Kroger's "Tender and Juicy Whole Frozen Turkey" ($0.99/lb,
+        // hidden at 16 Kroger banners), "Broth Basted Turkey", "Dry Toasted" pecan pieces. ("Vitamin D" on
+        // a milk label is forgiven in benignBefore, so the words still answer a search for vitamins.)
+        (Rx("\\btender (?:and |n )?juicy\\b"), "juicy"), (Rx("\\bbroth[- ]basted\\b"), "basted"),
+        (Rx("\\bdry[- ]toasted\\b"), "toasted"),
+        // The trade's other names: "Whole Cranberry Sauce", "Crispy Fried Onions", brown-and-serve rolls.
+        (Rx("\\bwhole cranberry sauce\\b"), "whole berry cranberry sauce"), (Rx("\\bcranberry sauce whole\\b(?! berr)"), "whole berry cranberry sauce"),
+        (Rx("\\bcrispy fried onions?\\b|\\bfried onions? crispy\\b"), "french fried onion"),
+        (Rx("\\bbrown (?:and |n )?serve rolls?\\b"), "brown and serve dinner roll"),
     ]
 
     /// Words that turn a product into something else when they follow the searched noun
@@ -60,6 +72,9 @@ enum Match {
         "ketchup", "catsup", "paste", "squash",
         "tortillas", "manapua", "bao", "siopao", "fork", "spoon", "cutlery", "drop", "lozenge",
         "stew", "hummus", "pesto", "salsa", "guacamole", "dressing", "concentrate", "concentrated", "substitute", "flavoring",
+        // Sam's "Kinder's Garlic Butter ... Crispy Tots" was Cheyenne's best "butter", "All Butter Panettone" its
+        // butter in four more cities, and Vallarta's "Bravo Pavo Especias" its turkey breast (19 Nov 2026).
+        "tot", "panettone", "especias",
         // Head nouns that make the searched word a modifier: "butter popcorn", "butter shrimp",
         // "all butter danish". Found in live Sam's Club and Costco results, where each produced an
         // absurd per-pound price that then set the scale of the per-store chart. Mirrors the same
@@ -181,7 +196,21 @@ enum Match {
     /// A trap noun forgiven when the next word names what it is: "King Oyster Mushrooms" are
     /// mushrooms. Mirrors BENIGN_BEFORE in shared/match.js.
     /// "Pecan Smoked Andouille" is smoked over pecan wood; PET is a brand of evaporated milk, not pet food.
-    private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"], "bread": ["flour"], "pecan": ["smoked", "wood"], "pet": ["evaporated"]]
+    /// "Vitamin D" (or "Vitamins A & D") on a label is a fortification, not the supplement aisle; roll
+    /// butter is butter in a roll. Port of BENIGN_BEFORE in shared/match.js.
+    private static let benignBefore: [String: Set<String>] = ["oyster": ["mushroom"], "bread": ["flour"], "pecan": ["smoked", "wood"], "pet": ["evaporated"], "vitamin": ["d", "a"], "roll": ["butter"]]
+    /// The index of the word before a "Vitamin D" label that sits between a base and its noun
+    /// ("Evaporated Vitamin D Milk"), or before the noun. Port of beforeLabel in shared/match.js.
+    private static func beforeLabel(_ words: [String], _ headIdx: Int) -> Int {
+        func at(_ i: Int) -> String? { i >= 0 && i < words.count ? words[i] : nil }
+        var i = headIdx - 1
+        if at(i) == "added" { i -= 1 }
+        guard at(i) == "d" else { return headIdx - 1 }
+        i -= 1
+        if at(i) == "and" { i -= 1 }
+        if at(i) == "a" { i -= 1 }
+        return at(i) == "vitamin" ? i - 1 : headIdx - 1
+    }
 
     /// How the food is kept, not what it is. Only these are forgiven when the retailer's own
     /// category is exactly what was searched. 'dried' is deliberately absent: dried cranberries are
@@ -195,7 +224,9 @@ enum Match {
         "camembert", "gouda", "havarti", "fontina", "provolone", "muenster", "colby", "monterey", "swiss", "emmental", "emmentaler", "comte",
         "jarlsberg", "manchego", "feta", "chevre", "gorgonzola", "roquefort", "stilton", "mascarpone", "burrata", "halloumi", "paneer",
         "raclette", "cotija", "queso", "fromage", "kase", "cheesecake"]
-    private static let headTraps: [String: Set<String>] = ["milk": cheeseNames, "cream": cheeseNames, "butter": cheeseNames]
+    /// Gravy granules are a dry mix: Grocery Outlet's "Bisto Gravy Granules" was Portland's and Washington's
+    /// best "gravy" by weight against jars (19 Nov 2026). For gravy only; see HEAD_TRAPS in shared/match.js.
+    private static let headTraps: [String: Set<String>] = ["milk": cheeseNames, "cream": cheeseNames, "butter": cheeseNames, "gravy": ["granule"]]
     /// Plant bases in front of the noun make a different product ("almond milk").
     private static let altBase: Set<String> = ["almond", "oat", "oatmilk", "soy", "coconut", "cashew", "rice", "hemp", "macadamia", "pea", "plant", "pistachio", "flax", "banana", "evaporated", "condensed", "powdered", "dry", "goat"]
     /// Prepared/processed forms are still the product but rarely what a price-checker wants.
@@ -219,7 +250,7 @@ enum Match {
         "sirloin": Set(animals), "wing": Set(animals), "dog": Set(animals + ["frank"]), "frank": Set(animals), "brat": Set(animals + ["beer"]), "sausage": Set(animals),
         "turkey": ["frozen"], "ham": ["honey", "spiral", "smoked", "pork", "glazed", "cooked"],
         "bun": ["hot", "dog", "hamburger", "seed", "sesame"], "croissant": ["butter", "mini"], "flower": ["bouquet", "cut", "mixed"],
-        "pumpkin": ["pie", "carving"], "stuffing": ["mix", "turkey", "chicken", "cornbread", "herb", "seasoned"],
+        "pumpkin": ["pie", "carving"], "stuffing": ["mix", "turkey", "chicken", "cornbread", "herb", "seasoned", "broth", "flavor", "flavored"],
         "candy": ["snack", "halloween", "chocolate", "assortment"], "wrapper": ["wrap", "round", "frozen"], "chip": ["potato", "tortilla", "kettle"],
         "tortilla": ["taco", "soft"], "tortillas": ["taco", "soft"], "chocolate": ["bar", "dark"], "pea": ["dry", "dried"], "peas": ["dry", "dried"], "filling": ["mix"],
         "watermelon": ["mini", "seedless", "personal"], "bar": ["oat", "honey"],
@@ -229,10 +260,13 @@ enum Match {
         // are sweet potato starch (the Thanksgiving food styles run). Port of shared/match.js.
         "chitterling": ["pork", "frozen", "cleaned"], "andouille": ["sausage", "pork", "chicken", "smoked", "cajun"],
         // Sold frozen ("Pamana Frozen Lumpia Wrapper" was refused in Houston). Port of shared/match.js.
-        "tamale": ["pork", "chicken", "beef", "cheese", "bean", "sweet", "red", "green", "frozen"], "crust": ["frozen", "pastry"], "lech": ["cake"], "flan": ["caramel"],
+        "tamale": ["pork", "chicken", "beef", "cheese", "bean", "sweet", "red", "green", "frozen"], "crust": ["frozen", "pastry", "graham", "cracker", "butter", "buttery"], "lech": ["cake"], "flan": ["caramel"],
         "macaroni": ["dinner"], "glass": ["sweet", "potato", "starch"],
         // Turkey gravy is gravy, a condensed soup is the soup, a pie crust is pastry (the Thanksgiving core list). Port of shared/match.js.
-        "gravy": ["turkey", "chicken", "beef", "pork"], "soup": ["condensed"],
+        "gravy": ["turkey", "chicken", "beef", "pork", "flavor", "flavored"], "soup": ["condensed"],
+        // The cheapest row is the store brand and its label describes it: ALDI's "Real Chicken Broth Stuffing
+        // Mix", "Beef Flavored" gravy, a "Graham Cracker" crust, Costco's "All Butter Dinner Rolls" (19 Nov 2026).
+        "roll": ["butter", "buttery"],
     ]
     /// Products that normally come in flavours. Port of FLAVOR_OK_HEADS.
     private static let flavorOkHeads: Set<String> = ["roast", "flan", "lech", "bar", "chip", "cereal", "candy", "soda", "bread", "ham", "meat", "cracker", "cookie", "sauce", "bean", "granola", "applesauce"]
@@ -254,7 +288,11 @@ enum Match {
         // Onion rings, celery soda, marshmallow Fluff and Peeps chicks (no aisle, 15 Nov 2026). Port of shared/match.js.
         "onion ring", "celery soda", "marshmallow fluff", "marshmallow creme", "marshmallow cream", "marshmallow chick", "marshmallow bunny",
         // Turkey is a wheat: Costco's "Lehi Roller Mills Turkey Flour, 25 lbs" answered "turkey" (18 Nov 2026). Port of shared/match.js.
-        "turkey flour"].map { tokens($0) }
+        "turkey flour",
+        // Celery cabbage is napa cabbage: Safeway's was Wilmington's runner-up for "celery" (19 Nov 2026).
+        "celery cabbage", "celery flake",
+        // Amish roll butter is butter: with "butter" allowed on a roll it answered "rolls" (the review of this change, 19 Nov 2026).
+        "roll butter"].map { tokens($0) }
     private static let modifierCompounds = ["baking soda", "cooking wine", "creme egg", "cadbury egg", "chocolate egg", "plastic egg", "mini egg",
         "candy corn", "corned beef brisket", "cottage cheese", "salisbury steak",
         // Scallions are not onions (Thanksgiving, NYC). Port of shared/match.js.
@@ -266,7 +304,7 @@ enum Match {
         // Fruit and nut butters, and margarine that says so. Port of shared/match.js.
         "apple butter", "pumpkin butter", "shea butter", "cocoa butter", "not butter",
         // Nut and seed butters, said outright now that a plant base is no penalty for a vegan search. Port of shared/match.js.
-        "almond butter", "cashew butter", "coconut butter", "sunflower butter", "seed butter", "cookie butter",
+        "almond butter", "cashew butter", "coconut butter", "sunflower butter", "seed butter", "cookie butter", "fig butter",
         // A chuck cross rib roast is shoulder, not prime rib (El Paso). Port of shared/match.js.
         "cross rib"].map { tokens($0) }
     private static func stem(_ w: String) -> String { w.hasSuffix("s") ? String(w.dropLast()) : w }
@@ -377,16 +415,18 @@ enum Match {
     /// Port of PREPARED_AISLE_RE.
     private static let preparedAisleRx = Rx("\\b(?:meals?|entrees?|dinners?|desserts?|bakery|pastr(?:y|ies)|dumplings?|snacks?|sides|prepared (?!produce|vegetables?|veggies|fruits?))\\b")
     private static let heavyRx = Rx("\\bheavy\\b")
-    private static let lightRx = Rx("\\blight\\b")
+    /// Table cream (media crema) is lighter still: "Lucerne Cream, Table" was Cheyenne's best heavy cream (19 Nov 2026).
+    private static let lightRx = Rx("\\b(?:light|table|media)\\b")
     private static let turkeyDishAisleRx = Rx("\\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?|seasonings?|spices?|herbs?)\\b")
-    private static let pastryCupRx = Rx("\\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\\b")
+    /// ...nor turnover and empanada discs: "Kikuet Plantillas Turnover Shells" was Providence's best pie crust (19 Nov 2026).
+    private static let pastryCupRx = Rx("\\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini|turnovers?|empanadas?|plantillas?|discos?|croustades?|dessert shells?)\\b")
     /// "Candies" too: "Durham-Ellis Pecan Co. Orange Slices" (Gummy Candies) answered "pecans" in Phoenix (13 Nov 2026).
-    private static let nutDishAisleRx = Rx("\\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies))\\b")
+    private static let nutDishAisleRx = Rx("\\b(?:cakes?|fruit ?cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|biscotti|cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies)|trail mix(?:es)?|granolas?|fish|seafood)\\b")
     private static let inShellRx = Rx("\\bin[- ]?(?:the )?shells?\\b")
     private static let nutHeadRx = Rx("^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$")
     /// A baked good or another food made with the nut ("Lady Linda Pecan Twirls", "Organic Raisin
     /// Pecan Sliced" bread answered "pecans", 14 Nov 2026). Port of NUT_FORM_RE.
-    private static let nutFormRx = Rx("\\b(?:twirls?|danish|breads?|loaf|loaves|rolls?|buns?|muffins?|scones?|cookies?|sandies|bars?|clusters?|turtles?|brittle|pralines?|pies?|tarts?|cakes?|raisins?|pastr(?:y|ies)|coffee ?cake|granola)\\b")
+    private static let nutFormRx = Rx("\\b(?:twirls?|danish|breads?|loaf|loaves|rolls?|buns?|muffins?|scones?|cookies?|sandies|bars?|clusters?|turtles?|brittle|pralines?|pies?|tarts?|cakes?|raisins?|pastr(?:y|ies)|coffee ?cake|granola|crostatas?|divinity|(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut) delights?|biscotti|fruit ?cakes?|crusted|encrusted|cand(?:y|ies)|nougat)\\b")
     private static let snackNutRx = Rx("\\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\\b")
     private static let whippedRx = Rx("\\bwhipped\\b")
     private static let freshRx = Rx("\\bfresh\\b")
@@ -395,6 +435,8 @@ enum Match {
     private static let piesAisleRx = Rx("^(?!.*\\b(?:crusts?|dough|shells?)\\b).*\\bpies\\b")
     private static let sweetPotatoRx = Rx("\\bsweet potato")
     private static let otherPotatoRx = Rx("\\b(?:russet|yukon|red potato|gold potato|white potato)")
+    private static let notBrownSugarRx = Rx("\\b(?:cane|raw|turbinado|demerara|piloncillo|panela|jaggery)\\b")
+    private static let bakeryPieNameRx = Rx("\\bpie,\\s*pumpkin\\b|\\b\\d+(?:\\.\\d+)?\\s*(?:in\\b|inch(?:es)?\\b|\")")
     private static let freshVegMeatRx = Rx("^(?:asparagus|carrot|celery|onion|cabbage|potato|cilantro|choy|broccoli|spinach|kale|lettuce|mushroom|pepper|cucumber|zucchini|beef|brisket|ham|chicken|pork|lamb|turkey|steak)$")
     private static let shelfFormRx = Rx("\\b(?:canned|dehydrated|freeze[- ]?dried)\\b")
 
@@ -615,6 +657,13 @@ enum Match {
             }
         }
         let allowed = Set(qt.flatMap { Array(queryAllows[$0] ?? []) })
+        // A word of the maker's name describes the maker, when the store has filed the product under exactly
+        // what was searched: every "Stew Leonard's ..." product scored 0.40 on "stew"; "Hotel Bar" butter,
+        // "Wonder Bread" dinner rolls, "Turkey Hill" milk and "Happy Tot" baby food the same way (19 Nov 2026).
+        // Not when the aisle names a form that was not asked for ("Dried Onion"), and never a base ("Meyenberg
+        // Goat Milk"). Port of makersWord in shared/match.js.
+        let plainAisle = catCoversQuery && !catTok.contains(where: { mild.contains($0) && !storageState.contains($0) && !qset.contains($0) })
+        func makersWord(_ w: String) -> Bool { plainAisle && fromBrandOnly(w) && !altBase.contains(w) }
         // ...whatever the product's own words (Tofurky's "Plant-Based Roast & Gravy" for "tofurky").
         let brandQuery = wholeBrand || (veganBrandRx.test(qDietNorm) && veganBrand)
         if brandQuery {
@@ -628,6 +677,7 @@ enum Match {
                 if i == hi { continue }
                 let w = words[i]
                 if qset.contains(w) || soft.contains(w) || allowed.contains(w) { continue }
+                if makersWord(w) { continue }
                 if wantsDiet && (altBase.contains(w) || dietMeets[w] != nil || dietCompanions.contains(w)) { continue } // "Plant Butter" is the vegan butter
                 let prev = i >= 1 ? words[i - 1] : nil
                 let prev2 = i >= 2 ? words[i - 2] : nil
@@ -638,11 +688,11 @@ enum Match {
                 // A base right before a dairy noun names another product: "Rouses Coconut Milk"
                 // and "Carnation Evaporated Milk" scored 0.51 for "milk", over the weekly-ad
                 // strip's 0.4 cut, so they were shown as milk deals (QA, 9 Nov 2026).
-                else if altBase.contains(w) && i == hi - 1 && dairyHeads.contains(head) { strong += 1 }
+                else if altBase.contains(w) && i == beforeLabel(words, hi) && dairyHeads.contains(head) { strong += 1 }
             }
             var alt = 0, mildN = 0, flavorN = 0
             for w in words {
-                if qset.contains(w) || allowed.contains(w) || (wantsDiet && altBase.contains(w)) { continue }
+                if qset.contains(w) || allowed.contains(w) || (wantsDiet && altBase.contains(w)) || makersWord(w) { continue }
                 // Position-independent: "Frozen Orange Juice" and "Orange Juice Frozen" are the
                 // same product and must score the same. Anchoring these to the head noun meant
                 // word order alone changed the score by a factor of two.
@@ -707,7 +757,11 @@ enum Match {
         if flavourDishRx.test(normalize(query)) && flavourFormRx.test(nameNorm) && !flavourFormRx.test(normalize(query)) { mult *= 0.2 }
         if wholePumpkinQuery && soldBy != .lb && dim == .weight, let b = base, b > 0, b < cannedPumpkinMaxOz { mult *= 0.2 }
         // A pie pumpkin is the produce, not the pie (Jewel's per-lb "Pumpkin Pie", Chicago). Port of shared/match.js.
-        if hasPhrase(qt, ["pumpkin", "pie"]) && (soldBy == .lb || (hasPhrase(words, ["pie", "pumpkin"]) && !hasPhrase(words, ["pumpkin", "pie"]))) { mult *= 0.2 }
+        // ...unless the bakery wrote its catalogue name backwards: "Publix Bakery Pie, Pumpkin" in the Pumpkin Pie
+        // aisle (19 Nov 2026). The comma or the pie's width says so, with the aisle; the aisle alone does not,
+        // because stores file the squash there too and a can of "Golden Pie Pumpkin" under Pie Fillings.
+        let bakeryPie = catTok.contains("pie") && !catTok.contains("filling") && bakeryPieNameRx.test(name)
+        if hasPhrase(qt, ["pumpkin", "pie"]) && (soldBy == .lb || (hasPhrase(words, ["pie", "pumpkin"]) && !hasPhrase(words, ["pumpkin", "pie"]) && !bakeryPie)) { mult *= 0.2 }
         if qt.contains("turkey") && otherTurkeyPart(query: query, nameNorm: nameNorm, category: category) { mult *= 0.2 }
         if wholeBirdForCut(query: query, nameNorm: nameNorm) { mult *= 0.2 }
         // ...nor a dish made of it ("The Turkey Trot (Half Panini)", "Turkey Carnitas"; Greenville). Port of shared/match.js.
@@ -729,6 +783,9 @@ enum Match {
         if head == "cream" && whippedRx.test(nameNorm) && !whippedRx.test(normalize(query)) { mult *= 0.2 }
         if freshRx.test(normalize(query)) && !frozenRx.test(normalize(query)) && (frozenRx.test(nameNorm) || frozenRx.test(normalize(category ?? ""))) { mult *= 0.3 }
         if sweetPotatoRx.test(normalize(query)) && otherPotatoRx.test(nameNorm) { mult *= 0.2 }
+        // Cane, raw and turbinado sugar, piloncillo and jaggery are filed under Brown Sugars and are not brown
+        // sugar: "Zulka Sugar, Pure Cane" was Miami's runner-up (19 Nov 2026). Port of shared/match.js.
+        if hasPhrase(qt, ["brown", "sugar"]) && !words.contains("brown") && notBrownSugarRx.test(nameNorm) { mult *= 0.3 }
         if freshVegMeatRx.test(head) {
             if let m = shelfFormRx.match(nameNorm)?.first ?? nil {
                 if !qNormForImitation.contains(m) { mult *= 0.3 }

@@ -90,8 +90,10 @@ function matchSize(s) {
 // as five 2-lb packs and priced a chicken breast at 7 cents a pound.
 // A bare "/" separator is excluded because "3/4 lb" is a fraction, not three 4-lb packs; a
 // slash-separated multipack ("12 pk / 12 fl oz") still matches via the pack-word branch.
+// A "#10 Can" is a can size, not ten cans: Smart & Final's "Ocean Spray Whole Cranberry Sauce, ...,
+// #10 Can, 117oz" read as 10 x 117 oz, $0.16/lb (every cached answer re-scored, 19 Nov 2026).
 const MULTI_RE = new RegExp(
-  `(?<![\\d.])(\\d+)\\s*-?\\s*(?:x|×|pk\\.?|pack|ct\\.?|count|cans?|bottles?)\\s*(?:\\/|,|x|×|-|of)?\\s*${NUM}\\s*(${UNIT_PATTERN})\\b`,
+  `(?<![\\d.#])(\\d+)\\s*-?\\s*(?:x|×|pk\\.?|pack|ct\\.?|count|cans?|bottles?)\\s*(?:\\/|,|x|×|-|of)?\\s*${NUM}\\s*(${UNIT_PATTERN})\\b`,
   'i'
 );
 const MULTI_RE_1B = new RegExp(
@@ -164,6 +166,10 @@ const MULTI_RE_2 = new RegExp(`(?<![\\d.])(\\d+)\\s*(?:pk\\.?|pack|ct\\.?|count)
  */
 const CONTAINER_IN_NAME_RE = /\b(?:cups|pouches|portions|packets|cans|bottles|jars|tubs|cartons|containers|boxes|bars|pods|sticks|packs|bags|cartridges|k-cups)\b/i;
 
+// The most a "M lb, N-count" multipack weighs in all (100 lb): past it the count is pieces.
+const MAX_PACK_OZ = 1600;
+const PIECES_MIN_COUNT = 10;
+const PIECES_MIN_UNIT_OZ = 24;
 const COUNT_WORD_FIRST_RE = /^\s*\d+\s*-?\s*(?:pack|packs|ct\.?|count|cnt)\b/i;
 const CONTAINERS_AFTER_RE = /^\s*\.?\s*(?:[a-z]+\s+)?(?:cups|cans|bottles|pouches|packets|jars|tubs|cartons|containers|boxes)\b/i;
 // The count can also come AFTER the size: "12 fl oz, 12 Pack Cans", "5.3 oz, 12 Count".
@@ -260,7 +266,14 @@ export function parseSize(input) {
       // "8oz, 9ct": see CONTAINER_IN_NAME_RE. A weight followed by an unhyphenated piece count is
       // the package, with the count kept for sizeFromName and pickSize to settle.
       const pieceWord = /^(?:ct|count)/i.test(t[5]) && !t[4].includes('-');
-      if (pieceWord && u && u.dim === 'weight' && n > 1 && n <= 200 && each > 0 && !isDoseNotPackage(u, each)) {
+      // ...and so is a weight whose "N-count" would make a pack no one sells: Costco's "Dinner Rolls,
+      // 7.5 lbs, 60-count" is sixty rolls in 7.5 lb, and read as sixty 7.5 lb packs it was 450 lb at
+      // $0.03/lb; "Hamburger Buns, 32 oz, 16-count" was 32 lb of buns at $0.17/lb (19 Nov 2026). The
+      // hyphenated spelling is the clubs' multipack (see above), and in the QA cache every real one is
+      // either under PIECES_MIN_COUNT units ("French Fries, 5 lbs, 6-count") or under PIECES_MIN_UNIT_OZ
+      // each ("Butter, Salted, Block, 1 lb, 30-count"); ten or more of 24 oz or more are pieces.
+      const tooBig = u && u.dim === 'weight' && (n * each * u.factor > MAX_PACK_OZ || (n >= PIECES_MIN_COUNT && each * u.factor >= PIECES_MIN_UNIT_OZ));
+      if ((pieceWord || tooBig) && u && u.dim === 'weight' && n > 1 && n <= 200 && each > 0 && !isDoseNotPackage(u, each)) {
         return { dim: u.dim, base: round(each * u.factor), amount: each, unit: u.key, count: 1, perWeight: false, range: false, text: s, countAfter: { n, unitBase: round(each * u.factor) } };
       }
     }
@@ -304,6 +317,8 @@ export function parseSize(input) {
  */
 const CAPACITY_RE = /\b(?:(?:holds?|fits?|accommodates?|for)\s+)?up\s+to\s+\d+(?:\.\d+)?\s*-?\s*(?:lbs?|pounds?|oz|ounces?|kg|qts?|quarts?|gal(?:lons?)?|cups?|servings?)\b|\b(?:holds?|fits?)\s+\d+(?:\.\d+)?\s*-?\s*(?:lbs?|pounds?|oz|ounces?|kg|qts?|quarts?|gal(?:lons?)?)\b/gi;
 
+const COUNT_OF_PACKS_RE = /(?<![\d.])(\d+)\s*-?\s*(?:ct|count)\.?\s*,\s*(\d+)\s*-?\s*(?:pk|packs?)\b/i;
+
 // Size is often embedded at the end of a product name: "Organic Whole Milk, 64 FZ", "Eggs Large 12ct"
 export function sizeFromName(name) {
   if (!name) return null;
@@ -324,7 +339,13 @@ export function sizeFromName(name) {
   }
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parseSize(parts[i]);
-    if (p && !p.perWeight) return p.countAfter ? packIfContainers(p, name) : p;
+    if (p && !p.perWeight) {
+      // Two counts are a pack of packs: Costco's "King's Hawaiian, Hawaiian Sweet Rolls, 16-count,
+      // 2-pack" (slug "...twin-pack-32-ct") read as 2, $4.16 a roll, in 23 ZIPs (19 Nov 2026).
+      const cc = p.dim === 'count' && String(name).match(COUNT_OF_PACKS_RE);
+      if (cc && +cc[2] === p.base && +cc[1] > 1 && +cc[1] * +cc[2] <= 500) return { ...p, base: +cc[1] * +cc[2], amount: +cc[1] * +cc[2], unit: 'ct' };
+      return p.countAfter ? packIfContainers(p, name) : p;
+    }
   }
   const m = String(name).match(new RegExp(`(\\d+\\s*(?:x|pk|pack|ct)?\\s*(?:\\/|x|-)?\\s*)?${NUM}\\s*(${UNIT_PATTERN})\\b`, 'i'));
   if (m) return parseSize(m[0]);
@@ -337,9 +358,16 @@ export function sizeFromName(name) {
 }
 
 /** "Yogurt Cups, 5.3 oz, 12 Count": the name counts containers, so the count-after reading is N of M. */
+/** The name counts containers ("Cups", "Cans", "Pouches"): each holds the stated size. */
+export const namesContainers = (name) => CONTAINER_IN_NAME_RE.test(String(name || ''));
+
 function packIfContainers(p, name) {
   if (!CONTAINER_IN_NAME_RE.test(String(name))) return p;
   const { n, unitBase } = p.countAfter;
+  // Sticks of butter are pieces of the stated weight, a quarter pound each: Meijer's "Salted Butter
+  // Sticks 8 oz 2 ct" is one half-pound pack, and read as two it was $2.69/lb, the runner-up named
+  // in four cities' butter claims (19 Nov 2026). "4 oz, 4 ct" is still four sticks.
+  if (/\bbutter\b/i.test(name) && /\bsticks\b/i.test(name) && Math.abs(unitBase / n - 4) <= 0.08) return p;
   return { ...p, base: round(n * unitBase), count: n, countAfter: undefined };
 }
 
@@ -492,12 +520,29 @@ export function looksLiquid(name) {
 // 'butter' does not fire on "Butter Chicken": that is a curry, not a dairy fat. Kettle & Fire's
 // "Organic Butter Chicken Bone Broth" and "Organic Classic Chicken Bone Broth", both 16.9 OZ at the
 // same $7.99, landed in different dimensions because of it and so could never be compared.
-const SOLID_RE = /\b(gelatin|jell-?o|bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk)\b/i;
+//
+// A cut of meat named after a drink is still meat: Jennie-O's "Tequila Lime Flavor Turkey Breast
+// Tenderloin, 24 OZ" read as 24 fl oz and left the per-pound comparison (Fred Meyer, the Thanksgiving
+// core list of 18 Nov 2026). Same for "Milk Chocolate Pecan Patties" and Oscar Mayer's "Ham & Water
+// Product ... Lunch Meat". The only meat rows among 283,088 cached that were read as liquids.
+// Nor is gravy, stuffing or bread. makeProduct reads the aisle too, and Trader Joe's files its
+// "Turkey Gravy", a 17.6 oz carton at $1.69, under "Dressing & Seasoning": read as 17.6 fl oz it had
+// no price per pound, so Trader Joe's had no gravy in 30 of 32 ZIPs and would have won 22 of them.
+// "Franz Milk Rolls" and "Olivia's Croutons Cornbread Dressing" the same (19 Nov 2026). These words
+// (BREAD_GRAVY_RE) give way when the product's own name says it is poured: "Spring Roll Sweet Chili
+// Sauce", "Home Style Gravy Sauce" (a tomato sauce), "Cinnamon Roll Coffee Creamer". The name, not the
+// aisle: an aisle called "Gravies & Sauces" does not make a jar of gravy a sauce.
+const SOLID_RE = /\b(gelatin|jell-?o|bites?|bars?|cookies?|candy|chips?|cheese|crackers?|cereal|powder|mix|bread|cake|pastr(?:y|ies)|snacks?|nuts?|jerky|butter(?!\s+chicken)|beans?|noodles?|pasta|rice|flakes|granola|pretzels?|popcorn|gummies|grounds?|whole bean|k-cups?|pods?|tea bags?|frozen|yogurt|yoghurt|skyr|cottage|ricotta|curds?|oats?|oatmeal|flour|sugar|cocoa|corn|pumpkin|tuna|salmon|soups?|soup mix|condensed|kernel|cranberr(?:y|ies)|jellied|yams?|sweet potato(?:es)?|pie filling|muffins?|donuts?|doughnuts?|instant|(?<!non-)sticks?|stick packs?|packets?|(?<!from\s)concentrate|cubes?|bouillon|granules?|pantry pack|dry milk|tenderloins?|patt(?:y|ies)|lunch ?meat)\b/i;
 
-export function coerceLiquid(size, name) {
+const BREAD_GRAVY_RE = /\b(?:grav(?:y|ies)|stuffing|croutons?|cornbread|rolls?|buns?)\b/i;
+const POURED_RE = /\b(?:sauces?|creamers?|syrups?)\b/i;
+
+/** `name` is the label and aisle together; `ownName` the product's own name where they differ. */
+export function coerceLiquid(size, name, ownName = name) {
   if (!size || size.dim !== 'weight' || size.perWeight) return size;
   if (!['oz', 'ounce', 'ounces', 'onz'].includes(size.unit)) return size;
   if (!looksLiquid(name) || SOLID_RE.test(String(name || ''))) return size;
+  if (BREAD_GRAVY_RE.test(String(name || '')) && !POURED_RE.test(String(ownName || ''))) return size;
   return { ...size, dim: 'volume', unit: 'floz', liquidCoerced: true };
 }
 
@@ -525,8 +570,19 @@ const PRODUCE_LB = [
   // Jalapenos before peppers: "Jalapeno Pepper" took the bell pepper's 0.4 lb, 8x a jalapeno.
   [/\bjalapenos?\b/, 0.05], [/\b(bell )?peppers?\b/, 0.4], [/\bcucumbers?\b/, 0.6], [/\bzucchini\b/, 0.5], [/\byellow squash\b/, 0.5], [/\beggplants?\b/, 1.0],
   [/\broma tomato(es)?\b/, 0.15], [/\btomato(es)?\b/, 0.33], [/\bsweet potato(es)?\b|\byams?\b/, 0.6], [/\bpotato(es)?\b/, 0.55],
+  // A jumbo onion is nearer a pound: the retailers' own estimates in the QA cache put it at 0.9
+  // (King Soopers) to 1.07 lb (Harris Teeter). At half a pound Trader Joe's "Jumbo Yellow Onions",
+  // 99c each, read $1.98/lb and ranked last in 30 ZIPs; it is Seattle's best (19 Nov 2026).
+  [/\bjumbo (?:[a-z]+ )?onions?\b/, 0.9],
   [/\bonions?\b/, 0.5], [/\bgarlic\b/, 0.12], [/\bartichokes?\b/, 0.5], [/\bcorn\b/, 0.6],
 ];
+// What one loose piece can be. A name's count of 40 or more on loose produce is a carton grade
+// (potatoes run 40 to 120 to the 50 lb carton): Haggen's "Russet Potato 80 ct", $7.99, was 44 lb of
+// potatoes at $0.18/lb and Seattle's best russets. And a "1 each" row costing more than a piece of
+// produce does is a bag: Sam's Club's "Sweet Potato (Yam)" at $5.36-$8.85 read $9-15/lb in 23 ZIPs
+// and pulled the median the others are judged by (every cached answer re-scored, 19 Nov 2026).
+export const PRODUCE_GRADE_COUNT = 40;
+export const PRODUCE_PIECE_MAX = 5;
 
 /**
  * Words that mean the produce word in the name is not one loose piece of produce.
@@ -542,7 +598,11 @@ const PRODUCE_LB = [
 // at an estimated $0.38/lb, the bag priced as one onion (the Thanksgiving core list).
 // 'jack'/'cheese': "Pepper Jack Cheese Slices" matched the bell-pepper weight, so ten slices were
 // four pounds of peppers and the pack read $0.60/lb (the state x holiday audit).
-const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag(?:ged|s)?|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder)\b/;
+const NOT_ONE_PIECE_RE = /\b(juice|bread|chips?|sauce|dried|frozen|canned|jar|salsa|guacamole|oil|mix|pie|cake|smoothie|yogurt|candy|bar|powder|seasoning|soup|salad kit|noodles?|vermicelli|ramen|pasta|mochi|ice cream|dessert|cookies?|crackers?|syrup|bag(?:ged|s)?|case|box|carton|crate|tray|pack|instant|cut|sliced|diced|wedges?|fries|tots|puree|filling|tablets?|capsules?|caplets?|softgels?|pills?|gumm(?:y|ies)|mg|mcg|cheese|jack|slices|pepperoni|salami|sausage|jerky|flakes|crushed|ground|powder|rolls?|buns?|bagels?|fried|crispy|rings?|pickled|chopper)\b/;
+// 'fried'/'crispy'/'rolls': Fred Meyer's "Simple Truth Organic Crispy French Fried Onions", a 6 oz can
+// stated "1 each", was weighed as one fresh onion and was Portland's and Boise's best french fried
+// onions at an estimated $7.98/lb; "Avocado Rolls", "Garlic Dinner Rolls" and "White Onion Dinner
+// Rolls" were weighed as avocados, garlic and onions (every cached answer re-scored, 19 Nov 2026).
 
 export function produceWeightLb(name) {
   const n = String(name || '').toLowerCase();
@@ -616,6 +676,16 @@ export function weighedWholePumpkin(name, size) {
  */
 export const TYPICAL_TURKEY_LB = 14;
 export const TURKEY_EACH_MIN = 10;
+// The least a package of whole turkey, or of turkey breast, works out to per pound: the cheapest
+// either has sold for by the pound in any run (whole birds 37c/lb in the first four-ZIP sweep,
+// bone-in breast 99c/lb at ALDI in Atlanta). A package that works out below it is a price per pound
+// over the piece's weight (turkeyPerLbConflict in src/normalize.js): the whole birds it catches work
+// out at 2-20c/lb, the breasts at 25-60c/lb. Set at the cheapest real price, not under it: the
+// Butterball breast that Dillons lists at $2.99 is $3.99 at Smith's (67c/lb over its 6 lb) and would
+// pass a lower floor at $4.99. A real package stands: Fry's "Kroger Frozen Whole Turkey", 14 lb at
+// $9.66, is an exact 69c/lb, a 12 lb bird at $4.44 is 37c/lb, a 6 lb breast at $5.94 is 99c/lb.
+export const TURKEY_WHOLE_PACKAGE_LB_MIN = 0.37;
+export const TURKEY_BREAST_PACKAGE_LB_MIN = 0.99;
 const TURKEY_RE = /\bturkeys?\b/;
 const WHOLE_BIRD_RE = /\bwhole\b|\b(?:young|hen|tom)\s+turkeys?\b/;
 const NOT_A_WHOLE_TURKEY_RE = /\b(?:breasts?|ground|deli|drums?(?:ticks?)?|wings?|thighs?|necks?|legs?|tenderloins?|cutlets?|roast|boneless|sliced|slices|lunch(?:meat)?|bacon|sausages?|jerky|sticks?|burgers?|patt(?:y|ies)|pastrami|ham|gravy|stuffing|stock|broth|brine|bags?|baster|pans?|roasters?|injector|thermometer|kit|rack|lifters?|meals?|dinners?|pot pie|pies?|sandwich(?:es)?|wraps?|dogs?|cats?|pets?|recipe|pate|food|treats?|chews?|kibble|toy|decorations?|candles?|cards?|books?|chocolate|candy|cookies?|cakes?|giblets?|half|halves|pieces?|chili|meatballs?|franks?|hot dogs?|kielbasa|loaf|salami|bologna)\b/;

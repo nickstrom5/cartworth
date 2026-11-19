@@ -118,7 +118,9 @@ struct ProductDetailView: View {
                     if let bad = product.implausible {
                         InfoBanner(
                             kind: .bad,
-                            text: "This works out \(Units.trimNum(bad.ratio))× the typical unit price for this search. Usually that means the listing's size is wrong, for example a multi-pack priced as one unit. Check the label before trusting it."
+                            text: bad.placeholder == true
+                                ? "A price this low per pound is a placeholder the store has not replaced with its real price. It is never counted as the best price."
+                                : "This works out \(Units.trimNum(bad.ratio))× the typical unit price for this search. Usually that means the listing's size is wrong, for example a multi-pack priced as one unit. Check the label before trusting it."
                         )
                     }
                     // Where this number came from, in full. This used to call an Instacart price

@@ -27,11 +27,21 @@ enum Compare {
     }
 
     /// Dimension most relevant items can be compared in.
+    ///
+    /// The tally is of items, so one store with a long list can outvote the rest: C-Town's Hartford
+    /// store returned 19 turkey breasts stated only as "each", which made "turkey breast" a
+    /// comparison by count that priced two stores and left ALDI's $1.99/lb out (18 Nov 2026). When
+    /// another dimension gives at least twice as many stores a unit price that is not an estimate,
+    /// that dimension is the answer. Port of `dominantDim` in shared/compare.js.
     static func dominantDim(_ items: [Product]) -> Dim? {
         var counts: [Dim: Int] = [:]
+        var stores: [Dim: Set<String>] = [:]
         for p in items {
             if let d = p.dim, let u = p.unitPrice(d), !u.est { counts[d, default: 0] += 2 }
-            for d in p.dims { counts[d, default: 0] += 1 }
+            for d in p.dims {
+                counts[d, default: 0] += 1
+                if let u = p.unitPrice(d), !u.est { stores[d, default: []].insert(p.storeId) }
+            }
         }
         // Ties go weight, then volume, then count — the order shared/compare.js's stable sort
         // resolves them in. `Dictionary.max` picks among equal values in hash order, which Swift
@@ -43,7 +53,14 @@ enum Compare {
             let c = counts[d, default: 0]
             if c > 0 && (best == nil || c > best!.1) { best = (d, c) }
         }
-        return best?.0
+        guard let chosen = best?.0 else { return nil }
+        // The same order breaks ties here, so the widest dimension is the first of the largest.
+        var widest = Dim.weight
+        for d in [Dim.volume, .count] where (stores[d]?.count ?? 0) > (stores[widest]?.count ?? 0) { widest = d }
+        // At least three stores as well as twice as many: two stray rows at two stores (a wine and a
+        // protein drink for "pumpkin pie") must not outvote one store's real products.
+        let wide = stores[widest]?.count ?? 0
+        return wide >= 3 && wide >= 2 * max(1, stores[chosen]?.count ?? 0) ? widest : chosen
     }
 
     static func suggestUnit(_ dim: Dim, items: [Product], query: String) -> DisplayUnit {
@@ -124,6 +141,19 @@ enum Compare {
         }
     }
 
+    /// A price per pound that is a placeholder, not a price: Smith's "Butterball Fresh Premium Young
+    /// Turkey" at $0.10/lb was Albuquerque's best whole turkey, "90% less than the next-best store"
+    /// (18 Nov 2026). Of 35,389 cached rows sold by the pound, the three at 10c or less are all wrong
+    /// and the next (25c onions) is real. Port of PER_LB_PLACEHOLDER in shared/compare.js.
+    static let perLbPlaceholder = 0.1
+    /// The price is the one the comparison will use (a card price counts), and a package of a pound or
+    /// more at a dime is the same thing said as "1 lb".
+    static func placeholderPerLb(_ p: Product, _ prefs: PricePrefs = PricePrefs()) -> Bool {
+        let price = effectivePrice(p, prefs)
+        guard price > 0, price <= perLbPlaceholder + 1e-9 else { return false }
+        return p.soldBy == .lb || (p.dim == .weight && (p.base ?? 0) >= 16)
+    }
+
     @discardableResult
     static func flagImplausible(_ items: inout [Product], dim: Dim, prefs: PricePrefs = PricePrefs()) -> [Product] {
         // The count dimension counts PACKAGES, so its median mixes a 50-sheet box of foil with a
@@ -132,8 +162,18 @@ enum Compare {
         // wrong". Telling a shopper a correct price looks wrong is the mirror image of showing a
         // wrong one.
         let priced = items.enumerated().compactMap { idx, p -> (Int, Double)? in
-            guard let u = unitFor(p, dim: dim, prefs: prefs), u.perBase.isFinite, u.perBase > 0 else { return nil }
+            guard !placeholderPerLb(p, prefs), let u = unitFor(p, dim: dim, prefs: prefs), u.perBase.isFinite, u.perBase > 0 else { return nil }
             return (idx, u.perBase)
+        }
+        // Placeholders are flagged whatever the dimension and however few rows there are, and are
+        // kept out of the median the others are judged by.
+        if items.contains(where: { placeholderPerLb($0, prefs) }) {
+            let typical = medianOf(priced.map(\.1)) ?? 0
+            for idx in items.indices where placeholderPerLb(items[idx], prefs) {
+                let u = unitFor(items[idx], dim: dim, prefs: prefs)
+                let ratio = typical > 0 && u != nil ? (u!.perBase / typical * 10).rounded() / 10 : 0
+                items[idx].implausible = ImplausiblePrice(ratio: ratio, median: typical, direction: "low", placeholder: true)
+            }
         }
         if dim == .count {
             flagSizeOutliers(&items, priced: priced, dim: dim)

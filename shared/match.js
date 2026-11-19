@@ -52,6 +52,23 @@ const PHRASES = [
   [/\bpernil\b/g, 'pork shoulder'],
   [/\b(?:japchae|jap chae|dangmyeon|dang myun)\b/g, 'glass noodles'],
   [/(?<!\b(?:mountain|purple|chinese|japanese|white|african|true|ube) )\byams?\b/g, 'sweet potatoes'],
+  // From re-scoring every cached Thanksgiving answer (18-19 Nov 2026).
+  // "Bone In" with no hyphen: split, 'bone' is a pet-aisle trap and "Jennie-O Bone In Turkey Breast"
+  // scored 0.12; Stater Bros' $1.99/lb breast tied Los Angeles' winner and was hidden.
+  [/\bbone[- ]in\b/g, 'bonein'], [/\bskin[- ]on\b/g, 'skinon'],
+  // Label phrases that describe the product and are not another one: Kroger's "Tender and Juicy
+  // Whole Frozen Turkey" ($0.99/lb, hidden at 16 Kroger banners by 'tender'), Jewel's "Broth Basted
+  // Turkey", Trader Joe's "Pecan Pieces Dry Toasted" ('dry' is a milk base). ("Vitamin D" on a milk
+  // label is forgiven in BENIGN_BEFORE, so the words still answer a search for vitamins.)
+  [/\btender (?:and |n )?juicy\b/g, 'juicy'], [/\bbroth[- ]basted\b/g, 'basted'],
+  [/\bdry[- ]toasted\b/g, 'toasted'],
+  // The trade's other names for the same can or bag: Ocean Spray's catalogue says "Whole Cranberry
+  // Sauce" (69 store rows missed "whole berry cranberry sauce"), French's own product is "Crispy
+  // Fried Onions" (the brand alone supplied 'french'; every store brand was hidden), and
+  // brown-and-serve rolls are dinner rolls.
+  [/\bwhole cranberry sauce\b/g, 'whole berry cranberry sauce'], [/\bcranberry sauce whole\b(?! berr)/g, 'whole berry cranberry sauce'],
+  [/\bcrispy fried onions?\b|\bfried onions? crispy\b/g, 'french fried onion'],
+  [/\bbrown (?:and |n )?serve rolls?\b/g, 'brown and serve dinner roll'],
 ];
 
 // Words that turn a product into something else when they FOLLOW the searched noun:
@@ -74,6 +91,11 @@ const TRAPS = new Set([
   // "corn"); and filled buns that are not bread buns ("Manapua" won Hawaii's "buns").
   'tortillas', 'manapua', 'bao', 'siopao', 'fork', 'spoon', 'cutlery', 'drop', 'lozenge',
   'stew', 'hummus', 'pesto', 'salsa', 'guacamole', 'dressing', 'concentrate', 'concentrated', 'substitute', 'flavoring',
+  // Sam's Club's "Kinder's Garlic Butter Restaurant-Style Crispy Tots" (Frozen Tater Tots) was
+  // Cheyenne's best "butter", and its "Bauducco All Butter Panettone" its butter in four more cities;
+  // Vallarta's "Bravo Pavo Especias" (a spice blend filed under Turkey Breast) was its turkey breast
+  // (every cached answer re-scored, 19 Nov 2026).
+  'tot', 'panettone', 'especias',
   // Head nouns that make the searched word a modifier: "butter popcorn", "butter shrimp",
   // "all butter danish". Found in live Sam's Club and Costco results, where each one produced an
   // absurd per-pound price that then set the scale of the per-store chart.
@@ -202,7 +224,21 @@ const BENIGN_AFTER = { cream: new Set(['sweet', 'whipping']), mix: new Set(['spr
 // Bread flour is flour: 'bread' is a trap so that "banana bread" is not bananas.
 // "Pecan Smoked Andouille" is smoked over pecan wood (Rouses, New Orleans).
 // PET is a brand of evaporated milk, not pet food (the Thanksgiving core list).
-const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour']), pecan: new Set(['smoked', 'wood']), pet: new Set(['evaporated']) };
+// "Vitamin D" (or "Vitamins A & D") on a label is a fortification, not the supplement aisle:
+// "Carnation Evaporated Milk Vitamin D" and every "Vitamin D Whole Milk" scored 0.40 (19 Nov 2026).
+// Roll butter is butter in a roll ("Minerva Dairy Amish Roll Butter"), not a bread roll.
+const BENIGN_BEFORE = { oyster: new Set(['mushroom']), bread: new Set(['flour']), pecan: new Set(['smoked', 'wood']), pet: new Set(['evaporated']), vitamin: new Set(['d', 'a']), roll: new Set(['butter']) };
+// ...and it does not come between a base and its noun: "Weis Quality Evaporated Vitamin D Milk" is
+// evaporated milk, not milk. The index of the word before the label, or before the noun.
+function beforeLabel(words, headIdx) {
+  let i = headIdx - 1;
+  if (words[i] === 'added') i -= 1;
+  if (words[i] !== 'd') return headIdx - 1;
+  i -= 1;
+  if (words[i] === 'and') i -= 1;
+  if (words[i] === 'a') i -= 1;
+  return words[i] === 'vitamin' ? i - 1 : headIdx - 1;
+}
 
 // Named cheeses, as traps for the dairy searches only. Trader Joe's "Raw Milk Cave Aged Le Gruyère",
 // $19.99/lb and without the word "cheese", scored 0.81 for "milk" and was named on the milk card
@@ -212,7 +248,11 @@ const CHEESE_NAMES = new Set(['gruyere', 'cheddar', 'mozzarella', 'parmesan', 'p
   'camembert', 'gouda', 'havarti', 'fontina', 'provolone', 'muenster', 'colby', 'monterey', 'swiss', 'emmental', 'emmentaler', 'comte',
   'jarlsberg', 'manchego', 'feta', 'chevre', 'gorgonzola', 'roquefort', 'stilton', 'mascarpone', 'burrata', 'halloumi', 'paneer',
   'raclette', 'cotija', 'queso', 'fromage', 'kase', 'cheesecake']);
-const HEAD_TRAPS = { milk: CHEESE_NAMES, cream: CHEESE_NAMES, butter: CHEESE_NAMES };
+// Gravy granules are a dry mix, like the 'mix' the general list refuses: Grocery Outlet's "Bisto Gravy
+// Granules for Beef" (6 oz, aisle Gravy Mix) was Portland's and Washington's best "gravy", by weight
+// against jars (19 Nov 2026). For gravy only: as a general trap it took onion granules out of
+// "onions", which moved a median that a size-outlier flag in Oklahoma City rested on.
+const HEAD_TRAPS = { milk: CHEESE_NAMES, cream: CHEESE_NAMES, butter: CHEESE_NAMES, gravy: new Set(['granule']) };
 
 // Plant bases in front of the noun make a different product: "almond milk", "coconut milk", "oat creamer".
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
@@ -252,7 +292,7 @@ const QUERY_ALLOWS = Object.fromEntries(Object.entries({
   sirloin: ANIMALS, wing: ANIMALS, dog: [...ANIMALS, 'frank'], frank: ANIMALS, brat: [...ANIMALS, 'beer'], sausage: ANIMALS,
   turkey: ['frozen'], ham: ['honey', 'spiral', 'smoked', 'pork', 'glazed', 'cooked'],
   bun: ['hot', 'dog', 'hamburger', 'seed', 'sesame'], croissant: ['butter', 'mini'], flower: ['bouquet', 'cut', 'mixed'],
-  pumpkin: ['pie', 'carving'], stuffing: ['mix', 'turkey', 'chicken', 'cornbread', 'herb', 'seasoned'],
+  pumpkin: ['pie', 'carving'], stuffing: ['mix', 'turkey', 'chicken', 'cornbread', 'herb', 'seasoned', 'broth', 'flavor', 'flavored'],
   candy: ['snack', 'halloween', 'chocolate', 'assortment'], wrapper: ['wrap', 'round', 'frozen'], chip: ['potato', 'tortilla', 'kettle'],
   tortilla: ['taco', 'soft'], tortillas: ['taco', 'soft'], chocolate: ['bar', 'dark'], pea: ['dry', 'dried'], peas: ['dry', 'dried'], filling: ['mix'],
   watermelon: ['mini', 'seedless', 'personal'], bar: ['oat', 'honey'], bacon: ['smoked', 'hardwood', 'pork'],
@@ -262,11 +302,16 @@ const QUERY_ALLOWS = Object.fromEntries(Object.entries({
   chitterling: ['pork', 'frozen', 'cleaned'], andouille: ['sausage', 'pork', 'chicken', 'smoked', 'cajun'],
   // Lumpia wrappers, tamales and pie crusts are sold frozen: Seafood City's "Pamana Frozen Lumpia
   // Wrapper" was refused in Houston.
-  tamale: ['pork', 'chicken', 'beef', 'cheese', 'bean', 'sweet', 'red', 'green', 'frozen'], crust: ['frozen', 'pastry'], lech: ['cake'], flan: ['caramel'],
+  tamale: ['pork', 'chicken', 'beef', 'cheese', 'bean', 'sweet', 'red', 'green', 'frozen'], crust: ['frozen', 'pastry', 'graham', 'cracker', 'butter', 'buttery'], lech: ['cake'], flan: ['caramel'],
   macaroni: ['dinner'], glass: ['sweet', 'potato', 'starch'],
   // Turkey gravy is gravy, a condensed soup is the soup (Campbell's Cream of Mushroom is sold condensed;
   // 'condensed' is a plant-base word for milk) and a pie crust is pastry. The Thanksgiving core list.
-  gravy: ['turkey', 'chicken', 'beef', 'pork'], soup: ['condensed'],
+  gravy: ['turkey', 'chicken', 'beef', 'pork', 'flavor', 'flavored'], soup: ['condensed'],
+  // The cheapest row is the store brand, and its label describes it: ALDI's "Real Chicken Broth
+  // Stuffing Mix" (78c, hidden in all 27 ALDI answers; ALDI wins stuffing mix in 16 of them),
+  // Kroger's "Chicken Flavored Stuffing Mix", "Beef Flavored" gravy at Food Lion and Walmart, a
+  // "Graham Cracker" or "All Butter" pie crust, Costco's "All Butter Dinner Rolls".
+  roll: ['butter', 'buttery'],
 }).map(([k, v]) => [k, new Set(v)]));
 // Products that normally come in flavours, where a flavour word is the variety, not a different food.
 // A holiday roast is named for its flavour: Whole Foods' "Hazelnut Cranberry Plant Based Roast"; so are
@@ -299,7 +344,13 @@ const HEAD_COMPOUNDS = ['peanut butter cup', 'bacon bit', 'corn flake', 'corn to
   'onion ring', 'celery soda', 'marshmallow fluff', 'marshmallow creme', 'marshmallow cream', 'marshmallow chick', 'marshmallow bunny',
   // Turkey is a hard red wheat: Costco's "Lehi Roller Mills Turkey Flour, 25 lbs" (Bread Flour) answered
   // "turkey" in Salt Lake City at $0.64/lb, under every bird (the Thanksgiving core list, 18 Nov 2026).
-  'turkey flour'];
+  'turkey flour',
+  // Celery cabbage is napa cabbage: Safeway's (aisle Napa Cabbage) was Wilmington's runner-up for
+  // "celery", named in the claim (every cached answer re-scored, 19 Nov 2026).
+  'celery cabbage', 'celery flake',
+  // Amish roll butter is butter: with 'butter' allowed on a roll (QUERY_ALLOWS) "Minerva Dairy Amish
+  // Roll Butter" answered "rolls" (the review of this change, 19 Nov 2026).
+  'roll butter'];
 const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury egg', 'chocolate egg', 'plastic egg', 'mini egg',
   'candy corn', 'corned beef brisket', 'cottage cheese', 'salisbury steak',
   // Scallions are not onions: ShopRite's "Green Onions (Scallions)" answered "onions" (Thanksgiving, NYC).
@@ -316,7 +367,7 @@ const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury
   'apple butter', 'pumpkin butter', 'shea butter', 'cocoa butter', 'not butter',
   // Nut and seed butters. A plant base is no longer a penalty for a vegan search, so "vegan butter"
   // needs these said outright (the Thanksgiving food styles run).
-  'almond butter', 'cashew butter', 'coconut butter', 'sunflower butter', 'seed butter', 'cookie butter',
+  'almond butter', 'cashew butter', 'coconut butter', 'sunflower butter', 'seed butter', 'cookie butter', 'fig butter',
   // A chuck cross rib roast is shoulder, not the rib: Albertsons' "Boneless Choice Beef Chuck Cross Rib
   // Roast" was El Paso's prime rib (the Thanksgiving food styles run).
   'cross rib'];
@@ -552,18 +603,21 @@ function wholeBirdImplied(nameNorm) {
 // costs $2-3 (the Thanksgiving core list, 3 Nov).
 const FROZEN_RE = /\bfrozen\b/;
 const TURKEY_DISH_AISLE_RE = /\b(?:prepared|sandwich(?:es)?|wraps?|meals?|entrees?|dinners?|salads?|seasonings?|spices?|herbs?)\b/;
-const PASTRY_CUP_RE = /\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini)\b/;
+// ...nor turnover and empanada discs: Price Rite's "Kikuet Plantillas Turnover Shells" (Frozen Pie
+// Crusts) was Providence's best pie crust and the runner-up behind Hartford's "50% less" claim.
+const PASTRY_CUP_RE = /\b(?:phyllo|filo|fillo|tart(?:let)?s?|mini|turnovers?|empanadas?|plantillas?|discos?|croustades?|dessert shells?)\b/;
 // "Candies" too: Bashas' "Durham-Ellis Pecan Co. Orange Slices" (Gummy Candies) was Phoenix's best
 // "pecans" at 0.72, the nut word from the maker's name (the Thanksgiving core list, 13 Nov 2026).
-const NUT_DISH_AISLE_RE = /\b(?:cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies))\b/;
+const NUT_DISH_AISLE_RE = /\b(?:cakes?|fruit ?cakes?|bakery|desserts?|pastr(?:y|ies)|pies?|cookies?|biscotti|cand(?:y|ies)|confection(?:s|ery)?|gumm(?:y|ies)|trail mix(?:es)?|granolas?|fish|seafood)\b/;
 const IN_SHELL_RE = /\bin[- ]?(?:the )?shells?\b/;
 const NUT_HEAD_RE = /^(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut)$/;
 // A baked good or another food made with the nut, by its name when the aisle does not say: Bravo's
 // "Lady Linda Pecan Twirls" (6 oz, 99¢) was Queens' best "pecans" and Whole Foods' "Organic Raisin
 // Pecan Sliced" (bread) Seattle's (the Thanksgiving core list, 14 Nov 2026).
-const NUT_FORM_RE = /\b(?:twirls?|danish|breads?|loaf|loaves|rolls?|buns?|muffins?|scones?|cookies?|sandies|bars?|clusters?|turtles?|brittle|pralines?|pies?|tarts?|cakes?|raisins?|pastr(?:y|ies)|coffee ?cake|granola)\b/;
+const NUT_FORM_RE = /\b(?:twirls?|danish|breads?|loaf|loaves|rolls?|buns?|muffins?|scones?|cookies?|sandies|bars?|clusters?|turtles?|brittle|pralines?|pies?|tarts?|cakes?|raisins?|pastr(?:y|ies)|coffee ?cake|granola|crostatas?|divinity|(?:pecan|walnut|almond|cashew|peanut|pistachio|hazelnut|macadamia|nut) delights?|biscotti|fruit ?cakes?|crusted|encrusted|cand(?:y|ies)|nougat)\b/;
 const SNACK_NUT_RE = /\b(?:candied|glazed|sweet|spicy|honey|cinnamon|praline|chocolate|maple|caramel|seasoned|toffee|sugared|frosted)\b/;
 const PIES_AISLE_RE = /^(?!.*\b(?:crusts?|dough|shells?)\b).*\bpies\b/;
+const BAKERY_PIE_NAME_RE = /\bpie,\s*pumpkin\b|\b\d+(?:\.\d+)?\s*(?:in\b|inch(?:es)?\b|")/i;
 // A dish named as a flavour. "Pumpkin pie spice" is kept out of "pumpkin pie" by the 'spice' trap;
 // the same is true of a caramel apple: Walmart's "Tootsie Pops Assorted Caramel Apple Pops Variety
 // Pack", 13.64 oz, was the best caramel apples in Anchorage and Honolulu (the live rerun, 26 Oct).
@@ -726,6 +780,17 @@ export function relevance(query, product, opts = {}) {
     if (before.some((w) => w === 'with' || w === 'made' || w === 'from' || w === 'in') && words.slice(0, headIdx).some((w) => TRAPS.has(w) && !qset.has(w))) mult *= 0.3;
   }
   const allowed = new Set(qt.flatMap((q) => [...(QUERY_ALLOWS[q] || [])]));
+  // A word of the maker's name describes the maker, when the store has filed the product under
+  // exactly what was searched: every "Stew Leonard's ..." product scored 0.40 on 'stew', so the
+  // chain had no ranked turkey, butter or heavy cream; "Hotel Bar" and "Danish Creamery" butter,
+  // "Wonder Bread" dinner rolls, "Turkey Hill" and "Fry's" milk, "Le Sauce & Co." gravy and "Happy
+  // Tot" baby food the same way (every cached answer re-scored, and the review of this change, 19
+  // Nov 2026). Only with the aisle's word for it: a maker's name often says what it makes ("Twrl
+  // Milk Tea", "Kellogg's Rice Krispies Treats"), and then the word is the product. Not when the
+  // aisle names a form that was not asked for ("Badia Spices Minced Onion" in Dried Onion), and
+  // never a base: "Meyenberg Goat Milk" is goat milk.
+  const plainAisle = catCoversQuery && ![...catTok].some((c) => MILD.has(c) && !STORAGE_STATE.has(c) && !qset.has(c));
+  const makersWord = (w) => plainAisle && fromBrandOnly(w) && !ALT_BASE.has(w);
   // ...whatever the product's own words: Tofurky's "Plant-Based Roast & Gravy" scored 0.08 for "tofurky".
   const brandQuery = wholeBrand || (VEGAN_BRAND_RE.test(qDietNorm) && VEGAN_BRAND_RE.test(nameNorm));
   if (brandQuery) { /* the name describes the brand's product */ } else if (headIdx >= 0) {
@@ -737,6 +802,7 @@ export function relevance(query, product, opts = {}) {
       if (i === headIdx) continue;
       const w = words[i];
       if (qset.has(w) || SOFT.has(w) || allowed.has(w)) continue;
+      if (makersWord(w)) continue;
       if (wantsDiet && (ALT_BASE.has(w) || DIET_MEETS[w] || DIET_COMPANIONS.has(w))) continue; // "Plant Butter" is the vegan butter
       if (words[i - 1] === 'in' || words[i - 1] === 'with' || words[i - 2] === 'in') continue; // "tuna in oil", "with sauce"
       if (BENIGN_AFTER[w]?.has(words[i - 1])) continue; // "sweet cream butter" is plain butter
@@ -745,14 +811,14 @@ export function relevance(query, product, opts = {}) {
       // A base right before a dairy noun names another product: "Rouses Coconut Milk" (a 13.5 oz
       // can) and "Carnation Evaporated Milk" scored 0.51 for "milk", under the 0.55 cut for results
       // but over the weekly-ad strip's 0.4, so they were shown as milk deals (QA, 9 Nov 2026).
-      else if (ALT_BASE.has(w) && i === headIdx - 1 && DAIRY_HEADS.has(head)) strong += 1;
+      else if (ALT_BASE.has(w) && i === beforeLabel(words, headIdx) && DAIRY_HEADS.has(head)) strong += 1;
     }
     let alt = 0;
     let mild = 0;
     let flavor = 0;
     for (let i = 0; i < words.length; i++) {
       const w = words[i];
-      if (qset.has(w) || allowed.has(w) || (wantsDiet && ALT_BASE.has(w))) continue;
+      if (qset.has(w) || allowed.has(w) || (wantsDiet && ALT_BASE.has(w)) || makersWord(w)) continue;
       // Position-independent: "Frozen Orange Juice" and "Orange Juice Frozen" are the same
       // product and must score the same. Anchoring these to the head noun meant word order alone
       // changed the score by a factor of two.
@@ -831,7 +897,13 @@ export function relevance(query, product, opts = {}) {
   if (wholePumpkinQuery && product.soldBy !== 'lb' && product.dim === 'weight' && product.base > 0 && product.base < CANNED_PUMPKIN_MAX_OZ) mult *= 0.2;
   // A pie pumpkin is the produce, not the pie: Jewel's "Pumpkin Pie", sold per lb, was Chicago's best
   // "pumpkin pie" (Halloween QA, 24 Oct), and a "Pie Pumpkin" scored 0.80 against it.
-  if (hasPhrase(qt, ['pumpkin', 'pie']) && (product.soldBy === 'lb' || (hasPhrase(words, ['pie', 'pumpkin']) && !hasPhrase(words, ['pumpkin', 'pie'])))) mult *= 0.2;
+  // ...unless the bakery wrote its catalogue name backwards: "Publix Bakery Pie, Pumpkin" in the
+  // Pumpkin Pie aisle scored 0.18, so Publix had no pumpkin pie in Atlanta (19 Nov 2026). The comma
+  // or the pie's width says so, with the aisle; the aisle alone does not, because stores file the
+  // squash there too ("PIE PUMPKIN" at Cermak, "Organic Pie Pumpkin" at Woodman's) and a can of
+  // "Golden Pie Pumpkin" under Pie Fillings.
+  const bakeryPie = catTok.has('pie') && !catTok.has('filling') && BAKERY_PIE_NAME_RE.test(product.name || '');
+  if (hasPhrase(qt, ['pumpkin', 'pie']) && (product.soldBy === 'lb' || (hasPhrase(words, ['pie', 'pumpkin']) && !hasPhrase(words, ['pumpkin', 'pie']) && !bakeryPie))) mult *= 0.2;
   if (qt.includes('turkey') && otherTurkeyPart(query, nameNorm, product.category)) mult *= 0.2;
   if (wholeBirdForCut(query, nameNorm)) mult *= 0.2;
   // ...nor a dish made of it: The Fresh Market's "The Turkey Trot (Half Panini)" and Sprouts' "Turkey
@@ -847,7 +919,9 @@ export function relevance(query, product, opts = {}) {
   if (head === 'crust' && (words.lastIndexOf('pie') > Math.max(...['crust', 'shell', 'dough'].map((w) => words.lastIndexOf(w))) || PIES_AISLE_RE.test(normalize(product.category || '')))) mult *= 0.2;
   // Cream is sold by fat: BJ's "Wellsley Farms Light Cream" and Stew Leonard's "Byrne Dairy Ultra
   // Pasteurized Light Cream", both filed under Heavy Creams, were Newark's two best "heavy cream".
-  { const grade = (s) => (/\bheavy\b/.test(s) ? 'heavy' : /\blight\b/.test(s) ? 'light' : null);
+  // ...and table cream (media crema) is lighter still: Albertsons' "Lucerne Cream, Table" was
+  // Cheyenne's best heavy cream, filed under Heavy Creams (19 Nov 2026).
+  { const grade = (s) => (/\bheavy\b/.test(s) ? 'heavy' : /\b(?:light|table|media)\b/.test(s) ? 'light' : null);
     const want = grade(normalize(query));
     if (head === 'cream' && want && grade(nameNorm) && grade(nameNorm) !== want) mult *= 0.2; }
   // Snack nuts are not baking nuts: Trader Joe's "Sweet & Spicy Pecans" and "Candied Pecans", 5 oz at
@@ -864,6 +938,9 @@ export function relevance(query, product, opts = {}) {
   if (head === 'cream' && /\bwhipped\b/.test(nameNorm) && !/\bwhipped\b/.test(normalize(query))) mult *= 0.2;
   if (/\bfresh\b/.test(normalize(query)) && !FROZEN_RE.test(normalize(query)) && (FROZEN_RE.test(nameNorm) || FROZEN_RE.test(normalize(product.category || '')))) mult *= 0.3;
   if (/\bsweet potato/.test(normalize(query)) && /\b(?:russet|yukon|red potato|gold potato|white potato)/.test(nameNorm)) mult *= 0.2;
+  // Cane, raw and turbinado sugar, piloncillo and jaggery are filed under Brown Sugars and are not
+  // brown sugar: "Zulka Sugar, Pure Cane" was Miami's runner-up, named in the claim (19 Nov 2026).
+  if (hasPhrase(qt, ['brown', 'sugar']) && !words.includes('brown') && /\b(?:cane|raw|turbinado|demerara|piloncillo|panela|jaggery)\b/.test(nameNorm)) mult *= 0.3;
   if (FRESH_VEG_MEAT_RE.test(head || '')) {
     const m = SHELF_FORM_RE.exec(nameNorm);
     if (m && !normalize(query).includes(m[0])) mult *= 0.3;

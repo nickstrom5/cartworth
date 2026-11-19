@@ -64,10 +64,10 @@ enum ProductFactory {
     /// So the name wins whenever it describes a multi-pack that the stated size does not, and
     /// whenever the stated size is just a unit count ("each") while the name carries a real
     /// measurement.
-    static func pickSize(_ fromText: ParsedSize?, _ fromName: ParsedSize?, name: String = "", url: URL? = nil) -> ParsedSize? {
+    static func pickSize(_ fromText: ParsedSize?, _ fromName: ParsedSize?, name: String = "", url: URL? = nil, club: Bool = false) -> ParsedSize? {
         guard let fromName else { return fromText }
         guard let fromText else { return fromName }
-        if let settled = settleCountFirst(fromText, fromName) ?? settleByStatedCount(fromText, fromName, name: name, url: url) { return settled }
+        if let settled = settleCountFirst(fromText, fromName, club: club, name: name) ?? settleByStatedCount(fromText, fromName, name: name, url: url) { return settled }
         let textPack = fromText.count > 1
         let namePack = fromName.count > 1
         if namePack && !textPack { return fromName }
@@ -91,12 +91,20 @@ enum ProductFactory {
     /// 2-count, 20 oz", stated 20 oz, is two loaves). stated x N == M: M is the package (Sam's
     /// "Hormel Chili with Beans 6-Pack, 5.63 LB", stated 15 oz — six cans ARE 5.63 lb). Anything
     /// else settles nothing. Port of `settleCountFirst` in src/normalize.js.
-    static func settleCountFirst(_ fromText: ParsedSize, _ fromName: ParsedSize) -> ParsedSize? {
+    static let warehouseClubs: Set<String> = ["costco", "samsclub", "bjs"]
+    private static let saysPackageRx = Rx("\\b(?:oz|ounces?|lbs?|pounds?)\\.?\\s+(?:package|pkg|total)\\b")
+    static func settleCountFirst(_ fromText: ParsedSize, _ fromName: ParsedSize, club: Bool = false, name: String = "") -> ParsedSize? {
         guard let cf = fromName.countFirst, cf.n > 1, cf.unitBase > 0 else { return nil }
         guard !fromText.perWeight, fromText.count <= 1, fromText.dim == fromName.dim, let tb = fromText.base, tb > 0 else { return nil }
         func near(_ a: Double, _ b: Double) -> Bool { abs(a - b) <= max(a, b) * 0.02 }
         let one = cf.unitBase
-        if near(tb, one) || near(tb, Double(cf.n) * one) {
+        // "stated == M, so there are N" is how a warehouse club lists a multipack, and only a club: at a
+        // supermarket a stated weight equal to the name's is the package said twice (Meijer's "Pie
+        // Crusts 2 Count 15 oz" was the best pie crust in four cities at half its price, 19 Nov 2026).
+        // Drinks keep the pack reading everywhere. See settleCountFirst in src/normalize.js.
+        // ...whether a drink's size is written fl oz or oz, and when the name counts containers.
+        let unitStated = near(tb, one) && (fromName.dim != .weight || Units.looksLiquid(name) || Units.namesContainers(name) || (club && !saysPackageRx.test(name)))
+        if unitStated || near(tb, Double(cf.n) * one) {
             var pack = fromName
             pack.base = (Double(cf.n) * one * 10000).rounded() / 10000
             pack.count = cf.n
@@ -168,14 +176,28 @@ enum ProductFactory {
         return SizeConflict(text: Units.format(size), name: "priced per lb")
     }
 
-    /// A turkey with a weight range in its name, sold "each" for less than a bird costs: Fred Meyer's
-    /// "Butterball Fresh Bone-In Turkey Breast, All Natural, 3-9 lbs.", stated 6 lb at $2.99, is $2.99
-    /// a pound, and divided over 6 lb was Portland's best turkey breast at $0.50/lb (18 Nov 2026). The
-    /// row keeps its price and loses its unit price. Port of `rangedTurkeyPerLbConflict` in src/normalize.js.
-    private static let rangedTurkeyRx = Rx("\\bturkeys?\\b")
-    static func rangedTurkeyPerLbConflict(name: String, size: ParsedSize?, nameSize: ParsedSize?, price: Double?, soldByLb: Bool) -> SizeConflict? {
-        guard !soldByLb, let n = nameSize, n.range, n.dim == .weight, let size, size.dim == .weight, !size.perWeight, let b = size.base, b >= 48 else { return nil }
-        guard let price, price > 0, price < Units.turkeyEachMin, rangedTurkeyRx.test(name) else { return nil }
+    /// A turkey sold "each" for less than a bird costs is priced per pound. With a weight range in its
+    /// name: Fred Meyer's "Butterball Fresh Bone-In Turkey Breast, All Natural, 3-9 lbs.", stated 6 lb at
+    /// $2.99, was Portland's best turkey breast at $0.50/lb (18 Nov 2026). With none, the price must be
+    /// one the kind never sells for: a whole bird that works out under `turkeyWholePackageLbMin` a
+    /// pound, a breast under `turkeyBreastPackageLbMin` (Dillons' listing of the same breast in
+    /// Wichita, Cub's "Festive Frozen Turkey Breast" at 4.5 lb for $1.99 in Minneapolis). A real
+    /// package stands (Fry's 14 lb bird at $9.66). The row keeps its price and loses its unit price.
+    /// Port of `turkeyPerLbConflict` in src/normalize.js.
+    private static let turkeyNameRx = Rx("\\bturkeys?\\b")
+    private static let turkeyBreastRx = Rx("\\bbreasts?\\b")
+    private static let petAisleRx = Rx("\\b(?:dogs?|cats?|pets?|pupp(?:y|ies)|kittens?|kibble)\\b")
+    static func turkeyPerLbConflict(name: String, category: String? = nil, size: ParsedSize?, nameSize: ParsedSize?, price: Double?, soldByLb: Bool) -> SizeConflict? {
+        guard !soldByLb, let size, size.dim == .weight, !size.perWeight, let b = size.base, b >= 48 else { return nil }
+        guard let price, price > 0, price < Units.turkeyEachMin, turkeyNameRx.test(name) else { return nil }
+        // To the cent, so a package at exactly the floor (12 lb at $4.44) is not under it.
+        let perLb = (price / (b / 16) * 100).rounded() / 100
+        let priced: Bool
+        if nameSize?.range == true && nameSize?.dim == .weight { priced = true }
+        else if Units.wholeTurkey(name, category: category) { priced = perLb < Units.turkeyWholePackageLbMin }
+        else if turkeyBreastRx.test(name) && !petAisleRx.test("\(name) \(category ?? "")") { priced = perLb < Units.turkeyBreastPackageLbMin }
+        else { priced = false }
+        guard priced else { return nil }
         return SizeConflict(text: Units.format(size), name: "priced per lb")
     }
 
@@ -211,6 +233,7 @@ enum ProductFactory {
         let rest = lower.replacingOccurrences(of: slugHouseBrand, with: "", options: .regularExpression)
         return rest != lower && slugWords(rest).allSatisfy { slugLabelWords.contains($0) }
     }
+    private static let slugSameThing: [(Rx, Rx)] = [(Rx("\\bsweet potato(?:es)?\\b"), Rx("\\byams?\\b")), (Rx("\\bcrusts?\\b"), Rx("\\bshells?\\b"))]
     static func slugProductConflict(name: String, url: URL?) -> SizeConflict? {
         guard let u = url?.absoluteString, let r = u.range(of: "/products/[0-9]+-[^?#/]+", options: .regularExpression) else { return nil }
         let tail = String(u[r]).replacingOccurrences(of: "^/products/[0-9]+-", with: "", options: .regularExpression)
@@ -218,6 +241,10 @@ enum ProductFactory {
         let slug = slugWords(tail.replacingOccurrences(of: "-", with: " "))
         let own = slugWords(name)
         guard slug.count >= 2, own.count >= 2, !own.contains(where: { a in slug.contains { sameSlugWord(a, $0) } }) else { return nil }
+        // The same thing in the trade's other word: Sprouts' "Orange Sweet Potatoes" is ".../yams-jewel"
+        // and Grocery Outlet's pie crusts are "...-pie-shell" (19 Nov 2026). Port of SLUG_SAME_THING.
+        let ownText = own.joined(separator: " "), slugText = slug.joined(separator: " ")
+        if slugSameThing.contains(where: { ($0.0.test(ownText) && $0.1.test(slugText)) || ($0.1.test(ownText) && $0.0.test(slugText)) }) { return nil }
         return SizeConflict(text: tail.replacingOccurrences(of: "-", with: " "), name: "listing names another product")
     }
 
@@ -390,7 +417,7 @@ enum ProductFactory {
         let name = f.name.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression).trimmingCharacters(in: .whitespaces)
         let textSize = Units.parseSize(f.sizeText)
         let nameSize = Units.sizeFromName(name)
-        let chosen = pickSize(textSize, nameSize, name: name, url: f.url)
+        let chosen = pickSize(textSize, nameSize, name: name, url: f.url, club: warehouseClubs.contains(f.storeId))
         var size = applyUrlPack(chosen, url: f.url)
         let packedFromUrl = (size?.count ?? 1) > (chosen?.count ?? 1)
         // Four sticks of butter are a pound only when the retailer's slug says so too.
@@ -398,7 +425,7 @@ enum ProductFactory {
         // Instacart's own unit line may say the price buys several of this size.
         let listed = listingPack(size, packText: f.packText, name: name, url: f.url)
         if let packed = listed?.size { size = packed }
-        size = Units.coerceLiquid(size, name: "\(name) \(f.category ?? "")")
+        size = Units.coerceLiquid(size, name: "\(name) \(f.category ?? "")", ownName: name)
         let soldByLb = f.soldBy == .lb || (size?.perWeight ?? false)
 
         // The product's own name and its stated size sometimes contradict each other outright:
@@ -428,8 +455,8 @@ enum ProductFactory {
         // The URL says "per-lb" but the stated size is a fixed weight: Smart & Final's "Table Carrots",
         // stated 25 lb at $2.19, slug "...-bulk-carrots-per-lb", was $0.09/lb. Port of slugPerLbConflict.
         if let c = slugPerLbConflict(size, url: f.url, soldByLb: soldByLb) { sizeConflict = c }
-        // A ranged turkey priced "each" under what a bird costs is a price per pound. Port of rangedTurkeyPerLbConflict.
-        else if let c = rangedTurkeyPerLbConflict(name: name, size: size, nameSize: nameSize, price: f.price, soldByLb: soldByLb) { sizeConflict = c }
+        // A turkey priced "each" under what a bird costs is a price per pound. Port of turkeyPerLbConflict.
+        else if let c = turkeyPerLbConflict(name: name, category: f.category, size: size, nameSize: nameSize, price: f.price, soldByLb: soldByLb) { sizeConflict = c }
         // The URL names another product ("...-kroger-sugar-cinnamon-mini-pretzel-20-oz" on a stuffing
         // mix): the price and size may be the other product's. Port of slugProductConflict.
         else if let c = slugProductConflict(name: name, url: f.url) { sizeConflict = c }
@@ -461,7 +488,7 @@ enum ProductFactory {
         if let pieceLb = Units.produceWeightLb(name), price > 0 {
             if soldByLb && unit[Dim.count.rawValue] == nil {
                 unit[Dim.count.rawValue] = UnitPrice(perBase: price * pieceLb, est: true)
-            } else if !soldByLb, let s = size, s.dim == .count, let b = s.base, b > 0, unit[Dim.weight.rawValue] == nil {
+            } else if !soldByLb, let s = size, s.dim == .count, let b = s.base, b > 0, b < Units.produceGradeCount, price / b <= Units.producePieceMax, unit[Dim.weight.rawValue] == nil {
                 unit[Dim.weight.rawValue] = UnitPrice(perBase: price / b / (pieceLb * 16), est: true)
             }
         }

@@ -27,15 +27,38 @@ export function priceFor(p, prefs = {}) {
   return usesMember(p, prefs) ? p.memberPrice : p.price;
 }
 
-/** Which dimension (weight/volume/count) most relevant items can be compared in. */
+/**
+ * Which dimension (weight/volume/count) most relevant items can be compared in.
+ *
+ * The tally is of ITEMS, so one store with a long list can outvote every other store. C-Town's
+ * Hartford store returned 19 turkey breasts stated only as "each" (all at $1.09); against 13 rows
+ * by the pound from eight stores they made "turkey breast" a comparison by count, which priced two
+ * stores and left ALDI's $1.99/lb, the real answer, out (the Thanksgiving core list, 18 Nov 2026).
+ * The comparison exists to set stores side by side, so when another dimension gives at least twice
+ * as many stores a unit price that is not an estimate, and at least DIM_MIN_STORES of them, that
+ * dimension is the answer. Of 1,107 cached answers this moves that one: everywhere else the items'
+ * dimension is also the stores', or within a store or two of it (dinner rolls and celery, which sell
+ * both ways). Three stores, not two: a shopper with two stores enabled got "pumpkin pie" by volume
+ * (a wine and a protein drink, one at each) over one store's dozen pies by weight; over every two-
+ * and three-store subset of the cache the floor of three leaves none of those (the review of this
+ * change, 19 Nov 2026).
+ */
+const DIM_STORES = 2;
+const DIM_MIN_STORES = 3;
 export function dominantDim(items) {
   const counts = { weight: 0, volume: 0, count: 0 };
+  const stores = { weight: new Set(), volume: new Set(), count: new Set() };
   for (const p of items) {
     if (p.dim && p.unit?.[p.dim] && !p.unit[p.dim].est) counts[p.dim] += 2;
-    for (const d of Object.keys(p.unit || {})) counts[d] += 1;
+    for (const d of Object.keys(p.unit || {})) {
+      counts[d] += 1;
+      if (!p.unit[d].est) stores[d]?.add(p.storeId);
+    }
   }
   const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-  return best && best[1] > 0 ? best[0] : null;
+  if (!best || !(best[1] > 0)) return null;
+  const widest = Object.keys(stores).sort((a, b) => stores[b].size - stores[a].size)[0];
+  return stores[widest].size >= DIM_MIN_STORES && stores[widest].size >= DIM_STORES * Math.max(1, stores[best[0]].size) ? widest : best[0];
 }
 
 export function suggestUnit(dim, items, query) {
@@ -155,13 +178,43 @@ function flagSizeOutliers(priced, dim) {
   }
 }
 
+/**
+ * A price per pound that is a placeholder, not a price.
+ *
+ * Smith's listed "Butterball Fresh Premium Young Turkey" by the pound at $0.10 in Salt Lake City and
+ * Albuquerque (its other fresh Butterball is $1.99/lb). In Salt Lake City the 1/30 floor caught it;
+ * in Albuquerque the median was lower, so it stood, and it was the city's best whole turkey, "90%
+ * less than the next-best store" (the Thanksgiving core list, 18 Nov 2026). A ratio cannot settle a
+ * price the store itself states per pound, because real doorbusters are an eighth of an organic
+ * median too. The price itself can: of 35,389 cached rows sold by the pound, three are at 10c or
+ * less (these two birds and a 9c/lb bell pepper) and all three are wrong; the next, El Super's 25c
+ * yellow onions, is real. Flagged whatever the dimension and however few rows there are, and kept
+ * out of the median the others are judged by. The price is the one the comparison will use (a card
+ * price counts), and a package of a pound or more at a dime is the same thing said as "1 lb".
+ */
+export const PER_LB_PLACEHOLDER = 0.1;
+const placeholderPerLb = (p, prefs = {}) => {
+  const price = priceFor(p, prefs);
+  if (!(price > 0) || price > PER_LB_PLACEHOLDER + 1e-9) return false;
+  return p.soldBy === 'lb' || (p.dim === 'weight' && p.base >= 16);
+};
+
 export function flagImplausible(items, dim, prefs = {}) {
+  const real = items.filter((p) => !placeholderPerLb(p, prefs));
   // The count dimension counts PACKAGES, so its median mixes a 50-sheet box of foil with a single
   // roll and a 2-pack of heavy duty. Distance from that median says nothing about whether a price
   // is right: it flagged six correct per-sheet foil prices as "price looks wrong" and a 500 ft
   // Kirkland roll, which is the cheapest foil in the sweep, as implausibly dear. Telling a shopper
   // a correct price looks wrong is the mirror image of showing a wrong one.
-  const priced = items.map((p) => ({ p, u: unitFor(p, dim, prefs) })).filter((x) => x.u && Number.isFinite(x.u.perBase) && x.u.perBase > 0);
+  const priced = real.map((p) => ({ p, u: unitFor(p, dim, prefs) })).filter((x) => x.u && Number.isFinite(x.u.perBase) && x.u.perBase > 0);
+  if (real.length < items.length) {
+    const typical = priced.length ? medianOf(priced.map((x) => x.u.perBase)) : 0;
+    for (const p of items) {
+      if (!placeholderPerLb(p, prefs)) continue;
+      const u = unitFor(p, dim, prefs);
+      p.implausible = { ratio: typical && u ? Math.round((u.perBase / typical) * 10) / 10 : 0, median: typical || 0, direction: 'low', placeholder: true };
+    }
+  }
   if (dim === 'count') {
     flagSizeOutliers(priced, dim);
     return items;

@@ -76,7 +76,9 @@ async function main() {
       const claim = top && second ? savingsClaim(top, second) : null;
       const flagged = Object.values(results).flat().filter((p) => p.implausible || p.sizeConflict)
         .map((p) => `${p.storeId} "${p.name}" ${p.size || ''} ${money(p.price)} ${p.implausible ? `implausible-${p.implausible.direction}` : 'sizeConflict'}`);
-      const excluded = excludedCheaper(q, results, best.stores);
+      // The whole result, not its stores: excludedCheaper reads best.dim, and handed best.stores it
+      // returned nothing, so every audit's "excluded" list was empty (found re-scoring the cache, 19 Nov 2026).
+      const excluded = excludedCheaper(q, results, best, { prefs: { cardPrices: true } });
       const entry = {
         zip, q, dim: best.dim,
         stores: rows.map((r) => {
