@@ -158,5 +158,6 @@ The first cut had these faults; each has a test marked REVIEW
 
 ## iPhone
 
-None of this is in build 11 (1.0.3), which is in App Review. The iOS code and tests are in this PR; it
-reaches phones in a later build.
+Build 12 (1.0.4) carries all of it. It was archived from main after #35 with the release Xcode (27.2,
+`iphoneos27.2`) and has been in TestFlight for the Owner group since 20 Nov; the iOS unit tests pass
+(541). Build 11 (1.0.3), with the 18-19 Nov fixes, is in App Review; 1.0.4 is not submitted.
