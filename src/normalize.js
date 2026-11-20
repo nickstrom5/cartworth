@@ -1,5 +1,5 @@
 // Build the normalized product shape every adapter returns.
-import { parseSize, sizeFromName, coerceLiquid, looksLiquid, namesContainers, unitPrices, formatSize, produceWeightLb, noEachEstimate, weighedWholePumpkin, wholeTurkey, TYPICAL_TURKEY_LB, TURKEY_EACH_MIN, TURKEY_WHOLE_PACKAGE_LB_MIN, TURKEY_BREAST_PACKAGE_LB_MIN, PRODUCE_GRADE_COUNT, PRODUCE_PIECE_MAX } from '../shared/units.js';
+import { parseSize, sizeFromName, coerceLiquid, coerceSolid, looksLiquid, namesContainers, unitPrices, formatSize, produceWeightLb, noEachEstimate, weighedWholePumpkin, wholeTurkey, TYPICAL_TURKEY_LB, TURKEY_EACH_MIN, TURKEY_WHOLE_PACKAGE_LB_MIN, TURKEY_BREAST_PACKAGE_LB_MIN, PRODUCE_GRADE_COUNT, PRODUCE_PIECE_MAX } from '../shared/units.js';
 
 export function money(s) {
   if (s == null) return null;
@@ -220,7 +220,21 @@ export function slugPerLbConflict(size, f, soldByLb) {
  */
 const TURKEY_BREAST_RE = /\bbreasts?\b/i;
 const PET_AISLE_RE = /\b(?:dogs?|cats?|pets?|pupp(?:y|ies)|kittens?|kibble)\b/i;
+// No whole turkey weighs under 4 lb (the smallest sold, Butterball's "Li'l", is about 7): Fairway's
+// "Maplecrest 10-12 Natural Turkey" stated "18 oz" at $2.21 read $1.96/lb, and Weis's "Weis Young
+// Turkey" stated "20 oz" at $10.39 was Weis's turkey at $8.31/lb (every cached answer re-scored, 20
+// Nov 2026). The stated weight is not the bird's, so like every size contradiction the row keeps its
+// price and loses its unit price. Not "1 lb": that is how a price per pound is listed (Stop & Shop's
+// Shady Brook hen at $0.59, "1 lb", won three ZIPs at its real $0.59/lb), as slugPerLbConflict knows.
+// The review of the rule: wholeTurkey() also says yes to "Whole Turkey Seasoning", gizzards in the
+// Whole Turkey aisle and a "Whole Sub" (now refused there), so the floor also skips prepared, deli and
+// spice aisles. "1.02 lb" is the 1 lb listing too (16.32 oz, a hair over 2% in floating point).
+const NOT_A_BIRD_AISLE_RE = /\b(?:prepared|sandwich(?:es)?|wraps?|spices?|seasonings?|deli|lunch|meals?|rubs?|marinades?)\b/i;
+export const TURKEY_WHOLE_MIN_OZ = 64;
 export function turkeyPerLbConflict(name, size, nameSize, f, soldByLb) {
+  if (!soldByLb && size?.dim === 'weight' && !size.perWeight && size.base > 0 && size.base < TURKEY_WHOLE_MIN_OZ && Math.abs(size.base - 16) > 0.33 && wholeTurkey(name, f.category) && !NOT_A_BIRD_AISLE_RE.test(f.category || '')) {
+    return { text: formatSize(size), name: 'a whole turkey' };
+  }
   if (soldByLb || !size || size.dim !== 'weight' || size.perWeight || !(size.base >= 48)) return null;
   if (!(f.price > 0) || f.price >= TURKEY_EACH_MIN || !/\bturkeys?\b/i.test(name)) return null;
   // To the cent, so a package at exactly the floor (12 lb at $4.44) is not under it.
@@ -394,16 +408,167 @@ export function wholeBirdEach(name, category) {
   return WHOLE_BIRD_CAT_RE.test(category || '') || WHOLE_BIRD_NAME_RE.test(name || '');
 }
 
-export function butterSticks(size, { name = '', category = '', url = '' } = {}) {
+// At a warehouse club "N ct" counts boxes, not sticks: BJ's "Wellsley Farms All Natural Salted Butter",
+// "4 ct" at $11.49 under ".../salted-butter-1lb", is four 1 lb boxes ($2.87/lb), not four sticks (a
+// pound of store-brand butter at $11.49, beside the same store's Kerrygold at $9.73/lb), in all 13 BJ's
+// ZIPs of the QA cache; its "Unsalted Butter Quarters" the same (every cached answer re-scored, 20 Nov
+// 2026). A club's slug weight of a pound or more is one box; a quarter-pound one is one stick, which
+// is the same N x 4 oz the stick rule gives; anything else settles nothing there.
+const CLUB_BUTTER_BOXES_MAX = 6;
+export function butterSticks(size, { name = '', category = '', url = '', club = false } = {}) {
   if (!size || size.dim !== 'count' || size.perWeight || !BUTTER_CATEGORY_RE.test(String(category || '').trim())) return null;
   const n = size.base;
   if (!Number.isInteger(n) || n < 2 || n > 8 || NOT_JUST_STICKS_RE.test(name)) return null;
   // Every weight the slug states must be one of the two readings; one it cannot explain ("1-lb"
   // over eight half sticks) means the sticks are not quarter pounds, and nothing is recovered.
   const weights = slugWeightsOz(url);
+  if (club) {
+    const [w] = weights;
+    if (!weights.length || !weights.every((x) => Math.abs(x - w) <= 0.02 * w)) return null;
+    if (w >= 15.5 && n <= CLUB_BUTTER_BOXES_MAX) return { dim: 'weight', base: n * w, amount: w, unit: 'oz', count: n, perWeight: false, range: false, text: `${n} × ${formatSize({ amount: w, unit: 'oz' })}`, clubBoxes: n };
+    if (Math.abs(w - 4) > 0.08) return null;
+  }
   const fits = (w) => Math.abs(w - 4 * n) <= 0.02 * 4 * n || Math.abs(w - 4) <= 0.08;
   if (!weights.length || !weights.every(fits)) return null;
   return { dim: 'weight', base: 4 * n, amount: 4 * n, unit: 'oz', count: 1, perWeight: false, range: false, text: `${n} sticks`, sticks: n };
+}
+
+/**
+ * The other dimension, from the retailer's own URL slug.
+ *
+ * A product keeps the one size its listing states, and a comparison is in one dimension, so a row
+ * stated in the other was simply left out, however cheap: Walmart's "Great Value 2 Pack 9 Inch Deep
+ * Dish Pie Crusts", stated "2 ct" at $1.36 under ".../great-value-deep-dish-pie-crusts-16-oz", and
+ * ALDI's "Bake House Creations Pie Crusts - 2 Count" at $1.88 (".../pie-crust-14-1-oz") were missing
+ * from pie crust, an answer by weight, in 26 of 32 ZIPs, and a dearer store was shown as the
+ * cheapest. Dinner rolls the other way round: Walmart's brown-and-serve dozen, stated "12 oz" at
+ * $1.05 (".../dinner-rolls-12-ct"), had no price per roll where rolls are compared by count.
+ *
+ * The slug's figure becomes a second unit price, in the other dimension only, marked `slug` so that:
+ *   - it never decides which dimension an answer is in (dominantDim skips it), only lets the row be
+ *     priced in the one the stated sizes chose, and the dimension picker does not offer a dimension
+ *     only slug figures fill;
+ *   - the plausibility guard judges it harder than a stated size, in every dimension, count included
+ *     (flagImplausible, SLUG_LOW): a misread slug is ten times out, not two;
+ *   - it is an estimate: shown "est.", and a claim made on it names no exact percentage, because
+ *     the weight is the catalogue's, not the store's (Walmart's crusts may be 12 oz, not 16);
+ *   - the size the shopper sees says where it came from ("2 ct · 16 oz").
+ * Measured over the 1,107 cached answers (20 Nov 2026): 36 pie crust and 8 dinner roll answers
+ * change store, no answer changes dimension. Walmart's two-pack ($1.24-$1.36) or ALDI's ($1.88)
+ * leads pie crust where the store has one, Costco's 8-count (56.4 oz, $8.70) in four western ZIPs.
+ * Narrow on purpose, because a size too big is a price too cheap, and that wins. The review of this
+ * change (four reviewers over every cached row, 20 Nov 2026) found each of these misreads:
+ *   - the product id is not part of the slug's words: Lunds & Byerlys' ".../57858643-l-b-brioche-
+ *     dinner-rolls-8-ct" read "8 ct · 57858643 L", and a measure starts at a hyphen, so a Whole Foods
+ *     ASIN ("...-3ct-b0fd3mlq6l") is not "6 L";
+ *   - slugs drop decimal points: "...-214-oz" is Ghirardelli's 21.4 oz bag and "...-15-lb" Meijer's
+ *     1.5 lb of brown sugar, so whole ounces of three digits and whole pounds over 12 settle nothing,
+ *     and a pound written with a decimal ("3-5-lb") may be 3.5 lb or a 3-5 lb range;
+ *   - every weight or volume in the slug must agree (2%), and none may be "up to", "about" or a
+ *     price per pound (".../up-to-19-pound-large-pumpkins-each", "...-priced-per-pound-2232lb");
+ *   - a count is a piece word (ct, count, ea), never a pack, a range ("31-to-40-count" shrimp,
+ *     "16-20-ct") or a decimal ("...-apple-pie-3-50-ct"), and at least 2; an "-each" that restates
+ *     the row's ounces ("...-heavy-16-each" on a pint of cream) is not pieces;
+ *   - the row's own figures win: a count in its name or size line that differs from the slug's
+ *     (Meijer's "French Dinner Rolls 10 ct" under "...-8-ct"), a weight in its name that differs,
+ *     a size line that already names a measure ("8 pack, /15 oz"), or a weight written just before
+ *     the row's own count ("...-15-oz-6-ct" on "6 ct": the weight is one piece's);
+ *   - not for a turkey (weighed at the till), loose produce (a slug's "1 lb" on one onion is the
+ *     catalogue's price per pound), a row sold by the pound, a row whose size came
+ *     from butter sticks or a club's boxes, or a row whose own figures disagree (sizeConflict).
+ */
+const SLUG_MEASURE_RE = /(?<=[-/])(?<!\d-)(\d+)(?:-(\d{1,3}))?-?(fl-oz|floz|oz|ounces?|lbs?|pounds?|g|grams?|kg|gal|gallons?|qt|quarts?|pt|pints?|ml|l|liters?|litres?)(?=$|[-/])/gi;
+const SLUG_MEASURE_UNIT = { 'fl-oz': 'fl oz', floz: 'fl oz', ounce: 'oz', ounces: 'oz', lbs: 'lb', pound: 'lb', pounds: 'lb', gram: 'g', grams: 'g', gallon: 'gal', gallons: 'gal', quart: 'qt', quarts: 'qt', pint: 'pt', pints: 'pt', liter: 'l', liters: 'l', litre: 'l', litres: 'l' };
+const SLUG_PIECES_RE = /(?<=-)(?<!\d-)(?<!-to-)(\d{1,3})-(ct|count|cnt|ea|each)(?=$|[-/])/gi;
+const SLUG_APPROX_RE = /(?:^|[-/])(?:up-to|upto|about|approx|approximately|avg|average)-\d+(?:-\d{1,3})?-?(?:fl-oz|floz|oz|ounces?|lbs?|pounds?|g|grams?|kg|gal|gallons?|qt|quarts?|pt|pints?|ml|l|liters?|litres?)(?=$|[-/])/i;
+const SLUG_PACK_RE = /-(?:pk|pks|pack|packs|case|cases|box-of)(?=$|[-/])/;
+const SLUG_PRICED_PER_RE = /(?:^|-)priced-per(?=-)/;
+const SLUG_LB_MAX = 12;
+// The slug's words, without the product id that starts them.
+const slugPath = (url) => String(url || '').replace(/^[^?#]*\/products?\//, '/').replace(/[?#].*$/, '').replace(/^\/\d+(?=-)/, '/');
+export function slugMeasure(url, name = '', category = '') {
+  const found = [];
+  const path = slugPath(url);
+  if (SLUG_APPROX_RE.test(path)) return null;
+  for (const m of path.matchAll(SLUG_MEASURE_RE)) {
+    const unit = SLUG_MEASURE_UNIT[m[3].toLowerCase()] || m[3].toLowerCase();
+    if (unit === 'lb' && (m[2] != null || +m[1] > SLUG_LB_MAX)) return null;
+    if ((unit === 'oz' || unit === 'fl oz') && m[2] == null && m[1].length >= 3) return null;
+    const s = parseSize(`${m[2] != null ? `${m[1]}.${m[2]}` : m[1]} ${unit}`);
+    if (!s || !(s.base > 0) || (s.dim !== 'weight' && s.dim !== 'volume')) return null;
+    found.push(coerceLiquid(s, `${name} ${category || ''}`, name));
+  }
+  if (!found.length) return null;
+  const [first] = found;
+  return found.every((s) => s.dim === first.dim && Math.abs(s.base - first.base) <= 0.02 * first.base) ? first : null;
+}
+export function slugPieces(url) {
+  const path = slugPath(url);
+  if (SLUG_PACK_RE.test(path)) return null;
+  const counts = new Set([...path.matchAll(SLUG_PIECES_RE)].map((m) => +m[1]));
+  const [n] = counts;
+  return counts.size === 1 && n >= 2 ? n : null;
+}
+const countOf = (s) => (!s ? null : s.dim === 'count' ? s.base : s.countFirst?.n ?? s.countAfter?.n ?? (s.count > 1 ? s.count : null));
+export function otherDimFromSlug(size, f, name, { soldByLb, sizeConflict, textSize, nameSize } = {}) {
+  if (soldByLb || sizeConflict || !size || size.perWeight || !(size.base > 0) || !f.url) return null;
+  if (size.sticks || size.clubBoxes || size.clubSlugPack) return null;
+  if (/\bturkeys?\b/i.test(name) || produceWeightLb(name)) return null;
+  const path = slugPath(f.url);
+  if (SLUG_PER_LB_RE.test(path) || SLUG_PRICED_PER_RE.test(path)) return null;
+  if (size.dim === 'count') {
+    const m = slugMeasure(f.url, name, f.category);
+    if (!m) return null;
+    if (nameSize && nameSize.dim === m.dim && !nameSize.perWeight && nameSize.base > 0 && Math.abs(nameSize.base - m.base) > 0.02 * m.base) return null;
+    if (/\d\s*(?:oz|ounces?|lbs?|pounds?|g|kg|ml|l|liters?|fl\.?\s*oz)\b/i.test(f.sizeText || '')) return null;
+    // A weight written just before the row's own count is one unit's ("...-15-oz-6-ct" on "6 ct", as
+    // applyUrlPack reads "...-4-oz-6-pk"); a count before the weight is the total ("...-8-count-56-400-oz").
+    if (size.base > 1 && new RegExp(`(?:oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|l|fl-oz|floz)-${size.base}-(?:ct|count|cnt|ea|each|pk|pks|pack|packs)(?=$|[-/])`, 'i').test(path)) return null;
+    return { dim: m.dim, base: m.base, size: m };
+  }
+  // A bag of celery hearts is one package (CELERY_HEARTS_RE): its "2-ct" counts hearts, not bunches.
+  if (CELERY_HEARTS_RE.test(name)) return null;
+  const n = slugPieces(f.url);
+  if (!n || n === size.count) return null;
+  if ([countOf(textSize), countOf(nameSize)].some((c) => c > 1 && c !== n)) return null;
+  if (new RegExp(`-${n}-(?:ea|each)(?=$|[-/])`, 'i').test(path) && (Math.abs(n - size.base) < 0.01 || Math.abs(n - (size.amount ?? -1)) < 0.01)) return null;
+  return { dim: 'count', base: n, size: { dim: 'count', base: n, amount: n, unit: 'ct', count: 1 } };
+}
+
+/**
+ * A bag of celery hearts is one package, however many hearts its listing counts.
+ *
+ * Celery is compared by the bunch where most stores sell it each, and a count counts bunches. BJ's
+ * "Foxy Organic Celery Hearts", stated "4 each" at $2.59, was priced at $0.65 a heart and won celery
+ * in Hartford, Queens, Atlanta and Miami, "59% less" than C-Town's $1.59 bunch; ALDI sells one bag
+ * of the same hearts at $2.59. Sprouts' and Key Food's "2 ct" bags were priced per heart the same
+ * way, ALDI's and Walmart's "1 each" bags per bag. A bag of trimmed hearts is about a pound, a bunch
+ * a pound or two: as one package each, they compare as a shopper buys them.
+ */
+const CELERY_HEARTS_RE = /\bcelery\s+hearts?\b/i;
+
+/**
+ * A warehouse club's butter, stated as one pack under a slug that weighs a whole number of them.
+ *
+ * Sam's lists "Member's Mark Salted Sweet Cream Butter Sticks" as "16 oz" at $11.88 under
+ * ".../member-s-mark-salted-sweet-cream-butter-sticks-4-lb": four pounds at $2.97/lb, read as one at
+ * $11.88, so Sam's real butter never ranked in any of its 25 ZIPs (a tater-tot "butter" or Kerrygold
+ * stood for it). BJ's states one box or one stick the same way: Wellsley Farms organic "16 oz" under
+ * "...-2-lb", Land O Lakes "1 lb" under a 3 lb slug, Kerrygold "4 oz" under "...-24-oz". Only in a
+ * butter aisle at a club: elsewhere a slug that drops the decimal point ("...-squares-214-oz" for
+ * Ghirardelli's 21.4 oz bag, "...-57-18-oz" read as 571 oz) would make the price ten times too cheap.
+ * Every butter row of this shape in the cache is one of those four, and every price it gives is a
+ * club's butter price ($2.97 to $11.46/lb). Measured 20 Nov 2026.
+ */
+export function clubButterPack(size, f) {
+  if (!size || size.dim !== 'weight' || size.perWeight || size.count > 1 || !(size.base > 0)) return null;
+  if (!BUTTER_CATEGORY_RE.test(String(f.category || '').trim())) return null;
+  const weights = slugWeightsOz(f.url);
+  const [w] = weights;
+  if (!weights.length || !weights.every((x) => Math.abs(x - w) <= 0.02 * w)) return null;
+  const n = Math.round(w / size.base);
+  if (n < 2 || n > 12 || Math.abs(w / size.base - n) > 0.02 * n) return null;
+  return { ...size, base: Math.round(n * size.base * 10000) / 10000, count: n, clubSlugPack: true };
 }
 
 const SLUG_WEIGHT_RE = /(?<!\d)(?<!\d-)(\d+)(?:-(\d{1,2}))?-?(oz|ounces?|lbs?|pounds?|g|grams?|kg)(?=$|[-/])/gi;
@@ -492,6 +657,11 @@ export function unitLineConflict(size, f) {
   return { text: formatSize(size), name: `1 lb (the listing's own ${'$'}${lu.price}/${lu.unit})` };
 }
 
+const BREAD_PIECES_RE = /\b(?:rolls|buns|biscuits|croissants|bagels)\b/i;
+// Rolls that are not bread (paper, foil, egg and spring rolls, sushi, cabbage, fruit rolls), rolls
+// sold loose, and a meal that comes with rolls.
+const NOT_BREAD_PIECES_RE = /\b(?:paper|towels?|toilet|tissue|bath|tape|foil|wrap|film|plastic|egg|spring|sushi|cabbage|fruit|bulk|loose|single|dinner with|meals?|sides|sandwich(?:es)?|lobster)\b/i;
+const ROLL_BAG_MIN_PRICE = 2;
 const ROLL_GOODS_RE = /\b(?:alumin(?:i)?um foil|foil|plastic wrap|cling wrap|wax(?:ed)? paper|parchment(?: paper)?|freezer paper|butcher paper)\b/i;
 const NOT_A_ROLL_RE = /\b(?:pans?|trays?|roasters?|containers?|lids?|liners?|bags?|sheets?|cups?|plates?|tins?|dish(?:es)?|board|foilware|racks?|burners?|tape|ducts?)\b/i;
 const LENGTH_OR_AREA_RE = /\d+(?:\.\d+)?\s*(?:sq\.?\s*ft\.?|sqft|square\s+f(?:ee|oo)t|ft\.?|feet|foot|yds?\.?|yards?)(?![a-z])|\d+(?:\.\d+)?\s*['\u2019]\s*L\b/i;
@@ -503,12 +673,18 @@ export function makeProduct(f) {
   const chosen = pickSize(textSize, nameSize, { name, url: f.url, club: WAREHOUSE_CLUBS.has(f.storeId) });
   let size = applyUrlPack(chosen, f);
   // Four sticks of butter are a pound only when the retailer's slug says so too (butterSticks).
-  const sticks = butterSticks(size, { name, category: f.category, url: f.url });
+  const club = WAREHOUSE_CLUBS.has(f.storeId);
+  const sticks = butterSticks(size, { name, category: f.category, url: f.url, club });
   if (sticks) size = sticks;
+  // A club's butter stated as one pack under a slug that weighs several (clubButterPack).
+  const clubPack = club ? clubButterPack(size, f) : null;
+  if (clubPack) size = clubPack;
   // Instacart's own unit line may say the price buys several of this size (listingPack).
   const listed = listingPack(size, f.packText, { name, url: f.url });
   if (listed?.size) size = listed.size;
   size = coerceLiquid(size, `${name} ${f.category || ''}`, name);
+  size = coerceSolid(size, `${name} ${f.category || ''}`, name);
+  if (size?.dim === 'count' && !size.perWeight && size.base > 1 && CELERY_HEARTS_RE.test(name)) size = { ...size, base: 1, amount: 1, count: 1, heartsPack: size.text || formatSize(size) };
 
   // The product's own name and its stated size sometimes contradict each other outright: Costco
   // lists "Sweet Potatoes, 5 lbs" with a sizeText of "10 lb", and the app silently keeps the
@@ -544,7 +720,7 @@ export function makeProduct(f) {
   //   name     read out of the product name
   //   derived  a pack multiplication or reconciliation we worked out (settle*, URL pack)
   const sizeSource = soldByLb ? 'perLb' : !size ? null
-    : size.packFromUrl || size.packFromListing || size.sticks || (chosen !== textSize && chosen !== nameSize) ? 'derived'
+    : size.packFromUrl || size.packFromListing || size.sticks || size.heartsPack || size.clubBoxes || size.clubSlugPack || (chosen !== textSize && chosen !== nameSize) ? 'derived'
     : chosen === textSize ? 'stated' : 'name';
 
   const price = round2(f.price);
@@ -565,7 +741,13 @@ export function makeProduct(f) {
   if (pieceLb && effective > 0) {
     if (soldByLb && !up.count) up.count = { perBase: effective * pieceLb, est: true };
     // One loose piece, at a price a piece can cost: see PRODUCE_GRADE_COUNT and PRODUCE_PIECE_MAX.
-    else if (!soldByLb && size?.dim === 'count' && size.base > 0 && size.base < PRODUCE_GRADE_COUNT && effective / size.base <= PRODUCE_PIECE_MAX && !up.weight) up.weight = { perBase: effective / size.base / (pieceLb * 16), est: true };
+    // ...and not when the retailer's own URL says the price is per pound: Kroger's "Sweet Potato",
+    // "1 ct" at $0.99 under ".../golden-sweet-potatoes-yams-per-lb", was estimated at $1.65/lb as one
+    // 0.6 lb potato, though the same listing is sold by the pound at $0.99 in seven other ZIPs (20
+    // Nov 2026). Which reading is right cannot be told from the row, so it gets no estimate at all.
+    else if (!soldByLb && size?.dim === 'count' && size.base > 0 && size.base < PRODUCE_GRADE_COUNT && effective / size.base <= PRODUCE_PIECE_MAX && !up.weight && !SLUG_PER_LB_RE.test(slugPath(f.url))) up.weight = { perBase: effective / size.base / (pieceLb * 16), est: true };
+    // ...nor a price per piece: it may be a price per pound.
+    if (!soldByLb && size?.dim === 'count' && size.base === 1 && SLUG_PER_LB_RE.test(slugPath(f.url))) delete up.count;
   }
   // A whole pumpkin at a fixed price with its weight stated is one pumpkin at that price
   // (weighedWholePumpkin). A per-lb pumpkin still gets no per-pumpkin price: see pieceWeightVaries.
@@ -594,6 +776,17 @@ export function makeProduct(f) {
   // 75 ft one with the lengths hidden. Pre-cut sheets ("50 ct") stay countable, as do pans, trays
   // and liners, which are sold one to a unit.
   if (!soldByLb && up.count && (!size || (size.dim === 'count' && size.base === 1)) && ROLL_GOODS_RE.test(name) && !NOT_A_ROLL_RE.test(name)) delete up.count;
+  // A bag of rolls stated "1 each" is one bag of an unknown number of rolls, not one roll: Natural
+  // Grocers' "Organic Hawaiian Rolls" at $6.29 was ranked last in seven ZIPs at "$6.29/ct" (every
+  // cached answer re-scored, 20 Nov 2026). Its price per bag says nothing per roll. A bakery single
+  // under a plural name is one roll, and the price says which: Bashas' "Bolillos Rolls" at $0.49 and
+  // every other single in the cache is $1.79 or less (the review of this change).
+  if (!soldByLb && up.count && (!size || (size.dim === 'count' && size.base === 1)) && effective >= ROLL_BAG_MIN_PRICE && BREAD_PIECES_RE.test(name) && !nameSize && !NOT_BREAD_PIECES_RE.test(name)) delete up.count;
+  // A row stated in one dimension whose slug states the other is priced in that one too, but never
+  // votes for the dimension (otherDimFromSlug).
+  const other = effective > 0 ? otherDimFromSlug(size, f, name, { soldByLb, sizeConflict, textSize, nameSize }) : null;
+  const slugDim = other && (!up[other.dim] || up[other.dim].est) ? other : null;
+  if (slugDim) up[slugDim.dim] = { perBase: effective / slugDim.base, est: true, slug: true };
   // A row whose own numbers disagree about the size has no unit price we can stand behind, in
   // either reading. Publishing one anyway is exactly "$224/lb" beside "$31/lb" for the same sticks.
   // The package price stays; the per-unit figure goes, everywhere (list, detail, history, planner).
@@ -615,7 +808,8 @@ export function makeProduct(f) {
     brand: f.brand ? tidyBrand(f.brand) : '',
     // Recovered stick weights say where they came from: "4 sticks · 16 oz", never a bare "16 oz"
     // the retailer did not print.
-    size: size && !soldByLb ? (size.sticks ? `${size.sticks} sticks · ${formatSize(size)}` : formatSize(size)) : soldByLb ? 'per lb' : f.sizeText || '',
+    // A second figure from the slug is shown beside the stated one: "2 ct · 16 oz".
+    size: size && !soldByLb ? `${size.sticks ? `${size.sticks} sticks · ${formatSize(size)}` : size.heartsPack ? `1 pack · ${size.heartsPack}` : formatSize(size)}${slugDim ? ` · ${formatSize(slugDim.size)}` : ''}` : soldByLb ? 'per lb' : f.sizeText || '',
     sizeText: f.sizeText || '',
     // Set only when the name and the stated size disagree about how much is in the package. The
     // comparison treats it like an unbelievable price: still listed, never the headline.

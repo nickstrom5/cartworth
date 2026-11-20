@@ -97,19 +97,16 @@ final class InstacartProvenanceTests: XCTestCase {
 
     // MARK: - the number (pricing's, pinned here for the handoff)
 
-    /// KNOWN DEFECT — handed off to the pricing owner (ProductFactory.swift + src/normalize.js).
+    /// Was a KNOWN DEFECT; fixed 20 Nov 2026 by `ProductFactory.otherDimFromSlug`.
     ///
     /// Jewel-Osco's butter as Instacart listed it at location 21943 (captured 23 Sep 13:57 in a
     /// QA database; every size, price and URL below is verbatim). Lucerne Salted Butter is a 16 oz
     /// package — its URL slug says "…-sweet-cream-salted-16-oz" — but its stated size is "4 ea",
-    /// so it is costed per stick-count and cannot enter a per-ounce comparison. Jewel's bar is then
-    /// Land O Lakes at $7.99/lb (49.9¢/oz) instead of Lucerne at $4.99/lb (31.2¢/oz): the $7.99 the
-    /// owner saw, against the lower price in Jewel's own app.
-    ///
-    /// `strict: true`: the day the size is read from the slug this starts failing as an
-    /// unexpected pass — delete the `XCTExpectFailure` line then, and it becomes the regression
-    /// test.
-    func testKNOWNDEFECTJewelsOneWeighedButterIsLeftOutOfThePerOunceComparison() {
+    /// so it was costed per stick-count and could not enter a per-ounce comparison. Jewel's bar was
+    /// then Land O Lakes at $7.99/lb (49.9¢/oz) instead of Lucerne at $4.99/lb (31.2¢/oz): the $7.99
+    /// the owner saw, against the lower price in Jewel's own app. The slug's 16 oz now prices it by
+    /// weight, as an estimate, and this is the regression test.
+    func testJewelsOneWeighedButterIsInThePerOunceComparison() {
         let jewel: [Product] = [
             jewelLandOLakes,
             product("jewel", "Lucerne Salted Butter", size: "4 ea", price: 4.99, regular: 6.99,
@@ -126,7 +123,6 @@ final class InstacartProvenanceTests: XCTestCase {
                                                              "aldi": StoreResult(retailerId: "aldi", status: .ok, items: aldi)],
                                    history: [:], options: CompareOptions(), prefs: PricePrefs(), storeOrder: ["aldi", "jewel"])
         let bar = out.bestPerStore.first { $0.product.storeId == "jewel" }
-        XCTExpectFailure("Pricing handoff: a count-sized listing whose URL slug states a weight is sized from the slug. Until then Jewel's bar is $7.99/lb.", strict: true)
         XCTAssertEqual(bar?.product.name, "Lucerne Salted Butter",
                        "Jewel's bar is \(bar?.product.name ?? "-") at \(Money.full(bar?.product.price ?? 0)) — Jewel sells 1 lb of butter for $4.99")
     }

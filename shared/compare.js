@@ -14,7 +14,12 @@ export function unitFor(p, dim, prefs = {}) {
   if (p.memberPrice != null && p.memberUnit != null && dim === p.dim && usesMember(p, prefs)) {
     return { perBase: p.memberUnit, est: u.est, member: true };
   }
-  return { perBase: u.perBase, est: u.est, member: false };
+  // A figure read from the slug is the shelf price over the slug's size; the member price the row
+  // shows scales it the same way (Whole Foods' Prime price on "English Muffins 6 Count").
+  if (u.slug && p.memberPrice != null && p.price > 0 && usesMember(p, prefs)) {
+    return { perBase: u.perBase * (p.memberPrice / p.price), est: u.est, member: true, slug: true };
+  }
+  return { perBase: u.perBase, est: u.est, member: false, ...(u.slug ? { slug: true } : {}) };
 }
 
 export function usesMember(p, prefs = {}) {
@@ -51,6 +56,9 @@ export function dominantDim(items) {
   for (const p of items) {
     if (p.dim && p.unit?.[p.dim] && !p.unit[p.dim].est) counts[p.dim] += 2;
     for (const d of Object.keys(p.unit || {})) {
+      // A figure read from the slug prices a row in the answer's dimension; it does not choose it
+      // (otherDimFromSlug in src/normalize.js).
+      if (p.unit[d].slug) continue;
       counts[d] += 1;
       if (!p.unit[d].est) stores[d]?.add(p.storeId);
     }
@@ -116,8 +124,12 @@ function medianOf(values) {
   return v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
 }
 
-/** The retailer stated this unit price's basis itself: a price per pound, or its own package size. */
-function statedUnit(p) {
+/**
+ * The retailer stated this unit price's basis itself: a price per pound, or its own package size.
+ * A figure in the other dimension read from the slug is one we worked out, whatever the stated size.
+ */
+function statedUnit(p, dim) {
+  if (dim && p.unit?.[dim]?.slug) return false;
   return p.sizeSource === 'perLb' || p.sizeSource === 'stated';
 }
 
@@ -192,6 +204,36 @@ function flagSizeOutliers(priced, dim) {
  * out of the median the others are judged by. The price is the one the comparison will use (a card
  * price counts), and a package of a pound or more at a dime is the same thing said as "1 lb".
  */
+/**
+ * A figure read from the URL slug (otherDimFromSlug in src/normalize.js), judged against the figures
+ * the stores stated, in every dimension, count included.
+ *
+ * A misread slug is ten times out, not two: a dropped decimal point ("...-15-lb" for 1.5 lb), a
+ * catalogue's case count, a size grade read as pieces. In the count dimension nothing else judges a
+ * price at all (see flagImplausible), and a weight or volume answer's 1/8 floor lets a dropped decimal
+ * through whenever the real price is above about 1.25 times the median: Meijer's organic brown sugar
+ * under ".../dark-brown-sugar-15-lb", read as 15 lb, sat at 0.20 of five ordinary bags (the review of
+ * this change, 20 Nov 2026). The yardstick is the cheapest stated figure, not the median: a pie crust
+ * pool's median is pulled up by 6 oz graham shells at $5-8/lb, and Walmart's real $1.36 Rollback sat
+ * at 0.15 of it. Measured over every cached answer, every slug figure that is a store's cheapest row
+ * is at 0.38 of the cheapest stated figure or more (Walmart's crusts 0.38, Costco's 8-count 0.54,
+ * Walmart's brown-and-serve dozen 0.62, ALDI's crusts 0.63), and a misread is about a tenth. So a slug
+ * figure under SLUG_LOW of the cheapest stated one is flagged. Needs three stated rows to judge against.
+ */
+const SLUG_LOW = 4;
+function flagSlugFigures(priced, dim) {
+  const slugged = priced.filter((x) => x.p.unit?.[dim]?.slug && !x.p.implausible);
+  if (!slugged.length) return;
+  const stated = priced.filter((x) => !x.p.unit?.[dim]?.slug).map((x) => x.u.perBase);
+  if (stated.length < 3) return;
+  const cheapest = Math.min(...stated);
+  const med = medianOf(stated);
+  for (const { p, u } of slugged) {
+    if (u.perBase * SLUG_LOW >= cheapest) continue;
+    p.implausible = { ratio: Math.round((u.perBase / med) * 10) / 10, median: med, direction: 'low', unconfirmed: true };
+  }
+}
+
 export const PER_LB_PLACEHOLDER = 0.1;
 const placeholderPerLb = (p, prefs = {}) => {
   const price = priceFor(p, prefs);
@@ -215,6 +257,7 @@ export function flagImplausible(items, dim, prefs = {}) {
       p.implausible = { ratio: typical && u ? Math.round((u.perBase / typical) * 10) / 10 : 0, median: typical || 0, direction: 'low', placeholder: true };
     }
   }
+  flagSlugFigures(priced, dim);
   if (dim === 'count') {
     flagSizeOutliers(priced, dim);
     return items;
@@ -235,8 +278,8 @@ export function flagImplausible(items, dim, prefs = {}) {
       };
     };
     if (ratio >= IMPLAUSIBLE_HIGH || ratio <= 1 / IMPLAUSIBLE_LOW) flag();
-    else if (ratio <= 1 / UNCONFIRMED_LOW && !statedUnit(p)) {
-      const vouched = priced.some((o) => o.p !== p && statedUnit(o.p) && !sameName(o.p, p) && o.u.perBase <= u.perBase * CORROBORATES);
+    else if (ratio <= 1 / UNCONFIRMED_LOW && !statedUnit(p, dim)) {
+      const vouched = priced.some((o) => o.p !== p && statedUnit(o.p, dim) && !sameName(o.p, p) && o.u.perBase <= u.perBase * CORROBORATES);
       if (!vouched) flag({ unconfirmed: true });
     }
   }

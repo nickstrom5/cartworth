@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import readline from 'node:readline';
 import { makeProduct } from '../../src/normalize.js';
 import { bestPerStore, savingsClaim, standings, excludedCheaper } from '../../shared/compare.js';
-import { DISPLAY_UNITS, sizeFromName } from '../../shared/units.js';
+import { DISPLAY_UNITS, sizeFromName, parseSize } from '../../shared/units.js';
 
 const SHOW = { weight: 'lb', volume: 'gal', count: 'ct' };
 export const money = (n) => (n == null ? '-' : `$${n.toFixed(2)}`);
@@ -33,9 +33,19 @@ export const feedOf = (p) => ({
 // they decided when it was fetched: a "$0.91/oz" line that made an 8.5 lb deli turkey a price per
 // pound (unitLineConflict), a "6 x 14.5 oz" line that made the price buy six (listingPack).
 const fromListingLines = (c) => !!c && (/listing's own/.test(c.name) || /^\d+ × /.test(c.name));
+// ...unless today's size already IS the pack the line describes: BJ's Kerrygold, stated "4 oz" with a
+// "6 × 4 oz" line, is six sticks by its slug today (clubButterPack), and the line then agrees with it,
+// as listingPack would find in the app.
+const packLineAgrees = (c, t) => {
+  const m = /^(\d+) × (.+)$/.exec(c.name || '');
+  const unit = m && parseSize(m[2]);
+  return !!unit && t.dim === unit.dim && t.base > 0 && Math.abs(t.base - +m[1] * unit.base) <= 0.02 * t.base;
+};
+// A row in conflict gets no slug figure in the app (otherDimFromSlug), so none in its size either.
+const withoutSlugFigure = (t) => (Object.values(t.unit || {}).some((u) => u.slug) ? t.size.replace(/ · [^·]+$/, '') : t.size);
 export function renormalize(p) {
   const t = makeProduct(feedOf(p));
-  if (!t.sizeConflict && fromListingLines(p.sizeConflict)) return { ...t, sizeConflict: p.sizeConflict, unit: p.unit, memberUnit: p.memberUnit, carried: 'listing-line conflict' };
+  if (!t.sizeConflict && fromListingLines(p.sizeConflict) && !packLineAgrees(p.sizeConflict, t)) return { ...t, size: withoutSlugFigure(t), sizeConflict: p.sizeConflict, unit: p.unit, memberUnit: p.memberUnit, carried: 'listing-line conflict' };
   // A pack the name itself counts ("2 Count 15 oz") was worked out from the name, by the code of the
   // day; today's reading of it stands. Only a pack the name cannot explain came from the pack line.
   const ns = sizeFromName(p.name);

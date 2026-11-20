@@ -226,7 +226,9 @@ enum Match {
         "raclette", "cotija", "queso", "fromage", "kase", "cheesecake"]
     /// Gravy granules are a dry mix: Grocery Outlet's "Bisto Gravy Granules" was Portland's and Washington's
     /// best "gravy" by weight against jars (19 Nov 2026). For gravy only; see HEAD_TRAPS in shared/match.js.
-    private static let headTraps: [String: Set<String>] = ["milk": cheeseNames, "cream": cheeseNames, "butter": cheeseNames, "gravy": ["granule"]]
+    /// Farina is a wheat cereal (Bravo's "Sa Farina Cream", filed under Heavy Cream; 20 Nov 2026), but only
+    /// beside cream and milk: "Farina 00" is Italian flour. Port of NOT_DAIRY_WORDS in shared/match.js.
+    private static let headTraps: [String: Set<String>] = ["milk": cheeseNames.union(["farina"]), "cream": cheeseNames.union(["farina"]), "butter": cheeseNames, "gravy": ["granule"]]
     /// Plant bases in front of the noun make a different product ("almond milk").
     private static let altBase: Set<String> = ["almond", "oat", "oatmilk", "soy", "coconut", "cashew", "rice", "hemp", "macadamia", "pea", "plant", "pistachio", "flax", "banana", "evaporated", "condensed", "powdered", "dry", "goat"]
     /// Prepared/processed forms are still the product but rarely what a price-checker wants.
@@ -307,6 +309,13 @@ enum Match {
         "almond butter", "cashew butter", "coconut butter", "sunflower butter", "seed butter", "cookie butter", "fig butter",
         // A chuck cross rib roast is shoulder, not prime rib (El Paso). Port of shared/match.js.
         "cross rib"].map { tokens($0) }
+    /// Sauces named for another base, when the search is for cranberry sauce only (Stonewall Kitchen's
+    /// "Horseradish Sauce, Cranberry", B.Bob's "Cranberry Chipotle Sauce", 20 Nov 2026): under any sauce
+    /// search they refused Trader Joe's "Habanero Hot Sauce" for "habanero sauce". Port of
+    /// CRANBERRY_SAUCE_OTHER_BASES in shared/match.js.
+    private static let cranberrySauceOtherBases = ["horseradish sauce", "chipotle sauce", "dipping sauce", "apple sauce", "barbecue sauce", "bbq sauce", "hot sauce"].map { tokens($0) }
+    /// "cranberry sauce", "whole berry cranberry sauce", "jellied cranberry sauce".
+    private static func cranberrySauceQuery(_ qt: [String]) -> Bool { qt.last == "sauce" && qt.contains(where: { $0.hasPrefix("cranberr") }) }
     private static func stem(_ w: String) -> String { w.hasSuffix("s") ? String(w.dropLast()) : w }
     private static func hasPhrase(_ words: [String], _ phrase: [String]) -> Bool {
         guard !phrase.isEmpty, words.count >= phrase.count else { return false }
@@ -369,8 +378,25 @@ enum Match {
     /// and a can answers both whatever its label says (Libby's "100% Pure Pumpkin" scored 0.06 against
     /// "canned pumpkin"; the Thanksgiving core list). Ports of PUMPKIN_CAN_WORDS and cannedPumpkin().
     private static let pumpkinCanWords = ["canned", "pure"]
-    private static func cannedPumpkin(nameTok: Set<String>, catTok: Set<String>, dim: Dim?, base: Double?, soldBy: SoldBy) -> Bool {
+    private static let beanKinds: Set<String> = ["green", "lima", "mung", "black", "kidney", "pinto", "fava", "navy", "garbanzo", "cannellini", "butter",
+        "baked", "refried", "jelly", "coffee", "vanilla", "wax", "soy", "adzuki", "azuki", "red", "white", "northern", "pink", "mayocoba",
+        "cranberry", "broad", "string", "snap", "romano", "runner", "yellow", "chili"]
+    private static let sameBean: [String: Set<String>] = ["green": ["string", "snap", "romano", "runner"]]
+    private static let blendVegetableRx = Rx("^(?:carrot|corn|peas?|potato|parsnip|cauliflower|broccoli|squash|zucchini|tomato|tomatoe)$")
+    /// ...but a small pumpkin-something that is another food is not the can: gummy "Mello Creme
+    /// Pumpkins" were Weis's canned pumpkin, a bakery "Pie, Pumpkin" C-Town's, pumpkin porridge H Mart's
+    /// (20 Nov 2026). A pie pumpkin in a filling or canned aisle is the variety, canned. Ports of
+    /// NOT_A_PUMPKIN_CAN_NAME_RE, NOT_A_PUMPKIN_CAN_AISLE_RE, PIE_WORD_RE, PIE_PUMPKIN_CAN_RE, CAN_AISLE_RE.
+    private static let notAPumpkinCanNameRx = Rx("\\b(?:candy|candies|gumm(?:y|ies)|creme|porridge|croquettes?|dumplings?|mochi|rice cakes?|noodles?|jams?|spreads?|honey|sauces?|lentils?|oats?|oatmeal|yog(?:h)?urts?|cheesecakes?|seeds?|kernels?|paint|acrylic|crafters?|sticks?|snacks?|bites?|breads?|muffins?|spice|latte|coffee|butter|ravioli|pasta|bars?|cookies?|granola|cereal|puffs?|chips?|crackers?|treats?|dogs?|cats?|baby|toddler|pouch(?:es)?|smoothies?|kefir|ice cream|soup|bisque|cakes?|donuts?|pancakes?|waffles?|beer|ale)\\b")
+    private static let notAPumpkinCanAisleRx = Rx("\\b(?:candy|candies|gumm(?:y|ies)|oats?|oatmeal|cereal|paint|crafts?|snacks?|bites?|yog(?:h)?urts?|cheesecakes?|bakery|desserts?|pies?(?! filling)|baby|seeds?|nuts?|spices?|coffee|beverages?)\\b")
+    private static let pieWordRx = Rx("\\bpies?\\b")
+    private static let piePumpkinCanRx = Rx("\\bpie pumpkin\\b")
+    private static let canAisleRx = Rx("\\b(?:fillings?|canned|cans?|baking)\\b")
+    private static func cannedPumpkin(name: String, category: String?, nameTok: Set<String>, catTok: Set<String>, dim: Dim?, base: Double?, soldBy: SoldBy) -> Bool {
         if soldBy == .lb { return false }
+        let nameN = normalize(name), aisleN = normalize(category ?? "")
+        if notAPumpkinCanNameRx.test(nameN) || notAPumpkinCanAisleRx.test(aisleN) { return false }
+        if pieWordRx.test(nameN) && !(piePumpkinCanRx.test(name) && canAisleRx.test(aisleN)) { return false }
         if ["canned", "can", "pure"].contains(where: { nameTok.contains($0) }) || catTok.contains("canned") { return true }
         if dim == .weight, let b = base, b > 0, b < cannedPumpkinMaxOz { return true }
         return false
@@ -585,7 +611,7 @@ enum Match {
             if byBrand || dairyFreeVegan || dietMeets[t]!.contains(where: { nameTok.contains($0) }) { nameTok.insert(t) }
         }
         let wantsPumpkinCan = qt.contains("pumpkin") && qt.contains(where: { pumpkinCanWords.contains($0) })
-        if wantsPumpkinCan && nameTok.contains("pumpkin") && cannedPumpkin(nameTok: nameTok, catTok: catTok, dim: dim, base: base, soldBy: soldBy) { nameTok.formUnion(pumpkinCanWords) }
+        if wantsPumpkinCan && nameTok.contains("pumpkin") && cannedPumpkin(name: name, category: category, nameTok: nameTok, catTok: catTok, dim: dim, base: base, soldBy: soldBy) { nameTok.formUnion(pumpkinCanWords) }
 
         // A word that appears ONLY in the brand counts as a match when it identifies the product
         // ("Kerrygold" for a kerrygold search) but NOT when it is a generic grocery qualifier,
@@ -654,6 +680,12 @@ enum Match {
             let before = words[max(0, hi - 3)..<hi]
             if before.contains(where: { ["with", "made", "from", "in"].contains($0) }) && words[0..<hi].contains(where: { traps.contains($0) && !qset.contains($0) }) {
                 mult *= 0.3
+            } else if let wi = words[0...hi].lastIndex(of: "with"), wi > 0,
+                      words[(wi + 1)..<hi].allSatisfy({ qset.contains($0) }),
+                      words[0..<wi].contains(where: { !qset.contains($0) && !soft.contains($0) && !stop.contains($0) && !fromBrandOnly($0) && !($0.first?.isNumber ?? false) }) {
+                // "Sweet Corn With Butter" is corn (Sam's Club's butter in about ten ZIPs, 20 Nov 2026); only the
+                // query's own words between. Port of the "with" rule in shared/match.js.
+                mult *= 0.3
             }
         }
         let allowed = Set(qt.flatMap { Array(queryAllows[$0] ?? []) })
@@ -691,13 +723,16 @@ enum Match {
                 else if altBase.contains(w) && i == beforeLabel(words, hi) && dairyHeads.contains(head) { strong += 1 }
             }
             var alt = 0, mildN = 0, flavorN = 0
+            // A sauce comes in flavours, but when the query names the sauce's own fruit a second one is
+            // another variety (Bravo's "Sa Strawberry Cranberry Sauce", 20 Nov 2026). Port of sauceFlavor.
+            let sauceFlavor = cranberrySauceQuery(qt)
             for w in words {
                 if qset.contains(w) || allowed.contains(w) || (wantsDiet && altBase.contains(w)) || makersWord(w) { continue }
                 // Position-independent: "Frozen Orange Juice" and "Orange Juice Frozen" are the
                 // same product and must score the same. Anchoring these to the head noun meant
                 // word order alone changed the score by a factor of two.
                 if altBase.contains(w) { alt += 1 }
-                else if flavor.contains(w) && !qt.contains(where: { inherentFlavor[$0]?.contains(w) == true }) && !flavorOkHeads.contains(head) { flavorN += 1 }
+                else if flavor.contains(w) && !qt.contains(where: { inherentFlavor[$0]?.contains(w) == true }) && (!flavorOkHeads.contains(head) || (sauceFlavor && w != "flavor" && w != "flavored")) { flavorN += 1 }
                 // When the retailer filed the product under exactly what was searched, a storage
                 // word in the name describes a variant OF that category rather than a different
                 // product. "Jennie-O Whole Frozen Turkey" in category "Frozen Whole Turkey" scored
@@ -734,11 +769,22 @@ enum Match {
             let inQ = { (w: String) in qstems.contains(stem(w)) }
             if headCompounds.contains(where: { hasPhrase(words, $0) && $0.dropLast().contains(where: inQ) && !inQ($0.last!) }) { mult *= 0.2 }
             if modifierCompounds.contains(where: { hasPhrase(words, $0) && inQ($0.last!) && !inQ($0.first!) }) { mult *= 0.2 }
+            if cranberrySauceQuery(qt), cranberrySauceOtherBases.contains(where: { hasPhrase(words, $0) && !inQ($0.first!) }) { mult *= 0.2 }
+        }
+        // Another kind of bean is another bean ("Goya Green Lima Beans" answered "green beans", 20 Nov
+        // 2026), when the query names its own kind. Port of BEAN_KINDS / SAME_BEAN in shared/match.js.
+        // Green beans only, where "green" also describes other beans; for any other kind the query's own
+        // word says which bean ("Refried Pinto Beans" are refried beans). Port of the rule in shared/match.js.
+        if head == "bean", qt.count == 2, qt[0] == "green" {
+            if words.indices.contains(where: { i in i > 0 && words[i] == head && beanKinds.contains(words[i - 1]) && !qset.contains(words[i - 1]) && !(sameBean["green"]?.contains(words[i - 1]) ?? false) }) { mult *= 0.2 }
         }
         if let qCut = qt.first(where: { cuts.contains($0) }), words.contains(where: { cuts.contains($0) && $0 != qCut && !qset.contains($0) }), !words.contains(qCut) { mult *= 0.2 }
         // "Glaze for Strawberries" is to use WITH strawberries. Port of the "for" rule in shared/match.js.
         if !qset.contains("for"), Rx("\\bfor (?:[a-z]+ ){0,2}\(NSRegularExpression.escapedPattern(for: head))").test(words.joined(separator: " ")) { mult *= 0.2 }
         if champagneGrapesRx.test(nameNorm) && !grapeRx.test(qNormForImitation) { mult *= 0.2 }
+        // Green beans in a blend of vegetables are a blend (Sam's Club's "Mixed Vegetables A Blend Of Carrots
+        // Corn Green Beans And Peas"), but a seasoned side is still green beans. Port of BLEND_VEGETABLE_RE.
+        if hasPhrase(qt, ["green", "bean"]) && words.contains(where: { !qset.contains($0) && blendVegetableRx.test($0) }) { mult *= 0.3 }
         // Fresh produce: another produce item named is a mix; a juice aisle is juice.
         if freshFruitRx.test(head) || produceHeadRx.test(head) {
             let others = words.filter { w in !qset.contains(w) && produceWordRx.test(w) && !qt.contains(where: { $0.hasPrefix(w) || w.hasPrefix($0) }) }

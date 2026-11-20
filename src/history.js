@@ -20,7 +20,8 @@ const insertObs = db.prepare(`INSERT INTO observations (pkey, store_id, location
 const REPEAT_MS = 12 * 60 * 60 * 1000;
 
 function primaryUnit(p) {
-  const dim = p.dim && p.unit?.[p.dim] ? p.dim : Object.keys(p.unit || {})[0];
+  // Never a figure read from the slug (otherDimFromSlug): the iPhone does not record one either.
+  const dim = p.dim && p.unit?.[p.dim] ? p.dim : Object.keys(p.unit || {}).find((d) => !p.unit[d].slug);
   return dim ? { dim, value: p.unit[dim].perBase } : { dim: null, value: null };
 }
 

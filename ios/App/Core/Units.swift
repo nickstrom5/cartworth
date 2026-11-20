@@ -36,6 +36,14 @@ struct ParsedSize: Codable, Hashable {
     var sticks: Int? = nil
     /// Set when the pack count came from Instacart's own unit line (`ProductFactory.listingPack`).
     var packFromListing: Bool = false
+    /// Set when a bag of celery hearts was read as one package: the count the listing stated
+    /// ("4 each"). See `ProductFactory.celeryHeartsRx`.
+    var heartsPack: String? = nil
+    /// Set when a club's "N ct" butter was read as N boxes of the slug's weight
+    /// (`ProductFactory.butterSticks`), and when its one stated pack was a whole number of them by
+    /// the slug (`ProductFactory.clubButterPack`).
+    var clubBoxes: Int? = nil
+    var clubSlugPack: Bool = false
 }
 
 struct CountFirst: Codable, Hashable {
@@ -94,6 +102,10 @@ struct UnitPrice: Codable, Hashable {
     var perBase: Double
     /// Estimated (range size, typical piece weight…)
     var est: Bool
+    /// Read from the retailer's URL slug, in the dimension the stated size is not in
+    /// (`ProductFactory.otherDimFromSlug`). It prices the row; it never chooses the answer's dimension.
+    /// Optional so products saved before it existed still decode.
+    var slug: Bool? = nil
 }
 
 enum Units {
@@ -240,6 +252,7 @@ enum Units {
     private static let perWeightRx = Rx("^(?:priced\\s+)?per\\s+(lb|pound|kg)\\b")
     private static let slashLbRx = Rx("^(?:avg\\.?\\s*)?/\\s*lb$")
     private static let eachRx = Rx("^(?:1\\s+)?each$|^ea\\.?$|^1\\s*ea\\.?$")
+    private static let bareVolumeRx = Rx("^(?:qt|quart|pt|pint|gal|gallon)\\.?$")
     /// Any dash-joined (or "to"-joined) pair of plain numbers followed by a unit is a range,
     /// regardless of which side is larger: "10-15 oz" and "1.5-2 lb" are both one package.
     private static let dashRangeRx = Rx("^\\s*\\d+(?:\\.\\d+)?\\s*(?:-|to)\\s*\\d")
@@ -314,6 +327,11 @@ enum Units {
         }
         if eachRx.test(lower) {
             return ParsedSize(dim: .count, base: 1, amount: 1, unit: "each", count: 1, perWeight: false, range: false, text: s)
+        }
+        // A bare volume unit is one of it (Weis's "Dairy Star Heavy Whipping Cream", stated "qt").
+        // Mirrors parseSize in shared/units.js.
+        if bareVolumeRx.test(lower) {
+            return parseSize("1 \(lower.hasSuffix(".") ? String(lower.dropLast()) : lower)")
         }
         // "12 Double Rolls", "8 Family Size Bars"
         s = adjectiveRx.replace(s, with: "$1 ")
@@ -469,6 +487,9 @@ enum Units {
     /// the cheapest in Chicago, among 14 captured listings). Not whipped cream or table cream,
     /// which are sold by NET WT. Mirrors LIQUID_RE in shared/units.js.
     private static let liquidRx = Rx("\\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half|egg ?nog|buttermilk)\\b")
+    /// Cream written backwards or plainly ("Cream Heavy Whipping", "Danzeisen Dairy Cream"), in the
+    /// product's own name only, never a whipped topping or cream cheese. Port of OWN_NAME_CREAM_RE.
+    private static let ownNameCreamRx = Rx("\\b(?:cream,? heavy(?: whip(?:ping)?)?|(?<!whipped )(?<!non-)dairy cream(?! cheese| topping))\\b")
     // "Cut Sweet Potatoes in Syrup", "Tuna in Water": what follows "in" is the packing medium, not
     // the product, and the can is still sold by NET WEIGHT. Without this, two 40 oz cans of the
     // same cut sweet potato at the same $4.99 on one Mariano's shelf landed in different
@@ -515,11 +536,30 @@ enum Units {
     static func coerceLiquid(_ size: ParsedSize?, name: String, ownName: String? = nil) -> ParsedSize? {
         guard var s = size, s.dim == .weight, !s.perWeight else { return size }
         guard ["oz", "ounce", "ounces", "onz"].contains(s.unit) else { return size }
-        guard looksLiquid(name), !solidRx.test(name) else { return size }
+        guard looksLiquid(name) || ownNameCreamRx.test(ownName ?? name), !solidRx.test(name) else { return size }
         if breadGravyRx.test(name) && !pouredRx.test(ownName ?? name) { return size }
         s.dim = .volume
         s.unit = "floz"
         s.liquidCoerced = true
+        return s
+    }
+
+    /// The other way round: a canned solid stated in fluid ounces is the can's net weight. Kroger's
+    /// "Kroger Pumpkin, 29oz" was stated "29 fl oz" and unpriced by weight in 20 ZIP/store rows;
+    /// Costco's Campbell's "10.5 fl oz, 12-Count" unranked in 11 ZIPs. Fluid ounces only (348 ml is
+    /// the metric volume of a 14 oz can). The product's own name says what it is, the aisle or the
+    /// name says it is a can, and neither says drink, dessert or not food: of 33 cached items whose
+    /// words alone fitted, only the four cans did. Port of `coerceSolid` in shared/units.js.
+    private static let cannedSolidRx = Rx("\\b(?:pumpkin|pie filling|cranberry sauce|jellied|cream of (?:mushroom|chicken|celery|potato)|green beans?|wax beans?|cut beans|yams?|sweet potato(?:es)?)\\b")
+    private static let canSignalRx = Rx("\\b(?:canned|cans?|solid pack|condensed)\\b")
+    private static let notCannedSolidRx = Rx("\\b(?:spice|latte|creamer|coffee|cold brew|energy|beer|ale|lager|hard|cocktails?|martini|vodka|rum|whiske?y|tequila|mule|spritz|sparkling|water|cartons?|juice|drinks?|beverages?|protein|smoothies?|shakes?|syrup|milk|soda|seltzer|kombucha|cider|wine|tea|oil|vinegar|broth|stock|nectar|pouch(?:es)?|baby|kefir|yog(?:h)?urt|ice cream|ice|frozen|eggnog|nog|bisque|lentils?|paint|acrylic|soap|lotion|cleanser|moisturi[sz]er|creme|candle|refill|pickled)\\b")
+    static func coerceSolid(_ size: ParsedSize?, name: String, ownName: String? = nil) -> ParsedSize? {
+        guard var s = size, s.dim == .volume, !s.perWeight, s.unit == "floz" else { return size }
+        // A packing medium ("in Syrup") is not a drink: set aside before the test, as looksLiquid does.
+        let all = packingMediumRx.replace(name, with: " ")
+        guard cannedSolidRx.test(ownName ?? name), canSignalRx.test(all), !notCannedSolidRx.test(all) else { return size }
+        s.dim = .weight
+        s.unit = "oz"
         return s
     }
 
@@ -633,10 +673,13 @@ enum Units {
     /// per pound over the piece's weight. See TURKEY_WHOLE_PACKAGE_LB_MIN in shared/units.js.
     static let turkeyWholePackageLbMin = 0.37
     static let turkeyBreastPackageLbMin = 0.99
+    /// No whole turkey weighs under 4 lb; a stated weight under it (not "1 lb", a price per pound) is
+    /// not the bird's. Mirrors TURKEY_WHOLE_MIN_OZ in src/normalize.js.
+    static let turkeyWholeMinOz = 64.0
     private static let turkeyRx = Rx("\\bturkeys?\\b")
     private static let wholeBirdRx = Rx("\\bwhole\\b|\\b(?:young|hen|tom)\\s+turkeys?\\b")
     private static let wholeTurkeyCategoryRx = Rx("\\bwhole turkeys?\\b")
-    private static let notAWholeTurkeyRx = Rx("\\b(?:breasts?|ground|deli|drums?(?:ticks?)?|wings?|thighs?|necks?|legs?|tenderloins?|cutlets?|roast|boneless|sliced|slices|lunch(?:meat)?|bacon|sausages?|jerky|sticks?|burgers?|patt(?:y|ies)|pastrami|ham|gravy|stuffing|stock|broth|brine|bags?|baster|pans?|roasters?|injector|thermometer|kit|rack|lifters?|meals?|dinners?|pot pie|pies?|sandwich(?:es)?|wraps?|dogs?|cats?|pets?|recipe|pate|food|treats?|chews?|kibble|toy|decorations?|candles?|cards?|books?|chocolate|candy|cookies?|cakes?|giblets?|half|halves|pieces?|chili|meatballs?|franks?|hot dogs?|kielbasa|loaf|salami|bologna)\\b")
+    private static let notAWholeTurkeyRx = Rx("\\b(?:breasts?|ground|deli|drums?(?:ticks?)?|wings?|thighs?|necks?|legs?|tenderloins?|cutlets?|roast|boneless|sliced|slices|lunch(?:meat)?|bacon|sausages?|jerky|sticks?|burgers?|patt(?:y|ies)|pastrami|ham|gravy|stuffing|stock|broth|brin(?:e|ing)|subs?|hoagies?|heros?|cheese|seasonings?|rubs?|spices?|gizzards?|hearts|livers?|tails|tenders|steaks?|neckbones?|feet|backs?|bags?|baster|pans?|roasters?|injector|thermometer|kit|rack|lifters?|meals?|dinners?|pot pie|pies?|sandwich(?:es)?|wraps?|dogs?|cats?|pets?|recipe|pate|food|treats?|chews?|kibble|toy|decorations?|candles?|cards?|books?|chocolate|candy|cookies?|cakes?|giblets?|half|halves|pieces?|chili|meatballs?|franks?|hot dogs?|kielbasa|loaf|salami|bologna)\\b")
     static func wholeTurkey(_ name: String, category: String? = nil) -> Bool {
         let n = name.lowercased()
         guard turkeyRx.test(n), !notAWholeTurkeyRx.test(n) else { return false }

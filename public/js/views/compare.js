@@ -230,7 +230,8 @@ function Results({ search, settings }) {
     // Mark prices that cannot be right given the other matches, so one mis-parsed case price
     // cannot become the headline number or silently win the comparison.
     if (dim) flagImplausible(relevant, dim, prefs);
-    const dims = [...new Set(relevant.flatMap((p) => Object.keys(p.unit || {})))];
+    // A dimension only slug figures fill is not offered: no store states it (otherDimFromSlug).
+    const dims = [...new Set(relevant.flatMap((p) => Object.keys(p.unit || {}).filter((d) => !p.unit[d].slug)))];
     const displayUnit = unitOverride && DISPLAY_UNITS[unitOverride]?.dim === dim ? unitOverride : dim ? suggestUnit(dim, (matched.length ? matched : relevant).filter((p) => p.dim === dim), search.q) : null;
     const factor = displayUnit ? DISPLAY_UNITS[displayUnit].factor : 1;
     const pass = (p) =>
@@ -241,7 +242,7 @@ function Results({ search, settings }) {
       !hidden.includes(p.storeId);
     const rows = relevant.filter(pass).map((p) => {
       const u = dim ? unitFor(p, dim, prefs) : null;
-      return { ...p, cmp: u ? u.perBase : null, cmpEst: u?.est, cmpMember: u?.member, shown: u ? u.perBase * factor : null };
+      return { ...p, cmp: u ? u.perBase : null, cmpEst: u?.est, cmpSlug: !!u?.slug, cmpMember: u?.member, shown: u ? u.perBase * factor : null };
     });
     const hiddenCount = scored.length - relevant.length;
     // best per store (from filtered rows)
@@ -435,7 +436,7 @@ function Results({ search, settings }) {
               <div class="hero-value">${unitPrice(winner.cmp, displayUnit).text}<span class="per">/${unitLabel(displayUnit)}</span></div>
               <div class="row wrap" style=${{ gap: 6 }}>
                 <${StoreTag} id=${winner.storeId} short=${false} />
-                ${winner.cmpEst && html`<span class="badge" title="Estimated from a typical piece weight">est.</span>`}
+                ${winner.cmpEst && html`<span class="badge" title=${winner.cmpSlug ? "Size read from the store's product listing, not the size it states" : 'Estimated from a typical piece weight'}>est.</span>`}
                 ${winner.priceBasis && html`<span class="badge badge-outline" title=${BASIS_TITLE[winner.priceBasis]}>${BASIS_LABEL[winner.priceBasis] || BASIS_LABEL.online}</span>`}
               </div>
               <div class="hero-sub"><a href="#" onClick=${(e) => { e.preventDefault(); openProduct(winner, displayUnit); }}>${winner.name}</a>${winner.size ? ` · ${winner.size}` : ''} · ${money2(effPrice(winner, prefs))}${winner.soldBy === 'lb' ? '/lb' : ''}</div>
@@ -585,7 +586,7 @@ export function ProductRow({ p, displayUnit, best, prefs, q, compact }) {
     </div>
     <div class="pprice">
       ${up
-        ? html`<div class="unit-big">${up.text}<span class="u">/${up.unit}</span>${p.cmpEst ? html`<span class="u" title="Estimated using a typical piece weight"> est.</span>` : ''}</div>`
+        ? html`<div class="unit-big">${up.text}<span class="u">/${up.unit}</span>${p.cmpEst ? html`<span class="u" title=${p.cmpSlug ? "Size read from the store's product listing, not the size it states" : 'Estimated using a typical piece weight'}> est.</span>` : ''}</div>`
         : html`<div class="unit-big" style=${{ fontSize: 15 }}>${money2(eff)}${p.soldBy === 'lb' ? html`<span class="u">/lb</span>` : ''}</div>`}
       ${up &&
       html`<div class="pkg">
