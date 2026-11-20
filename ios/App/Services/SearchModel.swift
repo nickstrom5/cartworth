@@ -192,7 +192,8 @@ enum Comparer {
         out.hiddenWeak = scored.count - relevant.count
         let relevantProducts = relevant.map(\.product)
         out.dim = dim
-        out.dims = Dim.allCases.filter { d in relevantProducts.contains { $0.unitPrice(d) != nil } }
+        // A dimension only slug figures fill is not offered: no store states it (ProductFactory.otherDimFromSlug).
+        out.dims = Dim.allCases.filter { d in relevantProducts.contains { $0.unitPrice(d) != nil && $0.unitPrice(d)?.slug != true } }
         if let dim {
             out.unit = o.unit?.dim == dim ? o.unit : Compare.suggestUnit(dim, items: (matched.isEmpty ? relevantProducts : matched).filter { $0.dim == dim }, query: query)
         }

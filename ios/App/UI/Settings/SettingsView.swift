@@ -255,7 +255,7 @@ struct AboutPricesView: View {
                 group("Shelf vs. Instacart prices",
                       "Some stores publish their in-store shelf prices; those are marked “shelf”. Others are priced from their Instacart listing, which can run higher than the shelf price or the store’s own app; those are marked “Instacart”. “National” means Instacart’s chain-wide listing, used when there is no location near you. Weekly-ad prices always come from the store’s circular.")
                 group("Unit prices",
-                      "Every price is converted to a common unit — per gallon, per pound, per dozen — so a 64 oz jug and a gallon can be compared honestly. Items sold by weight (meat, produce) use the per-pound price; when a store only lists “each”, a typical piece weight is used and the number is marked “est.”")
+                      "Every price is converted to a common unit — per gallon, per pound, per dozen — so a 64 oz jug and a gallon can be compared honestly. Items sold by weight (meat, produce) use the per-pound price; when a store only lists “each”, a typical piece weight is used and the number is marked “est.” So is a number worked out from the size in the store's product listing when the store states its size another way (a count of pie crusts, say, where others state ounces).")
                 group("Deals and coupons",
                       "Multi-buy (“2 for $5”), BOGO and digital-coupon prices are read from the circular, including the fine print — limits, “must buy 2”, and the price without the coupon. Prices that need a store card or a clipped coupon are labeled.")
                 group("How fresh",

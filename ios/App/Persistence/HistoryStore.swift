@@ -48,7 +48,7 @@ actor HistoryStore {
             let last = series.last
             let changed = last == nil || abs(last!.price - p.price) > 0.004 || (last!.regular ?? -1) != (p.regularPrice ?? -1) || last!.onSale != p.onSale
             if record, changed || now.timeIntervalSince(last!.at) > repeatInterval {
-                let dim = p.dim ?? p.dims.first
+                let dim = p.dim ?? p.dims.first(where: { p.unitPrice($0)?.slug != true })
                 modelContext.insert(PricePoint(key: p.key, storeId: p.storeId, name: p.name, price: p.price, regular: p.regularPrice,
                                                unitPerBase: dim.flatMap { p.unitPrice($0)?.perBase }, dim: dim?.rawValue, onSale: p.onSale, at: now))
             }

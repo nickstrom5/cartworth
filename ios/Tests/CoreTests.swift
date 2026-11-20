@@ -3842,3 +3842,401 @@ final class ReviewOfRescoreFixesTests: XCTestCase {
         XCTAssertNil(lime[0].implausible)
     }
 }
+
+/// Ports of test/qa-backlog-sizes-2026-11-20.test.js: the open size groups from the 18-19 Nov review of
+/// every cached Thanksgiving answer, fixed on 20 Nov 2026.
+final class BacklogSizesTests: XCTestCase {
+    private var seq = 0
+    private func row(_ store: String, _ name: String, _ size: String, _ price: Double, category: String? = nil, url: String? = nil) -> Product {
+        seq += 1
+        return ProductFactory.make(ProductInput(storeId: store, id: "\(seq)", name: name, sizeText: size, price: price, url: url.flatMap { URL(string: $0) }, category: category))!
+    }
+    private func slug(_ s: String, _ store: String = "walmart") -> String { seq += 1; return "https://www.instacart.com/products/\(seq)-\(s)?retailerSlug=\(store)" }
+    private func perLb(_ p: Product) -> Double? { p.unitPrice(.weight).map { ($0.perBase * 1600).rounded() / 100 } }
+
+    func testACountStatedPieCrustIsPricedByTheWeightItsSlugStates() {
+        let walmart = row("walmart", "Great Value 2 Pack 9 Inch Deep Dish Pie Crusts", "2 ct", 1.36, category: "Pie Crusts", url: slug("great-value-deep-dish-pie-crusts-16-oz"))
+        XCTAssertEqual(walmart.dim, .count)
+        XCTAssertEqual(walmart.unitPrice(.count)?.perBase, 0.68)
+        XCTAssertEqual(perLb(walmart), 1.36)
+        XCTAssertEqual(walmart.unitPrice(.weight)?.est, true)
+        XCTAssertEqual(walmart.unitPrice(.weight)?.slug, true)
+        XCTAssertEqual(walmart.size, "2 ct · 16 oz")
+        XCTAssertEqual(perLb(row("aldi", "Bake House Creations Pie Crusts - 2 Count", "2 ct", 1.88, url: "https://www.aldi.us/store/aldi/products/31794298-bake-house-creations-pie-crust-14-1-oz")), 2.13)
+        let costco = row("costco", "Pillsbury 9\" Pie Crusts, 8-count", "each", 8.7, url: slug("pillsbury-pie-crusts-8-count-56-400-oz", "costco"))
+        XCTAssertEqual(costco.size, "8 ct · 56.4 oz")
+        XCTAssertEqual(perLb(costco), 2.47)
+    }
+
+    func testAWeightStatedDozenOfRollsIsPricedPerRollByItsSlugCount() {
+        let rolls = row("walmart", "Great Value Brown'n Serve Enriched Dinner Rolls", "12 oz", 1.05, url: slug("great-value-enriched-brown-n-serve-dinner-rolls-12-ct"))
+        XCTAssertEqual(rolls.dim, .weight)
+        XCTAssertEqual(((rolls.unitPrice(.count)?.perBase ?? 0) * 1000).rounded() / 1000, 0.088)
+        XCTAssertEqual(rolls.unitPrice(.count)?.slug, true)
+        XCTAssertEqual(rolls.size, "12 oz · 12 ct")
+    }
+
+    func testTheSlugSettlesNothingWhenUnclearAPackATurkeyProduceOrAConflict() {
+        XCTAssertNil(ProductFactory.slugMeasure(URL(string: "https://www.instacart.com/products/1-hen-turkey-3-5-lb"), name: "x", category: nil))
+        XCTAssertNil(ProductFactory.slugMeasure(URL(string: "https://www.instacart.com/products/1-crusts-12-oz-16-oz"), name: "x", category: nil))
+        XCTAssertEqual(ProductFactory.slugMeasure(URL(string: "https://www.instacart.com/products/1-crusts-12-oz-12-0-oz"), name: "x", category: nil)?.base, 12)
+        XCTAssertNil(ProductFactory.slugPieces(URL(string: "https://www.instacart.com/products/1-rolls-4-pk")))
+        XCTAssertNil(ProductFactory.slugPieces(URL(string: "https://www.instacart.com/products/1-rolls-1-ct")))
+        XCTAssertEqual(ProductFactory.slugPieces(URL(string: "https://www.instacart.com/products/1-rolls-12-ct")), 12)
+        XCTAssertNil(row("foodcity", "Butterball Frozen Whole Turkey", "1 each", 24.99, url: slug("butterball-frozen-whole-turkey-12-lb")).unitPrice(.weight)?.slug)
+        XCTAssertNil(row("kroger", "Yellow Onion", "1 each", 0.89, url: slug("yellow-onion-1-lb")).unitPrice(.weight)?.slug)
+        let crust = row("kroger", "Kroger Deep Dish Pie Crust", "16 oz", 2.79, url: slug("kroger-deep-dish-pie-crust-16-oz"))
+        XCTAssertEqual(crust.size, "16 oz")
+        XCTAssertEqual(Set(crust.unit.keys), ["weight"])
+        let mixed = row("kingsoopers", "KRO TURKEY STUFFING MIX", "2 ct", 1.09, url: slug("kroger-sugar-cinnamon-mini-pretzel-20-oz"))
+        XCTAssertNotNil(mixed.sizeConflict)
+        XCTAssertTrue(mixed.unit.isEmpty)
+    }
+
+    func testTheSlugFigureWinsPieCrustAsAnEstimateThatClaimsNoPercent() {
+        let tj = row("traderjoes", "Pie Crusts", "22 oz", 4.49)
+        let kroger = row("kroger", "Kroger Deep Dish Pie Crust", "16 oz", 2.99)
+        let pills = row("target", "Pillsbury Refrigerated Pie Crusts", "14.1 oz", 3.99)
+        let walmart = row("walmart", "Great Value 2 Pack 9 Inch Deep Dish Pie Crusts", "2 ct", 1.36, url: slug("great-value-deep-dish-pie-crusts-16-oz"))
+        let best = Compare.bestPerStore(query: "pie crust", results: ["traderjoes": [tj], "kroger": [kroger], "target": [pills], "walmart": [walmart]])
+        XCTAssertEqual(best.dim, .weight)
+        XCTAssertEqual(best.stores["walmart"]?.product.name, walmart.name)
+        XCTAssertEqual(best.stores["walmart"]?.est, true)
+        let rows = Compare.standings(best.stores)
+        XCTAssertEqual(rows.first?.storeId, "walmart")
+        if let a = best.stores[rows[0].storeId], let b = best.stores[rows[1].storeId] {
+            let claim = Compare.savingsClaim(best: a.product, perBase: a.perBase, est: a.est, runnerUp: b.product, perBase: b.perBase, est: b.est)
+            XCTAssertNotEqual(claim?.kind, "exact")
+        } else { XCTFail("two stores ranked") }
+    }
+
+    func testSlugFiguresNeverChooseTheDimension() {
+        let items = [
+            row("a", "Crusts 2 ct", "2 ct", 1.5, url: slug("crusts-16-oz")),
+            row("b", "Crusts 2 ct", "2 ct", 1.6, url: slug("crusts-16-oz")),
+            row("c", "Crusts 2 ct", "2 ct", 1.7, url: slug("crusts-16-oz")),
+            row("d", "Crusts", "14.1 oz", 3.5),
+            row("e", "Crusts", "15 oz", 3.6),
+        ]
+        XCTAssertEqual(Compare.dominantDim(items), .count)
+    }
+
+    func testABagOfCeleryHeartsIsOnePackageWhateverItCounts() {
+        let bjs = row("bjs", "Foxy Organic Organic Celery Hearts", "4 each", 2.59, url: slug("foxy-organic-organic-celery-hearts", "bjs"))
+        XCTAssertEqual(bjs.base, 1)
+        XCTAssertEqual(bjs.unitPrice(.count)?.perBase, 2.59)
+        XCTAssertEqual(bjs.size, "1 pack · 4 each")
+        XCTAssertEqual(bjs.sizeSource, "derived")
+        XCTAssertNil(row("bravo", "Superior Celery Hearts", "20 oz", 2.18, url: slug("superior-celery-hearts-2-ct")).unitPrice(.count))
+        XCTAssertEqual(row("aldi", "Celery", "1 each", 0.95).unitPrice(.count)?.perBase, 0.95)
+    }
+
+    func testACannedSolidStatedInFluidOuncesIsItsNetWeight() {
+        let kroger = row("kroger", "Kroger Pumpkin, 29oz", "29 fl oz", 2.99, category: "Canned Pumpkin")
+        XCTAssertEqual(kroger.dim, .weight)
+        XCTAssertEqual(perLb(kroger), 1.65)
+        XCTAssertEqual(row("vons", "O Organics Pumpkin, 100% Pure, Solid Pack", "15 fl oz", 2.99).dim, .weight)
+        let soup = row("costco", "Campbell's, Cream of Mushroom Soup, 10.5 fl oz, 12-Count", "each", 12.43, category: "Canned Soup")
+        XCTAssertEqual(soup.dim, .weight)
+        XCTAssertEqual(soup.base, 126)
+        XCTAssertEqual(perLb(soup), 1.58)
+        XCTAssertEqual(row("safeway", "O Organics Green Beans, No Salt Added, Cut", "14.5 fl oz", 1.99, category: "Canned Green Beans").dim, .weight)
+    }
+
+    func testDrinksDessertsAndOtherThingsWithThoseWordsStayByVolume() {
+        func vol(_ name: String, _ size: String, _ category: String) -> Dim? { row("x", name, size, 4.99, category: category).dim }
+        XCTAssertEqual(vol("REBBL Protein, Spiced Pumpkin Pie", "12 fl oz", "Protein Drinks"), .volume)
+        XCTAssertEqual(vol("Hood Pumpkin Eggnog", "32 fl oz", "Eggnog"), .volume)
+        XCTAssertEqual(vol("Wegmans Pumpkin Pie Ice Cream, Limited Edition", "48 fl oz", "Ice Cream Tubs"), .volume)
+        XCTAssertEqual(vol("Nestle Nestle Lite Cream", "7.6 fl oz", "Condensed Milk"), .volume)
+        XCTAssertEqual(vol("Decoart Crafter's Acrylic Paint - Pure Pumpkin", "2 fl oz", "Acrylic Paint"), .volume)
+        XCTAssertEqual(vol("Blue Point Mother Pumpkin", "12 fl oz", "Other Ales"), .volume)
+        XCTAssertEqual(vol("W2GO Pumpkin Bisque", "24 fl oz", "Prepared Soups"), .volume)
+        XCTAssertEqual(Units.coerceSolid(Units.parseSize("348 ml"), name: "Ocean Spray Whole Cranberry Sauce Canned Cranberries")?.unit, "ml")
+    }
+
+    func testCreamNamedBackwardsOrPlainlyAndABareQuartAreVolumes() {
+        XCTAssertEqual(row("wholefoods", "Cream Heavy Whipping", "32 oz", 12.99).dim, .volume)
+        XCTAssertEqual(row("bashas", "Danzeisen Dairy Cream", "16 oz", 5.99).dim, .volume)
+        let weis = row("weis", "Dairy Star Heavy Whipping Cream", "qt", 6.69)
+        XCTAssertEqual(weis.dim, .volume)
+        XCTAssertEqual(weis.base, 32)
+        XCTAssertEqual(Units.parseSize("gal")?.base, Units.parseSize("1 gal")?.base)
+        XCTAssertEqual(row("x", "Philadelphia Dairy Cream Cheese", "8 oz", 2.99).dim, .weight)
+        XCTAssertEqual(Units.parseSize("lb")?.perWeight, true)
+    }
+
+    func testAWholeTurkeyStatedAtAFewOuncesHasNoUnitPrice() {
+        let fairway = row("fairway", "Maplecrest 10-12 Natural Turkey", "18 oz", 2.21, category: "Whole Turkey")
+        XCTAssertNotNil(fairway.sizeConflict)
+        XCTAssertTrue(fairway.unit.isEmpty)
+        XCTAssertNotNil(row("weis", "Weis Young Turkey", "20 oz", 10.39).sizeConflict)
+    }
+
+    func testOnePoundIsAPricePerPoundAndABreastOrGroundTurkeyMayWeighAPound() {
+        let hen = row("stopandshop", "Shady Brook Farms® Hen Turkey Frozen", "1 lb", 0.59, category: "Frozen Whole Turkey")
+        XCTAssertNil(hen.sizeConflict)
+        XCTAssertEqual(perLb(hen), 0.59)
+        XCTAssertNil(row("x", "Boneless Turkey Breast Roast", "2 lb", 9.99).sizeConflict)
+        XCTAssertNil(row("x", "Jennie-O Lean Ground Turkey", "16 oz", 4.99).sizeConflict)
+    }
+
+    func testAOneCountSweetPotatoUnderAPerLbSlugGetsNoPerPieceEstimate() {
+        XCTAssertNil(row("kroger", "Sweet Potato", "1 ct", 0.99, url: slug("golden-sweet-potatoes-yams-per-lb", "kroger")).unitPrice(.weight))
+        XCTAssertEqual(row("kroger", "Sweet Potato", "1 ct", 0.99).unitPrice(.weight)?.est, true)
+    }
+
+    func testABagOfRollsStatedOneEachHasNoPricePerRoll() {
+        XCTAssertNil(row("naturalgrocers", "Natural Grocers Brand Products Organic Hawaiian Rolls", "1 each", 6.29).unitPrice(.count))
+        XCTAssertEqual(row("x", "King's Hawaiian Original Hawaiian Sweet Rolls", "12 ct", 3.99).unitPrice(.count)?.perBase, 3.99 / 12)
+        XCTAssertEqual(row("x", "Bounty Paper Towels Double Rolls", "1 each", 2.99).unitPrice(.count)?.perBase, 2.99)
+    }
+}
+
+/// Ports of test/qa-backlog-matcher-2026-11-20.test.js.
+final class BacklogMatcherTests: XCTestCase {
+    private func score(_ q: String, _ name: String, _ category: String, dim: Dim? = .weight, base: Double? = 15, soldBy: SoldBy = .each) -> Double {
+        Match.relevance(query: q, name: name, category: category, dim: dim, base: base, soldBy: soldBy)
+    }
+    private func yes(_ q: String, _ name: String, _ category: String, dim: Dim? = .weight, base: Double? = 15, soldBy: SoldBy = .each, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertGreaterThanOrEqual(score(q, name, category, dim: dim, base: base, soldBy: soldBy), Match.relevant, "\"\(q)\" should find \"\(name)\"", file: file, line: line)
+    }
+    private func no(_ q: String, _ name: String, _ category: String, dim: Dim? = .weight, base: Double? = 15, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertLessThan(score(q, name, category, dim: dim, base: base), Match.relevant, "\"\(q)\" should not find \"\(name)\"", file: file, line: line)
+    }
+
+    func testASecondFruitOrAnotherSauceIsNotCranberrySauce() {
+        no("cranberry sauce", "Sa Strawberry Cranberry Sauce", "Canned Cranberries", base: 16)
+        no("cranberry sauce", "Ocean Spray Cran Raspberry Cranberry Sauce", "Canned Cranberries", base: 14)
+        no("cranberry sauce", "Stonewall Kitchen Horseradish Sauce, Cranberry", "Horseradish Sauce", base: 12)
+        no("cranberry sauce", "Bell-View Cranberry Horseradish Sauce", "Horseradish Sauce", base: 16)
+        no("cranberry sauce", "B.Bob's Foods Cranberry Chipotle Sauce", "Other Sauces", base: 14.75)
+        no("cranberry sauce", "Mott's Apple Sauce, Cranberry Raspberry", "Fruit Juice Blends", dim: .volume, base: 15.6)
+        no("cranberry sauce", "Ocean Spray Crushed Cranberry Orange Fruit Dipping Sauce", "Fruit Juice Blends", base: 12)
+    }
+
+    func testPlainWholeBerryAndJelliedCranberrySauceAndOtherFlavouredSauces() {
+        yes("cranberry sauce", "Super A Cranberry Sauce", "Canned Cranberries", base: 16)
+        yes("cranberry sauce", "Ocean Spray Whole Berry Cranberry Sauce", "Cranberry Sauce", base: 14)
+        yes("cranberry sauce", "Ocean Spray Jellied Cranberry Sauce", "Canned Fruit", base: 14)
+        yes("hot sauce", "Mango Habanero Hot Sauce", "Hot Sauce", dim: .volume, base: 5)
+        yes("bbq sauce", "Sweet Baby Ray's Honey Barbecue Sauce", "BBQ Sauce", base: 18)
+    }
+
+    func testCandyPiesPorridgeAndPaintAreNotCannedPumpkin() {
+        no("canned pumpkin", "Zachary Pumpkins, Mello Creme", "Gummy Candies", base: 16)
+        no("canned pumpkin", "Table Talk Pie, Pumpkin", "Pumpkin Pie", base: 22)
+        no("canned pumpkin", "Table Talk Pies Inc. Classic Pumpkin 8-inch Pie", "", base: 22)
+        no("canned pumpkin", "Jinga Pumpkin Porridge", "Quick Oats", base: 17.6)
+        no("canned pumpkin", "99 Pumpkin Energy Sticks", "Snack Bites", base: 6.35)
+        no("canned pumpkin", "Pumpkin Croquette", "", base: 15.51)
+        no("canned pumpkin", "Pumpkin Tree Fruit & Vegetable Puree, Organic, Apple, Carrot & Pumpkin", "Baby Food Purees", base: 4)
+        no("canned pumpkin", "Noosa Pumpkin Yoghurt, 8 oz", "Traditional Yogurt", base: 8)
+        no("canned pumpkin", "Market District Pie Pumpkin", "Pumpkin Pie", base: 24)
+    }
+
+    func testEveryCanOfPumpkinStillAnswers() {
+        yes("canned pumpkin", "Libby's 100% Pure Pumpkin", "Canned Pumpkin & Pie Filling")
+        yes("canned pumpkin", "Great Value Pumpkin", "Canned Vegetables")
+        yes("canned pumpkin", "Weis Quality 100% Pure Pumpkin", "Pie Filling")
+        yes("canned pumpkin", "Festal Golden Pie Pumpkin", "Pie Fillings")
+        yes("pumpkin puree", "Farmer's Market Foods Organic Pumpkin Puree", "")
+    }
+
+    func testAnotherBeanOrABlendOfVegetablesIsNotGreenBeans() {
+        no("green beans", "Goya Green Lima Beans", "Canned Lima Beans")
+        no("green beans", "Asian Taste Green Mung Bean", "Dried Mung Beans", base: 14)
+        no("green beans", "Nature's Black Bean Inside Green", "Dried Black Beans", base: 64)
+        no("green beans", "Green Valley Pinto Beans", "Canned Pinto Beans")
+        no("green beans", "Sultan Premium Green Fava Beans", "Other Frozen Vegetables", base: 14)
+        no("green beans", "Member's Mark Mixed Vegetables A Blend Of Carrots Corn Green Beans And Peas", "Frozen Mixed Vegetables", base: 72)
+        no("green beans", "Eat Smart Green Beans & Carrots", "Green Beans", base: 12)
+        no("green beans", "Glory Foods Seasoned Southern Style Green Beans With Potatoes", "Green Beans", base: 27)
+    }
+
+    func testGreenBeansByAnyNameSeasonedOrNotAndEveryBeanForBeans() {
+        yes("green beans", "Del Monte BLUE LAKE Cut Green Beans, Canned Vegetables", "Canned Green Beans", base: 14.5)
+        yes("green beans", "Birds Eye Steamfresh Cut Green Beans, Frozen Vegetables", "Frozen Green Beans", base: 10)
+        yes("green beans", "Organic Snap Green Beans", "Fresh Vegetables", base: nil, soldBy: .lb)
+        yes("green beans", "Green Beans with Cracked Pepper & Sea Salt", "", base: 12)
+        yes("green beans", "Glory Foods Reduced Sodium Southern Style Green Beans with Garlic, Onion & Sea Salt", "Canned Green Beans", base: 14.5)
+        yes("green beans", "String Beans with Garlic", "Green Beans", base: 12)
+        yes("beans", "Goya Black Beans", "Canned Beans", base: 15.5)
+        yes("black beans", "Goya Black Beans", "Canned Beans", base: 15.5)
+        yes("lima beans", "Goya Green Lima Beans", "Canned Lima Beans")
+    }
+
+    func testFarinaFiledUnderHeavyCreamIsNotCream() {
+        no("heavy cream", "Sa Farina Cream", "Heavy Cream", dim: .volume, base: 28)
+        yes("heavy cream", "White Rose Heavy Cream", "Heavy Cream", dim: .volume, base: 8)
+    }
+}
+
+/// Ports of the club butter tests in test/qa-backlog-sizes-2026-11-20.test.js.
+final class BacklogClubButterTests: XCTestCase {
+    private var seq = 0
+    private func row(_ store: String, _ name: String, _ size: String, _ price: Double, category: String? = nil, url: String? = nil) -> Product {
+        seq += 1
+        return ProductFactory.make(ProductInput(storeId: store, id: "\(seq)", name: name, sizeText: size, price: price, url: url.flatMap { URL(string: $0) }, category: category))!
+    }
+    private func slug(_ s: String, _ store: String) -> String { seq += 1; return "https://www.instacart.com/products/\(seq)-\(s)?retailerSlug=\(store)" }
+    private func perLb(_ p: Product) -> Double? { p.unitPrice(.weight).map { ($0.perBase * 1600).rounded() / 100 } }
+
+    func testAClubStatesOneBoxOrOnePoundUnderASlugThatWeighsThePack() {
+        let sams = row("samsclub", "Member’s Mark Salted Sweet Cream Butter Sticks", "16 oz", 11.88, category: "Salted Butter", url: slug("member-s-mark-salted-sweet-cream-butter-sticks-4-lb", "sams-club"))
+        XCTAssertEqual(sams.base, 64)
+        XCTAssertEqual(perLb(sams), 2.97)
+        XCTAssertEqual(sams.size, "4 × 16 oz")
+        XCTAssertEqual(sams.sizeSource, "derived")
+        XCTAssertEqual(perLb(row("bjs", "Kerrygold Unsalted Pure Irish Butter", "4 oz", 17.19, category: "Unsalted Butter", url: slug("kerrygold-unsalted-pure-irish-butter-24-oz", "bjs"))), 11.46)
+        let wellsley = row("bjs", "Wellsley Farms All Natural Salted Butter", "4 ct", 11.49, category: "Salted Butter", url: slug("wellsley-farms-all-natural-salted-butter-1lb", "bjs"))
+        XCTAssertEqual(wellsley.base, 64)
+        XCTAssertEqual(perLb(wellsley), 2.87)
+    }
+
+    func testTheSameShapesOutsideAClubOrTheButterAisleAreLeftAsTheyWere() {
+        let lucerne = row("jewel", "Lucerne Salted Butter", "4 ea", 4.99, category: "Salted Butter", url: slug("lucerne-butter-sweet-cream-salted-16-oz", "jewel-osco"))
+        XCTAssertEqual(lucerne.base, 16)
+        XCTAssertEqual(perLb(lucerne), 4.99)
+        let choc = row("costco", "Ghirardelli Premium Chocolate Assortment Squares, 21.4 oz Bag", "21.4 oz", 15.91, category: "Chocolate Candies", url: slug("ghirardelli-premium-chocolate-assortment-squares-214-oz", "costco"))
+        XCTAssertEqual(choc.base, 21.4)
+        XCTAssertNil(ProductFactory.slugMeasure(URL(string: "https://www.instacart.com/products/1-crusts-141-oz"), name: "x", category: nil))
+        XCTAssertEqual(ProductFactory.slugMeasure(URL(string: "https://www.instacart.com/products/1-crusts-14-1-oz"), name: "x", category: nil)?.base, 14.1)
+    }
+}
+
+/// Ports of test/qa-backlog-review-2026-11-20.test.js: what the review of the 20 Nov fixes found.
+final class BacklogReviewTests: XCTestCase {
+    private var seq = 0
+    private func row(_ store: String, _ name: String, _ size: String, _ price: Double, category: String? = nil, url: String? = nil, member: Double? = nil, memberLabel: String? = nil) -> Product {
+        seq += 1
+        var input = ProductInput(storeId: store, id: "\(seq)", name: name, sizeText: size, price: price, url: url.flatMap { URL(string: $0) }, category: category)
+        input.memberPrice = member
+        input.memberLabel = memberLabel
+        return ProductFactory.make(input)!
+    }
+    private func slug(_ s: String, _ store: String = "x") -> String { seq += 1; return "https://www.instacart.com/products/\(seq)-\(s)?retailerSlug=\(store)" }
+    private func measure(_ u: String) -> ParsedSize? { ProductFactory.slugMeasure(URL(string: u), name: "x", category: nil) }
+    private func pieces(_ u: String) -> Int? { ProductFactory.slugPieces(URL(string: u)) }
+    private func score(_ q: String, _ name: String, _ category: String, dim: Dim = .volume, base: Double = 5) -> Double {
+        Match.relevance(query: q, name: name, category: category, dim: dim, base: base)
+    }
+
+    func testTheProductIdAndAnASINAreNotTheSlugsSize() {
+        let brioche = row("lundsbyerlys", "L&B Brioche Dinner Rolls", "8 ct", 4.99, url: "https://www.instacart.com/products/57858643-l-b-brioche-dinner-rolls-8-ct?retailerSlug=lunds")
+        XCTAssertEqual(brioche.size, "8 ct")
+        XCTAssertNil(brioche.unitPrice(.volume))
+        XCTAssertNil(measure("https://www.instacart.com/products/75764907-lb-marshmallow-crispy-bar"))
+        XCTAssertNil(measure("https://www.wholefoodsmarket.com/product/mini-pecan-tart-3ct-b0fd3mlq6l"))
+        XCTAssertEqual(measure("https://www.instacart.com/products/25403082-great-value-deep-dish-pie-crusts-16-oz")?.base, 16)
+    }
+
+    func testDroppedDecimalsUpToAndPerPoundSlugsSettleNothing() {
+        XCTAssertNil(measure("https://www.instacart.com/products/1-true-goodness-organic-dark-brown-sugar-15-lb"))
+        XCTAssertNil(measure("https://www.instacart.com/products/1-okra-15-lbs"))
+        XCTAssertNil(measure("https://www.instacart.com/products/1-fresh-grown-large-pumpkins-up-to-19-pound-each"))
+        XCTAssertEqual(measure("https://www.instacart.com/products/1-potatoes-5-lb")?.base, 80)
+        let ham = row("samsclub", "Member's Mark Uncured Boneless Quarter Sliced Ham", "1 each", 5.81, url: slug("member-s-mark-ham-priced-per-pound-2232lb", "sams-club"))
+        XCTAssertNil(ham.unitPrice(.weight))
+        XCTAssertEqual(ham.size, "1 ea")
+    }
+
+    func testRangesDecimalsPacksAndRestatedOuncesAreNotPieces() {
+        XCTAssertNil(pieces("https://www.instacart.com/products/1-shrimp-31-to-40-count-raw-tail-off-2-lb"))
+        XCTAssertNil(pieces("https://www.instacart.com/products/1-shrimp-16-20-ct"))
+        XCTAssertNil(pieces("https://www.instacart.com/products/1-freshness-guaranteed-apple-pie-3-50-ct"))
+        XCTAssertNil(pieces("https://www.instacart.com/products/1-rolls-12-ct-2-pack"))
+        XCTAssertNil(row("hannaford", "Smiling Hill Farm Pure-Natural Heavy Cream", "1 pt", 5.99, url: slug("smiling-hill-farm-cream-heavy-16-each")).unitPrice(.count))
+        let grassland = row("walmart", "Grassland rBST-free, Salted Sweet Cream Butter", "16 oz", 4.96, url: slug("grassland-butter-salted-16-ea"))
+        XCTAssertNil(grassland.unitPrice(.count))
+        XCTAssertEqual(grassland.size, "16 oz")
+    }
+
+    func testTheRowsOwnCountOrWeightWinsOverTheCataloguesSlug() {
+        XCTAssertNil(row("meijer", "Fresh From Meijer French Dinner Rolls 10 ct 14.1 oz", "14.1 oz", 4.99, url: slug("fresh-from-meijer-french-dinner-rolls-8-ct")).unitPrice(.count))
+        XCTAssertNil(row("aldi", "Barissimo Milk Chocolate Hot Cocoa Mix - 8 Count", "11 oz", 2.79, url: slug("barissimo-milk-chocolate-hot-cocoa-mix-10-ct")).unitPrice(.count))
+        XCTAssertNil(row("costco", "La Boulangerie Smoked Ham & Swiss Cheese Pockets, 25.4 oz", "4 ct", 16.78, url: slug("la-boulangerie-ham-swiss-pocket-8-count-25-4-oz", "costco")).unitPrice(.count))
+        XCTAssertNil(row("x", "Cut Green Beans", "6 ct", 5.49, url: slug("cut-green-beans-15-oz-6-ct")).unitPrice(.weight))
+        XCTAssertNil(row("bjs", "Goya Green Pigeon Peas", "8 pack, /15 oz", 9.99, url: slug("goya-green-pigeon-peas-15-oz", "bjs")).unitPrice(.weight)?.slug)
+    }
+
+    func testASlugFigureFarUnderTheStatedOnesIsFlaggedInACountAnswerToo() {
+        let stated = [("Rhodes Bake-N-Serv Dinner Rolls", "36 ct", 5.12), ("King's Hawaiian Rolls", "12 ct", 3.99), ("Bakery Dinner Rolls", "12 ct", 3.49), ("Pepperidge Farm Rolls", "12 ct", 3.79)]
+            .enumerated().map { i, r in row("s\(i)", r.0, r.1, r.2) }
+        let wrong = row("w", "Dinner Rolls", "12 oz", 1.98, url: slug("dinner-rolls-120-ct"))
+        let walmart = row("walmart", "Great Value Brown'n Serve Enriched Dinner Rolls", "12 oz", 1.05, url: slug("great-value-enriched-brown-n-serve-dinner-rolls-12-ct"))
+        var items = stated + [wrong, walmart]
+        Compare.flagImplausible(&items, dim: .count)
+        XCTAssertEqual(items[4].implausible?.unconfirmed, true)
+        XCTAssertNil(items[5].implausible)
+        for i in 0..<4 { XCTAssertNil(items[i].implausible) }
+    }
+
+    func testASlugFigureTakesTheMemberPriceTheRowShows() {
+        let muffins = row("wholefoods", "Organic Grains English Muffins 6 Count", "13.2 oz", 5.41, url: slug("organic-grains-english-muffins-6-ct"), member: 4.87, memberLabel: "Prime")
+        XCTAssertEqual(((Compare.unitFor(muffins, dim: .count, prefs: PricePrefs(prime: true))?.perBase ?? 0) * 1000).rounded() / 1000, 0.812)
+        XCTAssertEqual(((Compare.unitFor(muffins, dim: .count, prefs: PricePrefs())?.perBase ?? 0) * 1000).rounded() / 1000, 0.902)
+    }
+
+    func testABakerySingleUnderAPluralNameKeepsItsPricePerRoll() {
+        XCTAssertEqual(row("bashas", "Bolillos Rolls", "1 each", 0.49).unitPrice(.count)?.perBase, 0.49)
+        XCTAssertEqual(row("bashas", "Kaiser Rolls", "1 each", 0.89).unitPrice(.count)?.perBase, 0.89)
+        XCTAssertNil(row("naturalgrocers", "Natural Grocers Brand Products Organic Hawaiian Rolls", "1 each", 6.29).unitPrice(.count))
+        XCTAssertEqual(row("jewel", "Turkey Dinner With Pie & Rolls", "1 each", 86.99).unitPrice(.count)?.perBase, 86.99)
+    }
+
+    func testWhippedToppingsAndCreamsNamedByTheAisleStayByWeight() {
+        XCTAssertEqual(row("bjs", "Reddi-wip Original Whipped Dairy Cream Topping", "30 oz", 12.39).dim, .weight)
+        XCTAssertEqual(row("x", "So Delicious Non-Dairy Cream Topping", "9 oz", 3.99).dim, .weight)
+        XCTAssertEqual(row("x", "Devon Cream Company Double Cream", "6 oz", 5.99, category: "Heavy Creams").dim, .weight)
+        XCTAssertEqual(row("wholefoods", "Cream Heavy Whipping", "32 oz", 12.99).dim, .volume)
+    }
+
+    func testSeasoningsGibletsSubsAndA102PoundListingAreNotWholeBirdsUnder4Lb() {
+        XCTAssertNil(row("x", "Whole Turkey Seasoning", "3 oz", 4.99, category: "Spices").sizeConflict)
+        XCTAssertNil(row("x", "Whole Turkey Brining Blend", "24 oz", 9.99).sizeConflict)
+        XCTAssertNil(row("x", "Turkey Gizzards", "1.5 lb", 3.49, category: "Whole Turkey").sizeConflict)
+        XCTAssertNil(row("shoprite", "Store Prepared Signature Turkey & Cheese, Whole Sub - Sold Cold", "18 oz", 12.47, category: "Prepared Sandwiches and Wraps").sizeConflict)
+        XCTAssertNil(row("x", "Honeysuckle White Whole Turkey", "1.02 lb", 1.29, category: "Whole Turkey").sizeConflict)
+        XCTAssertNotNil(row("fairway", "Maplecrest 10-12 Natural Turkey", "18 oz", 2.21, category: "Whole Turkey").sizeConflict)
+    }
+
+    func testADrinkCanIsNotACannedSolidAndAPackingMediumIsNotADrink() {
+        XCTAssertEqual(row("x", "Monster Pumpkin Energy Can", "16 fl oz", 2.99, category: "Energy Drinks").dim, .volume)
+        XCTAssertEqual(row("x", "Starbucks Pumpkin Cream Cold Brew Can", "11 fl oz", 3.49, category: "Cold Brew").dim, .volume)
+        XCTAssertEqual(row("x", "Cutwater Pumpkin Pie Martini Cans", "12 fl oz", 3.99, category: "Canned Cocktails").dim, .volume)
+        XCTAssertEqual(row("x", "Bruce's Yams Cut Sweet Potatoes in Syrup", "29 fl oz", 3.29, category: "Canned Sweet Potatoes").dim, .weight)
+    }
+
+    func testAOneCountSweetPotatoUnderAPerLbSlugHasNoPricePerPieceEither() {
+        XCTAssertTrue(row("kroger", "Sweet Potato", "1 ct", 0.99, url: slug("golden-sweet-potatoes-yams-per-lb", "kroger")).unit.isEmpty)
+    }
+
+    func testTheSauceBeanAndFarinaRulesStayInsideTheirSearches() {
+        XCTAssertGreaterThanOrEqual(score("habanero sauce", "Trader Joe's Habanero Hot Sauce", "Salsa & Hot Sauce"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("sweet and sour sauce", "Kikkoman Dipping Sauce, Sweet & Sour", "Sweet and Sour Sauces", base: 12), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("bbq sauce", "Horsetooth Hot Sauce BBQ Sauce, Hot Mess", "Barbecue Sauces", base: 12), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("chocolate sauce", "Hershey's Mocha Chocolate Sauce", "Dessert Toppings", dim: .weight, base: 15), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("refried beans", "Goya Traditional Refried Pinto Beans", "Canned Refried Beans", dim: .weight, base: 16), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("cannellini beans", "S&W Cannellini White Kidney Beans", "Canned Cannelini Beans", dim: .weight, base: 15.5), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("red beans", "Goya Premium Red Kidney Beans", "Canned Kidney Beans", dim: .weight, base: 15.5), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("flour", "Antimo Caputo Pizzeria Farina 00 Flour", "Flour", dim: .weight, base: 35), Match.relevant)
+        XCTAssertGreaterThanOrEqual(score("hot cereal", "Bob's Red Mill Creamy Wheat Farina Hot Cereal", "Hot Cereal", dim: .weight, base: 24), Match.relevant)
+        XCTAssertLessThan(score("heavy cream", "Sa Farina Cream", "Heavy Cream", base: 28), Match.relevant)
+        XCTAssertLessThan(score("green beans", "Del Monte Cut Green Beans & Peas", "Canned Vegetables", dim: .weight, base: 14.5), Match.relevant)
+        XCTAssertLessThan(score("green beans", "Goya Green Lima Beans", "Canned Lima Beans", dim: .weight, base: 15), Match.relevant)
+    }
+
+    func testAProductNamedFoodWithTheSearchedThingIsTheFood() {
+        func s(_ q: String, _ name: String, _ category: String) -> Double { score(q, name, category, dim: .weight, base: 16) }
+        XCTAssertLessThan(s("butter", "Sweet Corn With Butter", "Prepared Vegetables"), Match.relevant)
+        XCTAssertLessThan(s("butter", "Brussels Sprouts Halves With Butter Sea Salt & Black Pepper Steam Bag", "Green Brussels Sprouts"), Match.relevant)
+        XCTAssertLessThan(s("cheese", "Pickwell Farms Broccoli with Cheese", "Frozen Broccoli"), Match.relevant)
+        XCTAssertLessThan(s("marshmallows", "Corona Sweet Cocoa With Marshmallows", "Hot Cocoa Mix"), Match.relevant)
+        XCTAssertLessThan(s("pecans", "Blondie With Pecans", ""), Match.relevant)
+        XCTAssertLessThan(s("brown sugar", "AGV Okinawa Brown Eight Treasures Deluxe Congee With Brown Sugar", "Other Oats"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(s("gravy", "Heinz Brown with Onions Gravy", "Gravies"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(s("butter", "Kerrygold Pure Irish Butter", "Butter"), Match.relevant)
+        XCTAssertGreaterThanOrEqual(s("green beans", "String Beans with Garlic", "Green Beans"), Match.relevant)
+    }
+}

@@ -23,6 +23,11 @@ enum Compare {
         if usesMember(p, prefs), let mu = p.memberUnit, dim == p.dim {
             return (mu, u.est, true)
         }
+        // A figure read from the slug is the shelf price over the slug's size; the member price the row
+        // shows scales it the same way. Mirrors unitFor in shared/compare.js.
+        if u.slug == true, usesMember(p, prefs), let mp = p.memberPrice, p.price > 0 {
+            return (u.perBase * (mp / p.price), u.est, true)
+        }
         return (u.perBase, u.est, false)
     }
 
@@ -39,6 +44,9 @@ enum Compare {
         for p in items {
             if let d = p.dim, let u = p.unitPrice(d), !u.est { counts[d, default: 0] += 2 }
             for d in p.dims {
+                // A figure read from the slug prices a row in the answer's dimension; it does not
+                // choose it (ProductFactory.otherDimFromSlug). Mirrors shared/compare.js.
+                if p.unitPrice(d)?.slug == true { continue }
                 counts[d, default: 0] += 1
                 if let u = p.unitPrice(d), !u.est { stores[d, default: []].insert(p.storeId) }
             }
@@ -113,7 +121,12 @@ enum Compare {
         return v.count % 2 == 1 ? v[(v.count - 1) / 2] : (v[v.count / 2 - 1] + v[v.count / 2]) / 2
     }
 
-    private static func statedUnit(_ p: Product) -> Bool { p.sizeSource == "perLb" || p.sizeSource == "stated" }
+    /// The retailer stated this unit price's basis itself. A figure in the other dimension read from
+    /// the slug is one we worked out, whatever the stated size. Mirrors statedUnit in shared/compare.js.
+    private static func statedUnit(_ p: Product, _ dim: Dim? = nil) -> Bool {
+        if let dim, p.unitPrice(dim)?.slug == true { return false }
+        return p.sizeSource == "perLb" || p.sizeSource == "stated"
+    }
 
     private static func plainName(_ s: String) -> String {
         s.lowercased().replacingOccurrences(of: "[^a-z0-9]+", with: " ", options: .regularExpression).trimmingCharacters(in: .whitespaces)
@@ -138,6 +151,24 @@ enum Compare {
             if items[idx].base! >= sizeOutlier * medSize && perBase * sizeOutlierCheap <= medPrice {
                 items[idx].implausible = ImplausiblePrice(ratio: (perBase / medPrice * 10).rounded() / 10, median: medPrice, direction: "low", sizeOutlier: true)
             }
+        }
+    }
+
+    /// A figure read from the URL slug (`ProductFactory.otherDimFromSlug`), judged against the figures the
+    /// stores stated, in every dimension, count included: under `slugLow` of the cheapest stated one it
+    /// is flagged. A misread slug is ten times out (a dropped decimal, a case count); every right slug
+    /// figure that is a store's cheapest row in the cache is at 0.38 of the cheapest stated figure or more
+    /// (Walmart's pie crusts), while a median is pulled up by premium rows (the review of the change,
+    /// 20 Nov 2026). Needs three stated rows. Port of flagSlugFigures in shared/compare.js.
+    static let slugLow = 4.0
+    static func flagSlugFigures(_ items: inout [Product], priced: [(Int, Double)], dim: Dim) {
+        func isSlug(_ i: Int) -> Bool { items[i].unitPrice(dim)?.slug == true }
+        let slugged = priced.filter { isSlug($0.0) && items[$0.0].implausible == nil }
+        guard !slugged.isEmpty else { return }
+        let stated = priced.filter { !isSlug($0.0) }.map(\.1)
+        guard stated.count >= 3, let cheapest = stated.min(), let med = medianOf(stated) else { return }
+        for (idx, perBase) in slugged where perBase * slugLow < cheapest {
+            items[idx].implausible = ImplausiblePrice(ratio: (perBase / med * 10).rounded() / 10, median: med, direction: "low", unconfirmed: true)
         }
     }
 
@@ -175,6 +206,7 @@ enum Compare {
                 items[idx].implausible = ImplausiblePrice(ratio: ratio, median: typical, direction: "low", placeholder: true)
             }
         }
+        flagSlugFigures(&items, priced: priced, dim: dim)
         if dim == .count {
             flagSizeOutliers(&items, priced: priced, dim: dim)
             return items
@@ -193,10 +225,10 @@ enum Compare {
             }
             if ratio >= implausibleHigh || ratio <= 1 / implausibleLow {
                 flag(unconfirmed: false)
-            } else if ratio <= 1 / unconfirmedLow && !statedUnit(snapshot[idx]) {
+            } else if ratio <= 1 / unconfirmedLow && !statedUnit(snapshot[idx], dim) {
                 let me = snapshot[idx]
                 let vouched = priced.contains { oi, ob in
-                    oi != idx && statedUnit(snapshot[oi]) && plainName(snapshot[oi].name) != plainName(me.name) && ob <= perBase * corroborates
+                    oi != idx && statedUnit(snapshot[oi], dim) && plainName(snapshot[oi].name) != plainName(me.name) && ob <= perBase * corroborates
                 }
                 if !vouched { flag(unconfirmed: true) }
             }

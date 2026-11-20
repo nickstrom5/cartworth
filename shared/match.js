@@ -252,7 +252,11 @@ const CHEESE_NAMES = new Set(['gruyere', 'cheddar', 'mozzarella', 'parmesan', 'p
 // Granules for Beef" (6 oz, aisle Gravy Mix) was Portland's and Washington's best "gravy", by weight
 // against jars (19 Nov 2026). For gravy only: as a general trap it took onion granules out of
 // "onions", which moved a median that a size-outlier flag in Oklahoma City rested on.
-const HEAD_TRAPS = { milk: CHEESE_NAMES, cream: CHEESE_NAMES, butter: CHEESE_NAMES, gravy: new Set(['granule']) };
+// Farina is a wheat cereal: Bravo files "Sa Farina Cream" under Heavy Cream, and once its slug gave it a
+// price per gallon it was Bravo's heavy cream in Queens (every cached answer re-scored, 20 Nov 2026).
+// Only beside cream and milk: "Farina 00" is Italian flour, and farina a hot cereal (the review).
+const NOT_DAIRY_WORDS = new Set([...CHEESE_NAMES, 'farina']);
+const HEAD_TRAPS = { milk: NOT_DAIRY_WORDS, cream: NOT_DAIRY_WORDS, butter: CHEESE_NAMES, gravy: new Set(['granule']) };
 
 // Plant bases in front of the noun make a different product: "almond milk", "coconut milk", "oat creamer".
 const ALT_BASE = new Set(['almond', 'oat', 'oatmilk', 'soy', 'coconut', 'cashew', 'rice', 'hemp', 'macadamia', 'pea', 'plant', 'pistachio', 'flax', 'banana', 'evaporated', 'condensed', 'powdered', 'dry', 'goat']);
@@ -371,10 +375,17 @@ const MODIFIER_COMPOUNDS = ['baking soda', 'cooking wine', 'creme egg', 'cadbury
   // A chuck cross rib roast is shoulder, not the rib: Albertsons' "Boneless Choice Beef Chuck Cross Rib
   // Roast" was El Paso's prime rib (the Thanksgiving food styles run).
   'cross rib'];
+// Sauces named for another base, when the search is for cranberry sauce: Stonewall Kitchen's
+// "Horseradish Sauce, Cranberry" (7 stores in 16 ZIPs), Bell-View's "Cranberry Horseradish Sauce",
+// B.Bob's "Cranberry Chipotle Sauce", Mott's "Apple Sauce, Cranberry Raspberry" and Ocean Spray's
+// "Cranberry Orange Fruit Dipping Sauce" all scored as "cranberry sauce" (every cached answer
+// re-scored, 20 Nov 2026). Only then: under any sauce search they refused Trader Joe's "Habanero Hot
+// Sauce" for "habanero sauce" and every dipping sauce for its own flavour (the review of this change).
+const CRANBERRY_SAUCE_OTHER_BASES = ['horseradish sauce', 'chipotle sauce', 'dipping sauce', 'apple sauce', 'barbecue sauce', 'bbq sauce', 'hot sauce'];
 // Tokenised with the matcher's own tokens() ("tortillas" stays "tortillas"), on first use: tokens()
 // depends on constants declared further down this file.
 let compounds = null;
-const compoundTokens = () => (compounds ||= { head: HEAD_COMPOUNDS.map((p) => tokens(p)), modifier: MODIFIER_COMPOUNDS.map((p) => tokens(p)) });
+const compoundTokens = () => (compounds ||= { head: HEAD_COMPOUNDS.map((p) => tokens(p)), modifier: MODIFIER_COMPOUNDS.map((p) => tokens(p)), cranberrySauce: CRANBERRY_SAUCE_OTHER_BASES.map((p) => tokens(p)) });
 function hasPhrase(words, phrase) {
   // Plural-blind: singular() keeps "tortillas" and "peas" (their -as ending), so compare stems.
   const stem = (w) => w.replace(/s$/, '');
@@ -553,8 +564,36 @@ const CANNED_PUMPKIN_MAX_OZ = 32;
 // "canned pumpkin", every can did, and Walmart's "Great Value Pumpkin" (15 oz) missed "pumpkin
 // puree" (the Thanksgiving core list, 3 Nov).
 const PUMPKIN_CAN_WORDS = ['canned', 'pure'];
+// The kinds of bean a name can put before "bean", and the names that are the same bean as a kind.
+const BEAN_KINDS = new Set(['green', 'lima', 'mung', 'black', 'kidney', 'pinto', 'fava', 'navy', 'garbanzo', 'cannellini', 'butter',
+  'baked', 'refried', 'jelly', 'coffee', 'vanilla', 'wax', 'soy', 'adzuki', 'azuki', 'red', 'white', 'northern', 'pink', 'mayocoba',
+  'cranberry', 'broad', 'string', 'snap', 'romano', 'runner', 'yellow', 'chili']);
+const SAME_BEAN = { green: new Set(['string', 'snap', 'romano', 'runner']) };
+// What a vegetable blend is made of. Not "vegetable" (catalogue names end "..., Canned Vegetables"),
+// nor onion, shallot or mushroom, which season a side ("Southern Style Green Beans with Garlic, Onion").
+// The tokens keep "peas" as it is (the -as rule), so both spellings.
+const BLEND_VEGETABLE_RE = /^(?:carrot|corn|peas?|potato|parsnip|cauliflower|broccoli|squash|zucchini|tomato|tomatoe)$/;
+// "cranberry sauce", "whole berry cranberry sauce", "jellied cranberry sauce".
+const cranberrySauceQuery = (qt) => qt[qt.length - 1] === 'sauce' && qt.some((q) => /^cranberr/.test(q));
+// ...but a small pumpkin-something that is another food is not the can: Zachary's "Mello Creme
+// Pumpkins" (Gummy Candies) was Weis's canned pumpkin in two ZIPs, a Table Talk "Pie, Pumpkin" C-Town's
+// and Save-A-Lot's, Jinga and Ottogi "Pumpkin Porridge" and "99 Pumpkin Energy Sticks" H Mart's and 99
+// Ranch's, and pumpkin paint, baby puree, yoghurt, kernels and cheesecake scored the same way (every
+// cached answer re-scored, 20 Nov 2026). The name says so, or the aisle; an aisle may say "Pie
+// Filling" (where the cans are), not "Pumpkin Pie" (where the pies are). A pie pumpkin is the variety,
+// and Festal's "Golden Pie Pumpkin" in Pie Fillings is a can of it; a bakery's "Pie, Pumpkin" has the
+// comma, and its aisle is the pies'.
+const PIE_WORD_RE = /\bpies?\b/;
+const PIE_PUMPKIN_CAN_RE = /\bpie pumpkin\b/i;
+const CAN_AISLE_RE = /\b(?:fillings?|canned|cans?|baking)\b/;
+const NOT_A_PUMPKIN_CAN_NAME_RE = /\b(?:candy|candies|gumm(?:y|ies)|creme|porridge|croquettes?|dumplings?|mochi|rice cakes?|noodles?|jams?|spreads?|honey|sauces?|lentils?|oats?|oatmeal|yog(?:h)?urts?|cheesecakes?|seeds?|kernels?|paint|acrylic|crafters?|sticks?|snacks?|bites?|breads?|muffins?|spice|latte|coffee|butter|ravioli|pasta|bars?|cookies?|granola|cereal|puffs?|chips?|crackers?|treats?|dogs?|cats?|baby|toddler|pouch(?:es)?|smoothies?|kefir|ice cream|soup|bisque|cakes?|donuts?|pancakes?|waffles?|beer|ale)\b/;
+const NOT_A_PUMPKIN_CAN_AISLE_RE = /\b(?:candy|candies|gumm(?:y|ies)|oats?|oatmeal|cereal|paint|crafts?|snacks?|bites?|yog(?:h)?urts?|cheesecakes?|bakery|desserts?|pies?(?! filling)|baby|seeds?|nuts?|spices?|coffee|beverages?)\b/;
 function cannedPumpkin(product, nameTok, catTok) {
   if (product.soldBy === 'lb') return false;
+  const nameN = normalize(product.name || '');
+  const aisleN = normalize(product.category || '');
+  if (NOT_A_PUMPKIN_CAN_NAME_RE.test(nameN) || NOT_A_PUMPKIN_CAN_AISLE_RE.test(aisleN)) return false;
+  if (PIE_WORD_RE.test(nameN) && !(PIE_PUMPKIN_CAN_RE.test(product.name || '') && CAN_AISLE_RE.test(aisleN))) return false;
   if (['canned', 'can', 'pure'].some((w) => nameTok.has(w)) || catTok.has('canned')) return true;
   return product.dim === 'weight' && product.base > 0 && product.base < CANNED_PUMPKIN_MAX_OZ;
 }
@@ -778,6 +817,15 @@ export function relevance(query, product, opts = {}) {
   if (headIdx > 0) {
     const before = words.slice(Math.max(0, headIdx - 3), headIdx);
     if (before.some((w) => w === 'with' || w === 'made' || w === 'from' || w === 'in') && words.slice(0, headIdx).some((w) => TRAPS.has(w) && !qset.has(w))) mult *= 0.3;
+    // ...and when the searched noun follows "with" directly, the product is what comes before it: Sam's
+    // Club's "Sweet Corn With Butter" was its butter in about ten ZIPs; Brussels sprouts with bacon,
+    // butter or pecans, broccoli with cheese and hot cocoa with marshmallows answered the same way (every
+    // cached answer re-scored, 20 Nov 2026: 11 refusals over every cached item, all right). Only the
+    // query's own words between: "Brown with Onions Gravy" is gravy.
+    else {
+      const wi = words.lastIndexOf('with', headIdx);
+      if (wi > 0 && words.slice(wi + 1, headIdx).every((w) => qset.has(w)) && words.slice(0, wi).some((w) => !qset.has(w) && !SOFT.has(w) && !STOP.has(w) && !fromBrandOnly(w) && !/^\d/.test(w))) mult *= 0.3;
+    }
   }
   const allowed = new Set(qt.flatMap((q) => [...(QUERY_ALLOWS[q] || [])]));
   // A word of the maker's name describes the maker, when the store has filed the product under
@@ -816,6 +864,12 @@ export function relevance(query, product, opts = {}) {
     let alt = 0;
     let mild = 0;
     let flavor = 0;
+    // A sauce comes in flavours (FLAVOR_OK_HEADS), but a cranberry sauce with a second flavour is another
+    // variety: Bravo's "Sa Strawberry Cranberry Sauce" at $0.79/lb headlined "cranberry sauce" in Queens
+    // over its plain can at $1.09 (every cached answer re-scored, 20 Nov 2026), and Ocean Spray's "Cran
+    // Raspberry" scored with it. Only for cranberry sauce, and "flavored" is no second flavour: a mocha
+    // chocolate sauce is a chocolate sauce, a mango habanero hot sauce a hot sauce (the review).
+    const sauceFlavor = cranberrySauceQuery(qt);
     for (let i = 0; i < words.length; i++) {
       const w = words[i];
       if (qset.has(w) || allowed.has(w) || (wantsDiet && ALT_BASE.has(w)) || makersWord(w)) continue;
@@ -823,7 +877,7 @@ export function relevance(query, product, opts = {}) {
       // product and must score the same. Anchoring these to the head noun meant word order alone
       // changed the score by a factor of two.
       if (ALT_BASE.has(w)) alt += 1;
-      else if (FLAVOR.has(w) && !qt.some((q) => INHERENT_FLAVOR[q]?.has(w)) && !FLAVOR_OK_HEADS.has(head)) flavor += 1;
+      else if (FLAVOR.has(w) && !qt.some((q) => INHERENT_FLAVOR[q]?.has(w)) && (!FLAVOR_OK_HEADS.has(head) || (sauceFlavor && w !== 'flavor' && w !== 'flavored'))) flavor += 1;
       // When the retailer filed the product under exactly what was searched, a storage word in the
       // name describes a variant OF that category rather than a different product. "Jennie-O Whole
       // Frozen Turkey" in category "Frozen Whole Turkey" scored 0.510 against a 0.55 cut purely
@@ -861,6 +915,15 @@ export function relevance(query, product, opts = {}) {
     const inQ = (w) => qstems.has(w.replace(/s$/, ''));
     for (const p of compoundTokens().head) if (hasPhrase(words, p) && p.slice(0, -1).some(inQ) && !inQ(p[p.length - 1])) { mult *= 0.2; break; }
     for (const p of compoundTokens().modifier) if (hasPhrase(words, p) && inQ(p[p.length - 1]) && !inQ(p[0])) { mult *= 0.2; break; }
+    if (cranberrySauceQuery(qt)) for (const p of compoundTokens().cranberrySauce) if (hasPhrase(words, p) && !inQ(p[0])) { mult *= 0.2; break; }
+  }
+  // Another kind of bean is another bean: Goya's "Green Lima Beans", Asian Taste's "Green Mung Bean"
+  // and "Nature's Black Bean Inside Green" answered "green beans" at H Mart and 99 Ranch (every cached
+  // answer re-scored, 20 Nov 2026). Green beans only, where "green" also describes other beans: for any
+  // other kind the query's own word already says which bean, and a rule for them refused "Refried Pinto
+  // Beans" for "refried beans" and "Red Kidney Beans" for "red beans" (the review of this change).
+  if (head === 'bean' && qt.length === 2 && qt[0] === 'green') {
+    if (words.some((w, i) => w === head && i > 0 && BEAN_KINDS.has(words[i - 1]) && !qset.has(words[i - 1]) && !SAME_BEAN.green.has(words[i - 1]))) mult *= 0.2;
   }
   {
     const qCut = qt.find((w) => CUTS.has(w));
@@ -874,6 +937,11 @@ export function relevance(query, product, opts = {}) {
   // Fresh produce searches: a product naming a DIFFERENT produce item is a mix ("Chopped Cilantro & White
   // Onions", "Diced Tomatoes with Jalapeno And Cilantro" won "cilantro"), and a juice aisle is juice
   // ("Cold Pressed Celery", Pressed Juices, won "celery"). The state x holiday audit.
+  // Green beans in a blend are a blend: Sam's Club's "Mixed Vegetables A Blend Of Carrots Corn Green
+  // Beans And Peas" was its green beans in about ten ZIPs (every cached answer re-scored, 20 Nov 2026).
+  // The blend's vegetables, not a side's seasonings: "Sea Salt & Cracked Pepper", "with Garlic" and
+  // "Lemon Herb" green beans are still green beans.
+  if (hasPhrase(qt, ['green', 'bean']) && words.some((w) => !qset.has(w) && BLEND_VEGETABLE_RE.test(w))) mult *= 0.3;
   if (FRESH_FRUIT_RE.test(head || '') || PRODUCE_HEAD_RE.test(head || '')) {
     const others = words.filter((w) => !qset.has(w) && PRODUCE_WORD_RE.test(w) && !qt.some((q) => q.startsWith(w) || w.startsWith(q)));
     if (others.length) mult *= 0.3;

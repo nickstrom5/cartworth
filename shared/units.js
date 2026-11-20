@@ -225,6 +225,9 @@ export function parseSize(input) {
   if (/^(?:1\s+)?each$|^ea\.?$|^1\s*ea\.?$/.test(lower)) {
     return { dim: 'count', base: 1, amount: 1, unit: 'each', count: 1, perWeight: false, range: false, text: s };
   }
+  // A bare volume unit is one of it: Weis states its "Dairy Star Heavy Whipping Cream" as just "qt"
+  // (20 Nov 2026). Nothing is priced per quart, so it cannot mean what a bare "lb" means.
+  if (/^(?:qt|quart|pt|pint|gal|gallon)\.?$/.test(lower)) return parseSize(`1 ${lower.replace(/\.$/, '')}`);
 
   // "12 Double Rolls", "6 Mega Rolls", "8 Family Size Bars"
   s = s.replace(/(\d)\s+(?:double|triple|mega|huge|giant|super|jumbo|family(?:\s+size)?|big|regular|large|xl)\s+(?=[a-z])/i, '$1 ');
@@ -475,6 +478,12 @@ export function unitLabel(unit) {
 // heavy-cream search that compares by volume, and dropped out of it (14 captured listings). Not
 // "whipped" cream or "table cream": Reddi-wip and Nestlé Media Crema are sold by NET WT.
 const LIQUID_RE = /\b(beer|ale|lager|ipa|seltzer|soda|cola|sparkling water|water|juice|lemonade|drink|beverage|milk|kefir|creamer|tea|kombucha|cider|wine|vodka|whiskey|rum|tequila|gin|spirits?|broth|stock|smoothie|shake|coffee drink|cold brew|energy drink|sports drink|gatorade|oil|vinegar|syrup|sauce|dressing|soda pop|heavy (?:whip(?:ping)? )?cream|whipping cream|half (?:&|and|n) half|half-and-half|egg ?nog|buttermilk)\b/i;
+// The catalogue sometimes writes cream backwards or plainly: Whole Foods' "Cream Heavy Whipping" (32 oz,
+// $12.99) and Bashas' "Danzeisen Dairy Cream" (a 16 oz glass bottle) stayed weights in an answer by
+// volume (every cached answer re-scored, 20 Nov 2026). In the product's own name only: read across the
+// aisle's name, "Double Cream" + "Heavy Creams" was "cream heavy"; and never a whipped topping (BJ's
+// "Reddi-wip Original Whipped Dairy Cream Topping" is sold by net weight), nor cream cheese.
+const OWN_NAME_CREAM_RE = /\b(?:cream,? heavy(?: whip(?:ping)?)?|(?<!whipped )(?<!non-)dairy cream(?! cheese| topping))\b/i;
 // Containers that only imply a liquid alongside a real liquid word.
 const CONTAINER_RE = /\b(cans?|bottles?|jugs?|cartons?)\b/i;
 // "Cut Sweet Potatoes in Syrup", "Peaches in Light Syrup", "Tuna in Water": what follows "in" is
@@ -541,9 +550,41 @@ const POURED_RE = /\b(?:sauces?|creamers?|syrups?)\b/i;
 export function coerceLiquid(size, name, ownName = name) {
   if (!size || size.dim !== 'weight' || size.perWeight) return size;
   if (!['oz', 'ounce', 'ounces', 'onz'].includes(size.unit)) return size;
-  if (!looksLiquid(name) || SOLID_RE.test(String(name || ''))) return size;
+  if (!(looksLiquid(name) || OWN_NAME_CREAM_RE.test(String(ownName || ''))) || SOLID_RE.test(String(name || ''))) return size;
   if (BREAD_GRAVY_RE.test(String(name || '')) && !POURED_RE.test(String(ownName || ''))) return size;
   return { ...size, dim: 'volume', unit: 'floz', liquidCoerced: true };
+}
+
+/**
+ * The other way round: a canned solid stated in fluid ounces is the can's net weight.
+ *
+ * Every other store states these cans in ounces, so the answer is by weight, and a row stated in fl oz
+ * had only a price per gallon and dropped out. Kroger's "Kroger Pumpkin, 29oz" (its slug "...-29-fl-oz",
+ * its own name "29oz") was unpriced by weight in 20 ZIP/store rows; Erewhon's pumpkin puree and Vons'
+ * O Organics "Solid Pack" pumpkin were stated "15 fl oz" where Sprouts and ShopRite state the same
+ * product "15 oz"; Costco's Campbell's "Cream of Mushroom Soup, 10.5 fl oz, 12-Count" was unranked in
+ * 11 ZIPs (every cached answer re-scored, 20 Nov 2026). The label's "oz" is NET WT; the feed's "fl" is
+ * the mistake. Fluid ounces only: 348 ml is the metric volume of a 14 oz can of cranberry sauce, about
+ * 11.8 fl oz, and read one for one it would be a quarter too small.
+ *
+ * Three things must hold, because the same words are on a great many things sold by the fluid ounce:
+ * the product's own name says what it is, the aisle or the name says it is a can, and nothing in
+ * either says drink, dessert or not food. Of 33 cached items whose words alone fitted, only the cans
+ * did: the rest were pumpkin ice creams, Hood's pumpkin eggnog, REBBL's "Protein, Spiced Pumpkin Pie"
+ * drink (which had become two stores' pumpkin pie), acrylic paint, hand soap, a candle refill, an ale,
+ * and Nestle's "Lite Cream" from the Condensed Milk aisle.
+ */
+const CANNED_SOLID_RE = /\b(?:pumpkin|pie filling|cranberry sauce|jellied|cream of (?:mushroom|chicken|celery|potato)|green beans?|wax beans?|cut beans|yams?|sweet potato(?:es)?)\b/i;
+const CAN_SIGNAL_RE = /\b(?:canned|cans?|solid pack|condensed)\b/i;
+// ...nor a drink, which the review of this change found by name: a pumpkin cold brew, canned cocktail
+// or energy drink "can" would have been read as a can of pumpkin. A packing medium ("Cut Sweet Potatoes
+// in Syrup") is not a drink, so it is set aside before the test, as looksLiquid does.
+const NOT_CANNED_SOLID_RE = /\b(?:spice|latte|creamer|coffee|cold brew|energy|beer|ale|lager|hard|cocktails?|martini|vodka|rum|whiske?y|tequila|mule|spritz|sparkling|water|cartons?|juice|drinks?|beverages?|protein|smoothies?|shakes?|syrup|milk|soda|seltzer|kombucha|cider|wine|tea|oil|vinegar|broth|stock|nectar|pouch(?:es)?|baby|kefir|yog(?:h)?urt|ice cream|ice|frozen|eggnog|nog|bisque|lentils?|paint|acrylic|soap|lotion|cleanser|moisturi[sz]er|creme|candle|refill|pickled)\b/i;
+export function coerceSolid(size, name, ownName = name) {
+  if (!size || size.dim !== 'volume' || size.perWeight || size.unit !== 'floz') return size;
+  const all = String(name || '').replace(PACKING_MEDIUM_RE, ' ');
+  if (!CANNED_SOLID_RE.test(String(ownName || '')) || !CAN_SIGNAL_RE.test(all) || NOT_CANNED_SOLID_RE.test(all)) return size;
+  return { ...size, dim: 'weight', unit: 'oz', solidCoerced: true };
 }
 
 export function formatSize(size) {
@@ -688,7 +729,7 @@ export const TURKEY_WHOLE_PACKAGE_LB_MIN = 0.37;
 export const TURKEY_BREAST_PACKAGE_LB_MIN = 0.99;
 const TURKEY_RE = /\bturkeys?\b/;
 const WHOLE_BIRD_RE = /\bwhole\b|\b(?:young|hen|tom)\s+turkeys?\b/;
-const NOT_A_WHOLE_TURKEY_RE = /\b(?:breasts?|ground|deli|drums?(?:ticks?)?|wings?|thighs?|necks?|legs?|tenderloins?|cutlets?|roast|boneless|sliced|slices|lunch(?:meat)?|bacon|sausages?|jerky|sticks?|burgers?|patt(?:y|ies)|pastrami|ham|gravy|stuffing|stock|broth|brine|bags?|baster|pans?|roasters?|injector|thermometer|kit|rack|lifters?|meals?|dinners?|pot pie|pies?|sandwich(?:es)?|wraps?|dogs?|cats?|pets?|recipe|pate|food|treats?|chews?|kibble|toy|decorations?|candles?|cards?|books?|chocolate|candy|cookies?|cakes?|giblets?|half|halves|pieces?|chili|meatballs?|franks?|hot dogs?|kielbasa|loaf|salami|bologna)\b/;
+const NOT_A_WHOLE_TURKEY_RE = /\b(?:breasts?|ground|deli|drums?(?:ticks?)?|wings?|thighs?|necks?|legs?|tenderloins?|cutlets?|roast|boneless|sliced|slices|lunch(?:meat)?|bacon|sausages?|jerky|sticks?|burgers?|patt(?:y|ies)|pastrami|ham|gravy|stuffing|stock|broth|brin(?:e|ing)|subs?|hoagies?|heros?|cheese|seasonings?|rubs?|spices?|gizzards?|hearts|livers?|tails|tenders|steaks?|neckbones?|feet|backs?|bags?|baster|pans?|roasters?|injector|thermometer|kit|rack|lifters?|meals?|dinners?|pot pie|pies?|sandwich(?:es)?|wraps?|dogs?|cats?|pets?|recipe|pate|food|treats?|chews?|kibble|toy|decorations?|candles?|cards?|books?|chocolate|candy|cookies?|cakes?|giblets?|half|halves|pieces?|chili|meatballs?|franks?|hot dogs?|kielbasa|loaf|salami|bologna)\b/;
 
 export function wholeTurkey(name, category = '') {
   const n = String(name || '').toLowerCase();

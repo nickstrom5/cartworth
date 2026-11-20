@@ -185,9 +185,17 @@ enum ProductFactory {
     /// package stands (Fry's 14 lb bird at $9.66). The row keeps its price and loses its unit price.
     /// Port of `turkeyPerLbConflict` in src/normalize.js.
     private static let turkeyNameRx = Rx("\\bturkeys?\\b")
+    /// Prepared, deli and spice aisles hold no bird: "Whole Turkey Seasoning", a "Whole Sub" (the review of
+    /// the 4 lb floor, 20 Nov 2026). Port of NOT_A_BIRD_AISLE_RE in src/normalize.js.
+    private static let notABirdAisleRx = Rx("\\b(?:prepared|sandwich(?:es)?|wraps?|spices?|seasonings?|deli|lunch|meals?|rubs?|marinades?)\\b")
     private static let turkeyBreastRx = Rx("\\bbreasts?\\b")
     private static let petAisleRx = Rx("\\b(?:dogs?|cats?|pets?|pupp(?:y|ies)|kittens?|kibble)\\b")
     static func turkeyPerLbConflict(name: String, category: String? = nil, size: ParsedSize?, nameSize: ParsedSize?, price: Double?, soldByLb: Bool) -> SizeConflict? {
+        // No whole turkey weighs under 4 lb: Fairway's "Maplecrest 10-12 Natural Turkey" stated 18 oz,
+        // Weis's "Weis Young Turkey" 20 oz (20 Nov 2026). Not "1 lb", which is a price per pound.
+        if !soldByLb, let size, size.dim == .weight, !size.perWeight, let b = size.base, b > 0, b < Units.turkeyWholeMinOz, abs(b - 16) > 0.33, Units.wholeTurkey(name, category: category), !notABirdAisleRx.test(category ?? "") {
+            return SizeConflict(text: Units.format(size), name: "a whole turkey")
+        }
         guard !soldByLb, let size, size.dim == .weight, !size.perWeight, let b = size.base, b >= 48 else { return nil }
         guard let price, price > 0, price < Units.turkeyEachMin, turkeyNameRx.test(name) else { return nil }
         // To the cent, so a package at exactly the floor (12 lb at $4.44) is not under it.
@@ -281,15 +289,138 @@ enum ProductFactory {
     /// in src/normalize.js.
     private static let butterCategoryRx = Rx("^(?:salted|unsalted) butter$")
     private static let notJustSticksRx = Rx("\\b(?:half|pack|packs|pk|twin|family|value|bulk|case|foil|block|roll|tub|bar|brick|whipped|spread|pats?|minis?|cups?)\\b|\\d\\s*-?\\s*(?:ct|count|pk|pack)\\b")
-    static func butterSticks(_ size: ParsedSize?, name: String, category: String?, url: URL?) -> ParsedSize? {
+    /// At a warehouse club "N ct" counts boxes: BJ's "Wellsley Farms All Natural Salted Butter", "4 ct"
+    /// at $11.49 under ".../salted-butter-1lb", is four 1 lb boxes ($2.87/lb), not four sticks (20 Nov
+    /// 2026). A club's slug weight of a pound or more is one box; a quarter-pound one is one stick.
+    /// Port of the club branch of `butterSticks` in src/normalize.js.
+    private static let clubButterBoxesMax = 6
+    static func butterSticks(_ size: ParsedSize?, name: String, category: String?, url: URL?, club: Bool = false) -> ParsedSize? {
         guard let size, size.dim == .count, !size.perWeight, butterCategoryRx.test((category ?? "").trimmingCharacters(in: .whitespaces)) else { return nil }
         guard let b = size.base, b == b.rounded(), b >= 2, b <= 8, !notJustSticksRx.test(name) else { return nil }
         let n = Int(b)
         let weights = slugWeightsOz(url)
+        if club {
+            guard let w = weights.first, weights.allSatisfy({ abs($0 - w) <= 0.02 * w }) else { return nil }
+            if w >= 15.5 && n <= clubButterBoxesMax {
+                var out = ParsedSize(dim: .weight, base: Double(n) * w, amount: w, unit: "oz", count: n, perWeight: false, range: false, text: "\(n) × \(Units.trimNum(w)) oz")
+                out.clubBoxes = n
+                return out
+            }
+            if abs(w - 4) > 0.08 { return nil }
+        }
         let box = Double(4 * n)
         guard !weights.isEmpty, weights.allSatisfy({ abs($0 - box) <= 0.02 * box || abs($0 - 4) <= 0.08 }) else { return nil }
         var out = ParsedSize(dim: .weight, base: Double(4 * n), amount: Double(4 * n), unit: "oz", count: 1, perWeight: false, range: false, text: "\(n) sticks")
         out.sticks = n
+        return out
+    }
+
+    /// The other dimension, from the retailer's own URL slug. Walmart's "Great Value 2 Pack 9 Inch Deep
+    /// Dish Pie Crusts", stated "2 ct" at $1.36 under ".../deep-dish-pie-crusts-16-oz", and ALDI's two
+    /// crusts at $1.88 (".../pie-crust-14-1-oz") were left out of pie crust, an answer by weight, in 26
+    /// of 32 ZIPs; Walmart's "12 oz" brown-and-serve dozen (".../dinner-rolls-12-ct") had no price per
+    /// roll. The slug's figure is a second unit price, an estimate marked `slug`: it never chooses the
+    /// answer's dimension, the low-price guard judges it harder (`Compare.flagSlugFigures`), and the size
+    /// says where it came from ("2 ct · 16 oz"). Refused, as the review of the change found them misread:
+    /// the product id ("/57858643-l-b-brioche-...") and an ASIN tail; dropped decimals (three whole
+    /// digits of ounces, whole pounds over 12, a pound with a decimal); disagreeing figures; "up to",
+    /// "about" and per-pound slugs; a pack, a range or a decimal as pieces; an "-each" that restates the
+    /// ounces; a count or weight the row states otherwise; a size line that names a measure; a slug that
+    /// counts the row's own pieces beside its weight; turkeys, loose produce, butter sticks and club boxes.
+    /// Port of `otherDimFromSlug`, `slugMeasure` and `slugPieces` in src/normalize.js.
+    struct SlugDim { let dim: Dim; let base: Double; let size: ParsedSize }
+    private static let slugMeasureRx = Rx("(?<=[-/])(?<!\\d-)(\\d+)(?:-(\\d{1,3}))?-?(fl-oz|floz|oz|ounces?|lbs?|pounds?|g|grams?|kg|gal|gallons?|qt|quarts?|pt|pints?|ml|l|liters?|litres?)(?=$|[-/])")
+    private static let slugMeasureUnit: [String: String] = ["fl-oz": "fl oz", "floz": "fl oz", "ounce": "oz", "ounces": "oz", "lbs": "lb", "pound": "lb", "pounds": "lb", "gram": "g", "grams": "g", "gallon": "gal", "gallons": "gal", "quart": "qt", "quarts": "qt", "pint": "pt", "pints": "pt", "liter": "l", "liters": "l", "litre": "l", "litres": "l"]
+    private static let slugPiecesRx = Rx("(?<=-)(?<!\\d-)(?<!-to-)(\\d{1,3})-(ct|count|cnt|ea|each)(?=$|[-/])")
+    private static let slugApproxRx = Rx("(?:^|[-/])(?:up-to|upto|about|approx|approximately|avg|average)-\\d+(?:-\\d{1,3})?-?(?:fl-oz|floz|oz|ounces?|lbs?|pounds?|g|grams?|kg|gal|gallons?|qt|quarts?|pt|pints?|ml|l|liters?|litres?)(?=$|[-/])")
+    private static let slugPackRx = Rx("-(?:pk|pks|pack|packs|case|cases|box-of)(?=$|[-/])")
+    private static let slugPricedPerRx = Rx("(?:^|-)priced-per(?=-)")
+    private static let sizeTextMeasureRx = Rx("\\d\\s*(?:oz|ounces?|lbs?|pounds?|g|kg|ml|l|liters?|fl\\.?\\s*oz)\\b")
+    private static let slugLbMax = 12.0
+    /// The slug's words, without the product id that starts them.
+    private static func slugTail(_ url: URL?) -> String {
+        let s = slugOf(url)
+        if let r = s.range(of: "^/\\d+(?=-)", options: .regularExpression) { return "/" + String(s[r.upperBound...]) }
+        return s
+    }
+    static func slugMeasure(_ url: URL?, name: String, category: String?) -> ParsedSize? {
+        var found: [ParsedSize] = []
+        let path = slugTail(url)
+        if slugApproxRx.test(path) { return nil }
+        for m in slugMeasureRx.matches(path) {
+            guard let whole = m[1], let raw = m[3] else { return nil }
+            let unit = slugMeasureUnit[raw.lowercased()] ?? raw.lowercased()
+            if unit == "lb" && (m[2] != nil || (Double(whole) ?? 0) > slugLbMax) { return nil }
+            if (unit == "oz" || unit == "fl oz") && m[2] == nil && whole.count >= 3 { return nil }
+            guard let s = Units.parseSize("\(m[2].map { "\(whole).\($0)" } ?? whole) \(unit)"), let b = s.base, b > 0, s.dim == .weight || s.dim == .volume else { return nil }
+            found.append(Units.coerceLiquid(s, name: "\(name) \(category ?? "")", ownName: name) ?? s)
+        }
+        guard let first = found.first, let fb = first.base else { return nil }
+        return found.allSatisfy({ $0.dim == first.dim && abs(($0.base ?? 0) - fb) <= 0.02 * fb }) ? first : nil
+    }
+    static func slugPieces(_ url: URL?) -> Int? {
+        let path = slugTail(url)
+        if slugPackRx.test(path) { return nil }
+        let counts = Set(slugPiecesRx.matches(path).compactMap { Int($0[1] ?? "") })
+        guard counts.count == 1, let n = counts.first, n >= 2 else { return nil }
+        return n
+    }
+    private static func countOf(_ s: ParsedSize?) -> Double? {
+        guard let s else { return nil }
+        if s.dim == .count { return s.base }
+        if let n = s.countFirst?.n ?? s.countAfter?.n { return Double(n) }
+        return s.count > 1 ? Double(s.count) : nil
+    }
+    static func otherDimFromSlug(_ size: ParsedSize?, url: URL?, name: String, category: String?, sizeText: String? = nil, soldByLb: Bool, sizeConflict: Bool, textSize: ParsedSize? = nil, nameSize: ParsedSize? = nil) -> SlugDim? {
+        guard !soldByLb, !sizeConflict, let size, !size.perWeight, let b = size.base, b > 0, url != nil else { return nil }
+        if size.sticks != nil || size.clubBoxes != nil || size.clubSlugPack { return nil }
+        if turkeyNameRx.test(name) || Units.produceWeightLb(name) != nil { return nil }
+        let path = slugTail(url)
+        if slugPerLbRx.test(path) || slugPricedPerRx.test(path) { return nil }
+        if size.dim == .count {
+            guard let m = slugMeasure(url, name: name, category: category), let mb = m.base else { return nil }
+            if let ns = nameSize, ns.dim == m.dim, !ns.perWeight, let nb = ns.base, nb > 0, abs(nb - mb) > 0.02 * mb { return nil }
+            if sizeTextMeasureRx.test(sizeText ?? "") { return nil }
+            // A weight written just before the row's own count is one unit's ("...-15-oz-6-ct" on "6 ct");
+            // a count before the weight is the total ("...-8-count-56-400-oz").
+            if b > 1, b == b.rounded(), Rx("(?:oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|l|fl-oz|floz)-\(Int(b))-(?:ct|count|cnt|ea|each|pk|pks|pack|packs)(?=$|[-/])").test(path) { return nil }
+            return SlugDim(dim: m.dim, base: mb, size: m)
+        }
+        // A bag of celery hearts is one package: its "2-ct" counts hearts, not bunches.
+        if celeryHeartsRx.test(name) { return nil }
+        guard let n = slugPieces(url), n != size.count else { return nil }
+        if [countOf(textSize), countOf(nameSize)].contains(where: { c in (c ?? 0) > 1 && c != Double(n) }) { return nil }
+        if Rx("-\(n)-(?:ea|each)(?=$|[-/])").test(path) && (abs(Double(n) - b) < 0.01 || abs(Double(n) - (size.amount ?? -1)) < 0.01) { return nil }
+        return SlugDim(dim: .count, base: Double(n), size: ParsedSize(dim: .count, base: Double(n), amount: Double(n), unit: "ct", count: 1, perWeight: false, range: false, text: "\(n) ct"))
+    }
+    /// A bag of celery hearts is one package, however many hearts its listing counts: BJ's "Foxy Organic
+    /// Celery Hearts", "4 each" at $2.59, was priced at $0.65 a heart and won celery in four ZIPs
+    /// (20 Nov 2026). Port of CELERY_HEARTS_RE in src/normalize.js.
+    static let celeryHeartsRx = Rx("\\bcelery\\s+hearts?\\b")
+    /// A bag of rolls stated "1 each" is one bag of an unknown number of rolls (Natural Grocers'
+    /// "Organic Hawaiian Rolls" at "$6.29/ct"). Ports of BREAD_PIECES_RE and NOT_BREAD_PIECES_RE.
+    private static let breadPiecesRx = Rx("\\b(?:rolls|buns|biscuits|croissants|bagels)\\b")
+    private static let notBreadPiecesRx = Rx("\\b(?:paper|towels?|toilet|tissue|bath|tape|foil|wrap|film|plastic|egg|spring|sushi|cabbage|fruit|bulk|loose|single|dinner with|meals?|sides|sandwich(?:es)?|lobster)\\b")
+    /// A bakery single under a plural name is one roll: only a bag at $2 or more loses its per-roll price.
+    private static let rollBagMinPrice = 2.0
+
+    /// A warehouse club's butter stated as one pack under a slug that weighs a whole number of them:
+    /// Sam's "Member's Mark Salted Sweet Cream Butter Sticks", "16 oz" at $11.88 under "...-sticks-4-lb",
+    /// is four pounds at $2.97/lb, so Sam's real butter never ranked in its 25 ZIPs (20 Nov 2026). Only in
+    /// a club's butter aisle: elsewhere a slug that drops the decimal ("...-214-oz" for 21.4 oz) would
+    /// make a price ten times too cheap. Port of `clubButterPack` in src/normalize.js.
+    static func clubButterPack(_ size: ParsedSize?, category: String?, url: URL?) -> ParsedSize? {
+        guard let size, size.dim == .weight, !size.perWeight, size.count <= 1, let b = size.base, b > 0 else { return nil }
+        guard butterCategoryRx.test((category ?? "").trimmingCharacters(in: .whitespaces)) else { return nil }
+        let weights = slugWeightsOz(url)
+        guard let w = weights.first, weights.allSatisfy({ abs($0 - w) <= 0.02 * w }) else { return nil }
+        let ratio = w / b
+        let n = Int(ratio.rounded())
+        guard n >= 2, n <= 12, abs(ratio - Double(n)) <= 0.02 * Double(n) else { return nil }
+        var out = size
+        out.base = (Double(n) * b * 10000).rounded() / 10000
+        out.count = n
+        out.clubSlugPack = true
         return out
     }
 
@@ -421,11 +552,23 @@ enum ProductFactory {
         var size = applyUrlPack(chosen, url: f.url)
         let packedFromUrl = (size?.count ?? 1) > (chosen?.count ?? 1)
         // Four sticks of butter are a pound only when the retailer's slug says so too.
-        if let sticks = butterSticks(size, name: name, category: f.category, url: f.url) { size = sticks }
+        let club = warehouseClubs.contains(f.storeId)
+        if let sticks = butterSticks(size, name: name, category: f.category, url: f.url, club: club) { size = sticks }
+        // A club's butter stated as one pack under a slug that weighs several (clubButterPack).
+        if club, let pack = clubButterPack(size, category: f.category, url: f.url) { size = pack }
         // Instacart's own unit line may say the price buys several of this size.
         let listed = listingPack(size, packText: f.packText, name: name, url: f.url)
         if let packed = listed?.size { size = packed }
         size = Units.coerceLiquid(size, name: "\(name) \(f.category ?? "")", ownName: name)
+        size = Units.coerceSolid(size, name: "\(name) \(f.category ?? "")", ownName: name)
+        if let s = size, s.dim == .count, !s.perWeight, let b = s.base, b > 1, celeryHeartsRx.test(name) {
+            var h = s
+            h.base = 1
+            h.amount = 1
+            h.count = 1
+            h.heartsPack = s.text.isEmpty ? Units.format(s) : s.text
+            size = h
+        }
         let soldByLb = f.soldBy == .lb || (size?.perWeight ?? false)
 
         // The product's own name and its stated size sometimes contradict each other outright:
@@ -464,7 +607,7 @@ enum ProductFactory {
         let sizeSource: String? = {
             if soldByLb { return "perLb" }
             guard size != nil else { return nil }
-            if packedFromUrl || size?.packFromListing == true || size?.sticks != nil || (chosen != textSize && chosen != nameSize) { return "derived" }
+            if packedFromUrl || size?.packFromListing == true || size?.sticks != nil || size?.heartsPack != nil || size?.clubBoxes != nil || size?.clubSlugPack == true || (chosen != textSize && chosen != nameSize) { return "derived" }
             return chosen == textSize ? "stated" : "name"
         }()
         let price = round2(rawPrice)!
@@ -488,9 +631,12 @@ enum ProductFactory {
         if let pieceLb = Units.produceWeightLb(name), price > 0 {
             if soldByLb && unit[Dim.count.rawValue] == nil {
                 unit[Dim.count.rawValue] = UnitPrice(perBase: price * pieceLb, est: true)
-            } else if !soldByLb, let s = size, s.dim == .count, let b = s.base, b > 0, b < Units.produceGradeCount, price / b <= Units.producePieceMax, unit[Dim.weight.rawValue] == nil {
+            } else if !soldByLb, let s = size, s.dim == .count, let b = s.base, b > 0, b < Units.produceGradeCount, price / b <= Units.producePieceMax, unit[Dim.weight.rawValue] == nil, !slugPerLbRx.test(slugOf(f.url)) {
+                // ...not when the URL says per-lb (Kroger's "Sweet Potato", "1 ct" at $0.99, ".../yams-per-lb").
                 unit[Dim.weight.rawValue] = UnitPrice(perBase: price / b / (pieceLb * 16), est: true)
             }
+            // ...nor a price per piece: it may be a price per pound. Mirrors src/normalize.js.
+            if !soldByLb, let s = size, s.dim == .count, s.base == 1, slugPerLbRx.test(slugOf(f.url)) { unit[Dim.count.rawValue] = nil }
         }
         // A whole pumpkin at a fixed price with its weight stated is one pumpkin at that price
         // (Units.weighedWholePumpkin). A per-lb pumpkin still gets none. Mirrors src/normalize.js.
@@ -519,6 +665,18 @@ enum ProductFactory {
         if !soldByLb, unit[Dim.count.rawValue] != nil, size == nil || (size?.dim == .count && size?.base == 1), rollGoodsRx.test(name), !notARollRx.test(name) {
             unit[Dim.count.rawValue] = nil
         }
+        // A bag of rolls stated "1 each" has no price per roll. Mirrors src/normalize.js.
+        if !soldByLb, unit[Dim.count.rawValue] != nil, size == nil || (size?.dim == .count && size?.base == 1), price >= rollBagMinPrice, breadPiecesRx.test(name), nameSize == nil, !notBreadPiecesRx.test(name) {
+            unit[Dim.count.rawValue] = nil
+        }
+        // A row stated in one dimension whose slug states the other is priced in that one too, as an
+        // estimate that never votes for the dimension. Mirrors src/normalize.js.
+        var slugDim: SlugDim? = nil
+        if price > 0, let o = otherDimFromSlug(size, url: f.url, name: name, category: f.category, sizeText: f.sizeText, soldByLb: soldByLb, sizeConflict: sizeConflict != nil, textSize: textSize, nameSize: nameSize),
+           unit[o.dim.rawValue] == nil || unit[o.dim.rawValue]?.est == true {
+            slugDim = o
+            unit[o.dim.rawValue] = UnitPrice(perBase: price / o.base, est: true, slug: true)
+        }
         if sizeConflict != nil && !soldByLb { unit = [:] }
         // NOTE: there is deliberately no "count from the product name" rule here. src/normalize.js
         // has no counterpart, so inventing a per-egg price made the two clients pick a different
@@ -546,7 +704,8 @@ enum ProductFactory {
             name: name,
             brand: tidyBrand(f.brand ?? ""),
             // A recovered stick weight says where it came from: "4 sticks · 16 oz".
-            size: soldByLb ? "per lb" : (size.map { s in s.sticks.map { "\($0) sticks · \(Units.format(s))" } ?? Units.format(s) } ?? (f.sizeText ?? "")),
+            // ...and so do a celery hearts bag ("1 pack · 4 each") and a slug's figure ("2 ct · 16 oz").
+            size: soldByLb ? "per lb" : (size.map { s in (s.sticks.map { "\($0) sticks · \(Units.format(s))" } ?? s.heartsPack.map { "1 pack · \($0)" } ?? Units.format(s)) + (slugDim.map { " · \(Units.format($0.size))" } ?? "") } ?? (f.sizeText ?? "")),
             sizeText: f.sizeText ?? "",
             dim: dim,
             base: (size?.perWeight ?? true) ? nil : size?.base,
